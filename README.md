@@ -5,7 +5,7 @@ Regina-python and sage code for working with transverse taut and veering ideal t
 
 You will need regina installed inside of python (and/or sage) for the code to run.  Installation instructions can be found here:
 
-https://regina-normal.github.io/  
+http://regina-normal.github.io/  
 http://sageregina.unhyperbolic.org/
 
 After cloning or downloading the code, move into the new directory (called 'Veering' if cloned) and check the test suite using
