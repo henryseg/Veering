@@ -1,14 +1,16 @@
 # Veering
 Regina-python and sage code for working with transverse taut and veering ideal triangulations. Implemented by Anna Parlak, Saul Schleimer, and Henry Segerman. 
 
-### Download and testing
+### Installing regina
 
-You will need regina installed inside of python (and/or sage) for the code to run.  Installation instructions can be found here:
+All of the veering code relies on regina and some relies on sage.  Installation instructions for regina into python and into sage can be found here:
 
 http://regina-normal.github.io/  
 http://sageregina.unhyperbolic.org/
 
-After cloning or downloading the code, move into the new directory (called 'Veering' if cloned) and check the test suite using
+### Download and testing
+
+After cloning or downloading the veering code, move into the new directory (called 'Veering' if cloned) and check the test suite using
 
     python test_suite.py
     sage -python test_suite.py
