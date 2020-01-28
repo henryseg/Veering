@@ -12,4 +12,5 @@ or
 There is a list of all isomorphism signatures in the file Data/veering_census.txt.  As an example of usage, to compute the "big" veering polynomial (as defined by Sam Taylor and Michael Landry) start a sage session in the directory and run
 
 sage: import veering_polynomial
+
 sage: veering_polynomial.big_polynomial('cPcbbbiht_12')
