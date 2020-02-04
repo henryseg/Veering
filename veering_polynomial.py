@@ -257,14 +257,12 @@ def laurent_to_poly(p):
     if verbose > 0: print L, gens
     exps = p.exponents()
     if verbose > 0: print exps
-    if len(gens) == 1:
-        n = -min(exps)
-    else: # num gens > 1
-        exps = [list(e) for e in exps]
-        flat = []
-        for e in exps:
-            flat = flat + e
-        n = -min(flat)
+    # num gens > 1, so
+    exps = [list(e) for e in exps]
+    flat = []
+    for e in exps:
+        flat = flat + e
+    n = -min(flat)
     n = max(n, 0)
     mul = 1
     for gen in L.gens():
@@ -285,7 +283,12 @@ def small_polynomial(veer_sig):
     if verbose > 0: print ET
     minors = ET.minors(tri.countTetrahedra())
     if verbose > 0: print minors
-    minors = [laurent_to_poly(minor) for minor in minors if minor != 0]
+    minors = [minor for minor in minors if minor != 0]
+    if len(minors) == 0:
+        # this is strange...
+        return 0
+    if tri.homology().rank() > 1: 
+        minors = [laurent_to_poly(minor) for minor in minors if minor != 0]
     if verbose > 0: print minors
     return gcd(minors)
 
