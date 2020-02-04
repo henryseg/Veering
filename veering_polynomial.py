@@ -8,10 +8,12 @@ import regina
 
 from string import ascii_lowercase as ascii
 
+from sage.arith.misc import gcd
 from sage.rings.integer_ring import ZZ
 from sage.modules.free_module_element import vector
 from sage.matrix.constructor import Matrix
 from sage.rings.polynomial.laurent_polynomial_ring import LaurentPolynomialRing
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
 from taut import isosig_to_tri_angle
 from transverse_taut import is_transverse_taut
@@ -136,10 +138,10 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, alpha = False):
         edge_colour = edge_colours[edge.index()]
         if verbose > 0: print 'edge_colour', edge_colour
         embeddings = edge.embeddings()
-        tet_laurents = [0] * triangulation.countTetrahedra()
-        tet_laurents[tet.index()] = 1  # bottom tet around the edge gets a 1
-        if verbose > 0: print 'initial tet_laurents', tet_laurents
-        current_laurent = 1
+        tet_coeffs = [0] * triangulation.countTetrahedra()
+        tet_coeffs[tet.index()] = 1  # bottom tet around the edge gets a 1
+        if verbose > 0: print 'initial tet_coeffs', tet_coeffs
+        current_coeff = 1
         ### find index of bottom embedding in the list of embedding
         for i, embed in enumerate(embeddings):
             tet = embed.tetrahedron()
@@ -155,15 +157,15 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, alpha = False):
             tet = embed.tetrahedron()
             vert_perm = embed.vertices() 
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
-            current_laurent = current_laurent * face_laurents[tet.face(2,leading_vert_num).index()]**sign
+            current_coeff = current_coeff * face_laurents[tet.face(2,leading_vert_num).index()]**sign
             if coorientations[tet.index()][trailing_vert_num] == -1 and coorientations[tet.index()][leading_vert_num] == -1: ## we are the top embed
-                tet_laurents[tet.index()] = tet_laurents[tet.index()] - current_laurent
+                tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
                 sign = -1
             elif edge_colour == 'L' and tet in red_tetrahedra or edge_colour == 'R' and tet in blue_tetrahedra:
-                tet_laurents[tet.index()] = tet_laurents[tet.index()] - current_laurent
-            if verbose > 0: print 'current tet_laurents', tet_laurents
+                tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
+            if verbose > 0: print 'current tet_coeffs', tet_coeffs
                 
-        matrix.append(tet_laurents)
+        matrix.append(tet_coeffs)
     return matrix
 
 def big_polynomial(veer_sig):
@@ -174,6 +176,118 @@ def big_polynomial(veer_sig):
     if verbose > 0: print 'edges to tetrahedra'
     if verbose > 0: print ET
     return ET.determinant()
+
+def edges_to_triangles_matrix(triangulation, angle_structure, alpha = False):
+    coorientations = is_transverse_taut(triangulation, angle_structure, return_type = 'tet_vert_coorientations')
+    if verbose > 0: print 'coorientations', coorientations             
+    face_laurents = faces_in_laurent(triangulation, angle_structure, alpha = alpha)
+    if verbose > 0: print 'face_laurents', face_laurents
+
+    matrix = [] # this will get the face coefficients relative to each edge
+    for tet in triangulation.tetrahedra():
+        # get its upper edge - we iterate over upper edges of tetrahedra
+        if verbose > 0: print 'tet_index', tet.index()
+        edge = tet_lower_upper_edges(tet, coorientations)[1]
+        if verbose > 0: print 'edge_index', edge.index()
+        embeddings = edge.embeddings()
+
+        # find index of tet in the list of embeddings of edge
+        for i, embed in enumerate(embeddings):
+            tet = embed.tetrahedron()
+            if verbose > 0: print 'current_tet', tet.index()
+            vert_perm = embed.vertices()
+            trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
+            if coorientations[tet.index()][trailing_vert_num] == +1 and coorientations[tet.index()][leading_vert_num] == +1:
+                bottom_index = i
+                break
+        # rotate
+        embeddings = embeddings[bottom_index:] + embeddings[:bottom_index]
+        
+        face_coeffs = [0] * 2 * triangulation.countTetrahedra()
+        sign = 1 ### are we going up or coming down the other side of the edge
+        current_coeff = 1
+
+        # because of a sign change, we install the first and last by hand.
+        embed = embeddings[0]
+        assert tet.index() == embed.tetrahedron().index() # sanity
+        vert_perm = embed.vertices()
+        trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
+        leading_face = tet.triangle(trailing_vert_num)
+        face_coeffs[leading_face.index()] = face_coeffs[leading_face.index()] + current_coeff
+        trailing_face = tet.triangle(leading_vert_num)
+        face_coeffs[trailing_face.index()] = face_coeffs[trailing_face.index()] + current_coeff
+        if verbose > 0: print 'face_coeffs', face_coeffs
+        
+        for embed in embeddings[1:-1]:
+            tet = embed.tetrahedron()
+            vert_perm = embed.vertices()
+            trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
+            leading_face = tet.triangle(trailing_vert_num)
+            trailing_face = tet.triangle(leading_vert_num)
+            if sign == 1:
+                use_face = trailing_face
+            else:
+                use_face = leading_face
+            current_coeff = current_coeff * (face_laurents[use_face.index()])**sign
+            if verbose > 0: print 'current_coeff', current_coeff
+            # have we reached the top?
+            if coorientations[tet.index()][trailing_vert_num] == -1 and coorientations[tet.index()][leading_vert_num] == -1: ## we are the top embed
+                sign = -1
+                current_coeff = current_coeff * (face_laurents[leading_face.index()])**sign
+                if verbose > 0: print 'top current_coeff', current_coeff
+            face_coeffs[leading_face.index()] = face_coeffs[leading_face.index()] - current_coeff
+            if verbose > 0: print 'face_coeffs', face_coeffs
+            
+        # one last sanity check
+        embed = embeddings[0]
+        tet = embed.tetrahedron()        
+        vert_perm = embed.vertices()
+        trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
+        leading_face = tet.triangle(trailing_vert_num)
+        trailing_face = tet.triangle(leading_vert_num)
+        assert current_coeff == face_laurents[trailing_face.index()]
+            
+        matrix.append(face_coeffs)
+    return matrix
+
+def laurent_to_poly(p):
+    if verbose > 0: print p
+    L = p.parent()
+    gens = L.gens()
+    if verbose > 0: print L, gens
+    exps = p.exponents()
+    if verbose > 0: print exps
+    if len(gens) == 1:
+        n = -min(exps)
+    else: # num gens > 1
+        exps = [list(e) for e in exps]
+        flat = []
+        for e in exps:
+            flat = flat + e
+        n = -min(flat)
+    n = max(n, 0)
+    mul = 1
+    for gen in L.gens():
+        mul =  mul * gen**n
+    if verbose > 0: print mul
+    q = p * mul
+    L = q.parent()
+    P = L.polynomial_ring()
+    if verbose > 0: print 'q', q
+    return P(q)
+
+def small_polynomial(veer_sig):
+    tri, angle = isosig_to_tri_angle(veer_sig)
+    if verbose > 0: print 'angle', angle
+    ET = edges_to_triangles_matrix(tri, angle, alpha=True)
+    ET = Matrix(ET)
+    if verbose > 0: print 'edges to triangles'
+    if verbose > 0: print ET
+    minors = ET.minors(tri.countTetrahedra())
+    if verbose > 0: print minors
+    minors = [laurent_to_poly(minor) for minor in minors if minor != 0]
+    if verbose > 0: print minors
+    return gcd(minors)
 
 # veering_polynomial.big_polynomial('cPcbbbiht_12')
 # veering_polynomial.big_polynomial('gLLPQcdfefefuoaaauo_022110')
