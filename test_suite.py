@@ -1,5 +1,5 @@
 #
-# testing_suite.py
+# test_suite.py
 #
 
 from file_io import parse_data_file
@@ -47,13 +47,13 @@ def run_tests(num_to_check = 1000):
             tri_s, angle_s, face_num_s = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering.is_veering(tri_s, angle_s)
 
-    big_polynomial_dictionary = {'cPcbbbiht_12':'1 - 4*a + 4*a^2 - a^3',
-                                 'eLMkbcddddedde_2100':'a^6 - a^6*b^-1 - 2*a^5 - a^4*b + a^5*b^-1 + 2*a^4 + a^3*b - 2*a^3 + a^3*b^-1 + 2*a^2 + a*b - a^2*b^-1 - 2*a - b + 1',
-                                 'gLLAQbecdfffhhnkqnc_120012':'a^-8 + a^-7 + a^-6 + a^-5 - a^-4 - a^-3 - a^-2 - a^-1',
-                                 'gLLPQcdfefefuoaaauo_022110':'a^12*b^3 - a^11*b^2 - a^10*b^3 - a^10*b^2 - a^7*b^3 - a^7*b^2 - a^6*b^3 + a^7*b + a^5*b^2 - a^6 - a^5*b - a^5 - a^2*b - a^2 - a*b + 1'}
+    big_polys = {'cPcbbbiht_12':'1 - 4*a + 4*a^2 - a^3',
+                 'eLMkbcddddedde_2100':'a^6 - a^6*b^-1 - 2*a^5 - a^4*b + a^5*b^-1 + 2*a^4 + a^3*b - 2*a^3 + a^3*b^-1 + 2*a^2 + a*b - a^2*b^-1 - 2*a - b + 1',
+                 'gLLAQbecdfffhhnkqnc_120012':'a^-8 + a^-7 + a^-6 + a^-5 - a^-4 - a^-3 - a^-2 - a^-1',
+                 'gLLPQcdfefefuoaaauo_022110':'a^12*b^3 - a^11*b^2 - a^10*b^3 - a^10*b^2 - a^7*b^3 - a^7*b^2 - a^6*b^3 + a^7*b + a^5*b^2 - a^6 - a^5*b - a^5 - a^2*b - a^2 - a*b + 1'}
 
-    small_polynomial_dictionary = {'cPcbbbiht_12':'1 - 3*a + a^2', 
-                                   'eLMkbcddddedde_2100':'-a^2*b + a^2 + a*b + b^2 - b'}
+    small_polys = {'cPcbbbiht_12':'1 - 3*a + a^2', 
+                   'eLMkbcddddedde_2100':'-a^2*b + a^2 + a*b + b^2 - b'}
     
     try:
         import veering_polynomial
@@ -63,12 +63,12 @@ def run_tests(num_to_check = 1000):
         poly_working = False
 
     if poly_working:
-        for sig in big_polynomial_dictionary:
-            p = veering_polynomial.big_polynomial(sig)
-            assert p.__repr__() == big_polynomial_dictionary[sig]
-        for sig in small_polynomial_dictionary:
-            p = veering_polynomial.small_polynomial(sig)
-            assert p.__repr__() == small_polynomial_dictionary[sig]
+        for sig in big_polys:
+            p = veering_polynomial.big_polys(sig)
+            assert p.__repr__() == big_polys[sig]
+        for sig in small_polys:
+            p = veering_polynomial.small_polys(sig)
+            assert p.__repr__() == small_polys[sig]
 
 if __name__ == '__main__':
     run_tests()
