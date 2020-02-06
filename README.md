@@ -27,3 +27,7 @@ There is a list of all isomorphism signatures, up to 16 tetrahedra, in the file 
 For references, for information about the census, and for many diagrams, please see:
 
 https://math.okstate.edu/people/segerman/veering.html
+
+### Licence
+
+This work is in the public domain.  See the licence for details. 
