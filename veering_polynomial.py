@@ -24,7 +24,7 @@ from edge_equation_matrix_taut import edge_equation_matrix_taut
 verbose = 0
 
 def build_spanning_dual_tree(triangulation):
-    ### return list of dual edges in the tree
+    # return list of dual edges in the tree
     explored_tetrahedra = [0]
     frontier_tet_faces = [(0,0), (0,1), (0,2), (0,3)]
     tree_faces = []
@@ -55,8 +55,9 @@ def reduced_edge_equation_matrix_taut(triangulation, angle_structure):
     # N is a 2n by n matrix - the rows are longer than the columns
     # are high.  So we have to zero out the _columns_ for the tree
     # edges.
-    if verbose > 0: print 'reduced_edge_equation_matrix', [[a for i, a in enumerate(row) if i in non_tree_faces] for row in N]
-    return [[a for i, a in enumerate(row) if i in non_tree_faces] for row in N]
+    reduced = [[a for i, a in enumerate(row) if i in non_tree_faces] for row in N]
+    if verbose > 0: print 'reduced_edge_equation_matrix', reduced
+    return reduced
 
 def elem_vector(i, dim): 
     vec = [0]*dim
@@ -88,12 +89,12 @@ def faces_in_homology(triangulation, angle_structure):
     return [tuple(vec) for vec in face_vecs]
 
 def group_ring(triangulation, angle_structure, alpha = False, ring = ZZ):
-    b = triangulation.homology().rank() # betti number
+    betti = triangulation.homology().rank() 
     if alpha:
-        assert b < 26
-        return LaurentPolynomialRing(ring, list(ascii)[:b])
+        assert betti < 26
+        return LaurentPolynomialRing(ring, list(ascii)[:betti])
     else:
-        return LaurentPolynomialRing(ring, 'x', b)
+        return LaurentPolynomialRing(ring, 'x', betti)
 
 def faces_in_laurent(triangulation, angle_structure, ZH):
     face_vecs = faces_in_homology(triangulation, angle_structure)
@@ -111,7 +112,7 @@ def tet_lower_upper_edges(tetrahedron, coorientations):
     upper_edge_num = 5 - lower_edge_num
     return ( tetrahedron.face(1, lower_edge_num), tetrahedron.face(1, upper_edge_num) )
 
-### Code copied and modified from
+### following code copied/modified (with permission) from 
 ### https://github.com/3-manifolds/SnapPy/blob/master/python/snap/nsagetools.py
 
 def join_lists(list_of_lists):
@@ -136,12 +137,14 @@ def laurent_to_poly(elt, P):
        return P(elt)
    return P( elt.dict() )
 
+### end of copied/modified code
+
 def matrix_laurent_to_poly(M, ZH, P):
     # convert to polynomials after shifting rows
     muls = [ monomial_multiplier(row, ZH) for row in M ]
     return Matrix( [ [ laurent_to_poly(p / mul, P) for p in row ] for row, mul in zip(M, muls) ] )
 
-# computing the big veering polynomial
+### computing the big veering polynomial
 
 def has_red_lower_edge(tetrahedron, coorientations, edge_colours):
     lower_edge = tet_lower_upper_edges(tetrahedron, coorientations)[0]
@@ -187,7 +190,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
                 break
         embeddings = embeddings[bottom_index:] + embeddings[:bottom_index]
         sign = 1 # we are going up the left side of the edge
-        for embed in embeddings[1:]:  # first entry already dealt with
+        for embed in embeddings[1:]:  # skipping the first
             tet = embed.tetrahedron()
             vert_perm = embed.vertices() 
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
@@ -195,7 +198,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
             if coorientations[tet.index()][trailing_vert_num] == -1 and coorientations[tet.index()][leading_vert_num] == -1:
                 # we are the top embed so:
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
-                sign = -1 # we are going down the right side
+                sign = -1 # now we go down the right side
             elif edge_colour == 'L' and tet in red_tetrahedra or edge_colour == 'R' and tet in blue_tetrahedra:
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
             if verbose > 0: print 'current tet_coeffs', tet_coeffs
@@ -225,7 +228,7 @@ def big_polynomial(veer_sig, alpha = True):
         out_poly = -out_poly
     return out_poly
     
-# computing the small veering polynomial
+### computing the small veering polynomial
 
 def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P):
     coorientations = is_transverse_taut(triangulation, angle_structure, return_type = 'tet_vert_coorientations')
@@ -254,12 +257,12 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P):
         embeddings = embeddings[bottom_index:] + embeddings[:bottom_index]
         
         face_coeffs = [ ZH(0) ] * 2 * triangulation.countTetrahedra()
-        sign = 1 ### are we going up or coming down the other side of the edge
+        sign = 1 # we are going up the left side of the edge
         current_coeff = ZH(1)
 
         # because of a sign change, we install the first and last by hand.
         embed = embeddings[0]
-        assert tet.index() == embed.tetrahedron().index() # sanity
+        assert tet.index() == embed.tetrahedron().index() # sanity check
         vert_perm = embed.vertices()
         trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
         leading_face = tet.triangle(trailing_vert_num)
@@ -268,7 +271,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P):
         face_coeffs[trailing_face.index()] = face_coeffs[trailing_face.index()] + current_coeff
         if verbose > 0: print 'face_coeffs', face_coeffs
         
-        for embed in embeddings[1:-1]:
+        for embed in embeddings[1:-1]: # skipping the first and last
             tet = embed.tetrahedron()
             vert_perm = embed.vertices()
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
@@ -282,7 +285,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P):
             if verbose > 0: print 'current_coeff', current_coeff
             # have we reached the top?
             if coorientations[tet.index()][trailing_vert_num] == -1 and coorientations[tet.index()][leading_vert_num] == -1: ## we are the top embed
-                sign = -1
+                sign = -1 # we are going down the right side of the edge
                 current_coeff = current_coeff * (face_laurents[leading_face.index()])**sign
                 if verbose > 0: print 'top current_coeff', current_coeff
             face_coeffs[leading_face.index()] = face_coeffs[leading_face.index()] - current_coeff
@@ -323,8 +326,6 @@ def small_polynomial(veer_sig, alpha = True):
         out_poly = -out_poly
     return out_poly
 
-### End of copied/modified code
-
 def small_polynomial_via_smith(veer_sig, alpha = True):
     # set up
     tri, angle = isosig_to_tri_angle(veer_sig)
@@ -348,7 +349,17 @@ def small_polynomial_via_smith(veer_sig, alpha = True):
         out_poly = -out_poly
     return out_poly
 
-# Remarks on the smith normal form version'gLLAQacdefefjkaaqks_200210'
+### Remarks on small_polynomial_via_smith
+
+# 1. Running on 'gLLAQacdefefjkaaqks_200210' appears to involve very
+# large intermediate computations - I've never waited long enough for
+# the function to actually return.  So there is a serious dichotomy:
+# the version using smith normal form is exponentially faster most of
+# the time, but is exponentially slower every once in a while.
+
+# 2. Also, smith normal form wants the polynomial ring to be a PID, so
+# we are restricted to using QQ[x].  So we need b_1 = 1 or we need to
+# specialise the matrix ET before computing. 
 
 def small_polynomial_via_interpolate(veer_sig, alpha = True):
     # In the one-variable case: (1) get an upper bound on the
