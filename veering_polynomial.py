@@ -329,7 +329,7 @@ def small_polynomial_via_smith(veer_sig, alpha = True):
     # set up
     tri, angle = isosig_to_tri_angle(veer_sig)
     assert tri.homology().rank() == 1 # need the polynomial ring to be a PID
-    ZH = group_ring(tri, angle, alpha = alpha, ring = ZZ.quotient(2)) # ditto
+    ZH = group_ring(tri, angle, alpha = alpha, ring = QQ) # ditto
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, ZH, P)
