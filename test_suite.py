@@ -61,7 +61,7 @@ def run_tests(num_to_check = 1000):
         import veering_polynomial
         poly_working = True
     except:
-        print 'failed to import veering polynomial'
+        print 'failed to import veering_polynomial - probably not running in sage'
         poly_working = False
 
     if poly_working:
@@ -84,5 +84,11 @@ def run_tests(num_to_check = 1000):
             else:
                 assert q.divides(p)
 
+    if poly_working:
+        print 'all tests passed'
+    else:
+        print 'all tests not depending on veering_polynomial passed'
+
+                
 if __name__ == '__main__':
     run_tests()
