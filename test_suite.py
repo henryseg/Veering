@@ -3,6 +3,7 @@
 #
 
 from file_io import parse_data_file
+from random import random
 
 import taut
 import transverse_taut
@@ -22,7 +23,7 @@ def run_tests(num_to_check = 1000):
         recovered_sig = taut.isosig_from_tri_angle(tri, angle)
         assert sig == recovered_sig
         # we only test this round trip - the other round trip does not
-        # quite make sense because tri->isosig is many to one.
+        # make sense because tri->isosig is many to one.
 
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -47,13 +48,14 @@ def run_tests(num_to_check = 1000):
             tri_s, angle_s, face_num_s = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering.is_veering(tri_s, angle_s)
 
-    big_polys = {'cPcbbbiht_12':'1 - 4*a + 4*a^2 - a^3',
-                 'eLMkbcddddedde_2100':'a^6 - a^6*b^-1 - 2*a^5 - a^4*b + a^5*b^-1 + 2*a^4 + a^3*b - 2*a^3 + a^3*b^-1 + 2*a^2 + a*b - a^2*b^-1 - 2*a - b + 1',
-                 'gLLAQbecdfffhhnkqnc_120012':'a^-8 + a^-7 + a^-6 + a^-5 - a^-4 - a^-3 - a^-2 - a^-1',
+    big_polys = {'cPcbbbiht_12':'a^3 - 4*a^2 + 4*a - 1',
+                 'eLMkbcddddedde_2100':'a^6*b - a^6 - 2*a^5*b - a^4*b^2 + a^5 + 2*a^4*b + a^3*b^2 - 2*a^3*b + a^3 + 2*a^2*b + a*b^2 - a^2 - 2*a*b - b^2 + b',
+                 'gLLAQbecdfffhhnkqnc_120012':'a^7 + a^6 + a^5 + a^4 - a^3 - a^2 - a - 1',
                  'gLLPQcdfefefuoaaauo_022110':'a^12*b^3 - a^11*b^2 - a^10*b^3 - a^10*b^2 - a^7*b^3 - a^7*b^2 - a^6*b^3 + a^7*b + a^5*b^2 - a^6 - a^5*b - a^5 - a^2*b - a^2 - a*b + 1'}
 
-    small_polys = {'cPcbbbiht_12':'1 - 3*a + a^2', 
-                   'eLMkbcddddedde_2100':'-a^2*b + a^2 + a*b + b^2 - b'}
+    small_polys = {'cPcbbbiht_12':'a^2 - 3*a + 1',
+                   'eLMkbcddddedde_2100':'a^2*b - a^2 - a*b - b^2 + b',
+                   'iLLAwQcccedfghhhlnhcqeesr_12001122':'0'}
     
     try:
         import veering_polynomial
@@ -64,11 +66,23 @@ def run_tests(num_to_check = 1000):
 
     if poly_working:
         for sig in big_polys:
-            p = veering_polynomial.big_polys(sig)
+            print 'testing big', sig
+            p = veering_polynomial.big_polynomial(sig)
             assert p.__repr__() == big_polys[sig]
         for sig in small_polys:
-            p = veering_polynomial.small_polys(sig)
+            print 'testing small', sig
+            p = veering_polynomial.small_polynomial(sig)
             assert p.__repr__() == small_polys[sig]
+        for i in range(5):
+            j = int(200*random())
+            sig = veering_isosigs[j]
+            print 'testing divide', sig
+            p = veering_polynomial.big_polynomial(sig)
+            q = veering_polynomial.small_polynomial(sig)
+            if q == 0:
+                assert p == 0
+            else:
+                assert q.divides(p)
 
 if __name__ == '__main__':
     run_tests()
