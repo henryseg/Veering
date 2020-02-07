@@ -22,7 +22,7 @@ There is a list of all isomorphism signatures, up to 16 tetrahedra, in the file 
     sage: import veering_polynomial
     sage: veering_polynomial.big_polynomial('cPcbbbiht_12')
     
-and the answer should be
+The answer should be
 
     a^3 - 4*a^2 + 4*a - 1
 
