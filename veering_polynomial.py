@@ -24,7 +24,11 @@ from edge_equation_matrix_taut import edge_equation_matrix_taut
 verbose = 0
 
 def build_spanning_dual_tree(triangulation):
-    # return list of dual edges in the tree
+    """
+    returns two lists - (dual) edges in the spanning tree and (dual)
+    edges not in the spanning tree.  We use the regina numbering to 
+    determine the tree.
+    """
     explored_tetrahedra = [0]
     frontier_tet_faces = [(0,0), (0,1), (0,2), (0,3)]
     tree_faces = []
