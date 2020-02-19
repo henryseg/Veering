@@ -7,9 +7,12 @@ from random import random
 
 import taut
 import transverse_taut
+import taut_polytope
 import veering
 import veering_dehn_surgery
+import veering_polynomial
 
+#def run_tests(num_to_check = 10):
 def run_tests(num_to_check = 1000):
 
     veering_isosigs = parse_data_file('Data/veering_census.txt')
@@ -58,36 +61,47 @@ def run_tests(num_to_check = 1000):
                    'iLLAwQcccedfghhhlnhcqeesr_12001122':'0'}
     
     try:
-        import veering_polynomial
-        poly_working = True
+        from sage.rings.integer_ring import ZZ
+        sage_working = True
     except:
-        print 'failed to import veering_polynomial - probably not running in sage'
-        poly_working = False
+        print 'failed to import from sage'
+        sage_working = False
 
-    if poly_working:
+    if sage_working:
+        for sig in veering_isosigs[:17]:
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            assert taut_polytope.is_layered(tri, angle)
+        for sig in veering_isosigs[17:21]:
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            assert not taut_polytope.is_layered(tri, angle)
+
+    if sage_working:
         for sig in big_polys:
             print 'testing big', sig
-            p = veering_polynomial.big_polynomial(sig)
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            p = veering_polynomial.big_polynomial(tri, angle)
             assert p.__repr__() == big_polys[sig]
         for sig in small_polys:
             print 'testing small', sig
-            p = veering_polynomial.small_polynomial(sig)
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            p = veering_polynomial.small_polynomial(tri, angle)
             assert p.__repr__() == small_polys[sig]
         for i in range(5):
             j = int(200*random())
             sig = veering_isosigs[j]
             print 'testing divide', sig
-            p = veering_polynomial.big_polynomial(sig)
-            q = veering_polynomial.small_polynomial(sig)
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            p = veering_polynomial.big_polynomial(tri, angle)
+            q = veering_polynomial.small_polynomial(tri, angle)
             if q == 0:
                 assert p == 0
             else:
                 assert q.divides(p)
 
-    if poly_working:
+    if sage_working:
         print 'all tests passed'
     else:
-        print 'all tests not depending on veering_polynomial passed'
+        print 'all tests not depending on sage passed'
 
                 
 if __name__ == '__main__':

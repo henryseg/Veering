@@ -20,7 +20,7 @@ from sage.modules.free_module_integer import IntegerLattice
 
 from taut import isosig_to_tri_angle
 from transverse_taut import is_transverse_taut
-from edge_equation_matrix_taut import edge_equation_matrix_taut
+from taut_homology import edge_equation_matrix_taut
 
 # Polynomials that come with snappy (in sage)
 
@@ -96,8 +96,7 @@ def non_trivial_solution(N, real_bool = True, int_bool = False):
     except MIPSolverException:
         return (False, None)
 
-def get_non_triv_sol(veer_sig):
-    tri, angle = veering_isosig_to_triang(veer_sig)
+def get_non_triv_sol(tri, angle):
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
     non_triv, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
@@ -153,38 +152,20 @@ def fully_carried_solution(N):
     except MIPSolverException:
         return (False, None)
 
-# def does_tri_admit_layering(T):
-#     """Given a regina Triangulation with Betti number one, searches T for
-#     layered structures.  Returns True on the first it finds.
-
-#     """
-#     assert T.homologyH1().rank() == 1
-#     tauts = regina.AngleStructures.enumerate(T, True)
-#     tauts = [taut_regina_angle_struct_to_taut_struct(tauts.structure(i)) for i in range(tauts.size())]
-#     tauts = [angle_struct_edgepairs_str(taut) for taut in tauts]
-#     matrices = [calculate_edge_equation_matrix_taut(T, taut) for taut in tauts]
-#     for N in matrices:
-#         N = Matrix(N)
-#         layered, _ = fully_carried_solution(N)
-#         if layered:
-#             return True
-#     return False
-
-def is_layered(sig):
+def is_layered(tri, angle):
     """
-    Given a taut isosig, decide if it is layered. 
+    Given a tri, angle, decide if it is layered. 
     """
-    tri, angle = isosig_to_tri_angle(sig)
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
     layered, _ = fully_carried_solution(N)
     return layered
         
-def analyse_sig(sig):
+# check this against the homological dim of the taut cone. 
+def LMN_tri_angle(tri, angle):
     """
-    Given a taut isosig, decide LMN
+    Given a tri, angle, decide LMN
     """
-    tri, angle = isosig_to_tri_angle(sig)
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
     farkas, farkas_sol = farkas_solution(N)            
@@ -198,8 +179,7 @@ def analyse_sig(sig):
         assert farkas
         return 'N'
 
-def analyze_sig_deeply(sig):
-    tri, angle = isosig_to_tri_angle(sig)
+def analyze_deeply(tri, angle):
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
     M = snappy.Manifold(tri.snappystring())
@@ -226,20 +206,6 @@ def analyze_sig_deeply(sig):
         print ' no sol',
         print alex, hyper
 
-def LMN(sig):
-    tri, angle = isosig_to_tri_angle(sig)
-    N = edge_equation_matrix(tri, angle)
-    N = Matrix(N)
-    layered, layered_sol = fully_carried_solution(N)
-    if layered: 
-        return 'layered'
-    non_triv, non_triv_sol = non_trivial_solution(N)
-    if non_triv: 
-        return 'measurable'
-    farkas, farkas_sol = farkas_solution(N)
-    assert farkas 
-    return 'non-measurable'
-
 # Code to compute the dimension of the taut cone as projected into
 # homology.
 
@@ -248,15 +214,15 @@ def LMN(sig):
 def matrix_transpose(M):
     return map(lambda *row: list(row), *M)
 
-def zeroth_coboundary(tri):
+def zeroth_coboundary(triangulation):
     """
     Given a regina triangulation, returns the zeroth coboundary matrix
     for the dual cell structure
     """
     # for every primal tetrahedron, find its boundary.
     matrix = []
-    for tet in tri.tetrahedra():
-        row = [0] * tri.countFaces(2)
+    for tet in triangulation.tetrahedra():
+        row = [0] * triangulation.countFaces(2)
         for i in range(4):
             tri_index = tet.triangle(i).index()
             perm = tet.faceMapping(2,i)
@@ -282,10 +248,6 @@ def first_coboundary(triangulation):
         matrix.append(row)
     return matrix_transpose(matrix)
 
-def betti_number(sig):
-    M = snappy.Manifold(sig.split('_')[0])
-    return M.homology().betti_number()
-
 # extracting the taut cone
 
 def elem_vector(i, dim): 
@@ -304,10 +266,9 @@ def taut_rays(N):
 
 # the function
 
-def taut_cone_homological_dim(sig): 
+def taut_cone_homological_dim(tri, angle): 
     # find the dimension of the projection of the taut cone into
     # homology
-    tri, angle = isosig_to_tri_angle(sig)
     bdys = zeroth_coboundary(tri) # boundaries of tets
     bdys = matrix_transpose(bdys)
     
@@ -325,3 +286,18 @@ def taut_cone_homological_dim(sig):
     Cobs = Bdys.transpose()
     Anns = Cobs.kernel()
     return Rays.intersection(Anns).dimension()
+
+def analyse_many_angles(tri):
+    angles = regina.AngleStructures.enumerate(tri, True)
+    angles = [regina_taut_struct_to_ints(angles.structure(i)) for i in range(angles.size())]
+    dict_of_dimensions = {}
+    for angle in angles:
+        angle_str = ''.join(str(a) for a in angle)
+        if is_layered(tri, angle):
+            if 'layered' not in dict_of_dimensions: dict_of_dimensions['layered'] = set(angle_str)
+            else: dict_of_dimensions['layered'].add(angle_str)
+        else:
+            dim = taut_cone_homological_dim(tri, angle)
+            if dim not in dict_of_dimensions: dict_of_dimensions[dim] = set(angle_str)
+            else: dict_of_dimensions[dim].add(angle_str)
+
