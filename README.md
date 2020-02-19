@@ -5,7 +5,7 @@ Regina-python and sage code for working with transverse taut and veering ideal t
 
 All of the veering code relies on regina and some relies on sage.  Installation instructions for regina into python and into sage can be found here:
 
-http://regina-normal.github.io/  
+http://regina-normal.github.io/
 http://sageregina.unhyperbolic.org/
 
 ### Download and testing
@@ -21,7 +21,7 @@ There is a list of all isomorphism signatures, up to 16 tetrahedra, in the file 
 
     sage: import veering_polynomial
     sage: veering_polynomial.big_polynomial('cPcbbbiht_12')
-    
+
 The answer should be
 
     a^3 - 4*a^2 + 4*a - 1
