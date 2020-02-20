@@ -1,15 +1,16 @@
 # Veering
 
 Regina-python and sage code for working with transverse taut and
-veering ideal triangulations.  Implemented by Anna Parlak, Saul
+veering ideal triangulations; implemented by Anna Parlak, Saul
 Schleimer, and Henry Segerman.  The "big" and "small" veering
-polynomials were first defined by Sam Taylor and Michael Landry.
+polynomials are defined by Sam Taylor and Michael Landry.  We thank
+Nathan Dunfield for many helpful comments (and for some code).
 
 ### Installing regina
 
-All of the veering code relies on regina; some relies on sage.
-Installation instructions for regina into python and into sage can be
-found here:
+Essentially all of the veering code relies on regina; some of it
+relies on sage.  Installation instructions for regina into python and
+into sage can be found here:
 
 http://regina-normal.github.io/
 http://sageregina.unhyperbolic.org/
@@ -17,7 +18,7 @@ http://sageregina.unhyperbolic.org/
 ### Download and testing
 
 After cloning or downloading the veering code, move into the new
-directory (called 'Veering' if cloned) and check the test suite using
+directory (called 'Veering' if cloned) and check the test suite using:
 
     python test_suite.py
     sage -python test_suite.py
@@ -71,4 +72,4 @@ https://math.okstate.edu/people/segerman/veering.html
 
 ### Licence
 
-This work is in the public domain.  See the licence for details.
+This work is in the public domain.  See the LICENCE for details.
