@@ -11,7 +11,7 @@ from sage.arith.misc import gcd
 from sage.rings.rational_field import QQ
 from sage.matrix.constructor import Matrix
 
-from taut import isosig_to_tri_angle
+from taut import liberal
 from transverse_taut import is_transverse_taut
 from taut_homology import edge_equation_matrix_taut, group_ring, faces_in_laurent, matrix_laurent_to_poly, normalise_poly
 from veering import is_veering
@@ -25,14 +25,18 @@ def alex_is_monic(M):
     p = M.alexander_polynomial()
     return p.is_monic()
 
+
 def hyper_is_monic(M): # add a way to dial up the precision
-        p = M.hyperbolic_torsion()
-        lead = p.coefficients(sparse=False)[-1]
-        return abs(1 - lead) < 0.000001  # worry about lead = -1
+    p = M.hyperbolic_torsion()
+    lead = p.coefficients(sparse=False)[-1]
+    return abs(1 - lead) < 0.000001  # worry about lead = -1
+
 
 # veering structure
 
+
 edge_vert_index_map = {(0, 1):0, (0, 2):1, (0, 3):2, (1, 2): 3, (1, 3):4, (2, 3):5 }
+
 
 def tet_lower_upper_edges(tetrahedron, coorientations):
     tet_coor = coorientations[tetrahedron.index()]
@@ -42,12 +46,16 @@ def tet_lower_upper_edges(tetrahedron, coorientations):
     upper_edge_num = 5 - lower_edge_num
     return ( tetrahedron.face(1, lower_edge_num), tetrahedron.face(1, upper_edge_num) )
 
+
 ### computing the big veering polynomial
+
 
 def has_red_lower_edge(tetrahedron, coorientations, edge_colours):
     lower_edge = tet_lower_upper_edges(tetrahedron, coorientations)[0]
     return edge_colours[lower_edge.index()] == 'R'
 
+
+@liberal
 def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
     coorientations = is_transverse_taut(triangulation, angle_structure, return_type = 'tet_vert_coorientations')
     if verbose > 0: print 'coorientations', coorientations 
@@ -106,6 +114,8 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
     # convert and return
     return matrix_laurent_to_poly(ET_matrix, ZH, P)
 
+
+@liberal
 def big_polynomial(tri, angle, alpha = True):
     # set up
     ZH = group_ring(tri, angle, alpha = alpha)
@@ -115,8 +125,11 @@ def big_polynomial(tri, angle, alpha = True):
     ET = edges_to_tetrahedra_matrix(tri, angle, ZH, P)
     return normalise_poly(ET.determinant(), ZH, P)
     
-### computing the small veering polynomial
 
+# computing the small veering polynomial
+
+
+@liberal
 def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = 'veering'):
     # In mode alexander, we are computing the transpose of the
     # boundary operator from relative 1-chains to relative 0-chains of
@@ -198,6 +211,8 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = 'vee
     # convert and return
     return matrix_laurent_to_poly(ET_matrix, ZH, P)
 
+
+@liberal
 def small_polynomial(tri, angle, alpha = True, mode = 'veering'):
     # set up
     ZH = group_ring(tri, angle, alpha = alpha)
@@ -209,6 +224,8 @@ def small_polynomial(tri, angle, alpha = True, mode = 'veering'):
     minors = ET.minors(tri.countTetrahedra())
     return normalise_poly(gcd(minors), ZH, P)
 
+
+@liberal
 def small_polynomial_via_smith(tri, angle, alpha = True, mode = 'veering'):
     # set up
     assert tri.homology().rank() == 1 # need the polynomial ring to be a PID
@@ -223,7 +240,8 @@ def small_polynomial_via_smith(tri, angle, alpha = True, mode = 'veering'):
     ETs_reduced = Matrix([row[:a] for row in ETs])    
     return normalise_poly(ETs_reduced.determinant(), ZH, P)
 
-### Remarks on small_polynomial_via_smith
+
+# Remarks on small_polynomial_via_smith
 
 # 1. Running on 'gLLAQacdefefjkaaqks_200210' appears to involve very
 # large intermediate computations - I've never waited long enough for
@@ -235,6 +253,8 @@ def small_polynomial_via_smith(tri, angle, alpha = True, mode = 'veering'):
 # we are restricted to using QQ[x].  So we need b_1 = 1 or we need to
 # specialise the matrix ET before computing. 
 
+
+@liberal
 def small_polynomial_via_interpolate(tri, angle, alpha = True):
     # In the one-variable case: (1) get an upper bound on the
     # degree of the answer (2) plug integers into the matrix and

@@ -4,7 +4,8 @@
 
 # Check if a taut triangulation is veering
 
-import regina #needed inside of imported files
+import regina # needed inside of imported files
+from taut import liberal
 
 def tet_type(triangulation, tet_num, veering_colours):
     num_L = [ veering_colours[triangulation.tetrahedron(tet_num).edge(i).index()] for i in range(6) ].count('L')
@@ -16,6 +17,7 @@ def tet_type(triangulation, tet_num, veering_colours):
         return 'left'
     assert False
 
+@liberal
 def is_veering(tri, angle, return_type = 'boolean'):
     """checks to see if this triangulation with taut angle structure is
     veering
@@ -78,6 +80,3 @@ def is_veering(tri, angle, return_type = 'boolean'):
         return (Llist, Rlist)
     else:
         return True
-
-
-

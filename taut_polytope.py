@@ -18,7 +18,7 @@ from sage.geometry.polyhedron.constructor import Polyhedron
 from sage.matrix.constructor import Matrix
 from sage.modules.free_module_integer import IntegerLattice
 
-from taut import isosig_to_tri_angle
+from taut import liberal
 from transverse_taut import is_transverse_taut
 from taut_homology import edge_equation_matrix_taut
 
@@ -29,9 +29,9 @@ def alex_is_monic(M):
     return p.is_monic()
 
 def hyper_is_monic(M): # add a way to dial up the precision
-        p = M.hyperbolic_torsion()
-        lead = p.coefficients(sparse=False)[-1]
-        return abs(1 - lead) < 0.000001  # worry about lead = -1
+    p = M.hyperbolic_torsion()
+    lead = p.coefficients(sparse=False)[-1]
+    return abs(1 - lead) < 0.000001  # worry about lead = -1
 
 ### Examining edge/face matrices
 
@@ -76,9 +76,10 @@ def farkas_solution(N):  # never use this
     try:
         q.solve()
         U = extract_solution(q,u)
-        return (True, U)
+        out = (True, U)
     except MIPSolverException:
-        return (False, None)
+        out = (False, None)
+    return out
 
 
 def non_trivial_solution(N, real_bool = True, int_bool = False):
@@ -99,11 +100,13 @@ def non_trivial_solution(N, real_bool = True, int_bool = False):
     try:
         q.solve()
         W = extract_solution(q,w)
-        return (True, W)
+        out = (True, W)
     except MIPSolverException:
-        return (False, None)
+        out = (False, None)
+    return out
+        
 
-
+@liberal
 def get_non_triv_sol(tri, angle):
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
@@ -159,11 +162,13 @@ def fully_carried_solution(N):
     try:
         q.solve()
         W = extract_solution(q,w)
-        return (True, W)
+        out = (True, W)
     except MIPSolverException:
-        return (False, None)
+        out = (False, None)
+    return out
 
 
+@liberal
 def is_layered(tri, angle):
     """
     Given a tri, angle, decide if it is layered.
@@ -174,7 +179,8 @@ def is_layered(tri, angle):
     return layered
 
 
-# check this against the homological dim of the taut cone.
+# TODO - check this against the homological dim of the taut cone... and then delete.  :)
+@liberal
 def LMN_tri_angle(tri, angle):
     """
     Given a tri, angle, decide LMN
@@ -185,14 +191,16 @@ def LMN_tri_angle(tri, angle):
     non_triv, non_triv_sol = non_trivial_solution(N)
     full, full_sol = fully_carried_solution(N)
     if full:
-        return 'L'
+        out = 'L'
     elif non_triv:
-        return 'M'
+        out = 'M'
     else:
         assert farkas
-        return 'N'
+        out = 'N'
+    return out
 
 
+@liberal
 def analyze_deeply(tri, angle):
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
@@ -219,7 +227,7 @@ def analyze_deeply(tri, angle):
     elif not alex or not hyper:
         print ' no sol',
         print alex, hyper
-
+    return None
 
 # Code to compute the dimension of the taut cone as projected into
 # homology.
@@ -231,6 +239,7 @@ def matrix_transpose(M):
     return map(lambda *row: list(row), *M)
 
 
+@liberal
 def zeroth_coboundary(triangulation):
     """
     Given a regina triangulation, returns the zeroth coboundary matrix
@@ -248,6 +257,7 @@ def zeroth_coboundary(triangulation):
     return matrix_transpose(matrix)
 
 
+@liberal
 def first_coboundary(triangulation):
     """
     Given a regina triangulation, returns the first coboundary matrix
@@ -289,6 +299,7 @@ def taut_rays(N):
 # the function
 
 
+@liberal
 def taut_cone_homological_dim(tri, angle):
     # find the dimension of the projection of the taut cone into
     # homology
@@ -313,6 +324,7 @@ def taut_cone_homological_dim(tri, angle):
     return Rays.intersection(Anns).dimension()
 
 
+@liberal
 def analyse_many_angles(tri):
     angles = regina.AngleStructures.enumerate(tri, True)
     angles = [regina_taut_struct_to_ints(angles.structure(i)) for i in range(angles.size())]

@@ -1,7 +1,8 @@
 #### Regina-Python script for checking if a taut triangulation is transverse taut
 #### By Henry Segerman, Jan 2020
 
-import regina #needed inside of imported files
+import regina # needed inside of imported files
+from taut import liberal
 
 def pi_edgepair(regina_angle_struct, tet_num):
     """given a regina angle structure that is taut, tells us which pair of edges have the pi angle"""
@@ -43,6 +44,7 @@ def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direc
             return False  # failed neighbours check 
     return True # passed neighbours checks
 
+@liberal
 def is_transverse_taut(triangulation, taut_angle_struct, return_type = 'boolean'):
     assert triangulation.isOriented()
     coorientations = []

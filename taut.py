@@ -46,6 +46,22 @@ def isosig_from_tri_angle(tri, angle):
     all_angles_strings.sort()
     return isosig + '_' + all_angles_strings[0]
 
+# Let's be liberal in what we accept.  Here is the decorator. 
+# This might slow things down
+
+def liberal(func):
+    def liberal_wrapper(*args, **kwargs):
+        if type(args[0]) is str:
+            sig = args[0]
+            if "_" in sig:
+                tri, angle = isosig_to_tri_angle(sig)
+                args = (tri, angle) + args[1:]
+            else:
+                tri = regina.Triangulation3.fromIsoSig(sig)
+                args = (tri,) + args[1:]
+        return func(*args, **kwargs)
+    return liberal_wrapper
+
 # regina conventions
 
 vert_pair_to_edge_pair_dict = {(0,1):0, (2,3):0, (0,2):1, (1,3):1, (0,3):2, (1,2):2}
@@ -55,6 +71,7 @@ def edge_pair_to_edge_numbers(e):
 
 # checking tautness
 
+@liberal
 def is_taut(tri, angle):
     totals = [0] * tri.countEdges()
     for i, tet in enumerate(tri.tetrahedra()):
