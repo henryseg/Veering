@@ -25,16 +25,43 @@ directory (called 'Veering' if cloned) and check the test suite using
 ### Usage
 
 There is a list of all isomorphism signatures, up to 16 tetrahedra, in
-the file Data/veering_census.txt.  As an example of usage, to compute
-the "big" and "small" veering polynomials, start a sage session in the
-directory and run
+the file Data/veering_census.txt.  As an example of usage start a sage
+session in the directory and type
 
-    sage: sig = "cPcbbbiht_12"
+    sage: from file_io import parse_data_file
+    sage: veering_isosigs = parse_data_file('Data/veering_census.txt')
+
+The list veering_isosigs now contains taut isomorphism signatures for
+all veering triangulations, up to 16 tetrahedra.  Our code is mainly
+intended for batch processing.  However, examining individual
+manifolds is also possible.
+
+    sage: sig = veering_isosigs[1]; sig
+    'cPcbbbiht_12'
+
+This is the taut isomorphism signature for the only known veering
+structure on the figure eight knot complement.  We convert this to a
+regina triangulation and a taut angle structure as follows.
+
+    sage: from taut import isosig_to_tri_angle
     sage: tri, angle = isosig_to_tri_angle(sig)
+
+We can now compute various properties and invariants. 
+
+    sage: import taut_polytope
+    sage: taut_polytope.is_layered(tri, angle)
+    True
+
+So this taut triangulation is layered; thus the figure eight knot
+complement is fibred.
+
+    sage: import veering_polynomial
     sage: veering_polynomial.big_polynomial(tri, angle)
     a^3 - 4*a^2 + 4*a - 1
     sage: veering_polynomial.small_polynomial(tri, angle)
     a^2 - 3*a + 1
+
+Note that the small polynomial divides the large.
 
 ### Webpage
 
