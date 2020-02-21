@@ -12,6 +12,8 @@ import veering
 import veering_dehn_surgery
 import veering_polynomial
 
+import snappy
+
 #def run_tests(num_to_check = 10):
 def run_tests(num_to_check = 1000):
 
@@ -69,35 +71,40 @@ def run_tests(num_to_check = 1000):
 
     if sage_working:
         for sig in veering_isosigs[:17]:
-            tri, angle = taut.isosig_to_tri_angle(sig)
-            assert taut_polytope.is_layered(tri, angle)
+            assert taut_polytope.is_layered(sig)
         for sig in veering_isosigs[17:21]:
-            tri, angle = taut.isosig_to_tri_angle(sig)
-            assert not taut_polytope.is_layered(tri, angle)
+            assert not taut_polytope.is_layered(sig)
 
     if sage_working:
         for sig in big_polys:
             print 'testing big', sig
-            tri, angle = taut.isosig_to_tri_angle(sig)
-            p = veering_polynomial.big_polynomial(tri, angle)
+            p = veering_polynomial.big_polynomial(sig)
             assert p.__repr__() == big_polys[sig]
         for sig in small_polys:
             print 'testing small', sig
-            tri, angle = taut.isosig_to_tri_angle(sig)
-            p = veering_polynomial.small_polynomial(tri, angle)
+            p = veering_polynomial.small_polynomial(sig)
             assert p.__repr__() == small_polys[sig]
         for i in range(5):
             j = int(200*random())
             sig = veering_isosigs[j]
             print 'testing divide', sig
-            tri, angle = taut.isosig_to_tri_angle(sig)
-            p = veering_polynomial.big_polynomial(tri, angle)
-            q = veering_polynomial.small_polynomial(tri, angle)
+            p = veering_polynomial.big_polynomial(sig)
+            q = veering_polynomial.small_polynomial(sig)
             if q == 0:
                 assert p == 0
             else:
                 assert q.divides(p)
 
+    if sage_working:
+        for i in range(5):
+            j = int(100*random())
+            sig = veering_isosigs[j]
+            print 'testing alex', sig
+            snap_sig = sig.split("_")[0]
+            M = snappy.Manifold(snap_sig)
+            if M.homology().betti_number() == 1: 
+                assert veering_polynomial.small_polynomial(sig, mode = "alexander") == M.alexander_polynomial()
+                
     if sage_working:
         print 'all tests passed'
     else:
