@@ -29,34 +29,32 @@ As an example, start a sage session in the directory and type:
 
     sage: from file_io import parse_data_file
     sage: veering_isosigs = parse_data_file('Data/veering_census.txt')
-
-The list veering_isosigs now contains taut isomorphism signatures for
-all veering triangulations, up to 16 tetrahedra.  Our code is mainly
-intended for batch processing.  However, examining individual
-manifolds is also possible:
-
     sage: sig = veering_isosigs[1]; sig
     'cPcbbbiht_12'
-
-This is the taut isomorphism signature for the only known veering
-structure on the figure eight knot complement.  We can now compute
-various properties and invariants:
-
     sage: import taut_polytope
     sage: taut_polytope.is_layered(sig)
     True
-
-So this taut triangulation is layered; thus the figure eight knot
-complement is fibred.  To compute the small and large polynomials
-type:
-
     sage: import veering_polynomial
     sage: veering_polynomial.big_polynomial(sig)
     a^3 - 4*a^2 + 4*a - 1
     sage: veering_polynomial.small_polynomial(sig)
     a^2 - 3*a + 1
+    sage: veering_polynomial.small_polynomial(sig, mode = 'alexander')
+    a^2 - 3*a + 1
 
-Note that the small polynomial divides the large.
+The list veering_isosigs contains taut isomorphism signatures for all
+veering triangulations, up to 16 tetrahedra.  Our code is mainly
+intended for batch processing.  However, examining individual
+manifolds is also possible.  For example 'cPcbbbiht_12' is the taut
+isomorphism signature for the only known veering structure on the
+figure eight knot complement.
+
+We can compute various properties and invariants.  As computed above,
+this taut triangulation is layered; thus the figure eight knot
+complement is fibred.  Note also that the small veering polynomial
+divides the big veering polynomial; this is true in general.  Also,
+for the figure eight knot the small polynomial equals the Alexander
+polynomial; this is not true in general. 
 
 ### Webpage
 
