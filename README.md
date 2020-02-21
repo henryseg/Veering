@@ -39,16 +39,11 @@ manifolds is also possible:
     'cPcbbbiht_12'
 
 This is the taut isomorphism signature for the only known veering
-structure on the figure eight knot complement.  We convert this to a
-regina triangulation and a taut angle structure as follows:
-
-    sage: from taut import isosig_to_tri_angle
-    sage: tri, angle = isosig_to_tri_angle(sig)
-
-We can now compute various properties and invariants:
+structure on the figure eight knot complement.  We can now compute
+various properties and invariants:
 
     sage: import taut_polytope
-    sage: taut_polytope.is_layered(tri, angle)
+    sage: taut_polytope.is_layered(sig)
     True
 
 So this taut triangulation is layered; thus the figure eight knot
@@ -56,9 +51,9 @@ complement is fibred.  To compute the small and large polynomials
 type:
 
     sage: import veering_polynomial
-    sage: veering_polynomial.big_polynomial(tri, angle)
+    sage: veering_polynomial.big_polynomial(sig)
     a^3 - 4*a^2 + 4*a - 1
-    sage: veering_polynomial.small_polynomial(tri, angle)
+    sage: veering_polynomial.small_polynomial(sig)
     a^2 - 3*a + 1
 
 Note that the small polynomial divides the large.
