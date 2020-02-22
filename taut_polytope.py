@@ -52,7 +52,7 @@ def extract_solution(q, v):
 
 def get_polytope(N):
     """
-    Compute the (normalized) polytope cut out by N.
+    Compute the (normalised) polytope cut out by N.
     """
     num_faces = N.dimensions()[1]
     # q = MixedIntegerLinearProgram( maximization = False, solver = 'Coin' ) ### Why!!!
