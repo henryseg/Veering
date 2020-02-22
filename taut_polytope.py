@@ -2,13 +2,9 @@
 # classify_taut_ideal_triangulations
 #
 
-#
-# Goal - analyze manifolds and their taut/veering triangulations.
-#
+# Analyze manifolds and their taut/veering triangulations.
 
-# to do - use Gurobi
-
-# for a few example usages see Veering_census/census_reading.py
+# TODO - Gurobi?
 
 import regina
 import snappy
@@ -22,17 +18,6 @@ from taut import liberal
 from transverse_taut import is_transverse_taut
 from taut_homology import edge_equation_matrix_taut, elem_vector
 
-# Polynomials that come with snappy (in sage)
-
-def alex_is_monic(M):
-    p = M.alexander_polynomial()
-    return p.is_monic()
-
-def hyper_is_monic(M): # add a way to dial up the precision
-    p = M.hyperbolic_torsion()
-    lead = p.coefficients(sparse=False)[-1]
-    return abs(1 - lead) < 0.000001  # worry about lead = -1
-
 ### Examining edge/face matrices
 
 # Sage cannot treat the variables of a MILP as a vector, so we have to
@@ -42,7 +27,7 @@ def dot_prod(u, v):
         dim = len(u)
     except:
         dim = len(v)
-    return sum(u[i]*v[i] for i in range(dim))
+    return sum( u[i] * v[i] for i in range(dim) )
 
 
 def extract_solution(q, v):
@@ -55,8 +40,8 @@ def get_polytope(N):
     Compute the (normalised) polytope cut out by N.
     """
     num_faces = N.dimensions()[1]
-    # q = MixedIntegerLinearProgram( maximization = False, solver = 'Coin' ) ### Why!!!
-    q = MixedIntegerLinearProgram( maximization = False, solver = 'GLPK' ) ### Why!!!
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "Coin" ) ### Why!!!
+    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" ) ### Why!!!
     w = q.new_variable(real = True, nonnegative = True)
     for v in N.rows():
         q.add_constraint( dot_prod(v, w) == 0 )
@@ -65,10 +50,12 @@ def get_polytope(N):
 
 
 def farkas_solution(N):  # never use this
-    '''Look for an edge vector u so that all entries of u*N are positive,
+    """
+    Look for an edge vector u so that all entries of u*N are positive,
     minimizing the sum of the entries of u*N.  If one exists, returns
-    (True, u).'''
-    q = MixedIntegerLinearProgram( maximization = False, solver = 'GLPK' )
+    (True, u).
+    """
+    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
     u = q.new_variable( real = True, nonnegative = False )
     for v in N.columns():
         q.add_constraint( dot_prod(u, v), min = 1 )
@@ -88,7 +75,7 @@ def non_trivial_solution(N, real_bool = True, int_bool = False):
     entries.  If one exists, returns (True, w).
     """
     num_faces = N.dimensions()[1]
-    q = MixedIntegerLinearProgram( maximization = False, solver = 'GLPK' )
+    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
     w = q.new_variable ( real = real_bool, integer = int_bool, nonnegative = True )
     # actually, int has topological meaning here - hilbert versus vertex!
     # w = q.new_variable ( integer = True, nonnegative = True )
@@ -104,14 +91,14 @@ def non_trivial_solution(N, real_bool = True, int_bool = False):
     except MIPSolverException:
         out = (False, None)
     return out
-        
+
 
 @liberal
 def get_non_triv_sol(tri, angle):
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
     non_triv, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
-    twiddles = is_transverse_taut(tri, angle, return_type='face_coorientations')
+    twiddles = is_transverse_taut(tri, angle, return_type = "face_coorientations")
     sol = [int(a*b) for a, b in zip(sol, twiddles)]
     return sol
 
@@ -122,7 +109,7 @@ def vertex_solutions(N, real_bool = True, int_bool = False):
     entries.  If one exists, returns (True, w).
     """
     num_faces = N.dimensions()[1]
-    q = MixedIntegerLinearProgram( maximization = False, solver = 'GLPK' )
+    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
     w = q.new_variable ( real = real_bool, integer = int_bool, nonnegative = True )
     # actually, int has topological meaning here - hilbert versus vertex!
     # w = q.new_variable ( integer = True, nonnegative = True )
@@ -146,10 +133,10 @@ def fully_carried_solution(N):
     returns (True, w).
     """
     num_faces = N.dimensions()[1]
-    # q = MixedIntegerLinearProgram( maximization = False, solver = 'Gurobi' ) ### Grrr.
-    # q = MixedIntegerLinearProgram( maximization = False, solver = 'Coin' ) ### Why!!!
-    # q = MixedIntegerLinearProgram( maximization = False, solver = 'GLPK' )
-    q = MixedIntegerLinearProgram( maximization = False, solver = 'PPL' )
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "Gurobi" ) ### Grrr.
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "Coin" ) ### Why!!!
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
+    q = MixedIntegerLinearProgram( maximization = False, solver = "PPL" )
     w = q.new_variable(real = True, nonnegative = True)
     # w = q.new_variable(integer = True, nonnegative = True)
     for v in N.rows():
@@ -191,12 +178,12 @@ def LMN_tri_angle(tri, angle):
     non_triv, non_triv_sol = non_trivial_solution(N)
     full, full_sol = fully_carried_solution(N)
     if full:
-        out = 'L'
+        out = "L"
     elif non_triv:
-        out = 'M'
+        out = "M"
     else:
         assert farkas
-        out = 'N'
+        out = "N"
     return out
 
 
@@ -217,15 +204,15 @@ def analyze_deeply(tri, angle):
         assert hyper or not full ### full => fibered => hyper is monic
         assert alex or not hyper ### hyper is monic => alex is monic
     except AssertError:
-        print 'contradiction in maths'
+        print "contradiction in maths"
         raise
     if full:
         pass
     elif non_triv:
-        print ' non-triv sol (but not full)',
+        print " non-triv sol (but not full)",
         print alex, hyper
     elif not alex or not hyper:
-        print ' no sol',
+        print " no sol",
         print alex, hyper
     return None
 
