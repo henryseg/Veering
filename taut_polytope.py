@@ -20,7 +20,7 @@ from sage.modules.free_module_integer import IntegerLattice
 
 from taut import liberal
 from transverse_taut import is_transverse_taut
-from taut_homology import edge_equation_matrix_taut
+from taut_homology import edge_equation_matrix_taut, elem_vector
 
 # Polynomials that come with snappy (in sage)
 
@@ -279,25 +279,16 @@ def first_coboundary(triangulation):
 
 # extracting the taut cone
 
-
-def elem_vector(i, dim):
-    vec = [0]*dim
-    vec[i] = 1
-    return vec
-
-
 def taut_rays(N):
     # get the extreme rays of the taut cone
     dim = N.dimensions()[1]
-    elem_ieqs = [[0] + elem_vector(i, dim) for i in range(dim)]
+    elem_ieqs = [[0] + list(elem_vector(i, dim)) for i in range(dim)]
     N_rows = [v.list() for v in N.rows()]
     N_eqns = [[0] + v for v in N_rows]
     P = Polyhedron(ieqs = elem_ieqs, eqns = N_eqns)
     return [ray.vector() for ray in P.rays()]
 
-
 # the function
-
 
 @liberal
 def taut_cone_homological_dim(tri, angle):
