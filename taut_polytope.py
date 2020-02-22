@@ -18,7 +18,7 @@ from taut import liberal
 from transverse_taut import is_transverse_taut
 from taut_homology import edge_equation_matrix_taut, elem_vector
 
-### Examining edge/face matrices
+# Examining edge/face matrices
 
 # Sage cannot treat the variables of a MILP as a vector, so we have to
 # do things ourselves.  Boo.
@@ -40,8 +40,8 @@ def get_polytope(N):
     Compute the (normalised) polytope cut out by N.
     """
     num_faces = N.dimensions()[1]
-    # q = MixedIntegerLinearProgram( maximization = False, solver = "Coin" ) ### Why!!!
-    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" ) ### Why!!!
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "Coin" ) # Why!!!
+    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" ) # Why!!!
     w = q.new_variable(real = True, nonnegative = True)
     for v in N.rows():
         q.add_constraint( dot_prod(v, w) == 0 )
@@ -133,8 +133,8 @@ def fully_carried_solution(N):
     returns (True, w).
     """
     num_faces = N.dimensions()[1]
-    # q = MixedIntegerLinearProgram( maximization = False, solver = "Gurobi" ) ### Grrr.
-    # q = MixedIntegerLinearProgram( maximization = False, solver = "Coin" ) ### Why!!!
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "Gurobi" ) # Grrr.
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "Coin" ) # Why!!!
     # q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
     q = MixedIntegerLinearProgram( maximization = False, solver = "PPL" )
     w = q.new_variable(real = True, nonnegative = True)
@@ -199,10 +199,10 @@ def analyze_deeply(tri, angle):
     non_triv, non_triv_sol = non_trivial_solution(N)
     full, full_sol = fully_carried_solution(N)
     try:
-        assert non_triv or not full ### full => non_triv
-        assert alex or not full ### full => fibered => alex is monic
-        assert hyper or not full ### full => fibered => hyper is monic
-        assert alex or not hyper ### hyper is monic => alex is monic
+        assert non_triv or not full # full => non_triv
+        assert alex or not full # full => fibered => alex is monic
+        assert hyper or not full # full => fibered => hyper is monic
+        assert alex or not hyper # hyper is monic => alex is monic
     except AssertError:
         print "contradiction in maths"
         raise
@@ -220,7 +220,6 @@ def analyze_deeply(tri, angle):
 # homology.
 
 # (co)homology
-
 
 def matrix_transpose(M):
     return map(lambda *row: list(row), *M)
@@ -289,7 +288,7 @@ def taut_cone_homological_dim(tri, angle):
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
     rays = taut_rays(N)
-    # but these are all "upwards", so we need to fix the
+    # but these are all 'upwards', so we need to fix the
     # co-orientations
     coorient = is_transverse_taut(tri, angle, return_type = "face_coorientations")
     rays = [[int(a * b) for a, b in zip(coorient, ray)] for ray in rays]
