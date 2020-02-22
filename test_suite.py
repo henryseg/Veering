@@ -53,6 +53,8 @@ def run_tests(num_to_check = 1000):
             tri_s, angle_s, face_num_s = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering.is_veering(tri_s, angle_s)
 
+    print "all tests not depending on sage passed"
+            
     big_polys = {'cPcbbbiht_12':'a^3 - 4*a^2 + 4*a - 1',
                  'eLMkbcddddedde_2100':'a^6*b - a^6 - 2*a^5*b - a^4*b^2 + a^5 + 2*a^4*b + a^3*b^2 - 2*a^3*b + a^3 + 2*a^2*b + a*b^2 - a^2 - 2*a*b - b^2 + b',
                  'gLLAQbecdfffhhnkqnc_120012':'a^7 + a^6 + a^5 + a^4 - a^3 - a^2 - a - 1',
@@ -82,14 +84,14 @@ def run_tests(num_to_check = 1000):
             assert p.__repr__() == big_polys[sig]
         for sig in small_polys:
             print 'testing small', sig
-            p = veering_polynomial.small_polynomial(sig)
+            p = veering_polynomial.small_polynomial_via_tree(sig)
             assert p.__repr__() == small_polys[sig]
         for i in range(5):
-            j = int(200*random())
+            j = int(5000*random())
             sig = veering_isosigs[j]
             print 'testing divide', sig
             p = veering_polynomial.big_polynomial(sig)
-            q = veering_polynomial.small_polynomial(sig)
+            q = veering_polynomial.small_polynomial_via_tree(sig)
             if q == 0:
                 assert p == 0
             else:
@@ -97,19 +99,17 @@ def run_tests(num_to_check = 1000):
 
     if sage_working:
         for i in range(5):
-            j = int(100*random())
+            j = int(5000*random())
             sig = veering_isosigs[j]
             print 'testing alex', sig
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
             if M.homology().betti_number() == 1: 
-                assert veering_polynomial.small_polynomial(sig, mode = "alexander") == M.alexander_polynomial()
+                assert veering_polynomial.small_polynomial_via_tree(sig, mode = "alexander") == M.alexander_polynomial()
                 
     if sage_working:
-        print 'all tests passed'
-    else:
-        print 'all tests not depending on sage passed'
+        print 'all tests depending on sage passed'
 
-                
+        
 if __name__ == '__main__':
     run_tests()
