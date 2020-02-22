@@ -50,8 +50,8 @@ def isosig_from_tri_angle(tri, angle):
     return isosig + "_" + all_angles_strings[0]
 
 
-# Let's be liberal in what we accept.  Here is the decorator.  This
-# might slow things down, ever so slightly, but it is worth it.
+# Let's be liberal in what we accept.  This might slow things down,
+# ever so slightly, but it is worth it.  Here is the decorator.
 
 def liberal(func):
     def liberal_wrapper(*args, **kwargs):
@@ -70,7 +70,6 @@ def liberal(func):
 # regina conventions
 
 vert_pair_to_edge_pair_dict = {(0,1):0, (2,3):0, (0,2):1, (1,3):1, (0,3):2, (1,2):2}
-
 
 def edge_pair_to_edge_numbers(e):
     return (e, 5-e)
@@ -142,7 +141,7 @@ def find_orientations(triangulation):
 
 
 def reverse_tet_orientation(triangulation, tet, pi_location):
-    #only need triangulation here for diagnostics
+    # only need triangulation here for diagnostics
     """
     Reglues tet into triangulation with reversed orientation.  Returns
     which permutation of the tetrahedron was used.
