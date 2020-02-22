@@ -13,6 +13,7 @@ relies on sage.  Installation instructions for regina into python and
 into sage can be found here:
 
 http://regina-normal.github.io/
+
 http://sageregina.unhyperbolic.org/
 
 ### Download and testing
