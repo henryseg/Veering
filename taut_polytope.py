@@ -62,7 +62,7 @@ def farkas_solution(N):  # never use this
     q.set_objective( sum( dot_prod(u, v) for v in N.columns() ) )
     try:
         q.solve()
-        U = extract_solution(q,u)
+        U = extract_solution(q, u)
         out = (True, U)
     except MIPSolverException:
         out = (False, None)
@@ -86,7 +86,7 @@ def non_trivial_solution(N, real_bool = True, int_bool = False):
     q.set_objective( S )
     try:
         q.solve()
-        W = extract_solution(q,w)
+        W = extract_solution(q, w)
         out = (True, W)
     except MIPSolverException:
         out = (False, None)
@@ -99,7 +99,7 @@ def get_non_triv_sol(tri, angle):
     N = Matrix(N)
     non_triv, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
     twiddles = is_transverse_taut(tri, angle, return_type = "face_coorientations")
-    sol = [int(a*b) for a, b in zip(sol, twiddles)]
+    sol = [int(a * b) for a, b in zip(sol, twiddles)]
     return sol
 
 
@@ -120,7 +120,7 @@ def vertex_solutions(N, real_bool = True, int_bool = False):
     q.set_objective( S )
     try:
         q.solve()
-        W = extract_solution(q,w)
+        W = extract_solution(q, w)
         return (True, W)
     except MIPSolverException:
         return (False, None)
@@ -148,7 +148,7 @@ def fully_carried_solution(N):
     q.set_objective( S )
     try:
         q.solve()
-        W = extract_solution(q,w)
+        W = extract_solution(q, w)
         out = (True, W)
     except MIPSolverException:
         out = (False, None)
@@ -238,7 +238,7 @@ def zeroth_coboundary(triangulation):
         row = [0] * triangulation.countFaces(2)
         for i in range(4):
             tri_index = tet.triangle(i).index()
-            perm = tet.faceMapping(2,i)
+            perm = tet.faceMapping(2, i)
             row[tri_index] += perm.sign()
         matrix.append(row)
     return matrix_transpose(matrix)
@@ -258,7 +258,7 @@ def first_coboundary(triangulation):
         row = [0] * triangulation.countEdges() # == countFaces(1)
         for i in range(3):
             edge_index = tri.edge(i).index()
-            perm = tri.edgeMapping(i) # == tri.faceMapping(1,i)
+            perm = tri.edgeMapping(i) # == tri.faceMapping(1, i)
             row[edge_index] += perm.sign()
         matrix.append(row)
     return matrix_transpose(matrix)
@@ -292,7 +292,7 @@ def taut_cone_homological_dim(tri, angle):
     # but these are all "upwards", so we need to fix the
     # co-orientations
     coorient = is_transverse_taut(tri, angle, return_type = "face_coorientations")
-    rays = [[int(a*b) for a, b in zip(coorient, ray)] for ray in rays]
+    rays = [[int(a * b) for a, b in zip(coorient, ray)] for ray in rays]
 
     # now work in the space of two-chains
     Rays = IntegerLattice(rays + bdys)
