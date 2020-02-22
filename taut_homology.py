@@ -97,8 +97,8 @@ def reduced_edge_equation_matrix_taut(triangulation, angle_structure):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut(triangulation, angle_structure)
     if verbose > 0: print 'edge_equation_matrix', N
-    # N is a 2n by n matrix - the rows are longer than the columns
-    # are high.  So we have to zero out the _columns_ for the tree
+    # N is a 2n by n matrix - the rows are longer than the columns are
+    # high.  So we zero out the columns corresponding to the tree
     # edges.
     reduced = [[a for i, a in enumerate(row) if i in non_tree_faces] for row in N]
     if verbose > 0: print 'reduced_edge_equation_matrix', reduced
@@ -168,6 +168,11 @@ def uniform_exponents(poly):
     
 
 def monomial_multiplier(elts, ZH):
+    if all(elt == 0 for elt in elts):
+        # Careful.  If the row consists only of zeros then we have to
+        # return early.  See, for example, the computation of the big
+        # polynomial for 'kLLLMPPkcdgfehijjijhshassqhdqr_1222011022'
+        return ZH(1)
     elts = [ZH(elt) for elt in elts]
     A =  Matrix(ZZ, join_lists([ uniform_exponents(p) for p in elts]))
     min_exp = tuple( [min(row) for row in A.transpose()] )
@@ -184,14 +189,18 @@ def laurent_to_poly(elt, P):
 
 def matrix_laurent_to_poly(M, ZH, P):
     # convert to polynomials after shifting rows
+    if verbose > 0: print M
     muls = [ monomial_multiplier(row, ZH) for row in M ]
+    if verbose > 0: print muls
     return Matrix( [ [ laurent_to_poly(p / mul, P) for p in row ] for row, mul in zip(M, muls) ] )
 
 
 def normalise_poly(poly, ZH, P):
+    if verbose > 0: print poly
     if poly == 0:
         return poly
     mul = monomial_multiplier([poly], ZH)
+    if verbose > 0: print mul
     poly = laurent_to_poly(poly / mul, P)
     if poly.coefficients()[-1] < 0:
         poly = -poly
