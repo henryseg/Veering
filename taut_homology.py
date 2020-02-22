@@ -2,7 +2,8 @@
 # taut_homology.py
 #
 
-# Goal: various computations in homology, given a regina triangulation and a angle_structure
+# Various computations in homology, given a regina triangulation
+# and an angle_structure.
 
 from string import ascii_lowercase as ascii
 
@@ -16,8 +17,8 @@ verbose = 0
 
 def build_spanning_dual_tree(triangulation):
     """
-    returns two lists - (dual) edges in the spanning tree and (dual)
-    edges not in the spanning tree.  We use the regina numbering to 
+    Returns two lists - (dual) edges in the spanning tree and (dual)
+    edges not in the spanning tree.  We use the regina numbering to
     determine the tree.
     """
     explored_tetrahedra = [0]
@@ -40,17 +41,18 @@ def build_spanning_dual_tree(triangulation):
             explored_tetrahedra.append(neighbour_tet.index())
     tree_faces.sort()
     non_tree_faces.sort()
-    if verbose > 0: print 'tree and non-tree faces', (tree_faces, non_tree_faces)
+    if verbose > 0:
+        print "tree and non-tree faces", (tree_faces, non_tree_faces)
     return (tree_faces, non_tree_faces)
 
 
 def there_is_a_pi_here(angle_struct, embed):
     """
-    given an embedding of an edge in a tetrahedron, tells us if there
-    is a pi at that edge
+    Given an embedding of an edge in a tetrahedron, tells us if there
+    is a pi at that edge.
     """
     tet = embed.tetrahedron()
-    vert_perm = embed.vertices() 
+    vert_perm = embed.vertices()
     vert_nums = [vert_perm[0], vert_perm[1]]
     vert_nums.sort()
     in_tet_edge_num = [(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)].index(tuple(vert_nums))
@@ -63,8 +65,8 @@ def there_is_a_pi_here(angle_struct, embed):
 
 def edge_equation_matrix_taut(triangulation, angle_struct):
     """
-    for each edge, find the face numbers on either side of the pis,
-    put +1 for one side and -1 for the other
+    For each edge, find the face numbers on either side of the pis,
+    put +1 for one side and -1 for the other.
     """
     assert triangulation.isOriented()
     matrix = []
@@ -76,15 +78,15 @@ def edge_equation_matrix_taut(triangulation, angle_struct):
         which_set_to_add_to = 0
         for embed in embeddings:
             tet = embed.tetrahedron()
-            vert_perm = embed.vertices() 
+            vert_perm = embed.vertices()
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
-            #as we walk around the edge, leading is in front of us, trailing is behind us
-            #see http://regina.sourceforge.net/engine-docs/classregina_1_1NTetrahedron.html#a54d99721b2ab2a0a0a72b6216b436440
+            # as we walk around the edge, leading is in front of us, trailing is behind us
+            # see http://regina.sourceforge.net/engine-docs/classregina_1_1NTetrahedron.html#a54d99721b2ab2a0a0a72b6216b436440
             triangle_num_sets[which_set_to_add_to].append(tet.triangle(leading_vert_num).index())
             if there_is_a_pi_here(angle_struct, embed):
                 which_set_to_add_to = (which_set_to_add_to + 1) % 2
 
-        row = [0]*triangulation.countTriangles()
+        row = [0] * triangulation.countTriangles()
         for i in triangle_num_sets[0]:
             row[i] = row[i] + 1
         for i in triangle_num_sets[1]:
@@ -96,17 +98,18 @@ def edge_equation_matrix_taut(triangulation, angle_struct):
 def reduced_edge_equation_matrix_taut(triangulation, angle_structure):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut(triangulation, angle_structure)
-    if verbose > 0: print 'edge_equation_matrix', N
+    if verbose > 0:
+        print "edge_equation_matrix", N
     # N is a 2n by n matrix - the rows are longer than the columns are
-    # high.  So we zero out the columns corresponding to the tree
-    # edges.
+    # high.  So we delete the columns corresponding to the tree edges.
     reduced = [[a for i, a in enumerate(row) if i in non_tree_faces] for row in N]
-    if verbose > 0: print 'reduced_edge_equation_matrix', reduced
+    if verbose > 0:
+        print "reduced_edge_equation_matrix", reduced
     return reduced
 
 
-def elem_vector(i, dim): 
-    vec = [0]*dim
+def elem_vector(i, dim):
+    vec = [0] * dim
     vec[i] = 1
     return vector(vec)
 
@@ -121,9 +124,9 @@ def faces_in_homology(triangulation, angle_structure):
     image_dim = sum(1 for a in S.diagonal() if a != 0)
     ambient_dim = S.dimensions()[0]
     betti = ambient_dim - image_dim
-    assert betti == triangulation.homology().rank() 
+    assert betti == triangulation.homology().rank()
 
-    zero_vec = vector([0]*betti)
+    zero_vec = vector([0] * betti)
     n = len(tree_faces) + len(non_tree_faces)
     face_vecs = []
     for i in range(n):
@@ -131,18 +134,19 @@ def faces_in_homology(triangulation, angle_structure):
             face_vecs.append(zero_vec)
         else:
             j = non_tree_faces.index(i)
-            face_vecs.append( (U*elem_vector(j, ambient_dim))[image_dim:] )
-    if verbose > 0: print 'face_vecs', face_vecs
+            face_vecs.append( (U * elem_vector(j, ambient_dim))[image_dim:] )
+    if verbose > 0:
+        print "face_vecs", face_vecs
     return [tuple(vec) for vec in face_vecs]
 
 
 def group_ring(triangulation, angle_structure, alpha = False, ring = ZZ):
-    betti = triangulation.homology().rank() 
+    betti = triangulation.homology().rank()
     if alpha:
         assert betti < 26
         return LaurentPolynomialRing(ring, list(ascii)[:betti])
     else:
-        return LaurentPolynomialRing(ring, 'x', betti)
+        return LaurentPolynomialRing(ring, "x", betti)
 
 
 def faces_in_laurent(triangulation, angle_structure, ZH):
@@ -152,9 +156,8 @@ def faces_in_laurent(triangulation, angle_structure, ZH):
     return [ ZH( {vec:1} ) for vec in face_vecs]
 
 
-# The code below is copied/modified (with permission) from 
+# The code below is copied and modified (with permission) from
 # https://github.com/3-manifolds/SnapPy/blob/master/python/snap/nsagetools.py
-
 
 def join_lists(list_of_lists):
     out = []
@@ -165,13 +168,14 @@ def join_lists(list_of_lists):
 
 def uniform_exponents(poly):
     return [list(e) if hasattr(e, "__getitem__") else (e,) for e in poly.exponents()]
-    
+
 
 def monomial_multiplier(elts, ZH):
     if all(elt == 0 for elt in elts):
-        # Careful.  If the row consists only of zeros then we have to
-        # return early.  See, for example, the computation of the big
-        # polynomial for 'kLLLMPPkcdgfehijjijhshassqhdqr_1222011022'
+        # Zero (unlike other constants) has valuation -\infty.  This
+        # can show up as an issue when computing the big polynomial.
+        # For an example, compute ET for
+        # "kLLLMPPkcdgfehijjijhshassqhdqr_1222011022"
         return ZH(1)
     elts = [ZH(elt) for elt in elts]
     A =  Matrix(ZZ, join_lists([ uniform_exponents(p) for p in elts]))
@@ -182,29 +186,33 @@ def monomial_multiplier(elts, ZH):
 
 
 def laurent_to_poly(elt, P):
-   if type(elt) is int:
-       return P(elt)
-   return P( elt.dict() )
+    if type(elt) is int:
+        return P(elt)
+    return P( elt.dict() )
 
 
 def matrix_laurent_to_poly(M, ZH, P):
     # convert to polynomials after shifting rows
-    if verbose > 0: print M
+    if verbose > 0:
+        print "matrix"
+        print M
     muls = [ monomial_multiplier(row, ZH) for row in M ]
-    if verbose > 0: print muls
+    if verbose > 0:
+        print "muls", muls
     return Matrix( [ [ laurent_to_poly(p / mul, P) for p in row ] for row, mul in zip(M, muls) ] )
 
 
 def normalise_poly(poly, ZH, P):
-    if verbose > 0: print poly
+    if verbose > 0:
+        print "poly", poly
     if poly == 0:
         return poly
     mul = monomial_multiplier([poly], ZH)
-    if verbose > 0: print mul
+    if verbose > 0:
+        print "mul", mul
     poly = laurent_to_poly(poly / mul, P)
     if poly.coefficients()[-1] < 0:
         poly = -poly
     return poly
-
 
 ### end of copied/modified code
