@@ -13,41 +13,45 @@ import regina
 # location of the pi-angles of a (presumably) taut structure on such a
 # triangulation.  A "taut isosig" is a string of the form
 #
-# regina_isosig + '_' + angle_string 
-#
+# regina_isosig + "_" + angle_string
+
 
 # converting a taut isosig to (tri,angle) pair and back again
 
 def isosig_to_tri_angle(isosig):
-    """Given a taut isosig, returns an oriented regina triangulation and
+    """
+    Given a taut isosig, returns an oriented regina triangulation and
     the list of angles for the taut angle structure, for the new
     labelling.
     """
-    isosig, angle = isosig.split('_')
+    isosig, angle = isosig.split("_")
     tri = regina.Triangulation3.fromIsoSig(isosig)
     angle = [int(i) for i in list(angle)]
-    fix_orientations(tri, angle)  # this does not alter what the angles_string should be
+    fix_orientations(tri, angle) # this does not alter what the angles_string should be
     assert tri.isOriented()
-    return tri, angle 
+    return tri, angle
+
 
 def isosig_from_tri_angle(tri, angle):
-    """Given a triangulation and taut angle structure, generate the taut
+    """
+    Given a triangulation and taut angle structure, generate the taut
     isosig.
     """
     isosig, isom = tri.isoSigDetail() # isom is the mapping between the original triangulation and the isosig triangulation
     isosig_tri = regina.Triangulation3.fromIsoSig(isosig)
     isosig_tri_angle_struct_list = apply_isom_to_angle_struct_list(angle, isom)
-    ### Now find the lexicographically smallest angle structure string of symmetries of the one we have
+    # Now find the lexicographically smallest angle structure string of symmetries of the one we have
     all_isoms = isosig_tri.findAllIsomorphisms(isosig_tri)
     all_angles_lists = []
     for isom in all_isoms:
         all_angles_lists.append( apply_isom_to_angle_struct_list(isosig_tri_angle_struct_list, isom) )
-    all_angles_strings = [''.join([str(num) for num in angles_list]) for angles_list in all_angles_lists]
+    all_angles_strings = ["".join([str(num) for num in angles_list]) for angles_list in all_angles_lists]
     all_angles_strings.sort()
-    return isosig + '_' + all_angles_strings[0]
+    return isosig + "_" + all_angles_strings[0]
 
-# Let's be liberal in what we accept.  Here is the decorator. 
-# This might slow things down
+
+# Let's be liberal in what we accept.  Here is the decorator.  This
+# might slow things down, ever so slightly, but it is worth it.
 
 def liberal(func):
     def liberal_wrapper(*args, **kwargs):
@@ -62,12 +66,15 @@ def liberal(func):
         return func(*args, **kwargs)
     return liberal_wrapper
 
+
 # regina conventions
 
 vert_pair_to_edge_pair_dict = {(0,1):0, (2,3):0, (0,2):1, (1,3):1, (0,3):2, (1,2):2}
 
+
 def edge_pair_to_edge_numbers(e):
     return (e, 5-e)
+
 
 # checking tautness
 
@@ -81,15 +88,17 @@ def is_taut(tri, angle):
     # print totals
     return all(total == 2 for total in totals)
 
+
 # building from a triangulation
 
 vert_pair_to_edge_num = {(0,1):0, (2,3):0, (0,2):1, (1,3):1, (0,3):2, (1,2):2}
 edge_num_to_vert_pair = {0:(0,1), 1:(0,2), 2:(0,3), 3:(2,3), 4:(1,3), 5:(1,2)}
 
+
 # dealing with relabelling triangulations
 
 def apply_isom_to_angle_struct_list(original_angle_struct_list, isom):
-    """Given a taut angle structure and an isomorphism of a triangulation, 
+    """Given a taut angle structure and an isomorphism of a triangulation,
     return the taut angle structure relative to the new triangulation."""
     new_angle_struct_list = [None] * len(original_angle_struct_list)
     for i in xrange(len(original_angle_struct_list)):
@@ -101,6 +110,7 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom):
         pi_number = vert_pair_to_edge_num[pi_edge]
         new_angle_struct_list[mapped_tet_index] = pi_number
     return new_angle_struct_list
+
 
 # functions to deal with orientations
 
@@ -119,7 +129,7 @@ def find_orientations(triangulation):
         tet = triangulation.tetrahedron(tet_num)
         adjtet, adjgluing = tet.adjacentTetrahedron(face_num), tet.adjacentGluing(face_num)
         if orientations[adjtet.index()] != 0:  # we have already been to that tetrahedron
-            assert orientations[adjtet.index()] == adjgluing.sign() * -1 * orientations[tet.index()], 'triangulation not orientable!'
+            assert orientations[adjtet.index()] == adjgluing.sign() * -1 * orientations[tet.index()], "triangulation not orientable!"
             frontier.remove( (adjtet.index(), adjgluing[face_num]) )  # remove the reverse gluing from the frontier
         else:
             orientations[adjtet.index()] = adjgluing.sign() * -1 * orientations[tet.index()]
@@ -127,12 +137,14 @@ def find_orientations(triangulation):
                 if i != adjgluing[face_num]: # don't go backwards
                     frontier.append( (adjtet.index(), i) )
     for orient in orientations:
-        assert orient != 0, 'triangulation not connected!'
+        assert orient != 0, "triangulation not connected!"
     return orientations
+
 
 def reverse_tet_orientation(triangulation, tet, pi_location):
     #only need triangulation here for diagnostics
-    """Reglues tet into triangulation with reversed orientation.  Returns
+    """
+    Reglues tet into triangulation with reversed orientation.  Returns
     which permutation of the tetrahedron was used.
     """
     swaps = {0:regina.Perm4(1,0,2,3), 1:regina.Perm4(2,1,0,3), 2:regina.Perm4(3,1,2,0)}
@@ -148,22 +160,24 @@ def reverse_tet_orientation(triangulation, tet, pi_location):
         oldadjgluing = tet.adjacentGluing(face)
         oldadjgluings.append(tet.adjacentGluing(face))
         if adjtet != tet:
-            adjgluings.append(oldadjgluing * swap) #swaps 0 with 1 in this tet, not the other tet
+            adjgluings.append(oldadjgluing * swap) # swaps 0 with 1 in this tet, not the other tet
             other_faces.append(face)
         else:
             adjgluings.append(swap * oldadjgluing * swap)
             self_faces.append(face)
-    tet.isolate() #undo all gluings
+    tet.isolate() # undo all gluings
     for face in other_faces:
         tet.join(swap[face], adjtets[face], adjgluings[face])
-    if len(self_faces) > 0: #assume it must be two
+    if len(self_faces) > 0: # assume it must be two
         assert len(self_faces) == 2, '4 self faces, must be an error...'
-        face = self_faces[0] #only need to make one of the identifications
+        face = self_faces[0] # only need to make one of the identifications
         tet.join(swap[face], adjtets[face], adjgluings[face])
     return swap
 
+
 def fix_orientations(tri, angle):
-    """Fix the orientations of the tetrahedra in triangulation so that
+    """
+    Fix the orientations of the tetrahedra in triangulation so that
     they are consistently oriented.  We choose how to flip each
     tetrahedron so that the angle structure list does not change.
     """
@@ -171,4 +185,3 @@ def fix_orientations(tri, angle):
     for i,orientation in enumerate(old_orientations):
         if orientation == -1:
             reverse_tet_orientation(tri, tri.tetrahedron(i), angle[i])
-
