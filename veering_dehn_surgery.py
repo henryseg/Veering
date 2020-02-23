@@ -6,6 +6,7 @@ import regina
 from veering import is_veering
 from taut import is_taut, isosig_from_tri_angle, isosig_to_tri_angle
 
+
 def get_mobius_strip_indices(triangulation):
     out = []
     for face in triangulation.triangles():
@@ -13,31 +14,34 @@ def get_mobius_strip_indices(triangulation):
             out.append(face.index())
     return out
 
+
 def shares_pi_with(ang, vert):
-    ### Within a single tetrahedron with angle structure ang (a member of {0,1,2}),
-    ### given a vertex vert (a member of {0,1,2,3}), find the vertex at the other end
-    ### of the pi edge from vert.
-    other_part = [1,2,3]
+    # Within a single tetrahedron with angle structure ang (a member
+    # of {0, 1, 2}), given a vertex vert (a member of {0, 1, 2, 3}),
+    # find the vertex at the other end of the pi edge from vert.
+    other_part = [1, 2, 3]
     other_part.remove(ang + 1)
-    partition = [[0,ang + 1], other_part]
+    partition = [[0, ang + 1], other_part]
     for part in partition:
         if vert in part:
             part.remove(vert)
-            return part.pop()
+            out = part.pop()
+    return out
 
-verts_to_edge_dict = {(0,1):0, (0,2):1, (0,3):2, (1,2):3, (1,3):4, (2,3):5}
+
+verts_to_edge_dict = {(0, 1):0, (0, 2):1, (0, 3):2, (1, 2):3, (1, 3):4, (2, 3):5}
 
 def veering_mobius_dehn_surgery(triangulation, angle_struct, face_num):
     tri = regina.Triangulation3(triangulation) # make a copy
     angle = list(angle_struct) # make a copy
-    face = tri.triangle(face_num) 
+    face = tri.triangle(face_num)
     assert face.isMobiusBand()
     # Note that dunce caps cannot appear in a veering triangulation
 
     # Find which vertex is on both copies of the identified edge of the face
-    edges = [face.edge(i) for i in range(3)]   # edge i is opposite vertex i, i in [0,1,2]
+    edges = [face.edge(i) for i in range(3)] # edge i is opposite vertex i, i in [0, 1, 2]
     for j in range(3):
-        if edges[j]==edges[(j+1)%3]:   
+        if edges[j]==edges[(j+1)%3]:
             B = (j+2)%3
             break
 
@@ -54,20 +58,20 @@ def veering_mobius_dehn_surgery(triangulation, angle_struct, face_num):
 
     b = embed0.vertices()[B]
     c = shares_pi_with(angle[tet0.index()], b)
-    d = embed0.vertices()[3] #... use the face index
-    a = [i for i in [0,1,2,3] if i not in [b,c,d]].pop()  #... whatever is left
-    
+    d = embed0.vertices()[3] # ... use the face index
+    a = [i for i in [0, 1, 2, 3] if i not in [b, c, d]].pop()  # ... whatever is left
+
     # similarly in tet1 - B gives "q".  Let "r" be the edge sharing a
     # pi with "q".  Let "s" be the vertex not meeting the given face.
     # Let "p" be the remaining vertex.
 
     q = embed1.vertices()[B]
     r = shares_pi_with(angle[tet1.index()], q)
-    s = embed1.vertices()[3] #... use the face index
-    p = [i for i in [0,1,2,3] if i not in [q,r,s]].pop()  #... whatever is left
+    s = embed1.vertices()[3] # ... use the face index
+    p = [i for i in [0, 1, 2, 3] if i not in [q, r,s ]].pop()  # ... whatever is left
 
-    ### get colour of mobius strip
-    pair_a = [b,c]
+    # get colour of mobius strip
+    pair_a = [b, c]
     pair_a.sort()
     mob_edge_a = tet0.edge( verts_to_edge_dict[tuple(pair_a)] )
     pair_c = [a,b]
@@ -75,39 +79,41 @@ def veering_mobius_dehn_surgery(triangulation, angle_struct, face_num):
     mob_edge_c = tet0.edge( verts_to_edge_dict[tuple(pair_c)] )
     assert mob_edge_a == mob_edge_c
 
-    veering_colours = is_veering(tri, angle, return_type = 'veering_colours')
+    veering_colours = is_veering(tri, angle, return_type = "veering_colours")
     assert veering_colours != False # otherwise the triangulation is not veering
     mob_colour = veering_colours[mob_edge_a.index()]
 
-    ### Now actually do the surgery
-    tet0.unjoin(d) #same as tet1.unjoin(s)
+    # Now actually do the surgery
+    tet0.unjoin(d) # same as tet1.unjoin(s)
     tet_new = tri.newTetrahedron()
-    if mob_colour == 'R':
-        tet_new.join(0, tet_new, regina.Perm4(3,0,1,2))
-        tet_new.join(1, tet0, regina.Perm4(c,d,a,b))
-        tet_new.join(2, tet1, regina.Perm4(q,p,s,r))
+    if mob_colour == "R":
+        tet_new.join(0, tet_new, regina.Perm4(3, 0, 1, 2))
+        tet_new.join(1, tet0, regina.Perm4(c, d, a, b))
+        tet_new.join(2, tet1, regina.Perm4(q, p, s, r))
     else:
-        tet_new.join(1, tet_new, regina.Perm4(1,3,0,2))
-        tet_new.join(2, tet0, regina.Perm4(a,b,d,c))  
-        tet_new.join(0, tet1, regina.Perm4(s,r,p,q)) 
+        tet_new.join(1, tet_new, regina.Perm4(1, 3, 0, 2))
+        tet_new.join(2, tet0, regina.Perm4(a, b, d, c))
+        tet_new.join(0, tet1, regina.Perm4(s, r, p, q))
 
-    angle.append(0)  # this is the correct taut angle for our new tetrahedron
+    angle.append(0) # this is the correct taut angle for our new tetrahedron
     assert is_taut(tri, angle)
     assert is_veering(tri, angle)
     return tri, angle, tet_new.triangle(3).index()
 
+
 def veering_n_mobius_dehn_surgery(tri, angle, face_num, n):
-    ### apply veering mobius dehn surgery n times to the same Mobius strip
+    # apply veering mobius dehn surgery n times to the same Mobius strip
     for i in range(n):
         tri, angle, face_num = veering_mobius_dehn_surgery(tri, angle, face_num)
     return tri, angle, face_num
 
-def do_all_veering_n_surgeries(tri, angle, n=1):
-    ### apply veering mobius dehn surgery n times to all Mobius strips in tri, print the results
+
+def do_all_veering_n_surgeries(tri, angle, n = 1):
+    # apply veering mobius dehn surgery n times to all Mobius strips in tri, print the results
     out = []
-    print 'mob strip faces: ' + str(get_mobius_strip_indices(tri))
+    print "mob strip faces: " + str(get_mobius_strip_indices(tri))
     for face_num in get_mobius_strip_indices(tri):
-        print 'face_num', face_num
+        print "face_num", face_num
         tri2 = regina.Triangulation3(tri) # make a copy
         tri_surg, angle_surg, face_num_surg = veering_n_mobius_dehn_surgery(tri2, angle, face_num, n)
         sig = isosig_from_tri_angle(tri_surg, angle_surg)
@@ -115,8 +121,9 @@ def do_all_veering_n_surgeries(tri, angle, n=1):
         out.append(sig)
     return out
 
+
 def explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 4):
-    ### apply veering mobius dehn surgery recursively 
+    # apply veering mobius dehn surgery recursively
     out = []
     frontier = [(tri, angle, face_num) for face_num in get_mobius_strip_indices(tri)]
     while len(frontier) > 0:
@@ -130,10 +137,10 @@ def explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 4):
     out.sort()
     return out
 
+
 if __name__ == "__main__":
-    tri, angle = isosig_to_tri_angle('cPcbbbdxm_10')
+    tri, angle = isosig_to_tri_angle("cPcbbbdxm_10")
 
     out = explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 6)
     for sig in out:
         print sig
-
