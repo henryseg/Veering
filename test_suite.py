@@ -18,10 +18,12 @@ def run_tests(num_to_check = 1000):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
 
+    print "testing is_taut"
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert taut.is_taut(tri, angle)
-
+        
+    print "testing isosig round trip"
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         recovered_sig = taut.isosig_from_tri_angle(tri, angle)
@@ -29,23 +31,27 @@ def run_tests(num_to_check = 1000):
         # we only test this round trip - the other round trip does not
         # make sense because tri->isosig is many to one.
 
+    print "testing is_transverse_taut"
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert transverse_taut.is_transverse_taut(tri, angle)
 
+    print "testing not is_transverse_taut"
     non_transverse_taut_isosigs = parse_data_file("Data/veering_non_transverse_taut_examples.txt")
     for sig in non_transverse_taut_isosigs:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert not transverse_taut.is_transverse_taut(tri, angle)
 
+    print "testing is_veering"
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert veering.is_veering(tri, angle)
 
     # tri, angle = taut.isosig_to_tri_angle("cPcbbbdxm_10")
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
-    # ### tests to see that it makes only veering triangulations as it goes
+    # # tests to see that it makes only veering triangulations as it goes
 
+    print "testing veering_dehn_surgery"
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
