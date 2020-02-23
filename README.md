@@ -9,8 +9,8 @@ Nathan Dunfield for many helpful comments (and for some code).
 ### Installing regina
 
 Essentially all of the veering code relies on regina; some of it
-relies on sage.  Installation instructions for regina into python and
-into sage can be found here:
+relies on sage.  Installation instructions for regina (independently
+and into sage) can be found here:
 
 http://regina-normal.github.io/  
 http://sageregina.unhyperbolic.org/
@@ -18,10 +18,18 @@ http://sageregina.unhyperbolic.org/
 ### Download and testing
 
 After cloning or downloading the veering code, move into the new
-directory (called 'Veering' if cloned) and check the test suite using:
+directory (called 'Veering' if cloned) and run the test suite.  The
+exact command depends on the location of your regina install(s).  From
+the command line:
 
     python test_suite.py
+    regina-python test_suite.py
     sage -python test_suite.py
+
+or inside of sage:
+
+    sage: from test_suite import run_tests
+    sage: run_tests()
 
 ### Usage
 
