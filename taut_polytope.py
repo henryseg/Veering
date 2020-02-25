@@ -166,6 +166,33 @@ def is_layered(tri, angle):
     return layered
 
 
+@liberal
+def min_carried_neg_euler(tri, angle):
+    """
+    Given a tri, angle, find the minimal negative euler characteristic
+    among carried surfaces.  Returns zero if there is none such.
+    """
+    N = edge_equation_matrix_taut(tri, angle)
+    N = Matrix(N)
+    _, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
+    if sol == None:
+        out = 0.0
+    else:
+        out = sum(sol)/2 # sum counts triangles, so divide
+    return out
+
+
+@liberal
+def is_torus_bundle(tri, angle):
+    """
+    Given a tri, angle, decides if it is layered by once-punctured
+    tori.
+    """
+    return (tri.homology().rank() == 1 and
+            is_layered(tri, angle) and
+            min_carried_neg_euler(tri, angle) == 1.0)
+
+
 # TODO - check this against the homological dim of the taut cone... and then delete.  :)
 @liberal
 def LMN_tri_angle(tri, angle):

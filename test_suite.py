@@ -69,6 +69,8 @@ def run_tests(num_to_check = 1000):
                    "eLMkbcddddedde_2100":"a^2*b - a^2 - a*b - b^2 + b",
                    "iLLAwQcccedfghhhlnhcqeesr_12001122":"0"}
 
+    torus_bundles = ["cPcbbbiht_12", "eLMkbcdddhhqqa_1220", "gLMzQbcdefffhhqqqdl_122002"]
+    
     try:
         from sage.rings.integer_ring import ZZ
         import taut_polytope
@@ -115,6 +117,11 @@ def run_tests(num_to_check = 1000):
             if M.homology().betti_number() == 1:
                 assert veering_polynomial.small_polynomial_via_tree(sig, mode = "alexander") == M.alexander_polynomial()
 
+    if sage_working:
+        for sig in torus_bundles:
+            print "testing torus bundle", sig
+            assert taut_polytope.is_torus_bundle(sig)
+                
     if sage_working:
         print "all tests depending on sage passed"
 
