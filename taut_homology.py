@@ -95,16 +95,16 @@ def edge_equation_matrix_taut(triangulation, angle_struct):
     return matrix
 
 
-def reduced_edge_equation_matrix_taut(triangulation, angle_structure):
+def edge_equation_matrix_taut_reduced(triangulation, angle_structure):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut(triangulation, angle_structure)
     if verbose > 0:
-        print "edge_equation_matrix", N
+        print "edge equation matrix", N
     # N is a 2n by n matrix - the rows are longer than the columns are
     # high.  So we delete the columns corresponding to the tree edges.
     reduced = [[a for i, a in enumerate(row) if i in non_tree_faces] for row in N]
     if verbose > 0:
-        print "reduced_edge_equation_matrix", reduced
+        print "edge equation matrix, reduced", reduced
     return reduced
 
 
@@ -116,7 +116,7 @@ def elem_vector(i, dim):
 
 def faces_in_homology(triangulation, angle_structure):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
-    N = reduced_edge_equation_matrix_taut(triangulation, angle_structure)
+    N = edge_equation_matrix_taut_reduced(triangulation, angle_structure)
     N = Matrix(N)
     N = N.transpose()
     S, U, V = N.smith_form()
