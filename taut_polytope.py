@@ -346,3 +346,5 @@ def analyse_many_angles(tri):
                 dict_of_dimensions[dim] = set(angle_str)
             else:
                 dict_of_dimensions[dim].add(angle_str)
+
+

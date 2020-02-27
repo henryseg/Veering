@@ -96,7 +96,7 @@ def run_tests(num_to_check = 1000):
             print "testing small", sig
             p = veering_polynomial.small_polynomial_via_tree(sig)
             assert p.__repr__() == small_polys[sig]
-        for i in range(5):
+        for i in range(3):
             j = int(5000*random())
             sig = veering_isosigs[j]
             print "testing divide", sig
@@ -108,7 +108,7 @@ def run_tests(num_to_check = 1000):
                 assert q.divides(p)
 
     if sage_working:
-        for i in range(5):
+        for i in range(3):
             j = int(5000*random())
             sig = veering_isosigs[j]
             print "testing alex", sig
@@ -122,6 +122,14 @@ def run_tests(num_to_check = 1000):
             print "testing torus bundle", sig
             assert taut_polytope.is_torus_bundle(sig)
                 
+    if sage_working:
+        for i in range(3):
+            j = int(10000*random())
+            sig = veering_isosigs[j]
+            print "testing hom dim", sig
+            assert ( (taut_polytope.taut_cone_homological_dim(sig) == 0 and taut_polytope.LMN_tri_angle(sig) == 'N') or
+                     (taut_polytope.taut_cone_homological_dim(sig) != 0 and taut_polytope.LMN_tri_angle(sig) != 'N') )
+
     if sage_working:
         print "all tests depending on sage passed"
 
