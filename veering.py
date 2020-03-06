@@ -77,6 +77,7 @@ def is_veering(tri, angle, return_type = 'boolean'):
                 Rlist.append(i)
         return (Llist, Rlist)
     else:
+        assert return_type == 'boolean'
         return True
 
 

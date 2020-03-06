@@ -1,2 +1,5 @@
 
 .DS_Store
+*.pyc
+Images/Boundary_triangulations/**
+Images/Cannon-Thurston/**
