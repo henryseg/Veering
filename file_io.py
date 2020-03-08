@@ -1,6 +1,7 @@
 #
 # file_io.py
 #
+import cPickle
 
 def parse_data_file(filename):
     """Parse a file into lines."""
@@ -21,3 +22,9 @@ def write_data_file(data, filename):
         data_line = ' '.join(line) + '\n' # join together and add a carriage return. 
         data_file.write(data_line)
     data_file.close()
+
+def read_from_cpickle(filename):                                                                                                     
+    f = open(filename, 'r')                                                                                                          
+    data = cPickle.load(f)                                                                                                           
+    f.close()                                                                                                                        
+    return data

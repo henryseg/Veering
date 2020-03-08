@@ -8,11 +8,7 @@ import pyx ### vector graphics
 
 from develop_ideal_hyperbolic_tetrahedra import develop_vert_posns, convert_to_complex
 
-def read_from_cpickle(filename):                                                                                                     
-    f = open(filename, 'r')                                                                                                          
-    data = cPickle.load(f)                                                                                                           
-    f.close()                                                                                                                        
-    return data
+from file_io import read_from_cpickle
 
 edge_vert_index_map = {(0,1):0, (0,2):1, (0,3):2, (1,2): 3, (1,3):4, (2,3):5}
 
@@ -369,7 +365,7 @@ if __name__ == '__main__':
   # make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_sideways, name = name + '_sideways', max_depth = 0, epsilon = 0.05, verbose = 5.0)
   # make_cannon_thurston(tri, angle, tet_shapes, name = name, max_depth = 5, epsilon = 0.05, verbose = 5.0)
   # make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_one_ladderpole, name = name + '_one_ladderpole', max_depth = 25, epsilon = 0.005, lw = 0.002, verbose = 0.0)
-  make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_up_ladderpole, name = name + '_up_ladderpole', max_depth = 8, epsilon = 0.005, lw = 0.002, verbose = 0.0)
+  make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_up_ladderpole, name = 'Images/Cannon-Thurston/' + name + '_up_ladderpole', max_depth = 8, epsilon = 0.005, lw = 0.002, verbose = 0.0)
 
   # vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
   # for i in range(tri.countTetrahedra()):
