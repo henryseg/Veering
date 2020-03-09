@@ -36,7 +36,7 @@ def read_from_pickle(filename):
 
 
 def output_to_pickle(out, filename):
-    f = __builtins__.open(filename, 'w')
+    f = open(filename, 'w')
     pickle.dump(out, f)
     f.close()
     return None
