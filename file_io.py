@@ -1,7 +1,7 @@
 #
 # file_io.py
 #
-import cPickle
+import pickle
 
 def parse_data_file(filename):
     """Parse a file into lines."""
@@ -23,8 +23,14 @@ def write_data_file(data, filename):
         data_file.write(data_line)
     data_file.close()
 
-def read_from_cpickle(filename):                                                                                                     
+def read_from_pickle(filename):                                                                                                     
     f = open(filename, 'r')                                                                                                          
-    data = cPickle.load(f)                                                                                                           
+    data = pickle.load(f)                                                                                                           
     f.close()                                                                                                                        
     return data
+
+def output_to_pickle(out, filename):
+    f = __builtins__.open(filename, 'w')
+    pickle.dump(out, f)
+    f.close()
+    return
