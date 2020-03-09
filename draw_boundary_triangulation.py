@@ -1,5 +1,5 @@
 
-from file_io import parse_data_file, read_from_cpickle
+from file_io import parse_data_file, read_from_pickle
 from taut import isosig_to_tri_angle
 from veering_triangulation import veering_triangulation
 from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_vert_posns, unknown_vert_to_known_verts_ordering, convert_to_complex
@@ -747,7 +747,7 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
     else:
         to_draw = veering_isosigs_list
 
-    shapes_data = read_from_cpickle('Data/shapes_for_cusped_374.pkl')
+    shapes_data = read_from_pickle('Data/shapes_for_cusped_374.pkl')
     names = shapes_data.keys()
     for veering_isosig in to_draw:
         print veering_isosig
@@ -760,9 +760,9 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
         # draw_triangulation_boundary_from_veering_isosig(veering_isosig, style = style, tet_shapes = tet_shapes, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
 
 # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', style = 'ladders', num_to_draw = 5)
-draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 200)
+draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 5)
 
-shapes_data = read_from_cpickle('Data/shapes_for_cusped_374.pkl')
+shapes_data = read_from_pickle('Data/shapes_for_cusped_374.pkl')
 # d = shapes_data.keys()
 # d.sort()
 # for k in d:
