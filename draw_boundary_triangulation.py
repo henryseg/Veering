@@ -747,22 +747,21 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
     else:
         to_draw = veering_isosigs_list
 
-    shapes_data = read_from_pickle('Data/shapes_for_cusped_374.pkl')
+    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     names = shapes_data.keys()
     for veering_isosig in to_draw:
         print veering_isosig
-        if veering_isosig in names:
-            tet_shapes = shapes_data[veering_isosig]
-            draw_triangulation_boundary_from_veering_isosig(veering_isosig, style = style, tet_shapes = tet_shapes, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
+        tet_shapes = shapes_data[veering_isosig]
+        draw_triangulation_boundary_from_veering_isosig(veering_isosig, style = style, tet_shapes = tet_shapes, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
 
         # else:
         #     tet_shapes = None
         # draw_triangulation_boundary_from_veering_isosig(veering_isosig, style = style, tet_shapes = tet_shapes, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
 
 # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', style = 'ladders', num_to_draw = 5)
-draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 5)
+draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 374)
 
-shapes_data = read_from_pickle('Data/shapes_for_cusped_374.pkl')
+shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
 # d = shapes_data.keys()
 # d.sort()
 # for k in d:

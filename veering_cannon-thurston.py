@@ -347,7 +347,7 @@ if __name__ == '__main__':
   # tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
   # make_cannon_thurston(tri, angle, tet_shapes, max_depth = 30, epsilon = 0.02)
 
-  data = read_from_pickle('Data/shapes_for_cusped_374.pkl')
+  data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
   names = data.keys()
   names.sort()
   # for name in names:
