@@ -43,24 +43,25 @@ class tet_face:
     def __repr__(self):
         return '(' + str(self.tet_num) + ',' + str(self.face) + ')'
 
-class ladder_unit:
+class ladder_unit(tet_face):
     """a triangle in a ladder, together with associated data"""
 
     def __init__(self, vt, tf):
         self.vt = vt
-        self.tet_face = tf
+        # self.tet_face = tf
+        tet_face.__init__(self, tf.tet_num, tf.face, verts_CP1 = tf.verts_CP1)
         self.left_vertices = []  # of the ladder, not in terms of veering colours
         self.right_vertices = []
         self.calculate_left_right_vertices()
         self.vertex_posns = {}
 
-    def __str__(self):
-        return str(self.tet_face)
-    def __repr__(self):
-        return str(self.tet_face)
+    # def __str__(self):
+    #     return str(self.tet_face)
+    # def __repr__(self):
+    #     return str(self.tet_face)
 
     def calculate_left_right_vertices(self):
-        tet_num, inf_vert = self.tet_face.tet_num, self.tet_face.face
+        tet_num, inf_vert = self.tet_num, self.face
         verts = get_triangle_vertex_order(inf_vert)
         red_vertices = []
         blue_vertices = []
@@ -100,36 +101,30 @@ class ladder_unit:
         #print self.vertex_posns
         if not curvy:
             vertex_names = self.vertex_posns.keys()
-            posns = [vector(self.vertex_posns[vertex_name]) for vertex_name in vertex_names]
+            posns = [self.vertex_posns[vertex_name] for vertex_name in vertex_names]
             pos = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
+            pos = [pos.real, pos.imag]
         else:
             if self.is_on_left():
                 rungs = [self.draw_triangle_curvy_edge(my_canvas, self.right_vertices[0], vert, ladder_width, delta = delta, draw = False) for vert in self.left_vertices]
             else:
                 rungs = [self.draw_triangle_curvy_edge(my_canvas, self.left_vertices[0], vert, ladder_width, delta = delta, draw = False) for vert in self.right_vertices]
             points = [rung.at(0.7*rung.arclen()) for rung in rungs]
-            pos = 0.5*(vector(points[0]) + vector(points[1]))
+            pos = [0.5*(points[0][0] + points[1][0]), 0.5*(points[0][1] + points[1][1])]
 
-        my_canvas.text(pos[0], pos[1], "$"+str(self.tet_face.tet_num)+"_"+str(self.tet_face.face)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero])
+        my_canvas.text(pos[0], pos[1], "$"+str(self.tet_num)+"_"+str(self.face)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero])
 
     def draw_corner_labels(self, my_canvas):
         vertex_names = self.vertex_posns.keys()
-        posns = [vector(self.vertex_posns[vertex_name]) for vertex_name in vertex_names]
+        posns = [self.vertex_posns[vertex_name] for vertex_name in vertex_names]
         center = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
         for i in range(3):
             pos = (1.0/3.0)*(center + 2.0*posns[i])
-            my_canvas.text(pos[0], pos[1], "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
-
-    # def draw_corner_symbol(self, my_canvas, vertex, symbol):
-    #     vertex_names = self.vertex_posns.keys()
-    #     posns = [vector(self.vertex_posns[vertex_name]) for vertex_name in vertex_names]
-    #     center = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
-    #     pos = (1.0/3.0)*(center + 2.0*vector(self.vertex_posns[vertex]))
-    #     my_canvas.text(pos[0], pos[1], symbol)
+            my_canvas.text(pos.real, pos.imag, "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
 
     def draw_vertex_dot(self, my_canvas, vertex):
-        x,y = self.vertex_posns[vertex][0], self.vertex_posns[vertex][1]
-        colour = get_edge_between_verts_colour(self.vt, self.tet_face.tet_num, self.tet_face.face, vertex)
+        x,y = self.vertex_posns[vertex].real, self.vertex_posns[vertex].imag
+        colour = get_edge_between_verts_colour(self.vt, self.tet_num, self.face, vertex)
         draw_vertex_colour(my_canvas, (x,y), colour)
 
     def draw_vertex_dots(self, my_canvas):
@@ -140,17 +135,17 @@ class ladder_unit:
         colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
         vp0 = self.vertex_posns[v0]
         vp1 = self.vertex_posns[v1]
-        colour = colours[ get_edge_between_verts_colour(self.vt, self.tet_face.tet_num, v0, v1) ]
-        if abs(vp0[0] - vp1[0]) < 0.01: ###hack, this is a vertical edge, directions depend on colour
-            out_path = pyx.path.line( vp0[0], vp0[1], vp1[0], vp1[1])
+        colour = colours[ get_edge_between_verts_colour(self.vt, self.tet_num, v0, v1) ]
+        if abs(vp0.real - vp1.real) < 0.01: ###hack, this is a vertical edge, directions depend on colour
+            out_path = pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag)
             if draw: my_canvas.stroke(out_path, [pyx.deco.stroked([colour])])
             return out_path
-        elif (vp0[0] < vp1[0]) != (get_edge_between_verts_colour(self.vt, self.tet_face.tet_num, self.tet_face.face, v0) == 'R'):
+        elif (vp0.real < vp1.real) != (get_edge_between_verts_colour(self.vt, self.tet_num, self.face, v0) == 'R'):
             sign = +1
         else: ### if we are at a red dot and going right, we should be concave up
             sign = -1
         shift = sign * delta * ladder_width
-        out_path = pyx.path.curve( vp0[0], vp0[1], vp0[0], vp0[1] + shift, vp1[0], vp1[1] + shift, vp1[0], vp1[1])
+        out_path = pyx.path.curve( vp0.real, vp0.imag, vp0.real, vp0.imag + shift, vp1.real, vp1.imag + shift, vp1.real, vp1.imag)
         if draw: my_canvas.stroke(out_path,  [pyx.deco.stroked([colour])])
         return out_path
 
@@ -158,11 +153,11 @@ class ladder_unit:
         colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
         vp0 = self.vertex_posns[v0]
         vp1 = self.vertex_posns[v1]
-        colour = colours[ get_edge_between_verts_colour(self.vt, self.tet_face.tet_num, v0, v1) ]
-        my_canvas.stroke(pyx.path.line( vp0[0], vp0[1], vp1[0], vp1[1]),  [pyx.deco.stroked([colour])]  )
+        colour = colours[ get_edge_between_verts_colour(self.vt, self.tet_num, v0, v1) ]
+        my_canvas.stroke(pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag),  [pyx.deco.stroked([colour])]  )
 
     def draw_face_label(self, my_canvas, face_num, ladder_width = None, delta = 0.2):  
-        tet = self.vt.tri.tetrahedron( self.tet_face.tet_num )
+        tet = self.vt.tri.tetrahedron( self.tet_num )
         triangle = tet.triangle(face_num)
         triangle_num = triangle.index()
 
@@ -177,7 +172,7 @@ class ladder_unit:
 
     def draw_labels_curvy(self, my_canvas, ladder_width, delta = 0.2):
         vertex_names = self.vertex_posns.keys()
-        tet_index, face = self.tet_face.tet_num, self.tet_face.face
+        tet_index, face = self.tet_num, self.face
         angle_choice = self.vt.angle[tet_index]
         pi_vert = anglechoice_face2vert[(angle_choice, face)]  
         if pi_vert in self.left_vertices:
@@ -187,7 +182,7 @@ class ladder_unit:
             singleton = self.left_vertices[0]
             third = self.right_vertices[ (self.right_vertices.index(pi_vert) + 1) % 2 ]
 
-        posns = [vector(self.vertex_posns[vertex_name]) for vertex_name in vertex_names]
+        posns = [self.vertex_posns[vertex_name] for vertex_name in vertex_names]
         center = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
 
         magic_number = 0.6
@@ -205,13 +200,14 @@ class ladder_unit:
                 else:
                     amount = 0.1
                 points = [path.at(amount*ladder_width) for path in paths]
-                pos = 0.5*(vector(points[0]) + vector(points[1]))
+                pos = [0.5*(points[0][0] + points[1][0]), 0.5*(points[0][1] + points[1][1])]
             else:
-                if self.vertex_posns[vname][0] > center[0]:
+                if self.vertex_posns[vname].real > center.real:
                     sign = -1
                 else:
                     sign = +1
-                pos = vector( self.vertex_posns[vname] ) + vector([sign*ladder_width * 0.03, 0])
+                pos = self.vertex_posns[vname] + complex(sign*ladder_width * 0.03, 0)
+                pos = [pos.real, pos.imag]
 
             my_canvas.text(pos[0], pos[1], "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
 
@@ -251,7 +247,7 @@ class ladder:
         right_length = sum([len(tri.right_vertices) for tri in self.ladder_unit_list]) - len(self.ladder_unit_list)
         return left_length, right_length
         
-    def draw(self, my_canvas, style = 'ladders', width = 5.0, height = 10.0, origin = [0,0], delta = 0.2, geom_complex_scale = 3.0, geom_torus_offset = 0.0):
+    def draw(self, my_canvas, style = 'ladders', width = 5.0, height = 10.0, origin = complex(0,0), delta = 0.2, geom_complex_scale = 3.0):
         left_len, right_len = self.count_vertices()
         first_ladder_unit = self.ladder_unit_list[0]
  
@@ -259,16 +255,20 @@ class ladder:
         right_pos = 0
         for ladder_unit in self.ladder_unit_list:
             if ladder_unit.is_on_right():
-                back_coords = (origin[0] + width, origin[1] + height*float(right_pos)/float(right_len))
+                # back_coords = (origin[0] + width, origin[1] + height*float(right_pos)/float(right_len))
+                back_coords = origin + complex(width, height*float(right_pos)/float(right_len))
                 back_label = ladder_unit.right_vertices[0]
                 right_pos += 1
             else:
-                back_coords = (origin[0], origin[1] + height*float(left_pos)/float(left_len))
+                # back_coords = (origin[0], origin[1] + height*float(left_pos)/float(left_len))
+                back_coords = origin + complex(0, height*float(left_pos)/float(left_len))
                 back_label = ladder_unit.left_vertices[0]
                 left_pos += 1
                     
-            left_front_coords = (origin[0], origin[1] + height*float(left_pos)/float(left_len))
-            right_front_coords = (origin[0] + width, origin[1] + height*float(right_pos)/float(right_len))
+            # left_front_coords = (origin[0], origin[1] + height*float(left_pos)/float(left_len))
+            # right_front_coords = (origin[0] + width, origin[1] + height*float(right_pos)/float(right_len))
+            left_front_coords = origin + complex(0, height*float(left_pos)/float(left_len))
+            right_front_coords = origin + complex(width, height*float(right_pos)/float(right_len))
 
             if style == 'ladders':
                 ladder_unit.add_vertex_posns({back_label:back_coords, ladder_unit.left_vertices[-1]:left_front_coords, ladder_unit.right_vertices[-1]:right_front_coords})
@@ -276,10 +276,10 @@ class ladder:
                 assert style == 'geometric'
                 posns_dict = {}
                 for i in range(4):
-                    if ladder_unit.tet_face.face != i:  # don't include infinity vertex
-                        c = convert_to_complex(ladder_unit.tet_face.verts_CP1[i]) 
-                        c = geom_complex_scale * ( c + complex(origin[0], origin[1]) ) + geom_torus_offset
-                        posns_dict[i] = [c.real, c.imag]
+                    if ladder_unit.face != i:  # don't include infinity vertex
+                        c = convert_to_complex(ladder_unit.verts_CP1[i]) 
+                        c = geom_complex_scale * ( c + origin ) 
+                        posns_dict[i] = c
                 ladder_unit.add_vertex_posns(posns_dict)
 
             if style == 'ladders':
@@ -316,15 +316,9 @@ class ladder:
                     self.holonomy = convert_to_complex(current_tf.verts_CP1[not_inf_vert]) - convert_to_complex(start_tf.verts_CP1[not_inf_vert]) 
                 break
         ### if needed, flip ladder
-        tet_num, inf_vert = self.ladder_unit_list[0].tet_face.tet_num, self.ladder_unit_list[0].tet_face.face
+        tet_num, inf_vert = self.ladder_unit_list[0].tet_num, self.ladder_unit_list[0].face
         if self.vt.coorientations[tet_num][inf_vert] == -1: 
             self.ladder_unit_list.reverse()
-
-def draw_edge_label(my_canvas, edge_endpoint_coords):
-    endpts = map(vector, edge_endpoint_coords)
-    center = 0.5*(endpts[0] + endpts[1])
-    square = pyx.path.rect(center[0] - 0.1, center[1] - 0.1, 0.2, 0.2)
-    my_canvas.fill(square, [pyx.deco.filled([pyx.color.rgb.black])])
 
 def draw_vertex_colour(my_canvas, coords, veering_direction):
     colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
@@ -332,7 +326,7 @@ def draw_vertex_colour(my_canvas, coords, veering_direction):
     my_canvas.fill(circ, [pyx.deco.filled([colours[veering_direction]])])
 
 def draw_symmetry_symbol(my_canvas, coords):
-    circ = pyx.path.circle(coords[0], coords[1] ,0.18)
+    circ = pyx.path.circle(coords.real, coords.imag ,0.18)
     my_canvas.stroke(circ, [pyx.color.rgb.green])
 
 def get_edge_between_verts_colour(vt, tet_num, v1, v2):
@@ -358,7 +352,7 @@ def find_unit_index(new_tet_face, my_ladder):
     """find the index of this tet_face in the ladder"""
     unit_index = 0
     ladder_length = len(my_ladder.ladder_unit_list)
-    while my_ladder.ladder_unit_list[unit_index].tet_face != new_tet_face:
+    while my_ladder.ladder_unit_list[unit_index] != new_tet_face:  ### because of how equality is defined for tet_faces
         unit_index += 1
         if unit_index >= ladder_length:
             print 'error, couldnt find matching unit'
@@ -375,32 +369,30 @@ class torus_triangulation:
         self.tet_faces = []
         for l in self.ladder_list:
             for lu in l.ladder_unit_list:
-                self.tet_faces.append(lu.tet_face)
+                self.tet_faces.append(lu)
 
     def is_tet_face_in_ladders(self, tet_face):
         """Checks to see if a tet_face is already been used"""
         for L in self.ladder_list:
             for lu in L.ladder_unit_list:
-                if lu.tet_face == tet_face:
+                if lu == tet_face:
                     return True
         return False
 
-    def draw(self, my_canvas, style = 'ladders', ladder_width = 5.0, height = 10.0, origin = [0,0], geometric_scale_factor = 1.5):
+    def draw(self, my_canvas, style = 'ladders', ladder_width = 5.0, height = 10.0, geometric_scale_factor = 1.5):
         ### geometric_scale_factor is just so that the text looks good
         num_ladders = len(self.ladder_list)
         #ladder_width = width / float(num_ladders)
         for i,L in enumerate(self.ladder_list):
             if style == 'ladders':
-                ladder_origin = [origin[0] + ladder_width * i, origin[1]]
+                ladder_origin = complex(ladder_width * i, 0)
                 geom_complex_scale = None
                 geom_torus_offset = None
             elif style == 'geometric':
                 holonomy = self.ladder_list[0].holonomy
-                offset = (i%2) * holonomy
-                ladder_origin = [offset.real,offset.imag]
+                ladder_origin = (i%2) * holonomy
                 geom_complex_scale = geometric_scale_factor*len(self.ladder_list[0].ladder_unit_list) * complex(0,1) / self.ladder_list[0].holonomy ## rotate and scale
-                geom_torus_offset = geometric_scale_factor * complex(origin[0], origin[1]) 
-            L.draw(my_canvas, style = style, width = ladder_width, height = height, origin = ladder_origin, geom_complex_scale = geom_complex_scale, geom_torus_offset = geom_torus_offset)
+            L.draw(my_canvas, style = style, width = ladder_width, height = height, origin = ladder_origin, geom_complex_scale = geom_complex_scale)
         self.draw_symmetries(my_canvas)
 
     def find_sideways(self, start_tet_face):
@@ -506,7 +498,7 @@ class torus_triangulation:
                     vertex_axis_unit_pair = self.find_vertex_axis_unit_pair(ladder_index, unit_index)
 
                     if self.is_symmetric_torus(edge_axis_unit_pair, dict_of_tet_pairings = dict_of_tet_pairings): #axis is midpoint of the edge to the left of this triangle
-                        v0, v1 = vector(unit.vertex_posns[unit.left_vertices[0]]), vector(unit.vertex_posns[unit.left_vertices[1]])
+                        v0, v1 = unit.vertex_posns[unit.left_vertices[0]], unit.vertex_posns[unit.left_vertices[1]]
                         draw_symmetry_symbol(my_canvas, 0.5 * (v0+v1))
                         count += 1
                     if self.is_symmetric_torus(vertex_axis_unit_pair, dict_of_tet_pairings = dict_of_tet_pairings): #axis is the back left vertex from this triangle
@@ -535,13 +527,13 @@ class torus_triangulation:
     def find_edge_axis_unit_pair(self, ladder_index, unit_index): #explore the triangulation, see if the midpoint of the edge to the left of this triangle is a 180 deg rotation axis
         unit_posn_A = (ladder_index, unit_index)
         unit_A = self.ladder_list[ladder_index].ladder_unit_list[unit_index]
-        tet_B = self.vt.tri.tetrahedron(unit_A.tet_face.tet_num).adjacentTetrahedron(unit_A.right_vertices[0])
+        tet_B = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentTetrahedron(unit_A.right_vertices[0])
         tet_B_index = tet_B.index()
-        gluing = self.vt.tri.tetrahedron(unit_A.tet_face.tet_num).adjacentGluing(unit_A.right_vertices[0])
-        face_B = gluing[unit_A.tet_face.face]
+        gluing = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.right_vertices[0])
+        face_B = gluing[unit_A.face]
         ladder_B_index = (ladder_index - 1) % len(self.ladder_list)
         unit_posn_B = (ladder_B_index, find_unit_index(tet_face(tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
-        #print unit_posn_A, unit_A.tet_face, tet_B_index, face_B
+        #print unit_posn_A, unit_A, tet_B_index, face_B
         return (unit_posn_A, unit_posn_B)
 
     def find_vertex_axis_unit_pair(self, ladder_index, unit_index):
@@ -558,13 +550,13 @@ class torus_triangulation:
 
         ####edit next section to change unit_A to unit_temp
         
-        tet_B = self.vt.tri.tetrahedron(unit_temp.tet_face.tet_num).adjacentTetrahedron(unit_temp.right_vertices[0])
+        tet_B = self.vt.tri.tetrahedron(unit_temp.tet_num).adjacentTetrahedron(unit_temp.right_vertices[0])
         tet_B_index = tet_B.index()
-        gluing = self.vt.tri.tetrahedron(unit_temp.tet_face.tet_num).adjacentGluing(unit_temp.right_vertices[0])
-        face_B = gluing[unit_temp.tet_face.face]
+        gluing = self.vt.tri.tetrahedron(unit_temp.tet_num).adjacentGluing(unit_temp.right_vertices[0])
+        face_B = gluing[unit_temp.face]
         ladder_B_index = (ladder_index - 1) % len(self.ladder_list)
         unit_posn_B = (ladder_B_index, find_unit_index(tet_face(tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
-        #print unit_posn_A, unit_A.tet_face, tet_B_index, face_B
+        #print unit_posn_A, unit_A, tet_B_index, face_B
         return (unit_posn_A, unit_posn_B)
         
     def is_symmetric_torus(self, axis_unit_pair, dict_of_tet_pairings = {}):
@@ -600,7 +592,7 @@ class torus_triangulation:
             if not ( ladder_A.ladder_unit_list[ (unit_A_index + j) % len_A ].is_on_left() != ladder_B.ladder_unit_list[ (unit_B_index - j) % len_B ].is_on_left() ):
                 return False  #this is if both are on left or both are on right, meaning they are not symmetrical
             else: #add this pair to the list of tet_pairings
-                tet_pairing = [ladder_A.ladder_unit_list[ (unit_A_index + j) % len_A ].tet_face.tet_num, ladder_B.ladder_unit_list[ (unit_B_index - j) % len_B ].tet_face.tet_num ]
+                tet_pairing = [ladder_A.ladder_unit_list[ (unit_A_index + j) % len_A ].tet_num, ladder_B.ladder_unit_list[ (unit_B_index - j) % len_B ].tet_num ]
                 tet_pairing.sort()
                 tet_pairing = tuple(tet_pairing)
                 if tet_pairing not in tet_pairings:
@@ -620,18 +612,18 @@ class torus_triangulation:
             unit_B_index = (unit_B_index - 1) % len_B
         #now have the tris that we can move through to the next ladders
         unit_A = ladder_A.ladder_unit_list[unit_A_index]
-        new_tet_A = self.vt.tri.tetrahedron(unit_A.tet_face.tet_num).adjacentTetrahedron(unit_A.left_vertices[0])
+        new_tet_A = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentTetrahedron(unit_A.left_vertices[0])
         new_tet_A_index = new_tet_A.index()
-        gluing = self.vt.tri.tetrahedron(unit_A.tet_face.tet_num).adjacentGluing(unit_A.left_vertices[0])
-        new_face_A = gluing[unit_A.tet_face.face]
+        gluing = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.left_vertices[0])
+        new_face_A = gluing[unit_A.face]
         new_ladder_A_index = (ladder_A_index + 1) % len(self.ladder_list)
         new_unit_posn_A = (new_ladder_A_index, find_unit_index(tet_face(new_tet_A_index, new_face_A), self.ladder_list[new_ladder_A_index]) )
 
         unit_B = ladder_B.ladder_unit_list[unit_B_index]
-        new_tet_B = self.vt.tri.tetrahedron(unit_B.tet_face.tet_num).adjacentTetrahedron(unit_B.right_vertices[0])
+        new_tet_B = self.vt.tri.tetrahedron(unit_B.tet_num).adjacentTetrahedron(unit_B.right_vertices[0])
         new_tet_B_index = new_tet_B.index()
-        gluing = self.vt.tri.tetrahedron(unit_B.tet_face.tet_num).adjacentGluing(unit_B.right_vertices[0])
-        new_face_B = gluing[unit_B.tet_face.face]
+        gluing = self.vt.tri.tetrahedron(unit_B.tet_num).adjacentGluing(unit_B.right_vertices[0])
+        new_face_B = gluing[unit_B.face]
         new_ladder_B_index = (ladder_B_index - 1) % len(self.ladder_list)
         new_unit_posn_B = (new_ladder_B_index, find_unit_index(tet_face(new_tet_B_index, new_face_B), self.ladder_list[new_ladder_B_index]) )
 
@@ -661,13 +653,13 @@ class boundary_triangulation:
                 out.append( tet_face(i,j) )
         return out
 
-    def draw(self, output_filename, style = 'ladders', ladder_width = 5.0, torus_triangulation_height = 10.0, origin = [0,0]):
+    def draw(self, output_filename, style = 'ladders', ladder_width = 5.0, torus_triangulation_height = 10.0):
         canvases = []
         
         for i,T in enumerate(self.torus_triangulation_list):
             print 'cusp:', i, '| num ladders:', len(T.ladder_list)
             c = pyx.canvas.canvas()
-            T.draw(c, style = style, ladder_width = ladder_width, height = torus_triangulation_height, origin = origin)
+            T.draw(c, style = style, ladder_width = ladder_width, height = torus_triangulation_height)
             canvases.append(c)
 
         out_canvas = pyx.canvas.canvas()
@@ -711,10 +703,10 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 
 if __name__ == "__main__":
 
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', style = 'ladders', num_to_draw = 5)
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 374)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', style = 'ladders', num_to_draw = 5)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 5)
 
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     # d = shapes_data.keys()
     # d.sort()
     # for k in d:
@@ -722,11 +714,11 @@ if __name__ == "__main__":
 
     # name = 'cPcbbbiht_12'
     # name = 'eLMkbcddddedde_2100'
-    name = 'fLAMcaccdeejsnaxk_20010'
+    # name = 'fLAMcaccdeejsnaxk_20010'
     # name = 'fLLQcbecdeepuwsua_20102'
     # name = 'fLLQcbeddeehhbghh_01110'
     # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
-    draw_triangulation_boundary_from_veering_isosig(name, style = 'ladders', tet_shapes = None) 
+    # draw_triangulation_boundary_from_veering_isosig(name, style = 'ladders', tet_shapes = None) 
     # draw_triangulation_boundary_from_veering_isosig(name, style = 'geometric', tet_shapes = shapes_data[name])
 
 
