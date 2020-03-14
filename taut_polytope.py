@@ -166,6 +166,7 @@ def is_layered(tri, angle):
     return layered
 
 
+# This is morally correct, but it is too slow - probably due to the integer programming.
 @liberal
 def min_carried_neg_euler(tri, angle):
     """
@@ -183,6 +184,30 @@ def min_carried_neg_euler(tri, angle):
 
 
 @liberal
+def carries_torus_or_sphere(tri, angle):
+    """
+    Given a tri, angle decides if there is a once-punctured torus or
+    three-times punctured sphere among the carried surfaces.
+    """
+    N = edge_equation_matrix_taut(tri, angle)
+    # We must decide if there is a pair of columns which are negatives
+    # of each other.  We could test on quadratically many vectors, or
+    # we could do this:
+    N = Matrix(N).transpose() # easier to work with rows
+    N = set(tuple(row) for row in N) # make rows unique
+    N = Matrix(N)
+    P = []
+    for row in N:
+        P.append(row)
+        P.append(-row)
+    P.sort()
+    for i in range(len(P) - 1):
+        if P[i] == P[i+1]:
+            return True
+    return False
+
+
+@liberal
 def is_torus_bundle(tri, angle):
     """
     Given a tri, angle, decides if it is layered by once-punctured
@@ -190,7 +215,7 @@ def is_torus_bundle(tri, angle):
     """
     return (tri.homology().rank() == 1 and
             is_layered(tri, angle) and
-            min_carried_neg_euler(tri, angle) == 1.0)
+            carries_torus_or_sphere(tri, angle))
 
 
 # TODO - check this against the homological dim of the taut cone... and then delete.  :)
