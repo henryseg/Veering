@@ -322,9 +322,14 @@ class ladder:
                 ladder_unit.draw_corner_labels(my_canvas)
                 if ct_depth != None:
                     if ladder_unit.is_on_left():
+                        veering_colour = get_edge_between_verts_colour(self.vt, ladder_unit.tet_num, ladder_unit.left_vertices[0], ladder_unit.left_vertices[1])
+                        if veering_colour == 'R':
+                            colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
+                        else:
+                            colour = pyx.color.rgb(0.0,0.0,0.5)  # dark blue
                         ladder_unit.generate_ct(ladder_is_even = self.is_even, max_depth = ct_depth, epsilon = 0.02, verbose = 0.0)
                         # print len(ladder_unit.ct_developed_edges)
-                        ladder_unit.draw_ct(my_canvas, origin, geom_complex_scale)
+                        ladder_unit.draw_ct(my_canvas, origin, geom_complex_scale, colour = colour)
             ladder_unit.draw_vertex_dots(my_canvas)
 
     def make_ladder(self, start_tf):
@@ -698,7 +703,7 @@ class boundary_triangulation:
             height_offset += c.bbox().height() + 0.05 ### add a tiny bit to stop crashes due to line width
         out_canvas.writePDFfile(output_filename)
 
-def generate_boundary_triangulation(tri, angle, style = 'ladders', tet_shapes = None, output_filename = None, draw = True, ct_depth = 15):
+def generate_boundary_triangulation(tri, angle, style = 'ladders', tet_shapes = None, output_filename = None, draw = True, ct_depth = 20):
     """make a picture of the boundary triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
     B = boundary_triangulation(vt)
@@ -733,7 +738,7 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', style = 'ladders', num_to_draw = 2)
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 10)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 5)
 
     # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     # d = shapes_data.keys()
