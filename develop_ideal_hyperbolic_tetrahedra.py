@@ -93,7 +93,7 @@ unknown_vert_to_known_verts_ordering = {0:(3,2,1), 1:(2,3,0), 2:(1,0,3), 3:(0,1,
 ### Note that the complex angles we have are associated to the edges 01|23
 ### This is consistent with the orientation given by veering 
 
-def develop_vert_posns(vertex_posns, gluing, face_vertex, tet_shape):
+def develop_verts_CP1(vertex_posns, gluing, face_vertex, tet_shape):
   """Get vert posns for a new tetrahedron given vert posns for an existing tetrahedron and gluing info"""
   next_tet_vertex_posns = []
   current_vertex_nums = [0,1,2,3]

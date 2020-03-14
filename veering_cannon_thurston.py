@@ -6,24 +6,24 @@ from veering_triangulation import veering_triangulation
 
 import pyx ### vector graphics 
 
-from develop_ideal_hyperbolic_tetrahedra import develop_vert_posns, convert_to_complex
+from develop_ideal_hyperbolic_tetrahedra import develop_verts_CP1, convert_to_complex
 
 from file_io import read_from_pickle
 
 edge_vert_index_map = {(0,1):0, (0,2):1, (0,3):2, (1,2): 3, (1,3):4, (2,3):5}
 
 class ct_edge():  ### cooriented edge is determined by the tetrahedron above it, and properties thereof
-  def __init__(self, tet_num, forward_face_vertex, vert_posns, depth, vt):
+  def __init__(self, tet_num, forward_face_vertex, verts_CP1, depth, vt):
     self.tet_num = tet_num
     self.forward_face_vertex = forward_face_vertex
-    self.vert_posns = vert_posns
+    self.verts_CP1 = verts_CP1
     self.depth = depth
     self.vt = vt
 
     self.top, self.bottom = get_top_bottom(self.vt, self.tet_num)
 
-    self.end_complex = convert_to_complex(vert_posns[self.bottom[self.top.index(forward_face_vertex)]])
-    self.start_complex = convert_to_complex(vert_posns[self.bottom[(self.top.index(forward_face_vertex)+1)%2]])
+    self.end_complex = convert_to_complex(verts_CP1[self.bottom[self.top.index(forward_face_vertex)]])
+    self.start_complex = convert_to_complex(verts_CP1[self.bottom[(self.top.index(forward_face_vertex)+1)%2]])
 
     self.length = abs(self.start_complex - self.end_complex)
     self.index = self.vt.tri.tetrahedron(self.tet_num).edge( edge_vert_index_map[ tuple(sorted(self.bottom)) ] ).index() 
@@ -34,7 +34,7 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
   def __repr__(self):
     return str(self.tet_num) + ',' + str(self.forward_face_vertex) + '|' + str(self.start_complex) + ',' + str(self.end_complex) + '|' + str(self.depth) + ',' + self.colour
 
-  def too_close_to_infty(self, max_size = 4.0):
+  def too_close_to_infty(self, max_size = 10000.0):
     return abs(self.start_complex) > max_size and abs(self.end_complex) > max_size
 
   def develop_edge_outwards(self, depth_increment = 1, verbose = 0.0):
@@ -47,7 +47,7 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
     vt = self.vt
     tet_num = self.tet_num
     forward_face_vertex = self.forward_face_vertex
-    vert_posns = self.vert_posns
+    verts_CP1 = self.verts_CP1
     depth = self.depth
     colour = self.colour
 
@@ -86,12 +86,12 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
 
     out = []
     ### new edge connects prev-back for the top tet, prev-next for others, and next-front for the bottom tet
-    out.append( get_ct_edge_above( current_tet, vert_posns, next_face_vertex, front_edge_vertex, self, depth_increment = depth_increment, verbose = verbose ) )
+    out.append( get_ct_edge_above( current_tet, verts_CP1, next_face_vertex, front_edge_vertex, self.vt, self.depth, depth_increment = depth_increment, verbose = verbose ) )
     while True:
       next_tet = current_tet.adjacentTetrahedron(next_face_vertex)
       gluing = current_tet.adjacentGluing(next_face_vertex)
       # print 'next tet index', next_tet.index()
-      vert_posns = develop_vert_posns(vert_posns, gluing, next_face_vertex, tet_shapes[next_tet.index()])
+      verts_CP1 = develop_verts_CP1(verts_CP1, gluing, next_face_vertex, vt.tet_shapes[next_tet.index()])
       back_edge_vertex = gluing[back_edge_vertex]
       front_edge_vertex = gluing[front_edge_vertex]
       next_face_vertex, previous_face_vertex = gluing[previous_face_vertex], gluing[next_face_vertex]
@@ -113,29 +113,29 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
 
       assert vt.coorientations[current_tet.index()][previous_face_vertex] == +1
       if vt.coorientations[current_tet.index()][next_face_vertex] != +1: # keep going around the edge
-        out.append( get_ct_edge_above( current_tet, vert_posns, front_edge_vertex, back_edge_vertex, self, depth_increment = depth_increment, verbose = verbose ) )
+        out.append( get_ct_edge_above( current_tet, verts_CP1, front_edge_vertex, back_edge_vertex, self.vt, self.depth, depth_increment = depth_increment, verbose = verbose ) )
       else: ### we are now at the bottom of the edge
-        out.append( get_ct_edge_above( current_tet, vert_posns, back_edge_vertex, previous_face_vertex, self, depth_increment = depth_increment, verbose = verbose ) )
+        out.append( get_ct_edge_above( current_tet, verts_CP1, back_edge_vertex, previous_face_vertex, self.vt, self.depth, depth_increment = depth_increment, verbose = verbose ) )
         if colour != 'R': # we meet the edges in the opposite order when going anticlockwise
           out.reverse()  ### we want these edges to be in reverse order for popping off the to_do list
         return out
 
-def get_ct_edge_above(current_tet, vert_posns, edge_vertex, face_vertex, old_ct_edge, depth_increment = 1, verbose = 0.0):
+def get_ct_edge_above(current_tet, verts_CP1, edge_vertex, face_vertex, vt, old_depth, depth_increment = 1, verbose = 0.0):
   """move up from current_tet around the edge, developing as we go, find the edge data for this edge (meaning data for tet above the edge)."""
   ### face vertex gives a face of the tet, edge vertex gives the edge of that face that we rotate around, starting to move away from face_vertex
-  coorientations = old_ct_edge.vt.coorientations
-  tet_shapes = old_ct_edge.vt.tet_shapes
-  depth = old_ct_edge.depth + depth_increment
+  coorientations = vt.coorientations
+  tet_shapes = vt.tet_shapes
+  depth = old_depth + depth_increment
   assert coorientations[current_tet.index()][face_vertex] == +1
   if verbose > 3.0:
     print 'tet_num, edge_vertex, face_vertex', current_tet.index(), edge_vertex, face_vertex
-    print 'vert_posns', vert_posns
+    print 'verts_CP1', verts_CP1
   while True:
     # print 'tet_num going up', current_tet.index()
     # print '1,2,3,f', first_edge_vertex, second_edge_vertex, third_vertex, face_vertex
     next_tet = current_tet.adjacentTetrahedron(face_vertex)
     gluing = current_tet.adjacentGluing(face_vertex)
-    vert_posns = develop_vert_posns(vert_posns, gluing, face_vertex, tet_shapes[next_tet.index()])
+    verts_CP1 = develop_verts_CP1(verts_CP1, gluing, face_vertex, tet_shapes[next_tet.index()])
 
     # first_edge_vertex = gluing[first_edge_vertex]
     # second_edge_vertex = gluing[second_edge_vertex]
@@ -144,13 +144,13 @@ def get_ct_edge_above(current_tet, vert_posns, edge_vertex, face_vertex, old_ct_
     current_tet = next_tet
     if verbose > 3.0:
       print 'tet_num, edge_vertex, face_vertex', current_tet.index(), edge_vertex, face_vertex
-      print 'vert_posns', vert_posns
+      print 'verts_CP1', verts_CP1
     assert coorientations[current_tet.index()][edge_vertex] == -1
     if coorientations[current_tet.index()][face_vertex] == -1: ### we are now at the top of the edge
       # print 'tet_num going up', current_tet.index()
       # print '1,2,3,f', first_edge_vertex, second_edge_vertex, edge_vertex, face_vertex
       # print 'done going up'
-      return ct_edge(current_tet.index(), face_vertex, vert_posns, depth, old_ct_edge.vt)
+      return ct_edge(current_tet.index(), face_vertex, verts_CP1, depth, vt)
 
 def get_top_bottom(vt, tet_num): ## modified from draw_veering_mid-annuli2
   ### this says which vertices are 
@@ -225,8 +225,8 @@ def draw_edges(edges, dots, name = 'foobar', lw = 0.005, verbose = 0.0):
 def initial_path_single(tri, angle, tet_shapes, verbose = 0.0):
   vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
   lower_faces = [i for i in range(4) if vt.coorientations[0][i] == -1]
-  vert_posns = [[1,0],[0,1],[1,1],[tet_shapes[0],1]]
-  return ( [ct_edge(0,lower_faces[1],vert_posns,0, vt)], [] )
+  verts_CP1 = [[1,0],[0,1],[1,1],[tet_shapes[0],1]]
+  return ( [ct_edge(0,lower_faces[1],verts_CP1,0, vt)], [] )
 
 def initial_path_sideways(tri, angle, tet_shapes, verbose = 0.0):
   edges, _ = initial_path_single(tri, angle, tet_shapes, verbose = 0.0)
@@ -305,7 +305,7 @@ def initial_path_up_ladderpole(tri, angle, tet_shapes, verbose = 0.0):
     if verbose > 2.0: print 'edge vertex', edge_vertex
     for vertex in current_edge.bottom:
       if verbose > 2.0: print 'bottom vertex', vertex
-      ct_edge = get_ct_edge_above(current_tet, current_edge.vert_posns, edge_vertex, vertex, current_edge, depth_increment = 0, verbose = verbose) 
+      ct_edge = get_ct_edge_above(current_tet, current_edge.verts_CP1, edge_vertex, vertex, current_edge.vt, current_edge.depth, depth_increment = 0, verbose = verbose) 
       if verbose > 2.0: print 'ct edge', ct_edge
       if ct_edge.colour == current_edge.colour:
         next_edge = ct_edge
@@ -314,8 +314,7 @@ def initial_path_up_ladderpole(tri, angle, tet_shapes, verbose = 0.0):
     current_edge = next_edge
   return (ladderpole_edges, infinity_edge_endpoints)
 
-def make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_single, name = 'foobar', max_depth = 1, epsilon = 0.02, lw = 0.005, verbose = 0.0):
-  to_do_edges, infinity_edge_endpoints = init_function(tri, angle, tet_shapes, verbose = verbose)
+def develop_cannon_thurston(to_do_edges, max_depth = 1, epsilon = 0.02, verbose = 0.0):
   if verbose > 0.0: print 'len initial to_do_edges', len(to_do_edges)
   to_do_edges.reverse() 
   if verbose > 4.5: 
@@ -335,9 +334,13 @@ def make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_si
     else:
       to_do_edges.extend( edge.develop_edge_outwards(verbose = verbose) )
   if verbose > 0.0: print 'len final done_edges', len(done_edges)
+  return done_edges
+
+def make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_single, name = 'foobar', max_depth = 1, epsilon = 0.02, lw = 0.005, verbose = 0.0):
+  to_do_edges, infinity_edge_endpoints = init_function(tri, angle, tet_shapes, verbose = verbose)
+  done_edges = develop_cannon_thurston(to_do_edges, max_depth = max_depth, epsilon = epsilon, verbose = verbose)
   # draw_path(done_edges, infinity_edge_endpoints, name = name, lw = lw, verbose = verbose)
   draw_edges(done_edges, infinity_edge_endpoints, name = name, lw = lw, verbose = verbose)
-
 
 if __name__ == '__main__':
   # tet_shapes = [complex(0.5,math.sqrt(3)*0.5), complex(0.5,math.sqrt(3)*0.5)]
