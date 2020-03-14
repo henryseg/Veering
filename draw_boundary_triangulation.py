@@ -34,6 +34,7 @@ class tet_face:
         self.tet_num = tet_num
         self.face = face
         self.verts_CP1 = verts_CP1
+        self.origin_in_C = complex(0,0)  ### used to move things around for drawing
 
     def __eq__(self, other): ## don't care about verts_CP1
         return self.tet_num == other.tet_num and self.face == other.face 
@@ -117,11 +118,12 @@ class ladder_unit(tet_face):
 
         my_canvas.text(pos[0], pos[1], "$"+str(self.tet_num)+"_"+str(self.face)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero])
 
-    def draw_corner_labels(self, my_canvas):
+    def draw_corner_and_face_labels(self, my_canvas):
         vertex_names = self.verts_C.keys()
         posns = [self.verts_C[vertex_name] for vertex_name in vertex_names]
         center = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
         for i in range(3):
+            self.draw_face_label(my_canvas, vertex_names[i], curvy = False)
             pos = (1.0/3.0)*(center + 2.0*posns[i])
             my_canvas.text(pos.real, pos.imag, "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
 
@@ -159,7 +161,7 @@ class ladder_unit(tet_face):
         colour = colours[ get_edge_between_verts_colour(self.vt, self.tet_num, v0, v1) ]
         my_canvas.stroke(pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag),  [pyx.deco.stroked([colour])]  )
 
-    def draw_face_label(self, my_canvas, face_num, ladder_width = None, delta = 0.2):  
+    def draw_face_label(self, my_canvas, face_num, ladder_width = None, curvy = True, delta = 0.2):  
         tet = self.vt.tri.tetrahedron( self.tet_num )
         triangle = tet.triangle(face_num)
         triangle_num = triangle.index()
@@ -168,9 +170,12 @@ class ladder_unit(tet_face):
         edge_verts = vertex_names[:]
         edge_verts.remove(face_num)
 
-        edge_path = self.draw_triangle_curvy_edge(my_canvas, edge_verts[0], edge_verts[1], ladder_width, delta = 0.2, draw=False)
-        pos = edge_path.at(0.5*edge_path.arclen())
-
+        if curvy:
+            edge_path = self.draw_triangle_curvy_edge(my_canvas, edge_verts[0], edge_verts[1], ladder_width, delta = 0.2, draw=False)
+            pos = edge_path.at(0.5*edge_path.arclen())
+        else:
+            pos_C = 0.5*(self.verts_C[edge_verts[0]] + self.verts_C[edge_verts[1]])
+            pos = [pos_C.real, pos_C.imag]
         my_canvas.text(pos[0], pos[1], "$"+str(triangle_num)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero, pyx.color.rgb(0,0.5,0)])
 
     def draw_labels_curvy(self, my_canvas, ladder_width, delta = 0.2):
@@ -283,11 +288,13 @@ class ladder_unit(tet_face):
 
 class ladder:
     """ladder of triangles in cusp triangulation of a veering triangulation"""
-    def __init__(self, vt, start_tf):
+    def __init__(self, torus_triang, start_tf):
+        self.torus_triang = torus_triang
         self.ladder_unit_list = []
-        self.vt = vt
+        self.vt = torus_triang.vt
         self.holonomy = None
         self.is_even = None
+        self.ladder_origin = start_tf.origin_in_C
         self.make_ladder(start_tf)
 
     def __str__(self):
@@ -301,11 +308,9 @@ class ladder:
         right_length = sum([len(tri.right_vertices) for tri in self.ladder_unit_list]) - len(self.ladder_unit_list)
         return left_length, right_length
         
-    def draw(self, my_canvas, args = {}, origin = complex(0,0)):
-        delta = args['delta']
+    def calc_verts_C(self, args = {}):
+        origin = self.ladder_origin
         left_len, right_len = self.count_vertices()
-        first_ladder_unit = self.ladder_unit_list[0]
- 
         left_pos = 0
         right_pos = 0
         for ladder_unit in self.ladder_unit_list:
@@ -328,21 +333,41 @@ class ladder:
             else:
                 assert args['style'] == 'geometric'
                 posns_dict = {}
+                temp_origin = origin
+                if args['ct_depth'] >= 0 and self == self.torus_triang.ladder_list[-1] and ladder_unit.is_on_right():
+                    ### when drawing cannon-thurston, put these triangles on the left, so the cannon-thurston paths have triangles on both sides
+                    tet = self.vt.tri.tetrahedron(ladder_unit.tet_num)
+                    left_vert = ladder_unit.left_vertices[0]
+                    neighbour_tet = tet.adjacentTetrahedron(left_vert)
+                    gluing = tet.adjacentGluing(left_vert)
+                    neighbour_inf_vert = gluing[ladder_unit.face]
+                    neighbour_index_in_ladder_list = self.torus_triang.ladder_list[0].ladder_unit_list.index( tet_face(neighbour_tet.index(), neighbour_inf_vert) )
+                    neighbour = self.torus_triang.ladder_list[0].ladder_unit_list[neighbour_index_in_ladder_list]
+                    back_vert = ladder_unit.right_vertices[0]
+                    neighbour_back_vert = gluing[back_vert]
+                    offset = convert_to_complex(neighbour.verts_CP1[neighbour_back_vert]) - convert_to_complex(ladder_unit.verts_CP1[back_vert]) 
+                    temp_origin = self.torus_triang.ladder_list[0].ladder_origin + offset
                 for i in range(4):
                     if ladder_unit.face != i:  # don't include infinity vertex
                         c = convert_to_complex(ladder_unit.verts_CP1[i]) 
-                        c = args['geom_complex_scale'] * ( c + origin ) 
+
+                        c = args['geom_complex_scale'] * ( c + temp_origin ) 
                         posns_dict[i] = c
                 ladder_unit.add_verts_C(posns_dict)
 
+    def draw(self, my_canvas, args = {}, origin = complex(0,0)):
+        delta = args['delta']
+        origin = self.ladder_origin
+        for ladder_unit in self.ladder_unit_list:
             if args['style'] == 'ladders':
+                width = args['ladder_width']
                 ladder_unit.draw_triangle_label(my_canvas, curvy = True, args = args)
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = True, args = args)
                 ladder_unit.draw_labels_curvy(my_canvas, width, delta = delta)
             else:                
                 ladder_unit.draw_triangle_label(my_canvas, curvy = False, args = args)
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = False, args = args)
-                ladder_unit.draw_corner_labels(my_canvas)
+                ladder_unit.draw_corner_and_face_labels(my_canvas)
                 if args['ct_depth'] >= 0:
                     if ladder_unit.is_on_left():
                         veering_colour = get_edge_between_verts_colour(self.vt, ladder_unit.tet_num, ladder_unit.left_vertices[0], ladder_unit.left_vertices[1])
@@ -425,6 +450,7 @@ class torus_triangulation:
     def __init__(self, vt, start_tet_face):
         self.ladder_list = []
         self.vt = vt
+        self.sideways_holonomy = None
         self.make_torus_triangulation(start_tet_face)
         self.tet_faces = []
         for i,l in enumerate(self.ladder_list):
@@ -433,34 +459,22 @@ class torus_triangulation:
                 # print lu
                 self.tet_faces.append(lu)
 
-    def is_tet_face_in_ladders(self, tet_face):
-        """Checks to see if a tet_face is already been used"""
-        for L in self.ladder_list:
-            for lu in L.ladder_unit_list:
-                if lu == tet_face:
-                    return True
-        return False
-
     def draw(self, my_canvas, args = {}): #style = 'ladders', ladder_width = 5.0, height = 10.0, , ct_depth = 5):
         ### geometric_scale_factor is just so that the text looks good
-        num_ladders = len(self.ladder_list)
-        #ladder_width = width / float(num_ladders)
         for i,L in enumerate(self.ladder_list):
             if args['style'] == 'ladders':
-                ladder_origin = complex(args['ladder_width'] * i, 0)
-                # args['ladder_origin'] = ladder_origin
-                # geom_complex_scale = None
-                # geom_torus_offset = None
+                L.ladder_origin = complex(args['ladder_width'] * i, 0)  ## ignore any stuff already in ladder_origin
             elif args['style'] == 'geometric':
                 holonomy = self.ladder_list[0].holonomy
-                ladder_origin = (i%2) * holonomy
-                geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,1) / self.ladder_list[0].holonomy ## rotate and scale
-                # args['ladder_origin'] = ladder_origin
+                L.ladder_origin = L.ladder_origin + (i%2) * holonomy 
+                geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,-1) / self.ladder_list[0].holonomy ## rotate and scale
                 args['geom_complex_scale'] = geom_complex_scale
-            L.draw(my_canvas, args = args, origin = ladder_origin)
-
-                # style = style, width = ladder_width, height = ladder_height, origin = ladder_origin, geom_complex_scale = geom_complex_scale, ct_depth = ct_depth)
+            L.calc_verts_C(args = args)
+        
         self.draw_symmetries(my_canvas)
+
+        for L in self.ladder_list:
+            L.draw(my_canvas, args = args)
 
     def find_sideways(self, start_tet_face):
         tet_num, face = start_tet_face.tet_num, start_tet_face.face
@@ -519,17 +533,24 @@ class torus_triangulation:
             current_tf = tet_face( tet.index(), inf_vert, verts_CP1 = verts_CP1 )
         sideways = rho[rho.index(current_tf):]   ### remove initial tail. Here .index ignores the verts_CP1 data of a tet_face
 
+        not_inf_vert = (current_tf.face + 1) % 4
+        self.sideways_holonomy = convert_to_complex(current_tf.verts_CP1[not_inf_vert]) - convert_to_complex(sideways[0].verts_CP1[not_inf_vert]) 
+        ### in cases when i(sideways, ladderpole slope) > 1, this isn't what we want for moving things around
+
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         if self.vt.coorientations[tet_num][inf_vert] == 1: 
+            # print 'choice 1'
+            sideways[0].origin_in_C += self.sideways_holonomy
             sideways = sideways[1:] + sideways[:1] ## convention: first ladder is convex down, aka green
-            ### this does nothing in the geometric case...
 
         ## make sideways go to the right rather than to the left
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         verts = get_triangle_vertex_order(inf_vert)
         cols = [get_edge_between_verts_colour(self.vt, tet_num, inf_vert, v) for v in verts]
         if cols.count('R') == 2:  # pi is on the right, so sideways must be going left
+            # print 'choice 2'
             sideways.reverse()
+            sideways[0].origin_in_C -= self.sideways_holonomy # put it back where we found it
             sideways = sideways[1:] + sideways[:1] # maintain first ladder convex down
         return sideways
 
@@ -539,9 +560,10 @@ class torus_triangulation:
         sideways = self.find_sideways(start_tet_face)
 
         for tf in sideways:
-            if self.is_tet_face_in_ladders(tf): ### sideways may wrap multiple times around the torus
+            if len(self.ladder_list) > 0 and tf in self.ladder_list[0].ladder_unit_list:
+            # if self.is_tet_face_in_ladders(tf): ### sideways may wrap multiple times around the torus
                 break
-            self.ladder_list.append(ladder(self.vt, tf))
+            self.ladder_list.append(ladder(self, tf))
         if self.vt.tet_shapes != None:
             for i, L in enumerate(self.ladder_list):
                 L.is_even = (i%2 == 0)
@@ -761,20 +783,21 @@ if __name__ == "__main__":
     args = {'draw':True, 'ct_depth':20, 'ct_epsilon':0.02, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
 
     # args['style'] = 'ladders'
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 2)
+    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
     args['style'] = 'geometric'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 50)
 
     
 
-    name = 'cPcbbbdxm_10'
+    # # name = 'cPcbbbdxm_10'
     # name = 'cPcbbbiht_12'
-    # # # name = 'eLMkbcddddedde_2100'
-    # name = 'eLAkbccddhhsqs_1220'
-    # # # name = 'fLAMcaccdeejsnaxk_20010'
-    # # # name = 'fLLQcbecdeepuwsua_20102'
-    # # # name = 'fLLQcbeddeehhbghh_01110'
-    # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
+    # # # # name = 'eLMkbcddddedde_2100'
+    # # name = 'eLAkbccddhhsqs_1220'
+    # name = 'fLAMcaccdeejsnaxk_20010'
+    # # # # name = 'fLLQcbecdeepuwsua_20102'
+    # # # # name = 'fLLQcbeddeehhbghh_01110'
+    # # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
+    name = 'eLAkaccddjsnak_2001'
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     args['tet_shapes'] = shapes_data[name]
