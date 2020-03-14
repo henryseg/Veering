@@ -254,7 +254,7 @@ class ladder_unit(tet_face):
         self.get_ct_edge(ladder_is_even)
         self.ct_developed_edges = develop_cannon_thurston([self.ct_edge], max_depth = args['ct_depth'], epsilon = args['ct_epsilon'], verbose = 0.0)
 
-    # def draw_ct(self, canv, origin, geom_complex_scale, colour = pyx.color.rgb.black, lw = 0.005):
+    # def draw_ct(self, canv, origin, geom_complex_scale, veering_colour = None, lw = 0.005):
     """draw edges one by one"""
     #     for edge in self.ct_developed_edges:
     #         s, e = edge.start_complex, edge.end_complex
@@ -262,15 +262,24 @@ class ladder_unit(tet_face):
     #         e = geom_complex_scale * ( e + origin ) 
     #         canv.stroke(pyx.path.line(s.real, s.imag, e.real, e.imag), [pyx.style.linewidth(lw), colour])
 
-    def draw_ct_path(self, canv, origin, geom_complex_scale, colour = pyx.color.rgb.black, lw = 0.005):
+    def draw_ct_path(self, canv, origin, geom_complex_scale, veering_colour = None, lw = 0.005):
         """draw path of edges"""
+        # if veering_colour == 'R':
+        #     colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
+        #     grad = pyx.color.gradient.RedBlack
+        # else:
+        #     colour = pyx.color.rgb(0.0,0.0,0.5)  # dark blue
+        #     grad = pyx.color.gradient.BlueBlack
+        grad = pyx.color.gradient.Hue
         edges = self.ct_developed_edges
         comp_coords = [edges[0].start_complex] + [edge.end_complex for edge in edges]
         comp_coords = [geom_complex_scale * (c + origin) for c in comp_coords]
         p = pyx.path.path( pyx.path.moveto(comp_coords[0].real, comp_coords[0].imag) )
         for coord in comp_coords[1:]: 
           p.append( pyx.path.lineto(coord.real, coord.imag) )
-        canv.stroke(p, [pyx.style.linewidth(lw), colour])
+        # canv.stroke(p, [pyx.style.linewidth(lw), colour])
+        canv.stroke(p, [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)])
+
 
 class ladder:
     """ladder of triangles in cusp triangulation of a veering triangulation"""
@@ -337,14 +346,10 @@ class ladder:
                 if args['ct_depth'] >= 0:
                     if ladder_unit.is_on_left():
                         veering_colour = get_edge_between_verts_colour(self.vt, ladder_unit.tet_num, ladder_unit.left_vertices[0], ladder_unit.left_vertices[1])
-                        if veering_colour == 'R':
-                            colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
-                        else:
-                            colour = pyx.color.rgb(0.0,0.0,0.5)  # dark blue
                         ladder_unit.generate_ct(ladder_is_even = self.is_even, args = args)
                         # print len(ladder_unit.ct_developed_edges)
                         # ladder_unit.draw_ct(my_canvas, origin, args['geom_complex_scale'], colour = colour)
-                        ladder_unit.draw_ct_path(my_canvas, origin, args['geom_complex_scale'], colour = colour)
+                        ladder_unit.draw_ct_path(my_canvas, origin, args['geom_complex_scale'], veering_colour = veering_colour)
             ladder_unit.draw_vertex_dots(my_canvas)
 
     def make_ladder(self, start_tf):
@@ -753,24 +758,25 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'draw':True, 'ct_depth':50, 'ct_epsilon':0.02, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
+    args = {'draw':True, 'ct_depth':20, 'ct_epsilon':0.02, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
 
     # args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 2)
     args['style'] = 'geometric'
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 5)
+    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 50)
+
+    
+
+    name = 'cPcbbbdxm_10'
+    # name = 'cPcbbbiht_12'
+    # # # name = 'eLMkbcddddedde_2100'
+    # name = 'eLAkbccddhhsqs_1220'
+    # # # name = 'fLAMcaccdeejsnaxk_20010'
+    # # # name = 'fLLQcbecdeepuwsua_20102'
+    # # # name = 'fLLQcbeddeehhbghh_01110'
+    # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-
-    # name = 'cPcbbbdxm_10'
-    # name = 'cPcbbbiht_12'
-    # # name = 'eLMkbcddddedde_2100'
-    name = 'eLAkbccddhhsqs_1220'
-    # # name = 'fLAMcaccdeejsnaxk_20010'
-    # # name = 'fLLQcbecdeepuwsua_20102'
-    # # name = 'fLLQcbeddeehhbghh_01110'
-    # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
-
     args['tet_shapes'] = shapes_data[name]
     draw_triangulation_boundary_from_veering_isosig(name, args = args)
 
