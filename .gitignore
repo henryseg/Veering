@@ -1,5 +1,5 @@
-
 .DS_Store
+*.pdf
 *.pyc
 Images/Boundary_triangulations/Ladders/**
 Images/Boundary_triangulations/Geometric/**

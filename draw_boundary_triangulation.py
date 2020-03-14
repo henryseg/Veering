@@ -98,14 +98,16 @@ class ladder_unit(tet_face):
     def is_on_right(self):
         return len(self.right_vertices) == 2
 
-    def draw_triangle_label(self, my_canvas, curvy = False, ladder_width = None, delta = 0.2):
+    def draw_triangle_label(self, my_canvas, curvy = False, args = {}):
         #print self.verts_C
+        delta = args['delta']
         if not curvy:
             vertex_names = self.verts_C.keys()
             posns = [self.verts_C[vertex_name] for vertex_name in vertex_names]
             pos = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
             pos = [pos.real, pos.imag]
         else:
+            ladder_width = args['ladder_width']
             if self.is_on_left():
                 rungs = [self.draw_triangle_curvy_edge(my_canvas, self.right_vertices[0], vert, ladder_width, delta = delta, draw = False) for vert in self.left_vertices]
             else:
@@ -190,7 +192,7 @@ class ladder_unit(tet_face):
         for i in range(3):
             vname = vertex_names[i]
 
-            self.draw_face_label(my_canvas, vname, ladder_width = ladder_width, delta=delta)
+            self.draw_face_label(my_canvas, vname, ladder_width = ladder_width, delta = delta)
             
             if vname != pi_vert:
                 other_verts = vertex_names[:]
@@ -212,12 +214,13 @@ class ladder_unit(tet_face):
 
             my_canvas.text(pos[0], pos[1], "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
 
-    def draw_triangle_edges(self, my_canvas, curvy = True, ladder_width = None, delta = 0.2):
+    def draw_triangle_edges(self, my_canvas, curvy = True, args = {}):
+        #ladder_width = None, delta = 0.2):
         vertex_names = self.verts_C.keys()
         for lv in self.left_vertices:
             for rv in self.right_vertices:
                 if curvy:
-                    self.draw_triangle_curvy_edge(my_canvas, lv, rv, ladder_width, delta = delta)
+                    self.draw_triangle_curvy_edge(my_canvas, lv, rv, args['ladder_width'], delta = args['delta'])
                 else:
                     self.draw_triangle_edge(my_canvas, lv, rv)
         if self.is_on_left():
@@ -225,7 +228,7 @@ class ladder_unit(tet_face):
         else:
             s0,s1 = self.right_vertices
         if curvy:
-            self.draw_triangle_curvy_edge(my_canvas, s0, s1, ladder_width, delta = delta)  
+            self.draw_triangle_curvy_edge(my_canvas, s0, s1, args['ladder_width'], delta = args['delta'])  
         else:
             self.draw_triangle_edge(my_canvas, s0, s1)
 
@@ -246,16 +249,28 @@ class ladder_unit(tet_face):
             face_vertex = self.face # inf vertex
         self.ct_edge = get_ct_edge_above(self.vt.tri.tetrahedron(self.tet_num), self.verts_CP1, edge_vertex, face_vertex, self.vt, 0, depth_increment = 0, verbose = 0.0)
 
-    def generate_ct(self, ladder_is_even = True, max_depth = 1, epsilon = 0.02, verbose = 0.0):
+    def generate_ct(self, ladder_is_even = True, args = {}):
+        #max_depth = 1, epsilon = 0.02, verbose = 0.0):
         self.get_ct_edge(ladder_is_even)
-        self.ct_developed_edges = develop_cannon_thurston([self.ct_edge], max_depth = max_depth, epsilon = epsilon, verbose = verbose)
+        self.ct_developed_edges = develop_cannon_thurston([self.ct_edge], max_depth = args['ct_depth'], epsilon = args['ct_epsilon'], verbose = 0.0)
 
-    def draw_ct(self, canv, origin, geom_complex_scale, colour = pyx.color.rgb.black, lw = 0.005):
-        for edge in self.ct_developed_edges:
-            s, e = edge.start_complex, edge.end_complex
-            s = geom_complex_scale * ( s + origin ) 
-            e = geom_complex_scale * ( e + origin ) 
-            canv.stroke(pyx.path.line(s.real, s.imag, e.real, e.imag), [pyx.style.linewidth(lw), colour])
+    # def draw_ct(self, canv, origin, geom_complex_scale, colour = pyx.color.rgb.black, lw = 0.005):
+    """draw edges one by one"""
+    #     for edge in self.ct_developed_edges:
+    #         s, e = edge.start_complex, edge.end_complex
+    #         s = geom_complex_scale * ( s + origin ) 
+    #         e = geom_complex_scale * ( e + origin ) 
+    #         canv.stroke(pyx.path.line(s.real, s.imag, e.real, e.imag), [pyx.style.linewidth(lw), colour])
+
+    def draw_ct_path(self, canv, origin, geom_complex_scale, colour = pyx.color.rgb.black, lw = 0.005):
+        """draw path of edges"""
+        edges = self.ct_developed_edges
+        comp_coords = [edges[0].start_complex] + [edge.end_complex for edge in edges]
+        comp_coords = [geom_complex_scale * (c + origin) for c in comp_coords]
+        p = pyx.path.path( pyx.path.moveto(comp_coords[0].real, comp_coords[0].imag) )
+        for coord in comp_coords[1:]: 
+          p.append( pyx.path.lineto(coord.real, coord.imag) )
+        canv.stroke(p, [pyx.style.linewidth(lw), colour])
 
 class ladder:
     """ladder of triangles in cusp triangulation of a veering triangulation"""
@@ -277,59 +292,59 @@ class ladder:
         right_length = sum([len(tri.right_vertices) for tri in self.ladder_unit_list]) - len(self.ladder_unit_list)
         return left_length, right_length
         
-    def draw(self, my_canvas, style = 'ladders', width = 5.0, height = 10.0, origin = complex(0,0), delta = 0.2, geom_complex_scale = 3.0, ct_depth = None):
+    def draw(self, my_canvas, args = {}, origin = complex(0,0)):
+        delta = args['delta']
         left_len, right_len = self.count_vertices()
         first_ladder_unit = self.ladder_unit_list[0]
  
         left_pos = 0
         right_pos = 0
         for ladder_unit in self.ladder_unit_list:
-            if ladder_unit.is_on_right():
-                # back_coords = (origin[0] + width, origin[1] + height*float(right_pos)/float(right_len))
-                back_coords = origin + complex(width, height*float(right_pos)/float(right_len))
-                back_label = ladder_unit.right_vertices[0]
-                right_pos += 1
-            else:
-                # back_coords = (origin[0], origin[1] + height*float(left_pos)/float(left_len))
-                back_coords = origin + complex(0, height*float(left_pos)/float(left_len))
-                back_label = ladder_unit.left_vertices[0]
-                left_pos += 1
-                    
-            # left_front_coords = (origin[0], origin[1] + height*float(left_pos)/float(left_len))
-            # right_front_coords = (origin[0] + width, origin[1] + height*float(right_pos)/float(right_len))
-            left_front_coords = origin + complex(0, height*float(left_pos)/float(left_len))
-            right_front_coords = origin + complex(width, height*float(right_pos)/float(right_len))
+            if args['style'] == 'ladders':
+                width = args['ladder_width']
+                height = args['ladder_height']
+                if ladder_unit.is_on_right():
+                    back_coords = origin + complex(width, height*float(right_pos)/float(right_len))
+                    back_label = ladder_unit.right_vertices[0]
+                    right_pos += 1
+                else:
+                    back_coords = origin + complex(0, height*float(left_pos)/float(left_len))
+                    back_label = ladder_unit.left_vertices[0]
+                    left_pos += 1
+                        
+                left_front_coords = origin + complex(0, height*float(left_pos)/float(left_len))
+                right_front_coords = origin + complex(width, height*float(right_pos)/float(right_len))
 
-            if style == 'ladders':
                 ladder_unit.add_verts_C({back_label:back_coords, ladder_unit.left_vertices[-1]:left_front_coords, ladder_unit.right_vertices[-1]:right_front_coords})
             else:
-                assert style == 'geometric'
+                assert args['style'] == 'geometric'
                 posns_dict = {}
                 for i in range(4):
                     if ladder_unit.face != i:  # don't include infinity vertex
                         c = convert_to_complex(ladder_unit.verts_CP1[i]) 
-                        c = geom_complex_scale * ( c + origin ) 
+                        c = args['geom_complex_scale'] * ( c + origin ) 
                         posns_dict[i] = c
                 ladder_unit.add_verts_C(posns_dict)
 
-            if style == 'ladders':
-                ladder_unit.draw_triangle_label(my_canvas, curvy = True, ladder_width = width, delta = delta)
-                ladder_unit.draw_triangle_edges(my_canvas, curvy = True, ladder_width = width, delta = delta)
+            if args['style'] == 'ladders':
+                ladder_unit.draw_triangle_label(my_canvas, curvy = True, args = args)
+                ladder_unit.draw_triangle_edges(my_canvas, curvy = True, args = args)
                 ladder_unit.draw_labels_curvy(my_canvas, width, delta = delta)
             else:                
-                ladder_unit.draw_triangle_label(my_canvas, curvy = False, ladder_width = width, delta = delta)
-                ladder_unit.draw_triangle_edges(my_canvas, curvy = False, ladder_width = width, delta = delta)
+                ladder_unit.draw_triangle_label(my_canvas, curvy = False, args = args)
+                ladder_unit.draw_triangle_edges(my_canvas, curvy = False, args = args)
                 ladder_unit.draw_corner_labels(my_canvas)
-                if ct_depth != None:
+                if args['ct_depth'] >= 0:
                     if ladder_unit.is_on_left():
                         veering_colour = get_edge_between_verts_colour(self.vt, ladder_unit.tet_num, ladder_unit.left_vertices[0], ladder_unit.left_vertices[1])
                         if veering_colour == 'R':
                             colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
                         else:
                             colour = pyx.color.rgb(0.0,0.0,0.5)  # dark blue
-                        ladder_unit.generate_ct(ladder_is_even = self.is_even, max_depth = ct_depth, epsilon = 0.02, verbose = 0.0)
+                        ladder_unit.generate_ct(ladder_is_even = self.is_even, args = args)
                         # print len(ladder_unit.ct_developed_edges)
-                        ladder_unit.draw_ct(my_canvas, origin, geom_complex_scale, colour = colour)
+                        # ladder_unit.draw_ct(my_canvas, origin, args['geom_complex_scale'], colour = colour)
+                        ladder_unit.draw_ct_path(my_canvas, origin, args['geom_complex_scale'], colour = colour)
             ladder_unit.draw_vertex_dots(my_canvas)
 
     def make_ladder(self, start_tf):
@@ -421,20 +436,25 @@ class torus_triangulation:
                     return True
         return False
 
-    def draw(self, my_canvas, style = 'ladders', ladder_width = 5.0, height = 10.0, geometric_scale_factor = 1.5, ct_depth = 5):
+    def draw(self, my_canvas, args = {}): #style = 'ladders', ladder_width = 5.0, height = 10.0, , ct_depth = 5):
         ### geometric_scale_factor is just so that the text looks good
         num_ladders = len(self.ladder_list)
         #ladder_width = width / float(num_ladders)
         for i,L in enumerate(self.ladder_list):
-            if style == 'ladders':
-                ladder_origin = complex(ladder_width * i, 0)
-                geom_complex_scale = None
-                geom_torus_offset = None
-            elif style == 'geometric':
+            if args['style'] == 'ladders':
+                ladder_origin = complex(args['ladder_width'] * i, 0)
+                # args['ladder_origin'] = ladder_origin
+                # geom_complex_scale = None
+                # geom_torus_offset = None
+            elif args['style'] == 'geometric':
                 holonomy = self.ladder_list[0].holonomy
                 ladder_origin = (i%2) * holonomy
-                geom_complex_scale = geometric_scale_factor*len(self.ladder_list[0].ladder_unit_list) * complex(0,1) / self.ladder_list[0].holonomy ## rotate and scale
-            L.draw(my_canvas, style = style, width = ladder_width, height = height, origin = ladder_origin, geom_complex_scale = geom_complex_scale, ct_depth = ct_depth)
+                geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,1) / self.ladder_list[0].holonomy ## rotate and scale
+                # args['ladder_origin'] = ladder_origin
+                args['geom_complex_scale'] = geom_complex_scale
+            L.draw(my_canvas, args = args, origin = ladder_origin)
+
+                # style = style, width = ladder_width, height = ladder_height, origin = ladder_origin, geom_complex_scale = geom_complex_scale, ct_depth = ct_depth)
         self.draw_symmetries(my_canvas)
 
     def find_sideways(self, start_tet_face):
@@ -687,13 +707,13 @@ class boundary_triangulation:
                 out.append( tet_face(i,j) )
         return out
 
-    def draw(self, output_filename, style = 'ladders', ladder_width = 5.0, torus_triangulation_height = 10.0, ct_depth = 5):
+    def draw(self, output_filename, args = {}):
         canvases = []
         
         for i,T in enumerate(self.torus_triangulation_list):
             print 'cusp:', i, '| num ladders:', len(T.ladder_list)
             c = pyx.canvas.canvas()
-            T.draw(c, style = style, ladder_width = ladder_width, height = torus_triangulation_height, ct_depth = ct_depth)
+            T.draw(c, args = args)
             canvases.append(c)
 
         out_canvas = pyx.canvas.canvas()
@@ -703,21 +723,20 @@ class boundary_triangulation:
             height_offset += c.bbox().height() + 0.05 ### add a tiny bit to stop crashes due to line width
         out_canvas.writePDFfile(output_filename)
 
-def generate_boundary_triangulation(tri, angle, style = 'ladders', tet_shapes = None, output_filename = None, draw = True, ct_depth = 20):
+def generate_boundary_triangulation(tri, angle, args = {}, output_filename = None, draw = True, ct_depth = 20):
     """make a picture of the boundary triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
-    vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
+    vt = veering_triangulation(tri, angle, tet_shapes = args['tet_shapes'])
     B = boundary_triangulation(vt)
-    if draw:
-        B.draw(output_filename, style = style, ladder_width = 10.0, torus_triangulation_height = 20.0, ct_depth = ct_depth)   #large!
+    if args['draw']:
+        B.draw(output_filename, args = args)  
         
-
-def draw_triangulation_boundary_from_veering_isosig(veering_isosig, style = 'ladders', tet_shapes = None, output_filename = None):
+def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, output_filename = None):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if output_filename == None:
         output_filename = veering_isosig + '.pdf'
-    generate_boundary_triangulation(tri, angle, style = style, tet_shapes = tet_shapes, output_filename = output_filename)
+    generate_boundary_triangulation(tri, angle, args = args, output_filename = output_filename)
 
-def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, style = 'ladders', num_to_draw = None):
+def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, args = {}, num_to_draw = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)
     if num_to_draw != None:
         to_draw = veering_isosigs_list[:num_to_draw]
@@ -728,33 +747,32 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
     names = shapes_data.keys()
     for veering_isosig in to_draw:
         print veering_isosig
-        tet_shapes = shapes_data[veering_isosig]
-        draw_triangulation_boundary_from_veering_isosig(veering_isosig, style = style, tet_shapes = tet_shapes, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
-
-        # else:
-        #     tet_shapes = None
-        # draw_triangulation_boundary_from_veering_isosig(veering_isosig, style = style, tet_shapes = tet_shapes, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
+        args['tet_shapes'] = shapes_data[veering_isosig]
+        draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = args, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
 
 if __name__ == "__main__":
 
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', style = 'ladders', num_to_draw = 2)
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', style = 'geometric', num_to_draw = 5)
+    # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
+    args = {'draw':True, 'ct_depth':50, 'ct_epsilon':0.02, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
 
-    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-    # d = shapes_data.keys()
-    # d.sort()
-    # for k in d:
-    #     print k
+    # args['style'] = 'ladders'
+    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 2)
+    args['style'] = 'geometric'
+    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 5)
+
+    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
 
     # name = 'cPcbbbdxm_10'
-    # # name = 'cPcbbbiht_12'
+    # name = 'cPcbbbiht_12'
     # # name = 'eLMkbcddddedde_2100'
+    name = 'eLAkbccddhhsqs_1220'
     # # name = 'fLAMcaccdeejsnaxk_20010'
     # # name = 'fLLQcbecdeepuwsua_20102'
     # # name = 'fLLQcbeddeehhbghh_01110'
     # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
-    # # draw_triangulation_boundary_from_veering_isosig(name, style = 'ladders', tet_shapes = None) 
-    # draw_triangulation_boundary_from_veering_isosig(name, style = 'geometric', tet_shapes = shapes_data[name])
+
+    args['tet_shapes'] = shapes_data[name]
+    draw_triangulation_boundary_from_veering_isosig(name, args = args)
 
 
     # names = ['kLALPPzkbcbefghgijjxxnsaaqkqqs_0110021020',
