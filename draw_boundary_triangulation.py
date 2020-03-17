@@ -257,7 +257,7 @@ class ladder_unit(tet_face):
     def generate_ct(self, ladder_is_even = True, args = {}):
         #max_depth = 1, epsilon = 0.02, verbose = 0.0):
         self.get_ct_edge(ladder_is_even)
-        self.ct_developed_edges = develop_cannon_thurston([self.ct_edge], max_depth = args['ct_depth'], epsilon = args['ct_epsilon'], verbose = 0.0)
+        self.ct_developed_edges = develop_cannon_thurston([self.ct_edge], max_depth = args['ct_depth'], epsilon = args['ct_epsilon'], verbose = 0.1)
 
     # def draw_ct(self, canv, origin, geom_complex_scale, veering_colour = None, lw = 0.005):
     """draw edges one by one"""
@@ -757,7 +757,8 @@ def generate_boundary_triangulation(tri, angle, args = {}, output_filename = Non
     if args['draw']:
         B.draw(output_filename, args = args)  
         
-def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, output_filename = None):
+def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, output_filename = None, verbose = 0.0):
+    if verbose > 0.0: print args
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if output_filename == None:
         output_filename = veering_isosig + '.pdf'
@@ -780,7 +781,7 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'draw':True, 'ct_depth':20, 'ct_epsilon':0.02, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
+    args = {'draw':True, 'ct_depth':500, 'ct_epsilon':0.01, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
 
     # args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
@@ -797,11 +798,13 @@ if __name__ == "__main__":
     # # # # name = 'fLLQcbecdeepuwsua_20102'
     # # # # name = 'fLLQcbeddeehhbghh_01110'
     # # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
-    name = 'eLAkaccddjsnak_2001'
+    # name = 'eLAkaccddjsnak_2001'
+    # name = 'eLAkbbcdddhwqj_2102'
+    name = 'dLQacccjsnk_200'
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     args['tet_shapes'] = shapes_data[name]
-    draw_triangulation_boundary_from_veering_isosig(name, args = args)
+    draw_triangulation_boundary_from_veering_isosig(name, args = args, output_filename = name + '_' + str(args['ct_depth']) + '_' + str(args['ct_epsilon']) + '.pdf', verbose = 1.0)
 
 
     # names = ['kLALPPzkbcbefghgijjxxnsaaqkqqs_0110021020',

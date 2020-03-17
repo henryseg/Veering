@@ -315,7 +315,9 @@ def initial_path_up_ladderpole(tri, angle, tet_shapes, verbose = 0.0):
   return (ladderpole_edges, infinity_edge_endpoints)
 
 def develop_cannon_thurston(to_do_edges, max_depth = 1, epsilon = 0.02, verbose = 0.0):
-  if verbose > 0.0: print 'len initial to_do_edges', len(to_do_edges)
+  max_depth_achieved = 0
+  min_length_achieved = 100.0
+  if verbose > 1.0: print 'len initial to_do_edges', len(to_do_edges)
   to_do_edges.reverse() 
   if verbose > 4.5: 
     print 'initial to_do_edges'
@@ -331,9 +333,15 @@ def develop_cannon_thurston(to_do_edges, max_depth = 1, epsilon = 0.02, verbose 
       print 'depth', edge.depth
     if edge.depth >= max_depth or edge.length < epsilon or edge.too_close_to_infty():
       done_edges.append(edge)
+      if edge.depth > max_depth_achieved:
+        max_depth_achieved = edge.depth
+      if edge.length < min_length_achieved:
+        min_length_achieved = edge.length
     else:
       to_do_edges.extend( edge.develop_edge_outwards(verbose = verbose) )
-  if verbose > 0.0: print 'len final done_edges', len(done_edges)
+  if verbose > 0.0: 
+    print 'len final done_edges', len(done_edges)
+    print 'max_depth_achieved, min_length_achieved', max_depth_achieved, min_length_achieved
   return done_edges
 
 def make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_single, name = 'foobar', max_depth = 1, epsilon = 0.02, lw = 0.005, verbose = 0.0):
