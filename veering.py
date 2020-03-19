@@ -5,6 +5,7 @@
 # Check if a taut triangulation is veering
 
 import regina #needed inside of imported files
+from transverse_taut import is_transverse_taut
 
 def tet_type(triangulation, tet_num, veering_colours):
     num_L = [ veering_colours[triangulation.tetrahedron(tet_num).edge(i).index()] for i in range(6) ].count('L')
@@ -17,9 +18,7 @@ def tet_type(triangulation, tet_num, veering_colours):
     assert False
 
 def is_veering(tri, angle, return_type = 'boolean'):
-    """checks to see if this triangulation with taut angle structure is
-    veering
-    """ 
+    """checks to see if this triangulation with taut angle structure is veering""" 
 
     ### return type can be 'boolean', 'veering_colours', 'veering_partition' or 'num_toggles'
     ### all return False if it is not veering. If it is veering:
@@ -80,5 +79,22 @@ def is_veering(tri, angle, return_type = 'boolean'):
         assert return_type == 'boolean'
         return True
 
+class veering_triangulation():
+    """Container class for a triangulation with transverse veering structure, possibly with hyperbolic shapes"""
+    def __init__(self, tri, angle, tet_shapes = None):
+        self.tri = tri
+        self.angle = angle
+        self.coorientations = is_transverse_taut(tri, angle, return_type = 'tet_vert_coorientations')
+        assert self.coorientations != False
+        self.veering_colours = is_veering(tri, angle, return_type = 'veering_colours')
+        assert self.veering_colours != False
+        self.tet_shapes = tet_shapes
 
+    def get_edge_between_verts_colour(self, tet_num, verts):
+        """returns the veering direction (colour) for the given edge of tetrahedron"""
+        ### the following dict turns a vert pair into index of edge within a tetrahedron
+        vert_pair_to_edge_index = {(0,1):0, (1,0):0, (0,2):1, (2,0):1, (0,3):2, (3,0):2, (1,2):3, (2,1):3, (1,3):4, (3,1):4, (2,3):5, (3,2):5}
+        edge_num = vert_pair_to_edge_index[tuple(verts)]
+        edge = self.tri.tetrahedron(tet_num).edge(edge_num)
+        return self.veering_colours[edge.index()]
 

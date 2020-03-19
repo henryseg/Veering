@@ -2,7 +2,7 @@
 
 import cPickle
 from taut import isosig_to_tri_angle
-from veering_triangulation import veering_triangulation
+from veering import veering_triangulation
 
 import pyx ### vector graphics 
 

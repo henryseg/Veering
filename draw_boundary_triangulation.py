@@ -1,7 +1,7 @@
 
 from file_io import parse_data_file, read_from_pickle
 from taut import isosig_to_tri_angle
-from veering_triangulation import veering_triangulation
+from veering import veering_triangulation
 from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_CP1, unknown_vert_to_known_verts_ordering, convert_to_complex
 from veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
 
@@ -68,7 +68,7 @@ class ladder_unit(tet_face):
         red_vertices = []
         blue_vertices = []
         for v in verts:
-            if get_edge_between_verts_colour(self.vt, tet_num, inf_vert, v) == 'R':
+            if self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) == 'R':
                 red_vertices.append(v)
             else:
                 blue_vertices.append(v)
@@ -129,7 +129,7 @@ class ladder_unit(tet_face):
 
     def draw_vertex_dot(self, my_canvas, vertex):
         x,y = self.verts_C[vertex].real, self.verts_C[vertex].imag
-        colour = get_edge_between_verts_colour(self.vt, self.tet_num, self.face, vertex)
+        colour = self.vt.get_edge_between_verts_colour(self.tet_num, (self.face, vertex))
         draw_vertex_colour(my_canvas, (x,y), colour)
 
     def draw_vertex_dots(self, my_canvas):
@@ -140,12 +140,12 @@ class ladder_unit(tet_face):
         colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
         vp0 = self.verts_C[v0]
         vp1 = self.verts_C[v1]
-        colour = colours[ get_edge_between_verts_colour(self.vt, self.tet_num, v0, v1) ]
+        colour = colours[ self.vt.get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
         if abs(vp0.real - vp1.real) < 0.01: ###hack, this is a vertical edge, directions depend on colour
             out_path = pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag)
             if draw: my_canvas.stroke(out_path, [pyx.deco.stroked([colour])])
             return out_path
-        elif (vp0.real < vp1.real) != (get_edge_between_verts_colour(self.vt, self.tet_num, self.face, v0) == 'R'):
+        elif (vp0.real < vp1.real) != (self.vt.get_edge_between_verts_colour(self.tet_num, (self.face, v0)) == 'R'):
             sign = +1
         else: ### if we are at a red dot and going right, we should be concave up
             sign = -1
@@ -158,7 +158,7 @@ class ladder_unit(tet_face):
         colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
         vp0 = self.verts_C[v0]
         vp1 = self.verts_C[v1]
-        colour = colours[ get_edge_between_verts_colour(self.vt, self.tet_num, v0, v1) ]
+        colour = colours[ self.vt.get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
         my_canvas.stroke(pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag),  [pyx.deco.stroked([colour])]  )
 
     def draw_face_label(self, my_canvas, face_num, ladder_width = None, curvy = True, delta = 0.2):  
@@ -370,7 +370,7 @@ class ladder:
                 ladder_unit.draw_corner_and_face_labels(my_canvas)
                 if args['ct_depth'] >= 0:
                     if ladder_unit.is_on_left():
-                        veering_colour = get_edge_between_verts_colour(self.vt, ladder_unit.tet_num, ladder_unit.left_vertices[0], ladder_unit.left_vertices[1])
+                        veering_colour = self.vt.get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)
                         ladder_unit.generate_ct(ladder_is_even = self.is_even, args = args)
                         # print len(ladder_unit.ct_developed_edges)
                         # ladder_unit.draw_ct(my_canvas, origin, args['geom_complex_scale'], colour = colour)
@@ -413,14 +413,6 @@ def draw_vertex_colour(my_canvas, coords, veering_direction):
 def draw_symmetry_symbol(my_canvas, coords):
     circ = pyx.path.circle(coords.real, coords.imag ,0.18)
     my_canvas.stroke(circ, [pyx.color.rgb.green])
-
-def get_edge_between_verts_colour(vt, tet_num, v1, v2):
-    """returns the veering direction (colour) for the given edge of tetrahedron"""
-    ### the following dict turns a vert pair into index of edge within a tetrahedron
-    vert_pair_to_edge_index = {(0,1):0, (1,0):0, (0,2):1, (2,0):1, (0,3):2, (3,0):2, (1,2):3, (2,1):3, (1,3):4, (3,1):4, (2,3):5, (3,2):5}
-    edge_num = vert_pair_to_edge_index[(v1,v2)]
-    edge = vt.tri.tetrahedron(tet_num).edge(edge_num)
-    return vt.veering_colours[edge.index()]
 
 def get_triangle_vertex_order(face):
     """returns an anticlockwise ordering on the vertices of a triangle 
@@ -503,21 +495,21 @@ class torus_triangulation:
             verts.remove(pi_vertex)
             u,v = verts
 
-            pi_colour = get_edge_between_verts_colour(self.vt, tet_num, inf_vert, pi_vertex)
+            pi_colour = self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, pi_vertex))
             for w in verts:
-                if get_edge_between_verts_colour(self.vt, tet_num, inf_vert, w) == pi_colour:
+                if self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, w)) == pi_colour:
                     trailing_vertex = w
                     verts.remove(w)
                     pivot_vertex = verts[0]
                     break
             leading_vertex = pi_vertex
             ### now forget the pis, we pivot around pivot_vertex until the leading edge (opposite trailing vertex) colour changes:
-            start_leading_edge_colour = get_edge_between_verts_colour(self.vt, tet_num, leading_vertex, pivot_vertex)
+            start_leading_edge_colour = self.vt.get_edge_between_verts_colour(tet_num, (leading_vertex, pivot_vertex))
             assert start_leading_edge_colour == pi_colour # for some reason...
             tet = self.vt.tri.tetrahedron(tet_num)
             if self.vt.tet_shapes != None:
                 verts_CP1 = current_tf.verts_CP1
-            while get_edge_between_verts_colour(self.vt, tet.index(), leading_vertex, pivot_vertex) == start_leading_edge_colour:
+            while self.vt.get_edge_between_verts_colour(tet.index(), (leading_vertex, pivot_vertex)) == start_leading_edge_colour:
                 # print tet.index(), '|iplt|', inf_vert, pivot_vertex, leading_vertex, trailing_vertex
                 gluing = tet.adjacentGluing(trailing_vertex)
                 new_tet = tet.adjacentTetrahedron(trailing_vertex)
@@ -546,7 +538,7 @@ class torus_triangulation:
         ## make sideways go to the right rather than to the left
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         verts = get_triangle_vertex_order(inf_vert)
-        cols = [get_edge_between_verts_colour(self.vt, tet_num, inf_vert, v) for v in verts]
+        cols = [self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) for v in verts]
         if cols.count('R') == 2:  # pi is on the right, so sideways must be going left
             # print 'choice 2'
             sideways.reverse()
@@ -781,11 +773,11 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'draw':True, 'ct_depth':500, 'ct_epsilon':0.01, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
+    args = {'draw':True, 'ct_depth':500, 'ct_epsilon':0.03, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
 
-    # args['style'] = 'ladders'
+    args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
-    args['style'] = 'geometric'
+    # args['style'] = 'geometric'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 50)
 
     

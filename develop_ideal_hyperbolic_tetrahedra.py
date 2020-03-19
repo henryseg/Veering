@@ -92,6 +92,13 @@ unknown_vert_to_known_verts_ordering = {0:(3,2,1), 1:(2,3,0), 2:(1,0,3), 3:(0,1,
 ### if we don't know the position of vert i, this gives the order of the vertices to put in for inf, 0, 1
 ### Note that the complex angles we have are associated to the edges 01|23
 ### This is consistent with the orientation given by veering 
+    
+        ###   0--------inf   1--------0
+        ###   |`.    ,'|     |`.    ,'|     
+        ###   |  ` ,'  |     |  ` ,'  |  
+        ###   |  ,' .  |     |  ,' .  |   
+        ###   |,'    `.|     |,'    `.|
+        ###   1--------z     2--------3   
 
 def develop_verts_CP1(vertex_posns, gluing, face_vertex, tet_shape):
   """Get vert posns for a new tetrahedron given vert posns for an existing tetrahedron and gluing info"""
