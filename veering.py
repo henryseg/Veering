@@ -90,11 +90,14 @@ class veering_triangulation():
         assert self.veering_colours != False
         self.tet_shapes = tet_shapes
 
-    def get_edge_between_verts_colour(self, tet_num, verts):
-        """returns the veering direction (colour) for the given edge of tetrahedron"""
+    def get_edge_between_verts_index(self, tet_num, verts):
         ### the following dict turns a vert pair into index of edge within a tetrahedron
         vert_pair_to_edge_index = {(0,1):0, (1,0):0, (0,2):1, (2,0):1, (0,3):2, (3,0):2, (1,2):3, (2,1):3, (1,3):4, (3,1):4, (2,3):5, (3,2):5}
         edge_num = vert_pair_to_edge_index[tuple(verts)]
         edge = self.tri.tetrahedron(tet_num).edge(edge_num)
-        return self.veering_colours[edge.index()]
+        return edge.index()
+
+    def get_edge_between_verts_colour(self, tet_num, verts):
+        """returns the veering direction (colour) for the given edge of tetrahedron"""
+        return self.veering_colours[self.get_edge_between_verts_index(tet_num, verts)]
 
