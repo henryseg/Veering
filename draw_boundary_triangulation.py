@@ -90,9 +90,6 @@ class ladder_unit(tet_face):
             self.left_vertices = red_vertices
             self.right_vertices = blue_vertices
 
-    def add_verts_C(self, posns_dict):
-        self.verts_C = posns_dict
-
     def is_on_left(self):
         return len(self.left_vertices) == 2
 
@@ -285,7 +282,6 @@ class ladder_unit(tet_face):
         # canv.stroke(p, [pyx.style.linewidth(lw), colour])
         canv.stroke(p, [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)])
 
-
 class ladder:
     """ladder of triangles in cusp triangulation of a veering triangulation"""
     def __init__(self, torus_triang, start_tf):
@@ -329,13 +325,13 @@ class ladder:
                 left_front_coords = origin + complex(0, height*float(left_pos)/float(left_len))
                 right_front_coords = origin + complex(width, height*float(right_pos)/float(right_len))
 
-                ladder_unit.add_verts_C({back_label:back_coords, ladder_unit.left_vertices[-1]:left_front_coords, ladder_unit.right_vertices[-1]:right_front_coords})
+                ladder_unit.verts_C = {back_label:back_coords, ladder_unit.left_vertices[-1]:left_front_coords, ladder_unit.right_vertices[-1]:right_front_coords}
             else:
                 assert args['style'] == 'geometric'
                 posns_dict = {}
                 temp_origin = origin
                 if args['ct_depth'] >= 0 and self == self.torus_triang.ladder_list[-1] and ladder_unit.is_on_right():
-                    ### when drawing cannon-thurston, put these triangles on the left, so the cannon-thurston paths have triangles on both sides
+                    ### when drawing Cannon-Thurston, put these triangles on the left, so the cannon-thurston paths have triangles on both sides
                     tet = self.vt.tri.tetrahedron(ladder_unit.tet_num)
                     left_vert = ladder_unit.left_vertices[0]
                     neighbour_tet = tet.adjacentTetrahedron(left_vert)
@@ -353,7 +349,7 @@ class ladder:
 
                         c = args['geom_complex_scale'] * ( c + temp_origin ) 
                         posns_dict[i] = c
-                ladder_unit.add_verts_C(posns_dict)
+                ladder_unit.verts_C = posns_dict
 
     def draw(self, my_canvas, args = {}, origin = complex(0,0)):
         delta = args['delta']
@@ -405,6 +401,16 @@ class ladder:
         if self.vt.coorientations[tet_num][inf_vert] == -1: 
             self.ladder_unit_list.reverse()
 
+    def left_ladder_pole_vertices(self):
+        out = []
+        for lu in self.ladder_unit_list:
+            if lu.is_on_left():
+                out.append( convert_to_complex(lu.verts_CP1[ lu.left_vertices[0] ]) )
+        out.append( out[0] + self.holonomy ) 
+        if not self.is_even:
+            out = [v - self.holonomy for v in out]
+        return out
+
 def draw_vertex_colour(my_canvas, coords, veering_direction):
     colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
     circ = pyx.path.circle(coords[0], coords[1] ,0.1)
@@ -442,6 +448,7 @@ class torus_triangulation:
     def __init__(self, vt, start_tet_face):
         self.ladder_list = []
         self.vt = vt
+        self.ladder_holonomy = None
         self.sideways_holonomy = None
         self.make_torus_triangulation(start_tet_face)
         self.tet_faces = []
@@ -457,9 +464,8 @@ class torus_triangulation:
             if args['style'] == 'ladders':
                 L.ladder_origin = complex(args['ladder_width'] * i, 0)  ## ignore any stuff already in ladder_origin
             elif args['style'] == 'geometric':
-                holonomy = self.ladder_list[0].holonomy
-                L.ladder_origin = L.ladder_origin + (i%2) * holonomy 
-                geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,-1) / self.ladder_list[0].holonomy ## rotate and scale
+                L.ladder_origin = L.ladder_origin + (i%2) * self.ladder_holonomy 
+                geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,-1) / self.ladder_holonomy ## rotate and scale
                 args['geom_complex_scale'] = geom_complex_scale
             L.calc_verts_C(args = args)
         
@@ -556,10 +562,13 @@ class torus_triangulation:
             # if self.is_tet_face_in_ladders(tf): ### sideways may wrap multiple times around the torus
                 break
             self.ladder_list.append(ladder(self, tf))
+
+        self.ladder_holonomy = self.ladder_list[0].holonomy
+
         if self.vt.tet_shapes != None:
             for i, L in enumerate(self.ladder_list):
                 L.is_even = (i%2 == 0)
-                assert abs( (-1)**(i%2) * L.holonomy - self.ladder_list[0].holonomy ) < 0.001 ## all ladder holonomies the same
+                assert abs( (-1)**(i%2) * L.holonomy - self.ladder_holonomy ) < 0.001 ## all ladder holonomies the same
 
     def draw_symmetries(self, my_canvas, draw=True):
         count = 0
@@ -773,11 +782,11 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'draw':True, 'ct_depth':500, 'ct_epsilon':0.03, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
+    args = {'draw':True, 'ct_depth':-1, 'ct_epsilon':0.03, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
 
-    args['style'] = 'ladders'
+    # args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
-    # args['style'] = 'geometric'
+    args['style'] = 'geometric'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 50)
 
     

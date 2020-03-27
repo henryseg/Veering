@@ -151,7 +151,17 @@ class continent:
         self.vt = vt
         self.triangles = []
         self.infinity = vertex([1,0])
-        self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
+        # self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
+        
+        self.vertices = [None, None, None, None]  ### came from draw_boundary_triangulation
+        self.vertices[0] = self.infinity
+        self.vertices[3-0] = vertex([0,1])
+        self.vertices[(0+2)%4] = vertex([1,1])
+        last_vert = 3 - ((0+2)%4)
+        ordering = unknown_vert_to_known_verts_ordering[last_vert] 
+        last_vert_CP1 = developed_position(self.vertices[ordering[0]].CP1, self.vertices[ordering[1]].CP1, self.vertices[ordering[2]].CP1, self.vt.tet_shapes[initial_tet_num])
+        self.vertices[last_vert] = vertex(last_vert_CP1)
+
         self.vertices_adjacent_to_infinity = []   ## list of (vertex, colour of edge from vertex to infinity)
 
         self.num_tetrahedra = 1

@@ -6,12 +6,14 @@ from taut import isosig_to_tri_angle
 from develop_ideal_hyperbolic_tetrahedra import convert_to_complex
 from veering import veering_triangulation
 from continent import continent
+from draw_boundary_triangulation import boundary_triangulation
 
 
 def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = None, lw = 0.005 ):
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
+    B = boundary_triangulation(vt)
 
     grad = pyx.color.gradient.Hue
 
@@ -45,6 +47,15 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
 
     # canv.fill(pyx.path.circle(0, 0, 0.02))
     # canv.fill(pyx.path.circle(1, 0, 0.02))
+
+    T = B.torus_triangulation_list[0]
+    for L in T.ladder_list:
+        for v in L.left_ladder_pole_vertices():
+            if L.is_even:
+                col = colours['L']
+            else:
+                col = colours['R']
+            canv.stroke(pyx.path.circle(v.real, v.imag, 0.04), [pyx.style.linewidth(lw * 3), col])
 
     canv.writePDFfile(output_filename)
 
