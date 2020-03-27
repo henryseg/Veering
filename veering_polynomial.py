@@ -248,6 +248,13 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "vee
 
 
 @liberal
+def edges_to_triangles_matrix_wrapper(tri, angle):
+    ZH = group_ring(tri, angle, alpha = True)
+    P = ZH.polynomial_ring()
+    return edges_to_triangles_matrix(tri, angle, ZH, P, mode = "veering"):    
+
+
+@liberal
 def small_polynomial(tri, angle, alpha = True, mode = "veering"):
     # set up
     ZH = group_ring(tri, angle, alpha = alpha)
