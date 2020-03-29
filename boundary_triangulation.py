@@ -45,6 +45,9 @@ class tet_face:
     def __repr__(self):
         return '(' + str(self.tet_num) + ',' + str(self.face) + ')'
 
+    def rotate(self, complex_scale):
+        self.verts_CP1 = [ [v[0] * complex_scale, v[1]] for v in self.verts_CP1]
+
 class ladder_unit(tet_face):
     """a triangle in a ladder, together with associated data"""
 
@@ -284,10 +287,10 @@ class ladder_unit(tet_face):
 
 class ladder:
     """ladder of triangles in cusp triangulation of a veering triangulation"""
-    def __init__(self, torus_triang, start_tf):
-        self.torus_triang = torus_triang
+    def __init__(self, torus_triangulation, start_tf):
+        self.torus_triangulation = torus_triangulation
         self.ladder_unit_list = []
-        self.vt = torus_triang.vt
+        self.vt = torus_triangulation.vt
         self.holonomy = None
         self.is_even = None
         self.ladder_origin = start_tf.origin_in_C
@@ -330,19 +333,19 @@ class ladder:
                 assert args['style'] == 'geometric'
                 posns_dict = {}
                 temp_origin = origin
-                if args['ct_depth'] >= 0 and self == self.torus_triang.ladder_list[-1] and ladder_unit.is_on_right():
+                if args['ct_depth'] >= 0 and self == self.torus_triangulation.ladder_list[-1] and ladder_unit.is_on_right():
                     ### when drawing Cannon-Thurston, put these triangles on the left, so the cannon-thurston paths have triangles on both sides
                     tet = self.vt.tri.tetrahedron(ladder_unit.tet_num)
                     left_vert = ladder_unit.left_vertices[0]
                     neighbour_tet = tet.adjacentTetrahedron(left_vert)
                     gluing = tet.adjacentGluing(left_vert)
                     neighbour_inf_vert = gluing[ladder_unit.face]
-                    neighbour_index_in_ladder_list = self.torus_triang.ladder_list[0].ladder_unit_list.index( tet_face(neighbour_tet.index(), neighbour_inf_vert) )
-                    neighbour = self.torus_triang.ladder_list[0].ladder_unit_list[neighbour_index_in_ladder_list]
+                    neighbour_index_in_ladder_list = self.torus_triangulation.ladder_list[0].ladder_unit_list.index( tet_face(neighbour_tet.index(), neighbour_inf_vert) )
+                    neighbour = self.torus_triangulation.ladder_list[0].ladder_unit_list[neighbour_index_in_ladder_list]
                     back_vert = ladder_unit.right_vertices[0]
                     neighbour_back_vert = gluing[back_vert]
                     offset = convert_to_complex(neighbour.verts_CP1[neighbour_back_vert]) - convert_to_complex(ladder_unit.verts_CP1[back_vert]) 
-                    temp_origin = self.torus_triang.ladder_list[0].ladder_origin + offset
+                    temp_origin = self.torus_triangulation.ladder_list[0].ladder_origin + offset
                 for i in range(4):
                     if ladder_unit.face != i:  # don't include infinity vertex
                         c = convert_to_complex(ladder_unit.verts_CP1[i]) 
@@ -394,7 +397,9 @@ class ladder:
             if current_tf == start_tf:
                 not_inf_vert = (start_tf.face + 1) % 4
                 if current_tf.verts_CP1 != None:
-                    self.holonomy = convert_to_complex(current_tf.verts_CP1[not_inf_vert]) - convert_to_complex(start_tf.verts_CP1[not_inf_vert]) 
+                    self.holonomy = convert_to_complex(start_tf.verts_CP1[not_inf_vert]) - convert_to_complex(current_tf.verts_CP1[not_inf_vert])
+                    ### the first ladder has blue vertices on its left, which means that the ladder in convex down, which means this calculated holonomy
+                    ### would be downwards, but we want it to be upwards. So, we do start - current
                 break
         ### if needed, flip ladder
         tet_num, inf_vert = self.ladder_unit_list[0].tet_num, self.ladder_unit_list[0].face
@@ -406,10 +411,16 @@ class ladder:
         for lu in self.ladder_unit_list:
             if lu.is_on_left():
                 out.append( convert_to_complex(lu.verts_CP1[ lu.left_vertices[0] ]) )
-        out.append( out[0] + self.holonomy ) 
+        out.append( out[0] + self.torus_triangulation.ladder_holonomy ) 
         if not self.is_even:
-            out = [v - self.holonomy for v in out]
+            out = [v + self.holonomy for v in out]
         return out
+
+    def rotate(self, complex_scale):
+        self.holonomy *= complex_scale
+        self.ladder_origin *= complex_scale
+        for lu in self.ladder_unit_list:
+            lu.rotate(complex_scale)
 
 def draw_vertex_colour(my_canvas, coords, veering_direction):
     colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
@@ -464,8 +475,8 @@ class torus_triangulation:
             if args['style'] == 'ladders':
                 L.ladder_origin = complex(args['ladder_width'] * i, 0)  ## ignore any stuff already in ladder_origin
             elif args['style'] == 'geometric':
-                L.ladder_origin = L.ladder_origin + (i%2) * self.ladder_holonomy 
-                geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,-1) / self.ladder_holonomy ## rotate and scale
+                L.ladder_origin = L.ladder_origin - (i%2) * self.ladder_holonomy 
+                geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,1) / self.ladder_holonomy ## rotate and scale
                 args['geom_complex_scale'] = geom_complex_scale
             L.calc_verts_C(args = args)
         
@@ -569,6 +580,17 @@ class torus_triangulation:
             for i, L in enumerate(self.ladder_list):
                 L.is_even = (i%2 == 0)
                 assert abs( (-1)**(i%2) * L.holonomy - self.ladder_holonomy ) < 0.001 ## all ladder holonomies the same
+
+            ### now rotate everything so that ladder_holonomy is i
+
+            complex_scale = complex(0,1)/self.ladder_holonomy
+            self.rotate(complex_scale)
+
+    def rotate(self, complex_scale):
+        self.ladder_holonomy *= complex_scale 
+        self.sideways_holonomy *= complex_scale 
+        for L in self.ladder_list:
+            L.rotate(complex_scale)
 
     def draw_symmetries(self, my_canvas, draw=True):
         count = 0
@@ -801,11 +823,12 @@ if __name__ == "__main__":
     # # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
     # name = 'eLAkaccddjsnak_2001'
     # name = 'eLAkbbcdddhwqj_2102'
-    name = 'dLQacccjsnk_200'
+    # name = 'dLQacccjsnk_200'
+    name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     args['tet_shapes'] = shapes_data[name]
-    draw_triangulation_boundary_from_veering_isosig(name, args = args, output_filename = name + '_' + str(args['ct_depth']) + '_' + str(args['ct_epsilon']) + '.pdf', verbose = 1.0)
+    draw_triangulation_boundary_from_veering_isosig(name, args = args, output_filename = name + '_' + '_' + args['style'] + str(args['ct_depth']) + '_' + str(args['ct_epsilon']) + '.pdf', verbose = 1.0)
 
 
     # names = ['kLALPPzkbcbefghgijjxxnsaaqkqqs_0110021020',

@@ -146,29 +146,37 @@ class landscape_triangle:
                     raise
 
 class continent:
-    def __init__(self, vt, initial_tet_num = 0):
+    def __init__(self, vt, initial_tet_face):
         # print 'initializing continent'
         self.vt = vt
         self.triangles = []
-        self.infinity = vertex([1,0])
-        # self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
-        
-        self.vertices = [None, None, None, None]  ### came from draw_boundary_triangulation
-        self.vertices[0] = self.infinity
-        self.vertices[3-0] = vertex([0,1])
-        self.vertices[(0+2)%4] = vertex([1,1])
-        last_vert = 3 - ((0+2)%4)
-        ordering = unknown_vert_to_known_verts_ordering[last_vert] 
-        last_vert_CP1 = developed_position(self.vertices[ordering[0]].CP1, self.vertices[ordering[1]].CP1, self.vertices[ordering[2]].CP1, self.vt.tet_shapes[initial_tet_num])
-        self.vertices[last_vert] = vertex(last_vert_CP1)
-
-        self.vertices_adjacent_to_infinity = []   ## list of (vertex, colour of edge from vertex to infinity)
-
         self.num_tetrahedra = 1
 
-        for i in range(1,4):
-            col = self.vt.get_edge_between_verts_colour(initial_tet_num, (0, i))
-            self.vertices_adjacent_to_infinity.append( (self.vertices[i], col) )
+        self.tet_face = initial_tet_face
+
+        self.vertices = [vertex(v) for v in self.tet_face.verts_CP1]
+        self.infinity = self.vertices[self.tet_face.face]
+        assert self.infinity.CP1[1] == 0
+
+        # self.infinity = vertex([1,0])
+        # self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
+        
+        # self.vertices = [None, None, None, None]  ### came from draw_boundary_triangulation
+        # self.vertices[0] = self.infinity
+        # self.vertices[3-0] = vertex([0,1])
+        # self.vertices[(0+2)%4] = vertex([1,1])
+        # last_vert = 3 - ((0+2)%4)
+        # ordering = unknown_vert_to_known_verts_ordering[last_vert] 
+        # last_vert_CP1 = developed_position(self.vertices[ordering[0]].CP1, self.vertices[ordering[1]].CP1, self.vertices[ordering[2]].CP1, self.vt.tet_shapes[initial_tet_num])
+        # self.vertices[last_vert] = vertex(last_vert_CP1)
+
+
+        # self.vertices_adjacent_to_infinity = []   ## list of (vertex, colour of edge from vertex to infinity)
+
+        # for i in range(4):
+        #     if i != self.tet_face.face:
+        #         col = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, (self.tet_face.face, i))
+        #         self.vertices_adjacent_to_infinity.append( (self.vertices[i], col) )
 
         ###   c---R----b
         ###   |`d    ,'|     faces a, b on bottom, c, d on top
@@ -180,7 +188,7 @@ class continent:
         upper_face_nums = []
         lower_face_nums = []
         for i in range(4):
-            if self.vt.coorientations[initial_tet_num][i] == +1:
+            if self.vt.coorientations[self.tet_face.tet_num][i] == +1:
                 upper_face_nums.append(i)
             else:
                 lower_face_nums.append(i)
@@ -191,14 +199,14 @@ class continent:
         else:
             face_d, face_c = upper_face_nums
 
-        tet = vt.tri.tetrahedron(initial_tet_num)
+        tet = vt.tri.tetrahedron(self.tet_face.tet_num)
         face_a_index = tet.face(2,face_a).index()
         face_b_index = tet.face(2,face_b).index()
         face_c_index = tet.face(2,face_c).index()
         face_d_index = tet.face(2,face_d).index()
 
-        upper_edge_colour = self.vt.get_edge_between_verts_colour(initial_tet_num, lower_face_nums)
-        lower_edge_colour = self.vt.get_edge_between_verts_colour(initial_tet_num, upper_face_nums)
+        upper_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, lower_face_nums)
+        lower_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, upper_face_nums)
 
         ab_is_red = ( lower_edge_colour == 'R' )
         ab_is_upper = False
@@ -450,11 +458,12 @@ class continent:
         # print [ vertex(p) for p in [tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]]] ]
         # print vert_t
         self.vertices.append(vert_t)
-        if self.infinity in triangle.vertices:
-            which_one = [vert_a, vert_b, vert_c].index(self.infinity)
-            face_inf = [face_a, face_b, face_c][which_one]
-            col = self.vt.get_edge_between_verts_colour(tet.index(), (face_t, face_inf))
-            self.vertices_adjacent_to_infinity.append( (vert_t, col) )
+
+        # if self.infinity in triangle.vertices:
+        #     which_one = [vert_a, vert_b, vert_c].index(self.infinity)
+        #     face_inf = [face_a, face_b, face_c][which_one]
+        #     col = self.vt.get_edge_between_verts_colour(tet.index(), (face_t, face_inf))
+        #     self.vertices_adjacent_to_infinity.append( (vert_t, col) )
 
         if ab_is_red == ab_is_upper:
             triangle_a.vertices = [vert_t, vert_b, vert_c]
@@ -507,20 +516,27 @@ class continent:
                 vert_index = tri.vertices.index(vert)
 
         ## now rotate to put infinity first
-        inf_vert_index = out.index( self.vertices[0] )
+        inf_vert_index = out.index( self.infinity )
         out = out[inf_vert_index:] + out[:inf_vert_index]
         return out
 
-    def edges_adjacent_to_infinity(self):
-        ## list of ( (u,v), colour ) where u, v are vertices at either end of an edge opposite infinity in a triangle
-        out = []
+    def vertices_and_edges_adjacent_to_infinity(self):
+        ## vertices is set of (vertex, colour of edge from vertex to infinity)
+        ## edges is list of ( (u,v), colour ) where u, v are vertices at either end of an edge opposite infinity in a triangle
+        vertices = set()
+        edges = []
         for triangle in self.triangles:
             if self.infinity in triangle.vertices:
                 ind = triangle.vertices.index(self.infinity)
                 endpoints = ( triangle.vertices[(ind+1)%3], triangle.vertices[(ind+2)%3] )
-                veering_colour = self.vt.veering_colours[ triangle.edge_indices()[ind] ]
-                out.append( (endpoints, veering_colour) ) 
-        return out
+                edge_veering_colour = self.vt.veering_colours[ triangle.edge_indices()[ind] ]
+                edges.append( (endpoints, edge_veering_colour) ) 
+
+                for i in range(1,3):
+                    vert = triangle.vertices[(ind+i)%3]
+                    vertex_veering_colour = self.vt.veering_colours[ triangle.edge_indices()[(ind-i)%3] ]
+                    vertices.add( (vert, vertex_veering_colour) )
+        return vertices, edges
 
 if __name__ == '__main__':
 
@@ -530,9 +546,9 @@ if __name__ == '__main__':
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = shapes_data[veering_isosig])
-    con = continent( vt )
-    con.build(5)
-    print con.equator()
+    # con = continent( vt )
+    # con.build(5)
+    # print con.equator()
 
 
 
