@@ -2,6 +2,26 @@
 # basic_math.py
 #
 
+# helper functions for printing
+
+def intify(a):
+    if a.imag == 0:
+        a = a.real
+        if int(a) == a:
+            return int(a)
+    return a
+
+def num_print(a):
+    x = intify(a.real); y = intify(a.imag)
+    if y == 0: 
+        return str(x)
+    if x == 0: 
+        return str(y) + 'i'
+    if y < 0: return str(x) + ' - ' + str(abs(y)) + 'i'
+    else: return str(x) + ' + ' + str(y) + 'i'
+
+# permutations
+
 def sign(perm):
     copy = perm[:]
     copy.sort()
@@ -13,55 +33,103 @@ def sign(perm):
                 out *= -1
     return out
 
-#   linear algebra
+# linear algebra
 
-class vector(list):
-  def __add__(self, other):
-    return self.__class__(map(lambda x,y: x+y, self, other)) #self.__class__ is vector, unless i am a polynomial or something!
+class vector(tuple):
 
-  def __neg__(self):
-    return self.__class__(map(lambda x: -x, self))
+    def __add__(self, other):
+        return self.__class__(map(lambda x,y: x+y, self, other)) # self.__class__ is vector, unless i am a polynomial or something!
 
-  def __sub__(self, other):
-    return self.__class__(map(lambda x,y: x-y, self, other))
+    def __neg__(self):
+        return self.__class__(map(lambda x: -x, self))
 
-  def __mul__(self, other): #mult by scalar
-    return self.__class__(map(lambda x: x*other, self))
+    def __sub__(self, other):
+        return self + (-other)
+#        return self.__class__(map(lambda x,y: x-y, self, other))
 
-  def __rmul__(self, other):
-    return (self*other)
+    def __mul__(self, other): # left mul == scalar mul on left
+        if isinstance(other, Number):
+            return self.__class__(map(lambda x: x*other, self))
+        else: raise TypeError
+        
+    def __rmul__(self, other):
+        if isinstance(other, Number): # multiplication by scalars is commutative... so
+            return self * other
+        elif isinstance(other, matrix):
+            p, q = self
+            a, b, c, d = other
+            # [a b][p] = [ap + bq]
+            # [c d][q]   [cp + dq]
+            return self.__class__(a*p + b*q, c*p + d*q)
+        else: raise TypeError
 
-def zero_matrix(m,n):
-  """create zero matrix"""
-  return [[0 for row_entry in range(n)] for row in range(m)]
+#    def __repr__(self): 
+#        pretty = [num_print(x) for x in self]
+#        return '(' + ', '.join(printable) + ')'
 
-def matrix_mult(matrix1,matrix2):
-  """matrix multiplication"""
-  m1, m2 = matrix1, matrix2
-  assert len(m1[0]) == len(m2), 'Matrices must be m*n and n*p to multiply!'
-  new_matrix = zero_matrix(len(m1),len(m2[0]))
-  for i in range(len(m1)):
-    for j in range(len(m2[0])):
-      for k in range(len(m2)):
-        new_matrix[i][j] += m1[i][k]*m2[k][j]
-  return new_matrix 
+def matrix(tuple):
 
-def matrix_mult_vector(M,v): #treats v as if it were a vertical vector, when it is actually just a list
-  u = [[entry] for entry in v]
-  out = matrix_mult(M, u)
-  return [entry for [entry] in out]
+    def __repr__(self): 
+        A, B, C, D = (num_print(x) for x in self)
+        return ''.join(['[[', A, ', ', B, '], [', C, ', ', D,']]'])
 
-def matrix2_det(M):
-  """determinant of 2x2 matrix"""
-  return M[0][0]*M[1][1] - M[0][1]*M[1][0]
-  
-def matrix2_inv(M):
-  inv_det = 1.0/matrix2_det(M)
-  return [[inv_det*M[1][1],-inv_det*M[0][1]],[-inv_det*M[1][0],inv_det*M[0][0]]]
+    def cast(self, other):
+        if isinstance(other, Number):
+            return matrix(other, 0, 0, other)
+        else: return other
 
+    def __mul__(self, other):
+        other = self.cast(other)
+        if isinstance(other, matrix):
+            a, b, c, d = self
+            w, x, y, z = other
+            # [a b][w x] = [aw + by ax + bz]
+            # [c d][y z]   [cw + dy cx + dz]
+            return matrix(a*w + b*y, a*x + b*z, 
+                          c*w + d*y, c*x + d*z)
+        else: return other.__rmul__(self)
+
+    def trace(self):
+        a, b, c, d = self
+        return a + d
+
+    def det(self):
+        a, b, c, d = self
+        return a*d - b*c
+
+    def unit(self):
+        D = self.det()
+        return self * intify(sqrt(D)**(-1))
+
+    def inverse(self):
+        D = self.det()
+        a, b, c, d = self
+        # [a b]*[ d -b] = [D 0]
+        # [c d] [-c  a]   [0 D]. 
+        # One way to remember the formula is to think about how you
+        # invert elliptic, parabolic, and hyperbolic elements.  
+        return intify(D**(-1)) * matrix(d, -b, -c, a) 
+        # NB - I intified the inverse of the determinant because one
+        # use case is det == 1.  In that case using D**-1 (ie a float)
+        # will lose accuracy even for very modestly sized matrices.
+
+    def transpose(self):
+        a, b, c, d = self
+        return matrix(a, c, b, d)
+
+    def conjugate_transpose(self):
+        return (self.conjugate()).transpose()
+
+    def __call__(self, z): # z is a number
+        v = vector(z, 1)
+        w = self * v
+        return w.frac()
+
+    
 #   projective geometry   
 
 class CP1(tuple):
+
     def complex(self):
         if abs(a[1]) < 0.000001 * abs(a[0]):
             return complex(10,10) ### hack, useful for debugging
@@ -79,17 +147,21 @@ class CP1(tuple):
   ## h[z1_, z2_, z3_] := {{z2 - z3, -z1 (z2 - z3)}, {z2 - z1, -z3 (z2 - z1)}};
   ## g[p_, q_, r_, u_, v_, w_] := Inverse[h[u, v, w]].h[p, q, r];
 
+
 def inf_zero_one_to_triple(p,q,r):
-  p1,p2=p
-  q1,q2=q
-  r1,r2=r
-  M = [[p1,q1],[p2,q2]]
-  Minv = matrix2_inv(M)
-  [mu,lam] = matrix_mult_vector(matrix2_inv([[p1,q1],[p2,q2]]), [r1,r2])
-  return [[mu*p1, lam*q1],[mu*p2, lam*q2]]
+    p1, p2 = p
+    q1, q2 = q
+    r1, r2 = r
+    M = matrix(p1, q1, p2, q2)
+    Minv = M.inverse() # matrix2_inv(M)
+    mu, lam = Minv * r
+    # [mu, lam] = matrix_mult_vector(matrix2_inv([[p1,q1],[p2,q2]]), [r1,r2])
+    return matrix(mu*p1, lam*q1, mu*p2, lam*q2)
+
 
 def two_triples_to_PSL(a1,b1,c1,a2,b2,c2):
-  return matrix_mult( inf_zero_one_to_triple(a2,b2,c2), matrix2_inv(inf_zero_one_to_triple(a1,b1,c1) ) ) 
+    return matrix_mult( inf_zero_one_to_triple(a2,b2,c2), matrix2_inv(inf_zero_one_to_triple(a1,b1,c1) ) ) 
+
 
 if __name__ == '__main__':
     print sign([0,1,2,3])
