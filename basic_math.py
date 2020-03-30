@@ -2,6 +2,7 @@
 # basic_math.py
 #
 
+
 # helper functions for printing
 
 def intify(a):
@@ -11,6 +12,7 @@ def intify(a):
             return int(a)
     return a
 
+
 def num_print(a):
     x = intify(a.real); y = intify(a.imag)
     if y == 0: 
@@ -19,6 +21,7 @@ def num_print(a):
         return str(y) + 'i'
     if y < 0: return str(x) + ' - ' + str(abs(y)) + 'i'
     else: return str(x) + ' + ' + str(y) + 'i'
+
 
 # permutations
 
@@ -33,6 +36,7 @@ def sign(perm):
                 out *= -1
     return out
 
+
 # linear algebra
 
 class vector(tuple):
@@ -44,8 +48,8 @@ class vector(tuple):
         return self.__class__(map(lambda x: -x, self))
 
     def __sub__(self, other):
+        # return self.__class__(map(lambda x,y: x-y, self, other))
         return self + (-other)
-#        return self.__class__(map(lambda x,y: x-y, self, other))
 
     def __mul__(self, other): # left mul == scalar mul on left
         if isinstance(other, Number):
@@ -67,7 +71,8 @@ class vector(tuple):
 #        pretty = [num_print(x) for x in self]
 #        return '(' + ', '.join(printable) + ')'
 
-def matrix(tuple):
+
+class matrix(tuple):
 
     def __repr__(self): 
         A, B, C, D = (num_print(x) for x in self)
@@ -120,15 +125,29 @@ def matrix(tuple):
     def conjugate_transpose(self):
         return (self.conjugate()).transpose()
 
-    def __call__(self, z): # z is a number
-        v = vector(z, 1)
-        w = self * v
-        return w.frac()
-
+    def __call__(self, z): # z is a number or an element of CP1
+        if isinstance(z, Number):
+            v = vector(z, 1)
+            w = self * v
+            return w.frac()
+        if isinstance(z, CP1):
+            return self * z
     
 #   projective geometry   
 
 class CP1(tuple):
+
+    def __mul__(self, other):
+        raise TypeError
+
+    def __rmul__(self, other):
+        if isinstance(other, matrix):
+            p, q = self
+            a, b, c, d = other
+            # [a b][p] = [ap + bq]
+            # [c d][q]   [cp + dq]
+            return self.__class__(a*p + b*q, c*p + d*q)
+        else: raise TypeError
 
     def complex(self):
         if abs(a[1]) < 0.000001 * abs(a[0]):
@@ -148,7 +167,7 @@ class CP1(tuple):
   ## g[p_, q_, r_, u_, v_, w_] := Inverse[h[u, v, w]].h[p, q, r];
 
 
-def inf_zero_one_to_triple(p,q,r):
+def inf_zero_one_to(p, q, r):
     p1, p2 = p
     q1, q2 = q
     r1, r2 = r
@@ -159,8 +178,8 @@ def inf_zero_one_to_triple(p,q,r):
     return matrix(mu*p1, lam*q1, mu*p2, lam*q2)
 
 
-def two_triples_to_PSL(a1,b1,c1,a2,b2,c2):
-    return matrix_mult( inf_zero_one_to_triple(a2,b2,c2), matrix2_inv(inf_zero_one_to_triple(a1,b1,c1) ) ) 
+def move_in_PSL(a, b, c, p, q, r):
+    return inf_zero_one_to(p, q, r) * inf_zero_one_to(a, b, c).inverse()
 
 
 if __name__ == '__main__':
