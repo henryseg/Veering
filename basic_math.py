@@ -2,6 +2,7 @@
 # basic_math.py
 #
 
+from numbers import Number
 
 # helper functions for printing
 
