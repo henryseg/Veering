@@ -1,16 +1,16 @@
 from file_io import parse_data_file, read_from_pickle
 from taut import isosig_to_tri_angle
 from veering import veering_triangulation
-from develop_ideal_hyperbolic_tetrahedra import developed_position, convert_to_complex, unknown_vert_to_known_verts_ordering
+from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
 from basic_math import sign
 
 class vertex:
-    def __init__(self, CP1):
-        self.CP1 = CP1
+    def __init__(self, pos):
+        self.pos = pos
         ### maybe an age
     def __repr__(self):
-        if self.CP1 != [1,0]:
-            return str(convert_to_complex(self.CP1))
+        if not self.pos.is_infinity():
+            return str(self.pos.complex())
         else:
             return "inf"
     def __str__(self):
@@ -154,9 +154,9 @@ class continent:
 
         self.tet_face = initial_tet_face
 
-        self.vertices = [vertex(v) for v in self.tet_face.verts_CP1]
+        self.vertices = [vertex(v) for v in self.tet_face.verts_pos]
         self.infinity = self.vertices[self.tet_face.face]
-        assert self.infinity.CP1[1] == 0
+        assert self.infinity.pos.is_infinity()
 
         # self.infinity = vertex([1,0])
         # self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
@@ -446,9 +446,9 @@ class continent:
             vert_b, vert_c, vert_a = triangle.vertices
 
         tet_vert_posns = [None, None, None, None]
-        tet_vert_posns[face_a] = vert_a.CP1
-        tet_vert_posns[face_b] = vert_b.CP1
-        tet_vert_posns[face_c] = vert_c.CP1
+        tet_vert_posns[face_a] = vert_a.pos
+        tet_vert_posns[face_b] = vert_b.pos
+        tet_vert_posns[face_c] = vert_c.pos
 
         ### next: permute the triangle verts in CP1 into tet order. Then plug through tet_ordering so we can develop
         tet_shape = self.vt.tet_shapes[tet.index()]

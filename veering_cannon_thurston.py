@@ -6,7 +6,7 @@ from veering import veering_triangulation
 
 import pyx ### vector graphics 
 
-from develop_ideal_hyperbolic_tetrahedra import develop_verts_CP1, convert_to_complex
+from develop_ideal_hyperbolic_tetrahedra import develop_verts_pos
 
 from file_io import read_from_pickle
 
@@ -22,8 +22,8 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
 
         self.top, self.bottom = get_top_bottom(self.vt, self.tet_num)
 
-        self.end_complex = convert_to_complex(verts_CP1[self.bottom[self.top.index(forward_face_vertex)]])
-        self.start_complex = convert_to_complex(verts_CP1[self.bottom[(self.top.index(forward_face_vertex)+1)%2]])
+        self.end_complex = verts_CP1[self.bottom[self.top.index(forward_face_vertex)]].complex()
+        self.start_complex = verts_CP1[self.bottom[(self.top.index(forward_face_vertex)+1)%2]].complex()
 
         self.length = abs(self.start_complex - self.end_complex)
         self.index = self.vt.tri.tetrahedron(self.tet_num).edge( edge_vert_index_map[ tuple(sorted(self.bottom)) ] ).index() 

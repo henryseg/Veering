@@ -65,7 +65,7 @@ class vector(tuple):
             a, b, c, d = other
             # [a b][p] = [ap + bq]
             # [c d][q]   [cp + dq]
-            return self.__class__(a*p + b*q, c*p + d*q)
+            return self.__class__((a*p + b*q, c*p + d*q))
         else: raise TypeError
 
 #    def __repr__(self): 
@@ -81,8 +81,9 @@ class matrix(tuple):
 
     def cast(self, other):
         if isinstance(other, Number):
-            return matrix(other, 0, 0, other)
-        else: return other
+            return matrix((other, 0, 0, other))
+        else: 
+            return other
 
     def __mul__(self, other):
         other = self.cast(other)
@@ -91,9 +92,16 @@ class matrix(tuple):
             w, x, y, z = other
             # [a b][w x] = [aw + by ax + bz]
             # [c d][y z]   [cw + dy cx + dz]
-            return matrix(a*w + b*y, a*x + b*z, 
-                          c*w + d*y, c*x + d*z)
-        else: return other.__rmul__(self)
+            return matrix((a*w + b*y, a*x + b*z, 
+                           c*w + d*y, c*x + d*z))
+        else: 
+            return other.__rmul__(self)
+
+    def __rmul__(self, other):
+        if isinstance(other, Number):
+            return self.cast(other) * self
+        else: 
+            raise TypeError
 
     def trace(self):
         a, b, c, d = self
@@ -114,23 +122,23 @@ class matrix(tuple):
         # [c d] [-c  a]   [0 D]. 
         # One way to remember the formula is to think about how you
         # invert elliptic, parabolic, and hyperbolic elements.  
-        return intify(D**(-1)) * matrix(d, -b, -c, a) 
+        return intify(D**(-1)) * matrix((d, -b, -c, a))
         # NB - I intified the inverse of the determinant because one
         # use case is det == 1.  In that case using D**-1 (ie a float)
         # will lose accuracy even for very modestly sized matrices.
 
     def transpose(self):
         a, b, c, d = self
-        return matrix(a, c, b, d)
+        return matrix((a, c, b, d))
 
     def conjugate_transpose(self):
         return (self.conjugate()).transpose()
 
     def __call__(self, z): # z is a number or an element of CP1
         if isinstance(z, Number):
-            v = vector(z, 1)
+            v = vector((z, 1))
             w = self * v
-            return w.frac()
+            return w[0]/w[1]
         if isinstance(z, CP1):
             return self * z
     
@@ -147,20 +155,23 @@ class CP1(tuple):
             a, b, c, d = other
             # [a b][p] = [ap + bq]
             # [c d][q]   [cp + dq]
-            return self.__class__(a*p + b*q, c*p + d*q)
+            return self.__class__((a*p + b*q, c*p + d*q))
         else: raise TypeError
 
+    def is_infinity(self):
+        return abs(self[1]) < 0.000001 * abs(self[0])
+
     def complex(self):
-        if abs(a[1]) < 0.000001 * abs(a[0]):
+        if self.is_infinity():
             return complex(10,10) ### hack, useful for debugging
         else:
-            return a[0]/a[1]
+            return self[0]/self[1]
 
-    def preferred_rep(a):
-      if abs(a[1]) < 0.00001:
-        return a
+    def preferred_rep(self):
+      if abs(self[1]) < 0.00001:
+        return self
       else:
-        return [a[0]/a[1], complex(1.0,0.0)]   ### saul: perhaps should divide by cmath.sqrt(a[0]*a[1])
+        return CP1((self[0]/self[1], complex(1.0,0.0)))  ### saul: perhaps should divide by cmath.sqrt(a[0]*a[1])
 
   ## g[p_,q_,r_,s_,t_,u_] is a matrix that takes p,q,r to s,t,u
 
@@ -172,11 +183,11 @@ def inf_zero_one_to(p, q, r):
     p1, p2 = p
     q1, q2 = q
     r1, r2 = r
-    M = matrix(p1, q1, p2, q2)
+    M = matrix((p1, q1, p2, q2))
     Minv = M.inverse() # matrix2_inv(M)
     mu, lam = Minv * r
     # [mu, lam] = matrix_mult_vector(matrix2_inv([[p1,q1],[p2,q2]]), [r1,r2])
-    return matrix(mu*p1, lam*q1, mu*p2, lam*q2)
+    return matrix((mu*p1, lam*q1, mu*p2, lam*q2))
 
 
 def move_in_PSL(a, b, c, p, q, r):

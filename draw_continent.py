@@ -3,7 +3,6 @@ import pyx ### vector graphics
 
 from file_io import parse_data_file, read_from_pickle
 from taut import isosig_to_tri_angle
-from develop_ideal_hyperbolic_tetrahedra import convert_to_complex
 from veering import veering_triangulation
 from continent import continent
 from boundary_triangulation import boundary_triangulation
@@ -36,7 +35,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     eq =  con.equator()
     eq = eq[1:]  ## remove infinity vertex
 
-    eq_C = [ convert_to_complex(v.CP1) for v in eq ]
+    eq_C = [ v.pos.complex() for v in eq ]
 
     canv = pyx.canvas.canvas() 
 
@@ -47,13 +46,13 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
 
     # lines for triangles meeting infinity
     for endpoints, veering_colour in adj_edges:
-        z, w = [convert_to_complex(v.CP1) for v in endpoints]
+        z, w = [v.pos.complex() for v in endpoints]
         pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
         canv.stroke(pyx.path.line( z.real, z.imag, w.real, w.imag),  [pyx.style.linewidth(lw * 1.5), pyx_stroke_col]  )
 
     # dots for edges from infinity
     for v,veering_colour in adj_verts:
-        z = convert_to_complex(v.CP1)
+        z = v.pos.complex()
         pyx_fill_col = pyx.deco.filled([colours[veering_colour]])
         canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
 

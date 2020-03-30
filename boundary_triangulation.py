@@ -1,9 +1,9 @@
 
 from file_io import parse_data_file, read_from_pickle
-from basic_math import vector
+from basic_math import vector, matrix, CP1
 from taut import isosig_to_tri_angle
 from veering import veering_triangulation
-from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_CP1, unknown_vert_to_known_verts_ordering, convert_to_complex
+from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
 from veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
 
 import pyx ### vector graphics 
@@ -15,13 +15,13 @@ anglechoice_face2vert = {(0,0):1, (0,1):0, (0,2):3, (0,3):2,
 ### example usage: next_pi_vertex = anglechoice_face2vert[ (self.angle_structure[next_tet.index()], inf_vert) ]
 
 class tet_face:
-    def __init__(self, tet_num, face, verts_CP1 = None):
+    def __init__(self, tet_num, face, verts_pos = None):
         self.tet_num = tet_num
         self.face = face
-        self.verts_CP1 = verts_CP1
+        self.verts_pos = verts_pos
         self.origin_in_C = complex(0,0)  ### used to move things around for drawing
 
-    def __eq__(self, other): ## don't care about verts_CP1
+    def __eq__(self, other): ## don't care about verts_pos
         return self.tet_num == other.tet_num and self.face == other.face 
 
     def __ne__(self, other):
@@ -30,8 +30,8 @@ class tet_face:
     def __repr__(self):
         return '(' + str(self.tet_num) + ',' + str(self.face) + ')'
 
-    def rotate(self, complex_scale):
-        self.verts_CP1 = [ [v[0] * complex_scale, v[1]] for v in self.verts_CP1]
+    def transform(self, mob_tsfm):
+        self.verts_pos = [ mob_tsfm * v for v in self.verts_pos]
 
 class ladder_unit(tet_face):
     """a triangle in a ladder, together with associated data"""
@@ -39,7 +39,7 @@ class ladder_unit(tet_face):
     def __init__(self, vt, tf):
         self.vt = vt
         # self.tet_face = tf
-        tet_face.__init__(self, tf.tet_num, tf.face, verts_CP1 = tf.verts_CP1)
+        tet_face.__init__(self, tf.tet_num, tf.face, verts_pos = tf.verts_pos)
         self.left_vertices = []  # of the ladder, not in terms of veering colours
         self.right_vertices = []
         self.calculate_left_right_vertices()
@@ -224,7 +224,7 @@ class ladder_unit(tet_face):
 
     def get_ct_edge(self, ladder_is_even):
         # assert self.is_on_left()
-        # start_ct_edge = ct_edge(self.tet_num, None, self.verts_CP1, 0, self.vt)
+        # start_ct_edge = ct_edge(self.tet_num, None, self.verts_pos, 0, self.vt)
         ### when on an even ladder (concave down in our pictures) the edge_vertex is the inf vertex, the face_vertex is the singleton
         ### vice versa for odd ladders  
         if self.is_on_left():
@@ -237,7 +237,7 @@ class ladder_unit(tet_face):
         else:
             edge_vertex = singleton
             face_vertex = self.face # inf vertex
-        self.ct_edge = get_ct_edge_above(self.vt.tri.tetrahedron(self.tet_num), self.verts_CP1, edge_vertex, face_vertex, self.vt, 0, depth_increment = 0, verbose = 0.0)
+        self.ct_edge = get_ct_edge_above(self.vt.tri.tetrahedron(self.tet_num), self.verts_pos, edge_vertex, face_vertex, self.vt, 0, depth_increment = 0, verbose = 0.0)
 
     def generate_ct(self, ladder_is_even = True, args = {}):
         #max_depth = 1, epsilon = 0.02, verbose = 0.0):
@@ -329,11 +329,11 @@ class ladder:
                     neighbour = self.torus_triangulation.ladder_list[0].ladder_unit_list[neighbour_index_in_ladder_list]
                     back_vert = ladder_unit.right_vertices[0]
                     neighbour_back_vert = gluing[back_vert]
-                    offset = convert_to_complex(neighbour.verts_CP1[neighbour_back_vert]) - convert_to_complex(ladder_unit.verts_CP1[back_vert]) 
+                    offset = neighbour.verts_pos[neighbour_back_vert].complex() - ladder_unit.verts_pos[back_vert].complex() 
                     temp_origin = self.torus_triangulation.ladder_list[0].ladder_origin + offset
                 for i in range(4):
                     if ladder_unit.face != i:  # don't include infinity vertex
-                        c = convert_to_complex(ladder_unit.verts_CP1[i]) 
+                        c = ladder_unit.verts_pos[i].complex() 
 
                         c = args['geom_complex_scale'] * ( c + temp_origin ) 
                         posns_dict[i] = c
@@ -374,15 +374,15 @@ class ladder:
             current_pi_vertex = anglechoice_face2vert[ (self.vt.angle[current_tet.index()], current_inf_vert) ]
             gluing = current_tet.adjacentGluing(current_pi_vertex)
             current_tet = current_tet.adjacentTetrahedron(current_pi_vertex)
-            verts_CP1 = None
-            if current_tf.verts_CP1 != None:
-                verts_CP1 = develop_verts_CP1(current_tf.verts_CP1, gluing, current_pi_vertex, self.vt.tet_shapes[current_tet.index()])
+            verts_pos = None
+            if current_tf.verts_pos != None:
+                verts_pos = develop_verts_pos(current_tf.verts_pos, gluing, current_pi_vertex, self.vt.tet_shapes[current_tet.index()])
             current_inf_vert = gluing[current_inf_vert]
-            current_tf = tet_face( current_tet.index(), current_inf_vert, verts_CP1 = verts_CP1 )
+            current_tf = tet_face( current_tet.index(), current_inf_vert, verts_pos = verts_pos )
             if current_tf == start_tf:
                 not_inf_vert = (start_tf.face + 1) % 4
-                if current_tf.verts_CP1 != None:
-                    self.holonomy = convert_to_complex(start_tf.verts_CP1[not_inf_vert]) - convert_to_complex(current_tf.verts_CP1[not_inf_vert])
+                if current_tf.verts_pos != None:
+                    self.holonomy = start_tf.verts_pos[not_inf_vert].complex() - current_tf.verts_pos[not_inf_vert].complex()
                     ### the first ladder has blue vertices on its left, which means that the ladder in convex down, which means this calculated holonomy
                     ### would be downwards, but we want it to be upwards. So, we do start - current
                 break
@@ -395,17 +395,17 @@ class ladder:
         out = []
         for lu in self.ladder_unit_list:
             if lu.is_on_left():
-                out.append( convert_to_complex(lu.verts_CP1[ lu.left_vertices[0] ]) )
+                out.append( lu.verts_pos[ lu.left_vertices[0] ].complex() )
         out.append( out[0] + self.torus_triangulation.ladder_holonomy ) 
         if not self.is_even:
             out = [v + self.holonomy for v in out]
         return out
 
-    def rotate(self, complex_scale):
-        self.holonomy *= complex_scale
-        self.ladder_origin *= complex_scale
+    def transform(self, mob_tsfm):
+        self.holonomy = mob_tsfm(self.holonomy)
+        self.ladder_origin *= mob_tsfm(self.ladder_origin)
         for lu in self.ladder_unit_list:
-            lu.rotate(complex_scale)
+            lu.transform(mob_tsfm)
 
 def draw_vertex_colour(my_canvas, coords, veering_direction):
     colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
@@ -476,19 +476,19 @@ class torus_triangulation:
         rho = []
         current_tet_face = start_tet_face
 
-        verts_CP1 = None
+        verts_pos = None
         if self.vt.tet_shapes != None:  ### set up vertex positions on CP1 for first tetrahedron, so face is at infinity
-            verts_CP1 = [None, None, None, None]
-            verts_CP1[face] = [1,0]
-            verts_CP1[3-face] = [0,1]
-            verts_CP1[(face+2)%4] = [1,1]
+            verts_pos = [None, None, None, None]
+            verts_pos[face] = CP1((1,0))
+            verts_pos[3-face] = CP1((0,1))
+            verts_pos[(face+2)%4] = CP1((1,1))
             last_vert = 3 - ((face+2)%4)
             ordering = unknown_vert_to_known_verts_ordering[last_vert] 
-            verts_CP1[last_vert] = developed_position(verts_CP1[ordering[0]], verts_CP1[ordering[1]], verts_CP1[ordering[2]], self.vt.tet_shapes[tet_num])
-            # print 'tet, inf, shapes', tet_num, face, verts_CP1
-        current_tf = tet_face(current_tet_face.tet_num, current_tet_face.face, verts_CP1 = verts_CP1) 
+            verts_pos[last_vert] = developed_position(verts_pos[ordering[0]], verts_pos[ordering[1]], verts_pos[ordering[2]], self.vt.tet_shapes[tet_num])
+            # print 'tet, inf, shapes', tet_num, face, verts_pos
+        current_tf = tet_face(current_tet_face.tet_num, current_tet_face.face, verts_pos = verts_pos) 
         
-        while current_tf not in rho:  ### ignoring the verts_CP1 information because of our equality definition for tet_faces
+        while current_tf not in rho:  ### ignoring the verts_pos information because of our equality definition for tet_faces
             rho.append(current_tf)
             tet_num, inf_vert = current_tf.tet_num, current_tf.face
             pi_vertex = anglechoice_face2vert[ (self.vt.angle[tet_num], inf_vert) ]
@@ -510,7 +510,7 @@ class torus_triangulation:
             assert start_leading_edge_colour == pi_colour # for some reason...
             tet = self.vt.tri.tetrahedron(tet_num)
             if self.vt.tet_shapes != None:
-                verts_CP1 = current_tf.verts_CP1
+                verts_pos = current_tf.verts_pos
             while self.vt.get_edge_between_verts_colour(tet.index(), (leading_vertex, pivot_vertex)) == start_leading_edge_colour:
                 # print tet.index(), '|iplt|', inf_vert, pivot_vertex, leading_vertex, trailing_vertex
                 gluing = tet.adjacentGluing(trailing_vertex)
@@ -519,16 +519,16 @@ class torus_triangulation:
                 new_pivot_vertex = gluing[pivot_vertex]
                 new_leading_vertex, new_trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
                 if self.vt.tet_shapes != None:
-                    verts_CP1 = develop_verts_CP1(verts_CP1, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()])
-                    # print 'tet, inf, shapes', new_tet.index(), new_inf_vert, verts_CP1
-                    assert verts_CP1[new_inf_vert] == [1,0]
+                    verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()])
+                    # print 'tet, inf, shapes', new_tet.index(), new_inf_vert, verts_pos
+                    assert verts_pos[new_inf_vert] == CP1((1,0))
                 tet = new_tet
                 inf_vert, pivot_vertex, leading_vertex, trailing_vertex = new_inf_vert, new_pivot_vertex, new_leading_vertex, new_trailing_vertex
-            current_tf = tet_face( tet.index(), inf_vert, verts_CP1 = verts_CP1 )
-        sideways = rho[rho.index(current_tf):]   ### remove initial tail. Here .index ignores the verts_CP1 data of a tet_face
+            current_tf = tet_face( tet.index(), inf_vert, verts_pos = verts_pos )
+        sideways = rho[rho.index(current_tf):]   ### remove initial tail. Here .index ignores the verts_pos data of a tet_face
 
         not_inf_vert = (current_tf.face + 1) % 4
-        self.sideways_holonomy = convert_to_complex(current_tf.verts_CP1[not_inf_vert]) - convert_to_complex(sideways[0].verts_CP1[not_inf_vert]) 
+        self.sideways_holonomy = current_tf.verts_pos[not_inf_vert].complex() - sideways[0].verts_pos[not_inf_vert].complex() 
         ### in cases when i(sideways, ladderpole slope) > 1, this isn't what we want for moving things around
 
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
@@ -568,14 +568,14 @@ class torus_triangulation:
 
             ### now rotate everything so that ladder_holonomy is i
 
-            complex_scale = complex(0,1)/self.ladder_holonomy
-            self.rotate(complex_scale)
+            mob_tsfm = matrix(( complex(0,1)/self.ladder_holonomy, 0, 0, 1 ))
+            self.transform(mob_tsfm)
 
-    def rotate(self, complex_scale):
-        self.ladder_holonomy *= complex_scale 
-        self.sideways_holonomy *= complex_scale 
+    def transform(self, mob_tsfm):
+        self.ladder_holonomy = mob_tsfm(self.ladder_holonomy)
+        self.sideways_holonomy *= mob_tsfm(self.sideways_holonomy)
         for L in self.ladder_list:
-            L.rotate(complex_scale)
+            L.transform(mob_tsfm)
 
     def draw_symmetries(self, my_canvas, draw=True):
         count = 0
