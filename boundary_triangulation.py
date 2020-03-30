@@ -397,9 +397,9 @@ class ladder:
             if lu.is_on_left():
                 out.append( lu.verts_pos[ lu.left_vertices[0] ].complex() )
         out.append( out[0] + self.torus_triangulation.ladder_holonomy ) 
-        if not self.is_even:
-            out = [v + self.holonomy for v in out]
         return out
+
+    ### remove stuff from draw_continent to do with the boundary triangulation, we should be doing that here. Send it a canvas
 
     def transform(self, mob_tsfm):
         self.holonomy = mob_tsfm(self.holonomy)
@@ -460,7 +460,6 @@ class torus_triangulation:
             if args['style'] == 'ladders':
                 L.ladder_origin = complex(args['ladder_width'] * i, 0)  ## ignore any stuff already in ladder_origin
             elif args['style'] == 'geometric':
-                L.ladder_origin = L.ladder_origin - (i%2) * self.ladder_holonomy 
                 geom_complex_scale = args['geometric_scale_factor']*len(self.ladder_list[0].ladder_unit_list) * complex(0,1) / self.ladder_holonomy ## rotate and scale
                 args['geom_complex_scale'] = geom_complex_scale
             L.calc_verts_C(args = args)
@@ -565,6 +564,10 @@ class torus_triangulation:
             for i, L in enumerate(self.ladder_list):
                 L.is_even = (i%2 == 0)
                 assert abs( (-1)**(i%2) * L.holonomy - self.ladder_holonomy ) < 0.001 ## all ladder holonomies the same
+
+                if L.is_even:  ## move them up 
+                    mob_tsfm = matrix(( 1, self.ladder_holonomy, 0, 1 ))
+                    L.transform(mob_tsfm)
 
             ### now rotate everything so that ladder_holonomy is i
 
@@ -791,9 +794,9 @@ if __name__ == "__main__":
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
     args = {'draw':True, 'ct_depth':-1, 'ct_epsilon':0.03, 'geometric_scale_factor': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
 
-    # args['style'] = 'ladders'
+    args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
-    args['style'] = 'geometric'
+    # args['style'] = 'geometric'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 50)
 
     
@@ -813,6 +816,7 @@ if __name__ == "__main__":
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     args['tet_shapes'] = shapes_data[name]
+    # args['tet_shapes'] = None
     draw_triangulation_boundary_from_veering_isosig(name, args = args, output_filename = name + '_' + '_' + args['style'] + str(args['ct_depth']) + '_' + str(args['ct_epsilon']) + '.pdf', verbose = 1.0)
 
 
