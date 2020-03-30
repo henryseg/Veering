@@ -18,9 +18,18 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
     B = boundary_triangulation(vt)
 
-    print B.torus_triangulation_list[0].ladder_holonomy
+    # print B.torus_triangulation_list[0].ladder_holonomy
+    T = B.torus_triangulation_list[0]
 
-    initial_tet_face = B.torus_triangulation_list[0].ladder_list[0].ladder_unit_list[0]
+    ### make initial_tet_face be in the lower left of the fundamental domain
+    # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
+    
+    ### make initial_tet_face be in the middle of the fundamental domain
+    
+    num_ladders = len(T.ladder_list)
+    L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
+    num_ladder_units = len(L.ladder_unit_list)
+    initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
 
     con = continent( vt, initial_tet_face )
     con.build(max_num_tetrahedra)

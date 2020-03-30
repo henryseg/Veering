@@ -1,27 +1,12 @@
 
 from file_io import parse_data_file, read_from_pickle
+from basic_math import vector
 from taut import isosig_to_tri_angle
 from veering import veering_triangulation
 from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_CP1, unknown_vert_to_known_verts_ordering, convert_to_complex
 from veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
 
 import pyx ### vector graphics 
-
-class vector(list):
-  def __add__(self, other):
-    return self.__class__(map(lambda x,y: x+y, self, other)) #self.__class__ is vector, unless i am a polynomial or something!
-
-  def __neg__(self):
-    return self.__class__(map(lambda x: -x, self))
-
-  def __sub__(self, other):
-    return self.__class__(map(lambda x,y: x-y, self, other))
-
-  def __mul__(self, other): #mult by scalar
-    return self.__class__(map(lambda x: x*other, self))
-
-  def __rmul__(self, other):
-    return (self*other)
 
 anglechoice_face2vert = {(0,0):1, (0,1):0, (0,2):3, (0,3):2,
                          (1,0):2, (1,1):3, (1,2):0, (1,3):1,
