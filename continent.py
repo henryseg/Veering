@@ -146,13 +146,15 @@ class landscape_triangle:
                     raise
 
 class continent:
-    def __init__(self, vt, initial_tet_face):
+    def __init__(self, vt, initial_tet_face, desired_vertices = None):
         # print 'initializing continent'
         self.vt = vt
         self.triangles = []
         self.num_tetrahedra = 1
 
         self.tet_face = initial_tet_face
+        self.desired_vertices = desired_vertices
+        self.found_vertices = set()
 
         self.vertices = [vertex(v) for v in self.tet_face.verts_pos]
         self.infinity = self.vertices[self.tet_face.face]
@@ -258,6 +260,19 @@ class continent:
             triangle_d.neighbours = [triangle_a, triangle_b, triangle_c]
         # self.sanity_check()
 
+        if self.desired_vertices != None:
+            for v in self.vertices:
+                if v != self.infinity:
+                    self.check_vertex_desired(v) 
+
+    def check_vertex_desired(self, v, epsilon = 0.01):
+        v_in_C = v.pos.complex()
+        for w in self.desired_vertices:
+            if abs(v_in_C - w) < epsilon:
+                self.desired_vertices.remove(w)
+                self.found_vertices.add(v)
+                break
+
     def sanity_check(self):
         for tri in self.triangles:
             tri.check_against_neighbours()
@@ -283,9 +298,9 @@ class continent:
         self.num_tetrahedra += 1
         # self.sanity_check()
 
-    def build(self, max_num_tetrahedra):
+    def build(self, until_have_desired_vertices = True, max_num_tetrahedra = 50000):
         first_non_buried_index = 0
-        while self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
+        while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
             tri = self.triangles[first_non_buried_index]
             self.bury(tri)
             first_non_buried_index += 1
@@ -375,6 +390,12 @@ class continent:
         neighbour.not_downriver()[0].update_contacts(neighbour, triangle_b)
         neighbour.not_downriver()[1].update_contacts(neighbour, triangle_a)
 
+        if self.desired_vertices != None:
+            new_edge = [vert_t, vert_n]
+            if self.infinity in new_edge:
+                new_edge.remove(self.infinity)
+                self.check_vertex_desired(new_edge.pop()) 
+
         triangle.is_buried = True
         neighbour.is_buried = True
 
@@ -458,6 +479,10 @@ class continent:
         # print [ vertex(p) for p in [tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]]] ]
         # print vert_t
         self.vertices.append(vert_t)
+
+        if self.desired_vertices != None:
+            if self.infinity in triangle.vertices:
+                self.check_vertex_desired(vert_t) 
 
         # if self.infinity in triangle.vertices:
         #     which_one = [vert_a, vert_b, vert_c].index(self.infinity)

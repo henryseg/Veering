@@ -583,6 +583,11 @@ class torus_triangulation:
         for L in self.ladder_list:
             L.transform(mob_tsfm)
 
+    def left_ladder_pole_vertices(self):
+        return [L.left_ladder_pole_vertices() for L in self.ladder_list]
+
+    ### symmetry stuff
+
     def draw_symmetries(self, my_canvas, draw=True):
         count = 0
         dict_of_tet_pairings = {}
