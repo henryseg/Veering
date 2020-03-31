@@ -11,11 +11,12 @@ from boundary_triangulation import boundary_triangulation
 # def pre_draw_transformation( z, ladder_holonomy ):
     # return z/ladder_holonomy
 
-def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = None, lw = 0.005 ):
+def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = None, draw_args = None, lw = 0.005 ):
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
     B = boundary_triangulation(vt)
+    B.generate_canvases(args = draw_args)
 
     # print B.torus_triangulation_list[0].ladder_holonomy
     T = B.torus_triangulation_list[0]
@@ -32,32 +33,33 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
 
     con = continent( vt, initial_tet_face )
     con.build(max_num_tetrahedra)
-    eq =  con.equator()
-    eq = eq[1:]  ## remove infinity vertex
+    eq = con.equator()
+    eq.remove(con.infinity)
 
-    eq_C = [ v.pos.complex() for v in eq ]
+    eq_C = [ T.drawing_scale * v.pos.complex() for v in eq ]
 
-    canv = pyx.canvas.canvas() 
+    # canv = pyx.canvas.canvas() 
+    canv = T.canv
 
     grad = pyx.color.gradient.Hue
     colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
 
-    adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()
+    # adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()
 
-    # lines for triangles meeting infinity
-    for endpoints, veering_colour in adj_edges:
-        z, w = [v.pos.complex() for v in endpoints]
-        pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
-        canv.stroke(pyx.path.line( z.real, z.imag, w.real, w.imag),  [pyx.style.linewidth(lw * 1.5), pyx_stroke_col]  )
+    # # lines for triangles meeting infinity
+    # for endpoints, veering_colour in adj_edges:
+    #     z, w = [v.pos.complex() for v in endpoints]
+    #     pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
+    #     canv.stroke(pyx.path.line( z.real, z.imag, w.real, w.imag),  [pyx.style.linewidth(lw * 1.5), pyx_stroke_col]  )
 
-    # dots for edges from infinity
-    for v,veering_colour in adj_verts:
-        z = v.pos.complex()
-        pyx_fill_col = pyx.deco.filled([colours[veering_colour]])
-        canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
+    # # dots for edges from infinity
+    # for v,veering_colour in adj_verts:
+    #     z = v.pos.complex()
+    #     pyx_fill_col = pyx.deco.filled([colours[veering_colour]])
+    #     canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
 
     p = pyx.path.path( pyx.path.moveto(eq_C[0].real, eq_C[0].imag) )
-    for coord in eq_C[1:]: 
+    for coord in eq_C[1:]:  ### this is how path drawing works...
       p.append( pyx.path.lineto(coord.real, coord.imag) )
     # canv.stroke(p, [pyx.style.linewidth(lw), colour])
     canv.stroke(p, [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)])
@@ -68,11 +70,12 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     T = B.torus_triangulation_list[0]
     for L in T.ladder_list:
         for v in L.left_ladder_pole_vertices():
+            v *= T.drawing_scale.real
             if L.is_even:
                 col = colours['L']
             else:
                 col = colours['R']
-            canv.stroke(pyx.path.circle(v.real, v.imag, 0.04), [pyx.style.linewidth(lw * 3), col])
+            canv.stroke(pyx.path.circle(v.real, v.imag, 0.15), [pyx.style.linewidth(lw * 3), col])
 
     canv.writePDFfile(output_filename)
 
@@ -92,16 +95,16 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 
 
 if __name__ == '__main__':
+    args = {'draw_boundary_triangulation':False, 'global_drawing_scale': 1.5, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     # veering_isosig = 'cPcbbbiht_12'
     # # veering_isosig = 'dLQacccjsnk_200'
     veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
-
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     tet_shapes = shapes_data[veering_isosig]
 
     max_num_tetrahedra = 10000
     filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '.pdf'
-    draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = filename )
+    draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = filename, draw_args = args )
 
     # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = 10000, num_to_draw = 10)
     
