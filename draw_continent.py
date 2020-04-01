@@ -11,6 +11,12 @@ from boundary_triangulation import boundary_triangulation
 # def pre_draw_transformation( z, ladder_holonomy ):
     # return z/ladder_holonomy
 
+def draw_path(canv, path_C, draw_options):
+    p = pyx.path.path( pyx.path.moveto(path_C[0].real, path_C[0].imag) )
+    for coord in path_C[1:]:  ### this is how path drawing works...
+        p.append( pyx.path.lineto(coord.real, coord.imag) )
+    canv.stroke(p, draw_options)
+
 def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = None, draw_args = None, lw = 0.005 ):
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
@@ -25,34 +31,51 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
     
     ### make initial_tet_face be in the middle of the fundamental domain
-    
     num_ladders = len(T.ladder_list)
     L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
     num_ladder_units = len(L.ladder_unit_list)
     initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
 
-    desired_vertices = [v for L in T.left_ladder_pole_vertices() for v in L]
+    ladderpoles_vertices = T.left_ladder_pole_vertices() 
+    desired_vertices = [v for L in ladderpoles_vertices for v in L]
 
     con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
     
     # con.build(until_have_desired_vertices = False, max_num_tetrahedra = max_num_tetrahedra)
-    con.build()
+    con.build()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
     print 'unfound desired_vertices', con.desired_vertices
     print 'num_tetrahedra', con.num_tetrahedra
 
-    eq = con.equator()
-    eq.remove(con.infinity)
+    # now replace ladderpoles_vertices with the continent's corresponding vertices 
+    epsilon = 0.001
+    for ladderpole_vertices in ladderpoles_vertices:
+        for i, w in enumerate(ladderpole_vertices):
+            for v in con.boundary_triangulation_vertices:
+                if abs(v.pos.complex() - w) < epsilon:
+                    ladderpole_vertices[i] = v
+                    break  
 
-    eq_C = [ T.drawing_scale * v.pos.complex() for v in eq ]
+    con.update_equator()    
 
-    # canv = pyx.canvas.canvas() 
-    canv = T.canv
+    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
+    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
 
     grad = pyx.color.gradient.Hue
-    colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
+    # colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}  
 
-    adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()
+    # draw_options = [pyx.style.linewidth(lw), colour])  ## needs to know which colour if we do this
+    draw_options = [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)]
+
+    canv = T.canv
+
+    for ladderpole_vertices in ladderpoles_vertices:
+        for i in range(len(ladderpole_vertices) - 1):  # fenceposts
+            path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
+            path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+            draw_path(canv, path_C, draw_options)  
+
+    # adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()  
 
     ### continent drawing the boundary triangulation
     # lines for triangles meeting infinity
@@ -66,13 +89,6 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     #     z = v.pos.complex()
     #     pyx_fill_col = pyx.deco.filled([colours[veering_colour]])
     #     canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
-
-    ### cannon thurston map
-    p = pyx.path.path( pyx.path.moveto(eq_C[0].real, eq_C[0].imag) )
-    for coord in eq_C[1:]:  ### this is how path drawing works...
-      p.append( pyx.path.lineto(coord.real, coord.imag) )
-    # canv.stroke(p, [pyx.style.linewidth(lw), colour])
-    canv.stroke(p, [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)])
 
     ### continent drawing the left_ladder_pole_vertices
     # T = B.torus_triangulation_list[0]

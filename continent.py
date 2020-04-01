@@ -154,11 +154,12 @@ class continent:
 
         self.tet_face = initial_tet_face
         self.desired_vertices = desired_vertices
-        self.found_vertices = set()
+        self.boundary_triangulation_vertices = set()
 
         self.vertices = [vertex(v) for v in self.tet_face.verts_pos]
         self.infinity = self.vertices[self.tet_face.face]
         assert self.infinity.pos.is_infinity()
+        self.equator = None
 
         # self.infinity = vertex([1,0])
         # self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
@@ -265,12 +266,12 @@ class continent:
                 if v != self.infinity:
                     self.check_vertex_desired(v) 
 
-    def check_vertex_desired(self, v, epsilon = 0.01):
+    def check_vertex_desired(self, v, epsilon = 0.001):
         v_in_C = v.pos.complex()
         for w in self.desired_vertices:
             if abs(v_in_C - w) < epsilon:
                 self.desired_vertices.remove(w)
-                self.found_vertices.add(v)
+                self.boundary_triangulation_vertices.add(v)
                 break
 
     def sanity_check(self):
@@ -522,7 +523,7 @@ class continent:
 
         triangle.is_buried = True
 
-    def equator(self):
+    def update_equator(self):
         """Returns vertices in anticlockwise order as viewed from above"""
         out = []
         for tri in self.triangles:
@@ -543,8 +544,18 @@ class continent:
         ## now rotate to put infinity first
         inf_vert_index = out.index( self.infinity )
         out = out[inf_vert_index:] + out[:inf_vert_index]
-        return out
+        self.equator = out
 
+    def segment_between(self, u, v):
+        """return the segment of the equator between u and v inclusive"""
+        assert u != v
+        u_ind = self.equator.index(u)
+        v_ind = self.equator.index(v)
+        if u_ind < v_ind:
+            return self.equator[u_ind : v_ind + 1]
+        else:
+            return self.equator[v_ind : u_ind + 1]
+        
     def vertices_and_edges_adjacent_to_infinity(self):
         ## vertices is set of (vertex, colour of edge from vertex to infinity)
         ## edges is list of ( (u,v), colour ) where u, v are vertices at either end of an edge opposite infinity in a triangle
