@@ -18,7 +18,7 @@ class tet_face:
     def __init__(self, tet_num, face, verts_pos = None):
         self.tet_num = tet_num
         self.face = face
-        self.verts_pos = verts_pos
+        self.verts_pos = verts_pos  ## in CP1
         self.origin_in_C = complex(0,0)  ### used to move things around for drawing
 
     def __eq__(self, other): ## don't care about verts_pos
@@ -277,7 +277,8 @@ class ladder:
         self.vt = torus_triangulation.vt
         self.holonomy = None
         self.is_even = None
-        self.ladder_origin = start_tf.origin_in_C
+        self.ladder_origin = None
+        # self.ladder_origin = start_tf.origin_in_C
         self.make_ladder(start_tf)
 
     def __str__(self):
@@ -292,12 +293,12 @@ class ladder:
         return left_length, right_length
         
     def calc_verts_C(self, args = {}):
-        origin = self.ladder_origin
         left_len, right_len = self.count_vertices()
         left_pos = 0
         right_pos = 0
         for ladder_unit in self.ladder_unit_list:
             if args['style'] == 'ladders':
+                origin = self.ladder_origin
                 width = args['ladder_width']
                 height = args['ladder_height']
                 if ladder_unit.is_on_right():
@@ -316,9 +317,10 @@ class ladder:
             else:
                 assert args['style'] == 'geometric'
                 posns_dict = {}
-                temp_origin = origin
+                offset = 0
                 if args['draw_triangles_near_poles'] and self == self.torus_triangulation.ladder_list[-1] and ladder_unit.is_on_right():
                     ### when drawing Cannon-Thurston, put these triangles on the left, so the cannon-thurston paths have triangles on both sides
+                    # print 'moving:', ladder_unit
                     tet = self.vt.tri.tetrahedron(ladder_unit.tet_num)
                     left_vert = ladder_unit.left_vertices[0]
                     neighbour_tet = tet.adjacentTetrahedron(left_vert)
@@ -329,20 +331,19 @@ class ladder:
                     back_vert = ladder_unit.right_vertices[0]
                     neighbour_back_vert = gluing[back_vert]
                     offset = neighbour.verts_pos[neighbour_back_vert].complex() - ladder_unit.verts_pos[back_vert].complex() 
-                    temp_origin = self.torus_triangulation.ladder_list[0].ladder_origin + offset
+                    # print offset
+                    
                 for i in range(4):
                     if ladder_unit.face != i:  # don't include infinity vertex
                         c = ladder_unit.verts_pos[i].complex() 
-
-                        c = self.torus_triangulation.drawing_scale * ( c + temp_origin ) 
+                        c = self.torus_triangulation.drawing_scale * ( c + offset ) 
                         posns_dict[i] = c
                 ladder_unit.verts_C = posns_dict
 
-    def draw(self, my_canvas, args = {}, origin = complex(0,0)):
-        # delta = args['delta']
-        origin = self.ladder_origin
+    def draw(self, my_canvas, args = {}):
         for ladder_unit in self.ladder_unit_list:
             if args['style'] == 'ladders':
+                origin = self.ladder_origin
                 width = args['ladder_width']
                 ladder_unit.draw_triangle_label(my_canvas, curvy = True, args = args)
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = True, args = args)
@@ -356,7 +357,6 @@ class ladder:
                         veering_colour = self.vt.get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)
                         ladder_unit.generate_ct(ladder_is_even = self.is_even, args = args)
                         # print len(ladder_unit.ct_developed_edges)
-                        # ladder_unit.draw_ct(my_canvas, origin, args['drawing_scale'], colour = colour)
                         ladder_unit.draw_ct_path(my_canvas, origin, self.torus_triangulation.drawing_scale, veering_colour = veering_colour)
             ladder_unit.draw_vertex_dots(my_canvas)
 
@@ -402,7 +402,6 @@ class ladder:
 
     def transform(self, mob_tsfm):
         self.holonomy = mob_tsfm(self.holonomy)
-        self.ladder_origin *= mob_tsfm(self.ladder_origin)
         for lu in self.ladder_unit_list:
             lu.transform(mob_tsfm)
 
@@ -448,7 +447,7 @@ class torus_triangulation:
         self.make_torus_triangulation(start_tet_face)
         self.tet_faces = []
         for i,l in enumerate(self.ladder_list):
-            # print 'ladder', i
+            # print 'ladder', i 
             for lu in l.ladder_unit_list:
                 # print lu
                 self.tet_faces.append(lu)
@@ -536,8 +535,11 @@ class torus_triangulation:
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         if self.vt.coorientations[tet_num][inf_vert] == 1: 
             # print 'choice 1'
-            sideways[0].origin_in_C += self.sideways_holonomy
-            sideways = sideways[1:] + sideways[:1] ## convention: first ladder is convex down, aka green
+            ## convention: 0th ladder is convex down, aka green. So:
+            ### move 0th ladder to the end
+            mob_tsfm = matrix((1, self.sideways_holonomy, 0, 1))
+            sideways[0].transform(mob_tsfm)
+            sideways = sideways[1:] + sideways[:1] 
 
         ## make sideways go to the right rather than to the left
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
@@ -545,9 +547,13 @@ class torus_triangulation:
         cols = [self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) for v in verts]
         if cols.count('R') == 2:  # pi is on the right, so sideways must be going left
             # print 'choice 2'
+            # maintain first ladder convex down
+            # move last ladder to start
+            mob_tsfm = matrix((1, -self.sideways_holonomy, 0, 1))
+            sideways[-1].transform(mob_tsfm)
+            sideways = sideways[-1:] + sideways[:-1] 
             sideways.reverse()
-            sideways[0].origin_in_C -= self.sideways_holonomy # put it back where we found it
-            sideways = sideways[1:] + sideways[:1] # maintain first ladder convex down
+            # sideways = sideways[1:] + sideways[:1] 
         return sideways
 
     def make_torus_triangulation(self, start_tet_face):
@@ -579,7 +585,7 @@ class torus_triangulation:
 
     def transform(self, mob_tsfm):
         self.ladder_holonomy = mob_tsfm(self.ladder_holonomy)
-        self.sideways_holonomy *= mob_tsfm(self.sideways_holonomy)
+        self.sideways_holonomy = mob_tsfm(self.sideways_holonomy)
         for L in self.ladder_list:
             L.transform(mob_tsfm)
 
@@ -800,12 +806,13 @@ if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
     args = {'draw_boundary_triangulation':True, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
-    args['draw_triangles_near_poles'] = False ### for standard ladder picture, true for CT pictures
-    
+    # args['draw_triangles_near_poles'] = False ### for standard ladder picture, set true for CT pictures
+    args['draw_triangles_near_poles'] = True
+
     # args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
     args['style'] = 'geometric'
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 50)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 10)
 
     
 
@@ -819,13 +826,13 @@ if __name__ == "__main__":
     # # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
     # name = 'eLAkaccddjsnak_2001'
     # name = 'eLAkbbcdddhwqj_2102'
-    # name = 'dLQacccjsnk_200'
-    name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
+    # name = 'dLQacccjsnk_200' 
+    # name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
 
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-    args['tet_shapes'] = shapes_data[name]
+    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    # args['tet_shapes'] = shapes_data[name]
     # args['tet_shapes'] = None
-    draw_triangulation_boundary_from_veering_isosig(name, args = args, output_filename = name + '_' + '_' + args['style'] + str(args['ct_depth']) + '_' + str(args['ct_epsilon']) + '.pdf', verbose = 1.0)
+    # draw_triangulation_boundary_from_veering_isosig(name, args = args, output_filename = name + '_' + '_' + args['style'] + str(args['ct_depth']) + '_' + str(args['ct_epsilon']) + '.pdf', verbose = 1.0)
 
 
     # names = ['kLALPPzkbcbefghgijjxxnsaaqkqqs_0110021020',

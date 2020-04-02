@@ -67,9 +67,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
 
     con.mark_interesting_segments(interesting_segments)
 
-    con.build(max_interesting_edge_length = 0.2, max_num_tetrahedra = 200000)
-
-    # con.bury_uninteresting_triangles(interesting_segments)
+    # con.build(max_interesting_edge_length = 0.2, max_num_tetrahedra = max_num_tetrahedra)
 
     # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
     # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
@@ -92,6 +90,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
 
     ### continent drawing the boundary triangulation
     # lines for triangles meeting infinity
+    
     # for endpoints, veering_colour in adj_edges:
     #     z, w = [T.drawing_scale * v.pos.complex() for v in endpoints]
     #     pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
@@ -140,12 +139,12 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 if __name__ == '__main__':
     args = {'draw_boundary_triangulation':False, 'global_drawing_scale': 1.5, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     # veering_isosig = 'cPcbbbiht_12'
-    # # veering_isosig = 'dLQacccjsnk_200'
-    veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
+    veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     tet_shapes = shapes_data[veering_isosig]
 
-    max_num_tetrahedra = 10000
+    max_num_tetrahedra = 50000
     filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '.pdf'
     draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = filename, draw_args = args )
 
