@@ -35,6 +35,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
     num_ladder_units = len(L.ladder_unit_list)
     initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
+    print 'initial_tet_face', initial_tet_face
 
     ladderpoles_vertices = T.left_ladder_pole_vertices() 
     desired_vertices = [v for L in ladderpoles_vertices for v in L]
@@ -42,7 +43,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
     
     # con.build(until_have_desired_vertices = False, max_num_tetrahedra = max_num_tetrahedra)
-    con.build()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
+    con.build_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
     print 'unfound desired_vertices', con.desired_vertices
     print 'num_tetrahedra', con.num_tetrahedra
@@ -53,10 +54,22 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
         for i, w in enumerate(ladderpole_vertices):
             for v in con.boundary_triangulation_vertices:
                 if abs(v.pos.complex() - w) < epsilon:
-                    ladderpole_vertices[i] = v
-                    break  
+                    ladderpole_vertices[i] = v    
+                    break     
 
-    con.update_equator()    
+    interesting_segments = []
+    for ladderpole_vertices in ladderpoles_vertices:
+        segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
+        segment.sort()
+        interesting_segments.append( segment )
+
+    print interesting_segments
+
+    con.mark_interesting_segments(interesting_segments)
+
+    con.build(max_interesting_edge_length = 0.2, max_num_tetrahedra = 200000)
+
+    # con.bury_uninteresting_triangles(interesting_segments)
 
     # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
     # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole

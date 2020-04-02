@@ -7,12 +7,14 @@ from basic_math import sign
 class vertex:
     def __init__(self, pos):
         self.pos = pos
-        ### maybe an age
+        self.anticlockwise_edge_is_interesting = False ## is the anticlockwise adjacent coastal edge one we want to draw?
+    
     def __repr__(self):
         if not self.pos.is_infinity():
             return str(self.pos.complex())
         else:
             return "inf"
+    
     def __str__(self):
         return self.__repr__()
 
@@ -25,7 +27,7 @@ class landscape_triangle:
         self.vertices = vertices  ## list of three vertices, oriented anticlockwise as viewed from above, with the special vertex first
         ### the special vertex is incident to two edges of the same colour
         self.neighbours = neighbours ## list of three triangles incident to this one, opposite corresponding vertices
-        self.is_buried = False
+        self.is_buried = False  ## either it is inside the continent, or we aren't interested in it for drawing purposes
 
     def __str__(self):
         return 'continent_ind,triang_ind,upper,red,vertices,buried ' + str([self.continent.triangles.index(self), self.index, self.is_upper, self.is_red, self.vertices, self.is_buried])
@@ -146,10 +148,11 @@ class landscape_triangle:
                     raise
 
 class continent:
-    def __init__(self, vt, initial_tet_face, desired_vertices = None):
+    def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
         self.vt = vt
         self.triangles = []
+        self.first_non_buried_index = None
         self.num_tetrahedra = 1
 
         self.tet_face = initial_tet_face
@@ -159,7 +162,9 @@ class continent:
         self.vertices = [vertex(v) for v in self.tet_face.verts_pos]
         self.infinity = self.vertices[self.tet_face.face]
         assert self.infinity.pos.is_infinity()
-        self.equator = None
+        self.coast = None
+        self.num_long_edges = None
+        self.max_interesting_edge_length = None
 
         # self.infinity = vertex([1,0])
         # self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
@@ -261,7 +266,7 @@ class continent:
             triangle_d.neighbours = [triangle_a, triangle_b, triangle_c]
         # self.sanity_check()
 
-        if self.desired_vertices != None:
+        if self.desired_vertices != []:
             for v in self.vertices:
                 if v != self.infinity:
                     self.check_vertex_desired(v) 
@@ -282,32 +287,83 @@ class continent:
         while not triangle.is_buried:
             self.silt(triangle)
             
-    def silt(self, triangle):
-        """flow downriver from this triangle until we hit either a sink, or the coast, add one tetrahedron there"""
+    def flow(self, triangle):
+        """returns the triangle all the way downriver, and whether it is coastal"""
         while True:
             neighbour = triangle.downriver()
             if neighbour.is_upper != triangle.is_upper:
-                self.coastal_fill(triangle)
-                break
+                return (triangle, True)
             else:
-                neighbour2 = neighbour.downriver()
+                neighbour2 = neighbour.downriver()  
                 if triangle == neighbour2:
-                    self.in_fill(triangle)
-                    break
+                    return (triangle, False)
                 else:
                     triangle = neighbour
+
+    def silt(self, triangle):
+        """flow downriver from this triangle until we hit either a sink, or the coast, add one tetrahedron there"""
+        downriver_triangle, is_coastal = self.flow(triangle)
+        if is_coastal:
+            self.coastal_fill(downriver_triangle)
+        else:
+            self.in_fill(downriver_triangle)
         self.num_tetrahedra += 1
+        # if self.num_tetrahedra % 1000 == 0:
+        #     print self.num_long_edges
         # self.sanity_check()
 
-    def build(self, until_have_desired_vertices = True, max_num_tetrahedra = 50000):
-        first_non_buried_index = 0
+    def build_fundamental_domain(self, max_num_tetrahedra = 50000):
+        self.first_non_buried_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
-            tri = self.triangles[first_non_buried_index]
+            tri = self.triangles[self.first_non_buried_index]  
             self.bury(tri)
-            first_non_buried_index += 1
-            while self.triangles[first_non_buried_index].is_buried:
+            self.first_non_buried_index += 1
+            while self.triangles[self.first_non_buried_index].is_buried:
             # while self.triangles[first_non_buried_index].is_buried or self.triangles[first_non_buried_index].is_upper:
-                first_non_buried_index += 1
+                self.first_non_buried_index += 1
+        self.update_coast()  ## we don't update this as we build
+
+    def build(self, max_interesting_edge_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+        self.max_interesting_edge_length = max_interesting_edge_length
+        self.update_coast()
+        
+        self.num_long_edges = 0
+        for i,v in enumerate(self.coast):
+            if v.anticlockwise_edge_is_interesting:
+                w = self.coast[i+1]  ### if we have looped then you are Icarus: close to infinity so surely not interesting 
+                if abs(v.pos.complex() - w.pos.complex()) > self.max_interesting_edge_length:
+                    self.num_long_edges += 1
+
+        while self.num_long_edges > 0 and self.num_tetrahedra < max_num_tetrahedra: 
+            tri = self.triangles[self.first_non_buried_index]  
+            self.bury(tri)
+            self.first_non_buried_index += 1
+            while self.triangles[self.first_non_buried_index].is_buried:
+                self.first_non_buried_index += 1
+        print 'num_long_edges', self.num_long_edges, 'num_tetrahedra', self.num_tetrahedra
+        self.update_coast()
+
+
+
+### this plan doesnt seem to work...
+    # def bury_uninteresting_triangles(self, interesting_segments):
+    #     """We only care about certain parts of the coast for drawing purposes, bury triangles that flow to other parts of the coast."""
+    #     for triangle in self.triangles:
+    #         coastal_triangle, is_coastal = self.flow(triangle)
+    #         assert is_coastal
+    #         ind = coastal_triangle.downriver_index()
+    #         u = coastal_triangle.vertices[(ind - 1)%3]
+    #         v = coastal_triangle.vertices[(ind + 1)%3]  
+    #         u_ind, v_ind = self.coast.index(u), self.coast.index(v)
+    #         assert u_ind < v_ind  
+
+    #         found_segment = False
+    #         for segment in interesting_segments:
+    #             if segment[0] <= u_ind and v_ind <= segment[1] or segment[1] <= u_ind and v_ind <= segment[0]:  ### then we are interesting
+    #                 found_segment = True
+    #                 break
+    #
+    #         triangle.is_buried = not found_segment ## if we never found it, bury it because we don't care about it or its potential descendents 
 
     def in_fill(self, triangle):
         # print 'in fill'
@@ -391,7 +447,7 @@ class continent:
         neighbour.not_downriver()[0].update_contacts(neighbour, triangle_b)
         neighbour.not_downriver()[1].update_contacts(neighbour, triangle_a)
 
-        if self.desired_vertices != None:
+        if self.desired_vertices != []:
             new_edge = [vert_t, vert_n]
             if self.infinity in new_edge:
                 new_edge.remove(self.infinity)
@@ -481,15 +537,18 @@ class continent:
         # print vert_t
         self.vertices.append(vert_t)
 
-        if self.desired_vertices != None:
+        if self.desired_vertices != []:
             if self.infinity in triangle.vertices:
                 self.check_vertex_desired(vert_t) 
 
-        # if self.infinity in triangle.vertices:
-        #     which_one = [vert_a, vert_b, vert_c].index(self.infinity)
-        #     face_inf = [face_a, face_b, face_c][which_one]
-        #     col = self.vt.get_edge_between_verts_colour(tet.index(), (face_t, face_inf))
-        #     self.vertices_adjacent_to_infinity.append( (vert_t, col) )
+        vert_t.anticlockwise_edge_is_interesting = vert_a.anticlockwise_edge_is_interesting
+        if vert_a.anticlockwise_edge_is_interesting:
+            if abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_interesting_edge_length:
+                self.num_long_edges -= 1
+            if abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_interesting_edge_length:
+                self.num_long_edges += 1
+            if abs(vert_t.pos.complex() - vert_b.pos.complex()) > self.max_interesting_edge_length:
+                self.num_long_edges += 1
 
         if ab_is_red == ab_is_upper:
             triangle_a.vertices = [vert_t, vert_b, vert_c]
@@ -522,39 +581,52 @@ class continent:
         neighbour_australian.update_contacts(triangle, triangle_c)
 
         triangle.is_buried = True
-
-    def update_equator(self):
-        """Returns vertices in anticlockwise order as viewed from above"""
+  
+    def update_coast(self):
+        """Returns vertices in anticlockwise order as viewed from above"""  
         out = []
         for tri in self.triangles:
             if not tri.is_buried:
                 break  ## found an initial unburied tri 
-        vert_index = 0
+        vert_index = 0  
         initial_vert = tri.vertices[vert_index]
-        vert = initial_vert
+        vert = initial_vert   
         while out == [] or vert != initial_vert:
             if tri.neighbours[(vert_index - 1) % 3].is_upper != tri.is_upper: ## we are coastal
-                vert_index = (vert_index + 1) % 3
+                vert_index = (vert_index + 1) % 3   
                 vert = tri.vertices[vert_index]
                 out.append(vert)
             else: # walk to the next triangle
-                tri = tri.neighbours[(vert_index - 1) % 3]
-                vert_index = tri.vertices.index(vert)
+                tri = tri.neighbours[(vert_index - 1) % 3]  
+                vert_index = tri.vertices.index(vert) 
+
+        ##  i+1
+        ##   *-------* i  
+        ##    \     /
+        ##     \   / 
+        ##      \ /
+        ##       * i-1 
 
         ## now rotate to put infinity first
         inf_vert_index = out.index( self.infinity )
         out = out[inf_vert_index:] + out[:inf_vert_index]
-        self.equator = out
+        self.coast = out
+
+    def mark_interesting_segments(self, interesting_segments):
+        for i,v in enumerate(self.coast):
+            for segment in interesting_segments:
+                if segment[0] <= i < segment[1]:
+                    v.anticlockwise_edge_is_interesting = True
 
     def segment_between(self, u, v):
-        """return the segment of the equator between u and v inclusive"""
+        """return the segment of the coast between u and v inclusive"""
         assert u != v
-        u_ind = self.equator.index(u)
-        v_ind = self.equator.index(v)
+        u_ind = self.coast.index(u)
+        v_ind = self.coast.index(v)
         if u_ind < v_ind:
-            return self.equator[u_ind : v_ind + 1]
+            return self.coast[u_ind : v_ind + 1]
         else:
-            return self.equator[v_ind : u_ind + 1]
+            return self.coast[v_ind : u_ind + 1]
         
     def vertices_and_edges_adjacent_to_infinity(self):
         ## vertices is set of (vertex, colour of edge from vertex to infinity)
@@ -584,7 +656,7 @@ if __name__ == '__main__':
     vt = veering_triangulation(tri, angle, tet_shapes = shapes_data[veering_isosig])
     # con = continent( vt )
     # con.build(5)
-    # print con.equator()
+    # print con.coast()
 
 
 
