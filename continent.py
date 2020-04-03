@@ -7,7 +7,8 @@ from basic_math import sign
 class vertex:
     def __init__(self, pos):
         self.pos = pos
-        self.anticlockwise_edge_is_interesting = False ## is the anticlockwise adjacent coastal edge one we want to draw?
+        self.anticlockwise_edge_is_interesting = None ## is the anticlockwise adjacent coastal edge one we want to draw?
+        self.anticlockwise_edge_is_long = None
     
     def __repr__(self):
         if not self.pos.is_infinity():
@@ -146,6 +147,29 @@ class landscape_triangle:
                     print neighbour
                     print neighbour_edge_indices
                     raise
+
+    def coastal_indices(self):
+        return [ i for i in range(3) if self.is_upper != self.neighbours[i].is_upper ] 
+
+        ##  i+1
+        ##   *-------* i  
+        ##    \     /
+        ##     \   / 
+        ##      \ /
+        ##       * i-1 
+
+    def interesting_coastal_indices(self):
+        return [ i for i in self.coastal_indices() if self.vertices[(i+1)%3].anticlockwise_edge_is_interesting ]
+
+    def interesting_long_coastal_indices(self):
+        out = []
+        ci = self.interesting_coastal_indices()
+        for i in ci:
+            u = self.vertices[(i+1)%3]
+            v = self.vertices[(i+2)%3]
+            if abs(u.pos.complex() - v.pos.complex()) > self.continent.max_interesting_edge_length:
+                out.append(i)
+        return out
 
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
@@ -325,23 +349,32 @@ class continent:
 
     def build(self, max_interesting_edge_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_interesting_edge_length = max_interesting_edge_length
+        print 'max_interesting_edge_length', max_interesting_edge_length
         self.update_coast()
         
+        ## count number of long edges, mark vertices as long
         self.num_long_edges = 0
         for i,v in enumerate(self.coast):
             if v.anticlockwise_edge_is_interesting:
                 w = self.coast[i+1]  ### if we have looped then you are Icarus: close to infinity so surely not interesting 
                 if abs(v.pos.complex() - w.pos.complex()) > self.max_interesting_edge_length:
+                    v.anticlockwise_edge_is_long = True
                     self.num_long_edges += 1
+
+        ## now build
 
         while self.num_long_edges > 0 and self.num_tetrahedra < max_num_tetrahedra: 
             tri = self.triangles[self.first_non_buried_index]  
-            self.bury(tri)
+
+            if tri.interesting_long_coastal_indices() != []:
+                self.bury(tri)
             self.first_non_buried_index += 1
             while self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_long_edges', self.num_long_edges, 'num_tetrahedra', self.num_tetrahedra
         self.update_coast()
+        print 'num_long_edges_direct_count', self.count_long_edges()
+        print 'max_length', self.calculate_max_interesting_coast_edge_length()
 
 
 
@@ -542,13 +575,18 @@ class continent:
                 self.check_vertex_desired(vert_t) 
 
         vert_t.anticlockwise_edge_is_interesting = vert_a.anticlockwise_edge_is_interesting
+
         if vert_a.anticlockwise_edge_is_interesting:
-            if abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_interesting_edge_length:
+            if vert_a.anticlockwise_edge_is_long:
                 self.num_long_edges -= 1
-            if abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_interesting_edge_length:
+
+            vert_a.anticlockwise_edge_is_long = (abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_interesting_edge_length)
+            if vert_a.anticlockwise_edge_is_long:
                 self.num_long_edges += 1
-            if abs(vert_t.pos.complex() - vert_b.pos.complex()) > self.max_interesting_edge_length:
-                self.num_long_edges += 1
+
+            vert_t.anticlockwise_edge_is_long = (abs(vert_t.pos.complex() - vert_b.pos.complex()) > self.max_interesting_edge_length)
+            if vert_t.anticlockwise_edge_is_long:
+                self.num_long_edges += 1   
 
         if ab_is_red == ab_is_upper:
             triangle_a.vertices = [vert_t, vert_b, vert_c]
@@ -645,6 +683,25 @@ class continent:
                     vertex_veering_colour = self.vt.veering_colours[ triangle.edge_indices()[(ind-i)%3] ]
                     vertices.add( (vert, vertex_veering_colour) )
         return vertices, edges
+
+    def calculate_max_interesting_coast_edge_length(self):
+        max_length = 0.0
+        for i,v in enumerate(self.coast):
+            if v.anticlockwise_edge_is_interesting:
+                edge_length = abs( v.pos.complex() - self.coast[i+1].pos.complex() )
+                if edge_length > max_length:
+                    max_length = edge_length
+        return max_length
+
+    def count_long_edges(self):
+        out = 0
+        for i,v in enumerate(self.coast):
+            if v.anticlockwise_edge_is_interesting:
+                edge_length = abs( v.pos.complex() - self.coast[i+1].pos.complex() )
+                if edge_length > self.max_interesting_edge_length:
+                    out += 1
+        return out
+
 
 if __name__ == '__main__':
 

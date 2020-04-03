@@ -17,7 +17,7 @@ def draw_path(canv, path_C, draw_options):
         p.append( pyx.path.lineto(coord.real, coord.imag) )
     canv.stroke(p, draw_options)
 
-def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = None, draw_args = None, lw = 0.005 ):
+def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_interesting_edge_length = 0.1, output_filename = None, draw_args = None ):
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
@@ -63,11 +63,13 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
         segment.sort()
         interesting_segments.append( segment )
 
-    print interesting_segments
+    # print interesting_segments
 
     con.mark_interesting_segments(interesting_segments)
 
-    # con.build(max_interesting_edge_length = 0.2, max_num_tetrahedra = max_num_tetrahedra)
+    con.build(max_interesting_edge_length = max_interesting_edge_length, max_num_tetrahedra = max_num_tetrahedra)
+
+    #######
 
     # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
     # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
@@ -75,14 +77,18 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
     grad = pyx.color.gradient.Hue
     # colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}  
 
-    # draw_options = [pyx.style.linewidth(lw), colour])  ## needs to know which colour if we do this
-    draw_options = [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)]
+    ct_lw = draw_args['ct_lw']
+
+    # draw_options = [pyx.style.linewidth(ct_lw), colour])  ## needs to know which colour if we do this
+    draw_options = [pyx.style.linewidth(ct_lw), pyx.deco.colorgradient(grad)]
 
     canv = T.canv
 
     for ladderpole_vertices in ladderpoles_vertices:
         for i in range(len(ladderpole_vertices) - 1):  # fenceposts
             path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
+            for v in path[:-1]:
+                assert v.anticlockwise_edge_is_interesting
             path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
             draw_path(canv, path_C, draw_options)  
 
@@ -90,7 +96,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
 
     ### continent drawing the boundary triangulation
     # lines for triangles meeting infinity
-    
+
     # for endpoints, veering_colour in adj_edges:
     #     z, w = [T.drawing_scale * v.pos.complex() for v in endpoints]
     #     pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
@@ -121,7 +127,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filen
 
     canv.writePDFfile(output_filename)
 
-def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, num_to_draw = None):
+def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_interesting_edge_length = 0.1, num_to_draw = None, draw_args = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)
     if num_to_draw != None:
         to_draw = veering_isosigs_list[:num_to_draw]
@@ -132,23 +138,27 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
     for veering_isosig in to_draw:
         print veering_isosig
         tet_shapes = shapes_data[veering_isosig]
-        filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '.pdf'
-        draw_continent(veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = filename)
+        filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_interesting_edge_length) + '.pdf'
+        draw_continent(veering_isosig, tet_shapes, max_num_tetrahedra, max_interesting_edge_length = max_interesting_edge_length, output_filename = filename, draw_args = draw_args )
 
 
 if __name__ == '__main__':
-    args = {'draw_boundary_triangulation':False, 'global_drawing_scale': 1.5, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args = {'draw_boundary_triangulation':False, 'global_drawing_scale': 1.5, 'ct_lw': 0.005, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    max_num_tetrahedra = 100000
+    max_interesting_edge_length = 0.01
+
     # veering_isosig = 'cPcbbbiht_12'
-    veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'eLAkaccddjsnak_2001'
     # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-    tet_shapes = shapes_data[veering_isosig]
-
-    max_num_tetrahedra = 50000
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '.pdf'
-    draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, output_filename = filename, draw_args = args )
-
-    # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = 10000, num_to_draw = 10)
+    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    # tet_shapes = shapes_data[veering_isosig]
+    # filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_interesting_edge_length) + '.pdf'
+     
+    # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_interesting_edge_length = max_interesting_edge_length, output_filename = filename, draw_args = draw_args )
+    
+    num_to_draw = 50
+    draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_interesting_edge_length = max_interesting_edge_length, num_to_draw = num_to_draw, draw_args = draw_args)
     
 
 
