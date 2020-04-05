@@ -778,7 +778,7 @@ def generate_boundary_triangulation(tri, angle, args = {}, output_filename = Non
     """make a picture of the boundary triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
     vt = veering_triangulation(tri, angle, tet_shapes = args['tet_shapes'])
     B = boundary_triangulation(vt)
-    if args['draw_boundary_triangulation']:
+    if not args['only_generate_boundary_triangulation']:
         B.draw(output_filename, args = args)  
         
 def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, output_filename = None, verbose = 0.0):
@@ -805,7 +805,7 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'draw_boundary_triangulation':True, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
+    args = {'only_generate_boundary_triangulation':False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
     # args['draw_triangles_near_poles'] = False ### for standard ladder picture, set true for CT pictures
     args['draw_triangles_near_poles'] = True
 

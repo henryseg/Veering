@@ -17,7 +17,7 @@ def draw_path(canv, path_C, draw_options):
         p.append( pyx.path.lineto(coord.real, coord.imag) )
     canv.stroke(p, draw_options)
 
-def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_interesting_edge_length = 0.1, output_filename = None, draw_args = None ):
+def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length = 0.1, output_filename = None, draw_args = None, build_type = None ):
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
@@ -57,17 +57,22 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_interest
                     ladderpole_vertices[i] = v    
                     break     
 
-    interesting_segments = []
+    ladderpole_descendant_segments = []
     for ladderpole_vertices in ladderpoles_vertices:
         segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
         segment.sort()
-        interesting_segments.append( segment )
+        ladderpole_descendant_segments.append( segment )
 
-    # print interesting_segments
+    # print ladderpole_descendant_segments
 
-    con.mark_interesting_segments(interesting_segments)
+    con.mark_ladderpole_descendant_segments(ladderpole_descendant_segments)
 
-    con.build(max_interesting_edge_length = max_interesting_edge_length, max_num_tetrahedra = max_num_tetrahedra)
+    if build_type == 'build_on_coast':
+        con.build_on_coast(max_ladderpole_descendant_edge_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+    elif build_type == 'build_make_coastal_edges_internal':
+        con.build_make_coastal_edges_internal(max_ladderpole_descendant_edge_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+    elif build_type == 'build_explore_prongs':
+        con.build_explore_prongs(max_ladderpole_descendant_edge_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
 
     #######
 
@@ -84,13 +89,19 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_interest
 
     canv = T.canv
 
-    for ladderpole_vertices in ladderpoles_vertices:
-        for i in range(len(ladderpole_vertices) - 1):  # fenceposts
-            path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
-            for v in path[:-1]:
-                assert v.anticlockwise_edge_is_interesting
-            path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
-            draw_path(canv, path_C, draw_options)  
+    if draw_args['only_draw_ladderpoles']:
+        for ladderpole_vertices in ladderpoles_vertices:
+            for i in range(len(ladderpole_vertices) - 1):  # fenceposts
+                path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
+                for v in path[:-1]:
+                    assert v.anticlockwise_edge_is_ladderpole_descendant
+                path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+                draw_path(canv, path_C, draw_options)  
+    else:
+        path = con.coast
+        path.remove(con.infinity)
+        path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+        draw_path(canv, path_C, draw_options)  
 
     # adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()  
 
@@ -127,7 +138,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_interest
 
     canv.writePDFfile(output_filename)
 
-def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_interesting_edge_length = 0.1, num_to_draw = None, draw_args = None):
+def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_ladderpole_descendant_edge_length = 0.1, num_to_draw = None, draw_args = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)
     if num_to_draw != None:
         to_draw = veering_isosigs_list[:num_to_draw]
@@ -138,27 +149,30 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
     for veering_isosig in to_draw:
         print veering_isosig
         tet_shapes = shapes_data[veering_isosig]
-        filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_interesting_edge_length) + '.pdf'
-        draw_continent(veering_isosig, tet_shapes, max_num_tetrahedra, max_interesting_edge_length = max_interesting_edge_length, output_filename = filename, draw_args = draw_args )
+        filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_ladderpole_descendant_edge_length) + '.pdf'
+        draw_continent(veering_isosig, tet_shapes, max_num_tetrahedra, max_ladderpole_descendant_edge_length = max_ladderpole_descendant_edge_length, output_filename = filename, draw_args = draw_args )
 
 
 if __name__ == '__main__':
-    draw_args = {'draw_boundary_triangulation':False, 'global_drawing_scale': 1.5, 'ct_lw': 0.005, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    max_num_tetrahedra = 100000
-    max_interesting_edge_length = 0.01
+    draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'global_drawing_scale': 1.5, 'ct_lw': 0.005, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    max_num_tetrahedra = 200000
+    max_length = 0.005
+
+    build_type = 'build_make_coastal_edges_internal'
+    build_type = 'build_explore_prongs'
 
     # veering_isosig = 'cPcbbbiht_12'
     # veering_isosig = 'dLQacccjsnk_200'
-    # veering_isosig = 'eLAkaccddjsnak_2001'
+    veering_isosig = 'eLAkaccddjsnak_2001'
     # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
-    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-    # tet_shapes = shapes_data[veering_isosig]
-    # filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_interesting_edge_length) + '.pdf'
+    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    tet_shapes = shapes_data[veering_isosig]
+    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
      
-    # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_interesting_edge_length = max_interesting_edge_length, output_filename = filename, draw_args = draw_args )
+    draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
-    num_to_draw = 50
-    draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_interesting_edge_length = max_interesting_edge_length, num_to_draw = num_to_draw, draw_args = draw_args)
+    # num_to_draw = 50
+    # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_ladderpole_descendant_edge_length = max_ladderpole_descendant_edge_length, num_to_draw = num_to_draw, draw_args = draw_args)
     
 
 

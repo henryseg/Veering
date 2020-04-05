@@ -5,10 +5,12 @@ from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert
 from basic_math import sign
 
 class vertex:
-    def __init__(self, pos):
+    def __init__(self, continent, pos):
+        self.continent = continent
         self.pos = pos
-        self.anticlockwise_edge_is_interesting = None ## is the anticlockwise adjacent coastal edge one we want to draw?
+        self.anticlockwise_edge_is_ladderpole_descendant = None ## is the anticlockwise adjacent coastal edge one we want to draw?
         self.anticlockwise_edge_is_long = None
+        self.continent.vertices.append(self)
     
     def __repr__(self):
         if not self.pos.is_infinity():
@@ -19,16 +21,33 @@ class vertex:
     def __str__(self):
         return self.__repr__()
 
+class landscape_edge:
+    def __init__(self, continent, vertices, is_ladderpole_descendant = False): ## could add: is_red, edge_index
+        self.continent = continent
+        self.vertices = vertices
+        self.is_ladderpole_descendant = is_ladderpole_descendant  ## we require all tetrahedra incident to this edge in the continent
+        self.continent.edges.append(self)
+
+    def __repr__(self):
+        u, v = self.vertices
+        return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
+
+    def length(self):
+        u, v = self.vertices
+        return abs(u.pos.complex() - v.pos.complex())
+
 class landscape_triangle:
-    def __init__(self, continent, face_index, is_upper, is_red, vertices, neighbours):
+    def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
         self.continent = continent
         self.index = face_index ## in the quotient manifold
         self.is_upper = is_upper ## true if we are on the upper landscape of the continent (or were, before we got buried) 
         self.is_red = is_red ## if self has two red edges
         self.vertices = vertices  ## list of three vertices, oriented anticlockwise as viewed from above, with the special vertex first
         ### the special vertex is incident to two edges of the same colour
+        self.edges = edges
         self.neighbours = neighbours ## list of three triangles incident to this one, opposite corresponding vertices
         self.is_buried = False  ## either it is inside the continent, or we aren't interested in it for drawing purposes
+        self.continent.triangles.append(self)
 
     def __str__(self):
         return 'continent_ind,triang_ind,upper,red,vertices,buried ' + str([self.continent.triangles.index(self), self.index, self.is_upper, self.is_red, self.vertices, self.is_buried])
@@ -158,18 +177,25 @@ class landscape_triangle:
         ##      \ /
         ##       * i-1 
 
-    def interesting_coastal_indices(self):
-        return [ i for i in self.coastal_indices() if self.vertices[(i+1)%3].anticlockwise_edge_is_interesting ]
+    def ladderpole_descendant_coastal_indices(self):
+        return [ i for i in self.coastal_indices() if self.vertices[(i+1)%3].anticlockwise_edge_is_ladderpole_descendant ]
 
-    def interesting_long_coastal_indices(self):
+    def ladderpole_descendant_long_coastal_indices(self):
         out = []
-        ci = self.interesting_coastal_indices()
+        ci = self.ladderpole_descendant_coastal_indices()
         for i in ci:
             u = self.vertices[(i+1)%3]
             v = self.vertices[(i+2)%3]
-            if abs(u.pos.complex() - v.pos.complex()) > self.continent.max_interesting_edge_length:
+            if abs(u.pos.complex() - v.pos.complex()) > self.continent.max_ladderpole_descendant_edge_length:
                 out.append(i)
         return out
+
+    # def distance_to_prong(self):
+    def end_of_river_edge(self):
+        assert not self.is_buried
+        u = self.vertices[self.downriver_index()]   
+        tri, is_coastal = self.continent.flow(self)
+        return tri.edges[tri.downriver_index()]
 
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
@@ -183,32 +209,15 @@ class continent:
         self.desired_vertices = desired_vertices
         self.boundary_triangulation_vertices = set()
 
-        self.vertices = [vertex(v) for v in self.tet_face.verts_pos]
+        self.edges = []
+        self.vertices = []
+        for v in self.tet_face.verts_pos:
+            vertex(self, v)  ## creates and adds to the list of vertices
         self.infinity = self.vertices[self.tet_face.face]
         assert self.infinity.pos.is_infinity()
         self.coast = None
-        self.num_long_edges = None
-        self.max_interesting_edge_length = None
-
-        # self.infinity = vertex([1,0])
-        # self.vertices = [ self.infinity, vertex([0,1]), vertex([1,1]), vertex([self.vt.tet_shapes[initial_tet_num],1]) ]
-        
-        # self.vertices = [None, None, None, None]  ### came from draw_boundary_triangulation
-        # self.vertices[0] = self.infinity
-        # self.vertices[3-0] = vertex([0,1])
-        # self.vertices[(0+2)%4] = vertex([1,1])
-        # last_vert = 3 - ((0+2)%4)
-        # ordering = unknown_vert_to_known_verts_ordering[last_vert] 
-        # last_vert_CP1 = developed_position(self.vertices[ordering[0]].CP1, self.vertices[ordering[1]].CP1, self.vertices[ordering[2]].CP1, self.vt.tet_shapes[initial_tet_num])
-        # self.vertices[last_vert] = vertex(last_vert_CP1)
-
-
-        # self.vertices_adjacent_to_infinity = []   ## list of (vertex, colour of edge from vertex to infinity)
-
-        # for i in range(4):
-        #     if i != self.tet_face.face:
-        #         col = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, (self.tet_face.face, i))
-        #         self.vertices_adjacent_to_infinity.append( (self.vertices[i], col) )
+        self.num_long_edges = 0
+        self.max_ladderpole_descendant_edge_length = None
 
         ###   c---R----b
         ###   |`d    ,'|     faces a, b on bottom, c, d on top
@@ -240,17 +249,15 @@ class continent:
         upper_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, lower_face_nums)
         lower_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, upper_face_nums)
 
-        ab_is_red = ( lower_edge_colour == 'R' )
+        ab_is_red = ( lower_edge_colour == 'R' )  ## the triangles, not the edge
         ab_is_upper = False
         cd_is_red = ( upper_edge_colour == 'R' )
         cd_is_upper = True
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None)
-        triangle_c = landscape_triangle(self, face_c_index, cd_is_upper, cd_is_red, None, None)
-        triangle_d = landscape_triangle(self, face_d_index, cd_is_upper, cd_is_red, None, None)
-
-        self.triangles.extend([triangle_a, triangle_b, triangle_c, triangle_d])
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
+        triangle_c = landscape_triangle(self, face_c_index, cd_is_upper, cd_is_red, None, None, None)
+        triangle_d = landscape_triangle(self, face_d_index, cd_is_upper, cd_is_red, None, None, None)
 
         ## now for the vertices
 
@@ -272,6 +279,36 @@ class continent:
         else:
             triangle_c.vertices = [vert_b, vert_a, vert_d]
             triangle_d.vertices = [vert_a, vert_b, vert_c]
+
+        ## now for the edges
+
+        ###   c---R----b
+        ###   |`d    ,'|     faces a, b on bottom, c, d on top
+        ###   L  ` ,' a| 
+        ###   |b ,' .  L 
+        ###   |,'    c.| 
+        ###   a----R---d 
+
+        edge_ab = landscape_edge(self, [vert_a, vert_b])
+        edge_ac = landscape_edge(self, [vert_a, vert_c])
+        edge_ad = landscape_edge(self, [vert_a, vert_d])
+        edge_bc = landscape_edge(self, [vert_b, vert_c])
+        edge_bd = landscape_edge(self, [vert_b, vert_d])
+        edge_cd = landscape_edge(self, [vert_c, vert_d])
+
+        if ab_is_red: ## the triangles a and b, not the edge
+            triangle_a.edges = [edge_bd, edge_bc, edge_cd]
+            triangle_b.edges = [edge_ac, edge_ad, edge_cd]
+        else:
+            triangle_a.edges = [edge_bc, edge_cd, edge_bd]
+            triangle_b.edges = [edge_ad, edge_cd, edge_ac]
+
+        if cd_is_red: 
+            triangle_c.edges = [edge_bd, edge_ab, edge_ad]
+            triangle_d.edges = [edge_ac, edge_ab, edge_bc]
+        else:
+            triangle_c.edges = [edge_ad, edge_bd, edge_ab]
+            triangle_d.edges = [edge_bc, edge_ac, edge_ab]
 
         ## now for the neighbours
 
@@ -347,17 +384,17 @@ class continent:
                 self.first_non_buried_index += 1
         self.update_coast()  ## we don't update this as we build
 
-    def build(self, max_interesting_edge_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
-        self.max_interesting_edge_length = max_interesting_edge_length
-        print 'max_interesting_edge_length', max_interesting_edge_length
+    def build_on_coast(self, max_ladderpole_descendant_edge_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+        self.max_ladderpole_descendant_edge_length = max_ladderpole_descendant_edge_length
+        # print 'max_ladderpole_descendant_edge_length', max_ladderpole_descendant_edge_length
         self.update_coast()
         
         ## count number of long edges, mark vertices as long
         self.num_long_edges = 0
         for i,v in enumerate(self.coast):
-            if v.anticlockwise_edge_is_interesting:
-                w = self.coast[i+1]  ### if we have looped then you are Icarus: close to infinity so surely not interesting 
-                if abs(v.pos.complex() - w.pos.complex()) > self.max_interesting_edge_length:
+            if v.anticlockwise_edge_is_ladderpole_descendant:
+                w = self.coast[i+1]  ### if we have looped then you are Icarus: close to infinity so surely not ladderpole_descendant 
+                if abs(v.pos.complex() - w.pos.complex()) > self.max_ladderpole_descendant_edge_length:
                     v.anticlockwise_edge_is_long = True
                     self.num_long_edges += 1
 
@@ -366,7 +403,7 @@ class continent:
         while self.num_long_edges > 0 and self.num_tetrahedra < max_num_tetrahedra: 
             tri = self.triangles[self.first_non_buried_index]  
 
-            if tri.interesting_long_coastal_indices() != []:
+            if tri.ladderpole_descendant_long_coastal_indices() != []:
                 self.bury(tri)
             self.first_non_buried_index += 1
             while self.triangles[self.first_non_buried_index].is_buried:
@@ -374,29 +411,54 @@ class continent:
         print 'num_long_edges', self.num_long_edges, 'num_tetrahedra', self.num_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
-        print 'max_length', self.calculate_max_interesting_coast_edge_length()
+        print 'max_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
 
+    def build_make_coastal_edges_internal(self, max_ladderpole_descendant_edge_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+        self.max_ladderpole_descendant_edge_length = max_ladderpole_descendant_edge_length
+        self.update_coast()
 
+        ## now build
 
-### this plan doesnt seem to work...
-    # def bury_uninteresting_triangles(self, interesting_segments):
-    #     """We only care about certain parts of the coast for drawing purposes, bury triangles that flow to other parts of the coast."""
-    #     for triangle in self.triangles:
-    #         coastal_triangle, is_coastal = self.flow(triangle)
-    #         assert is_coastal
-    #         ind = coastal_triangle.downriver_index()
-    #         u = coastal_triangle.vertices[(ind - 1)%3]
-    #         v = coastal_triangle.vertices[(ind + 1)%3]  
-    #         u_ind, v_ind = self.coast.index(u), self.coast.index(v)
-    #         assert u_ind < v_ind  
+        while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
+            tri = self.triangles[self.first_non_buried_index]  
 
-    #         found_segment = False
-    #         for segment in interesting_segments:
-    #             if segment[0] <= u_ind and v_ind <= segment[1] or segment[1] <= u_ind and v_ind <= segment[0]:  ### then we are interesting
-    #                 found_segment = True
-    #                 break
-    #
-    #         triangle.is_buried = not found_segment ## if we never found it, bury it because we don't care about it or its potential descendents 
+            if any( [(edge.is_ladderpole_descendant and edge.length() > self.max_ladderpole_descendant_edge_length) for edge in tri.edges] ):
+                self.bury(tri)
+            self.first_non_buried_index += 1
+            while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
+                self.first_non_buried_index += 1
+        print 'num_tetrahedra', self.num_tetrahedra
+        self.update_coast()
+        print 'num_long_edges_direct_count', self.count_long_edges()
+        print 'max_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+
+    def build_explore_prongs(self, max_ladderpole_descendant_edge_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+        self.max_ladderpole_descendant_edge_length = max_ladderpole_descendant_edge_length
+        self.update_coast()
+
+        ## now build
+
+        while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
+            tri = self.triangles[self.first_non_buried_index]  
+
+            # if any( [edge.is_ladderpole_descendant for edge in tri.edges] ):
+
+            e = tri.end_of_river_edge()
+            if e.is_ladderpole_descendant:
+                u = tri.vertices[tri.downriver_index()]
+                v, w = e.vertices
+                midpoint = 0.5*(v.pos.complex() + w.pos.complex())
+                distance_to_prong = abs(u.pos.complex() - midpoint)
+                if distance_to_prong > max_ladderpole_descendant_edge_length:
+                    self.bury(tri)
+            self.first_non_buried_index += 1
+            while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
+                self.first_non_buried_index += 1
+        print 'num_long_edges', self.num_long_edges, 'num_tetrahedra', self.num_tetrahedra
+        self.update_coast()
+        print 'num_long_edges_direct_count', self.count_long_edges()
+        print 'max_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+
 
     def in_fill(self, triangle):
         # print 'in fill'
@@ -404,7 +466,7 @@ class continent:
         neighbour = triangle.downriver()
         assert not triangle.is_buried
         assert not neighbour.is_buried
-        assert triangle == neighbour.downriver() and triangle.is_upper == neighbour.is_upper
+        assert triangle == neighbour.downriver() and triangle.is_upper == neighbour.is_upper and triangle.is_red == neighbour.is_red
      
         ###   b---R----t
         ###   |`a    ,'|     is_upper, so faces t and n are below, a and b are new triangles above
@@ -444,9 +506,8 @@ class continent:
         ab_is_red = ( far_edge_colour == 'R' )
         ab_is_upper = triangle.is_upper
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None)
-        self.triangles.extend([triangle_a, triangle_b])
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
 
         ## now for the vertices
 
@@ -466,6 +527,39 @@ class continent:
             triangle_a.vertices = [vert_n, vert_t, vert_b]
             triangle_b.vertices = [vert_t, vert_n, vert_a]
         
+        ## now for the edges
+
+        ###   b---R----t
+        ###   |`a    ,'|     is_upper, so faces t and n are below, a and b are new triangles above
+        ###   L  ` ,' n|
+        ###   |t ,' .  L     
+        ###   |,'    b.|
+        ###   n----R---a 
+ 
+        ###   n---R----b
+        ###   |`t    ,'|     not is_upper, so t and n are above, a and b are new triangles below
+        ###   L  ` ,' a| 
+        ###   |b ,' .  L     
+        ###   |,'    n.|
+        ###   a----R---t  
+
+        edge_tn = landscape_edge(self, [vert_t, vert_n]) ## never coastal
+
+        if triangle.is_red == triangle.is_upper:
+            edge_bn, edge_na, edge_ab = triangle.edges 
+            edge_at, edge_tb, edge_ba = neighbour.edges
+        else:
+            edge_na, edge_ab, edge_bn = triangle.edges 
+            edge_tb, edge_ba, edge_at = neighbour.edges
+        assert edge_ab == edge_ba
+
+        if ab_is_red == ab_is_upper:
+            triangle_a.edges = [edge_bn, edge_tn, edge_tb]
+            triangle_b.edges = [edge_at, edge_tn, edge_na]
+        else:
+            triangle_a.edges = [edge_tb, edge_bn, edge_tn]
+            triangle_b.edges = [edge_na, edge_at, edge_tn]
+
         ## now for the neighbours
 
         if ab_is_red == ab_is_upper:
@@ -542,11 +636,9 @@ class continent:
         ab_is_upper = triangle.is_upper
         c_is_upper = not triangle.is_upper
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None)
-        triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red, None, None)
-
-        self.triangles.extend([triangle_a, triangle_b, triangle_c])
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
+        triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red, None, None, None)
 
         ## now for the vertices
 
@@ -565,7 +657,7 @@ class continent:
         tet_shape = self.vt.tet_shapes[tet.index()]
         # print tet_shape
         tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
-        vert_t = vertex( developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape) )
+        vert_t = vertex( self, developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape) )
         # print [ vertex(p) for p in [tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]]] ]
         # print vert_t
         self.vertices.append(vert_t)
@@ -574,17 +666,17 @@ class continent:
             if self.infinity in triangle.vertices:
                 self.check_vertex_desired(vert_t) 
 
-        vert_t.anticlockwise_edge_is_interesting = vert_a.anticlockwise_edge_is_interesting
+        vert_t.anticlockwise_edge_is_ladderpole_descendant = vert_a.anticlockwise_edge_is_ladderpole_descendant
 
-        if vert_a.anticlockwise_edge_is_interesting:
+        if vert_a.anticlockwise_edge_is_ladderpole_descendant:
             if vert_a.anticlockwise_edge_is_long:
                 self.num_long_edges -= 1
 
-            vert_a.anticlockwise_edge_is_long = (abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_interesting_edge_length)
+            vert_a.anticlockwise_edge_is_long = (abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_ladderpole_descendant_edge_length)
             if vert_a.anticlockwise_edge_is_long:
                 self.num_long_edges += 1
 
-            vert_t.anticlockwise_edge_is_long = (abs(vert_t.pos.complex() - vert_b.pos.complex()) > self.max_interesting_edge_length)
+            vert_t.anticlockwise_edge_is_long = (abs(vert_t.pos.complex() - vert_b.pos.complex()) > self.max_ladderpole_descendant_edge_length)
             if vert_t.anticlockwise_edge_is_long:
                 self.num_long_edges += 1   
 
@@ -599,6 +691,33 @@ class continent:
             triangle_c.vertices = [vert_b, vert_a, vert_t]
         else:
             triangle_c.vertices = [vert_a, vert_t, vert_b]
+
+        ### now for the edges
+
+        edge_at = landscape_edge(self, [vert_a, vert_t]) ## coastal
+        edge_bt = landscape_edge(self, [vert_b, vert_t]) ## coastal
+
+        edge_at.is_ladderpole_descendant = vert_a.anticlockwise_edge_is_ladderpole_descendant
+        edge_bt.is_ladderpole_descendant = vert_t.anticlockwise_edge_is_ladderpole_descendant 
+
+        edge_ct = landscape_edge(self, [vert_c, vert_t]) ## never coastal
+
+        if triangle.is_red == triangle.is_upper:
+            edge_bc, edge_ca, edge_ab = triangle.edges 
+        else:
+            edge_ca, edge_ab, edge_bc = triangle.edges
+
+        if ab_is_red == ab_is_upper:
+            triangle_a.edges = [edge_bc, edge_ct, edge_bt]
+            triangle_b.edges = [edge_at, edge_ct, edge_ca]
+        else:
+            triangle_a.edges = [edge_bt, edge_bc, edge_ct]
+            triangle_b.edges = [edge_ca, edge_at, edge_ct]
+
+        if c_is_red != c_is_upper:
+            triangle_c.edges = [edge_at, edge_bt, edge_ab]
+        else:
+            triangle_c.edges = [edge_bt, edge_ab, edge_at]
 
         ### now for the neighbours
 
@@ -650,11 +769,22 @@ class continent:
         out = out[inf_vert_index:] + out[:inf_vert_index]
         self.coast = out
 
-    def mark_interesting_segments(self, interesting_segments):
+    def mark_ladderpole_descendant_segments(self, ladderpole_descendant_segments):
         for i,v in enumerate(self.coast):
-            for segment in interesting_segments:
+            for segment in ladderpole_descendant_segments:
                 if segment[0] <= i < segment[1]:
-                    v.anticlockwise_edge_is_interesting = True
+                    v.anticlockwise_edge_is_ladderpole_descendant = True
+
+        for e in self.edges:
+            u, v = e.vertices
+            ui, vi = self.coast.index(u), self.coast.index(v)
+            vert_inds = [ui, vi]
+            vert_inds.sort()
+            if vert_inds[0] + 1 == vert_inds[1]: ## we are on the coast
+                for segment in ladderpole_descendant_segments:
+                    if segment[0] <= vert_inds[0] < segment[1]:  
+                        e.is_ladderpole_descendant = True
+                        break
 
     def segment_between(self, u, v):
         """return the segment of the coast between u and v inclusive"""
@@ -684,10 +814,10 @@ class continent:
                     vertices.add( (vert, vertex_veering_colour) )
         return vertices, edges
 
-    def calculate_max_interesting_coast_edge_length(self):
+    def calculate_max_ladderpole_descendant_coast_edge_length(self):
         max_length = 0.0
         for i,v in enumerate(self.coast):
-            if v.anticlockwise_edge_is_interesting:
+            if v.anticlockwise_edge_is_ladderpole_descendant:
                 edge_length = abs( v.pos.complex() - self.coast[i+1].pos.complex() )
                 if edge_length > max_length:
                     max_length = edge_length
@@ -696,9 +826,9 @@ class continent:
     def count_long_edges(self):
         out = 0
         for i,v in enumerate(self.coast):
-            if v.anticlockwise_edge_is_interesting:
+            if v.anticlockwise_edge_is_ladderpole_descendant:
                 edge_length = abs( v.pos.complex() - self.coast[i+1].pos.complex() )
-                if edge_length > self.max_interesting_edge_length:
+                if edge_length > self.max_ladderpole_descendant_edge_length:
                     out += 1
         return out
 
