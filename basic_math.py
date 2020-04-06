@@ -3,6 +3,7 @@
 #
 
 from numbers import Number
+from cmath import sqrt
 
 # helper functions for printing
 
@@ -172,6 +173,14 @@ class CP1(tuple):
         return self
       else:
         return CP1((self[0]/self[1], complex(1.0,0.0)))  ### saul: perhaps should divide by cmath.sqrt(a[0]*a[1])
+
+    def preferred_rep_saul(self):
+      if abs(self[1]) < 0.00001:
+        return self
+      else:
+        denom = sqrt(self[0]*self[1]) 
+        return CP1((self[0]/denom, self[1]/denom)) 
+
 
   ## g[p_,q_,r_,s_,t_,u_] is a matrix that takes p,q,r to s,t,u
 

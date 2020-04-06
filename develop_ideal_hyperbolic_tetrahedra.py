@@ -2,15 +2,15 @@ from basic_math import matrix, CP1
 
 def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations in a commutative ring"
     # print A1, A2, A3, z
-    epsilon = 0.00000001
+    epsilon = 0.00001  
     a1,b1 = A1 ## eg 1, 0
     a2,b2 = A2 ## eg 0, 1
     a3,b3 = A3 ## eg 1, 1
     Xinv = matrix((a1, a2, b1, b2))
-    assert abs(Xinv.det()) > epsilon, Xinv
+    assert abs(Xinv.det()) > epsilon, str(Xinv) + " " + str(abs(Xinv.det())) + " " + str([A1,A2,A3])
     X = Xinv.inverse()
     a3p, b3p = X * A3
-    assert abs(b3p) > epsilon and abs(a3p) > epsilon, X * A3
+    assert abs(b3p) > epsilon and abs(a3p) > epsilon, str(X * A3) + " " + str([A1,A2,A3])
     out = Xinv * CP1((-z/b3p, -1/a3p))
     return out.preferred_rep() 
 
