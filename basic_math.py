@@ -142,7 +142,32 @@ class matrix(tuple):
             return w[0]/w[1]
         if isinstance(z, CP1):
             return self * z
-    
+
+    def fixed_points(self, epsilon = 0.000001):
+        """return attracting fixed point then repelling"""
+        # (a b)  (z)  =  (Lz)
+        # (c d)  (1)     ( L)  
+
+        # az + b = c z^2 + d z
+        # 0 = c z^2 + (d-a)z - b
+        # z = ((a-d) \pm sqrt( (a-d)^2 + 4 bc )) / 2c
+
+        a, b, c, d = self
+
+        assert abs(c) > epsilon
+        zp = ((a - d) + sqrt( (a - d)**2 + 4*b*c)) / 2*c
+        zm = ((a - d) - sqrt( (a - d)**2 + 4*b*c)) / 2*c
+        Lp = c*zp + d
+        Lm = c*zm + d
+        if abs(Lp) < abs(Lm):
+            Ls = [Lp, Lm]
+            out = [zp, zm]
+        else:
+            Ls = [Lm, Lp]
+            out = [zm, zp]  
+        assert abs(Ls[0]) < 1 - epsilon and 1 + epsilon < abs(Ls[1])
+        return [CP1((z,1)) for z in out]
+
 #   projective geometry   
 
 class CP1(tuple):
@@ -159,14 +184,19 @@ class CP1(tuple):
             return self.__class__((a*p + b*q, c*p + d*q))
         else: raise TypeError
 
-    def is_infinity(self):
-        return abs(self[1]) < 0.000001 * abs(self[0])
+    def is_infinity(self, epsilon = 0.000001):
+        return abs(self[1]) < epsilon * abs(self[0])
 
     def complex(self):
         if self.is_infinity():
             return complex(10,10) ### hack, useful for debugging
         else:
             return self[0]/self[1]
+
+    def is_close_to(self, other, epsilon =  0.000001):
+        a, b = self
+        c, d = other
+        return abs(a*d - b*c) < epsilon
 
     def preferred_rep(self):
       if abs(self[1]) < 0.00001:

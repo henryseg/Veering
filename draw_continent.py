@@ -156,16 +156,16 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 
 if __name__ == '__main__':
     draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'global_drawing_scale': 1.5, 'ct_lw': 0.005, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    max_num_tetrahedra = 200001
-    max_length = 0.02
+    max_num_tetrahedra = 200000
+    max_length = 0.015
 
     # build_type = 'build_make_coastal_edges_internal'
     # build_type = 'build_explore_prongs'
     build_type = 'build_long_and_mid'
 
-    # # veering_isosig = 'cPcbbbiht_12'
-    # # veering_isosig = 'dLQacccjsnk_200'
-    # # veering_isosig = 'eLAkaccddjsnak_2001'
+    # veering_isosig = 'cPcbbbiht_12'
+    # veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'eLAkaccddjsnak_2001'
     veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
     # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
@@ -174,7 +174,7 @@ if __name__ == '__main__':
      
     draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
-    # num_to_draw = 50
+    # num_to_draw = 100
     # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, num_to_draw = num_to_draw, draw_args = draw_args, build_type = build_type)
     
 
