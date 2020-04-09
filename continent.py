@@ -8,10 +8,12 @@ class vertex:
     def __init__(self, continent, pos):
         self.continent = continent
         self.pos = pos
-        self.anticlockwise_edge_is_ladderpole_descendant = None ## is the anticlockwise adjacent coastal edge one we want to draw?
-        self.anticlockwise_edge_is_long = None
+        self.ladderpole_ancestors = set() ## which ladderpole edges did you come from
         self.continent.vertices.append(self)
     
+    def is_ladderpole_descendant(self):
+        return len(self.ladderpole_ancestors) != 0
+
     def __repr__(self):
         if not self.pos.is_infinity():
             return str(self.pos.complex())
@@ -22,10 +24,9 @@ class vertex:
         return self.__repr__()
 
 class landscape_edge:
-    def __init__(self, continent, vertices, is_ladderpole_descendant = False): ## could add: is_red, edge_index
+    def __init__(self, continent, vertices): ## could add: is_red, edge_index
         self.continent = continent
         self.vertices = vertices
-        self.is_ladderpole_descendant = is_ladderpole_descendant  ## we require all tetrahedra incident to this edge in the continent
         self.continent.edges.append(self)
 
     def __repr__(self):
@@ -35,6 +36,11 @@ class landscape_edge:
     def length(self):
         u, v = self.vertices
         return abs(u.pos.complex() - v.pos.complex())
+
+    def is_long(self):
+        return self.length() > self.continent.max_length
+
+    def is_under_ladderpole(self):
 
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
@@ -179,6 +185,7 @@ class landscape_triangle:
                     raise
 
     def coastal_indices(self):
+        assert not self.is_buried
         return [ i for i in range(3) if self.is_upper != self.neighbours[i].is_upper ] 
 
         ##  i+1
@@ -189,17 +196,10 @@ class landscape_triangle:
         ##       * i-1 
 
     def ladderpole_descendant_coastal_indices(self):
-        return [ i for i in self.coastal_indices() if self.vertices[(i+1)%3].anticlockwise_edge_is_ladderpole_descendant ]
+        return [ i for i in self.coastal_indices() if self.edges[i].is_under_ladderpole() ]
 
     def ladderpole_descendant_long_coastal_indices(self):
-        out = []
-        ci = self.ladderpole_descendant_coastal_indices()
-        for i in ci:
-            u = self.vertices[(i+1)%3]
-            v = self.vertices[(i+2)%3]
-            if abs(u.pos.complex() - v.pos.complex()) > self.continent.max_length:
-                out.append(i)
-        return out
+        return [ i for i in self.ladderpole_descendant_coastal_indices() if self.edges[i].is_long() ]
 
     # def distance_to_prong(self):
     def end_of_river_edge(self):
@@ -212,27 +212,25 @@ class landscape_triangle:
         tris, is_coastal = self.continent.flow(self, return_all = True)
         return [tri.edges[tri.downriver_index()] for tri in tris]
 
-    def dist_from_lox(self, edge):
-        vt = self.continent.vt
-        edge_index = self.edges.index(edge)
-        tet, embed = self.outwards_tet()
+    # def dist_from_lox(self, edge):
+    #     vt = self.continent.vt
+    #     edge_index = self.edges.index(edge)
+    #     tet, embed = self.outwards_tet()
 
-        ### get the tetrahedron outwards of the edge 
-        our_regina_vert_indices = self.outwards_tet_our_vert_indices()
+    #     ### get the tetrahedron outwards of the edge 
+    #     our_regina_vert_indices = self.outwards_tet_our_vert_indices()
 
-        init_verts_pos = [None, None, None, None]
-        for i, ind in enumerate(our_regina_vert_indices):
-            init_verts_pos[ind] = self.vertices[i].pos
+    #     init_verts_pos = [None, None, None, None]
+    #     for i, ind in enumerate(our_regina_vert_indices):
+    #         init_verts_pos[ind] = self.vertices[i].pos
 
-        tet_shape = vt.tet_shapes[tet.index()]
-        tet_ordering = unknown_vert_to_known_verts_ordering[embed.face]
-        init_verts_pos[embed.face] = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape) 
+    #     tet_shape = vt.tet_shapes[tet.index()]
+    #     tet_ordering = unknown_vert_to_known_verts_ordering[embed.face]
+    #     init_verts_pos[embed.face] = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape) 
 
-        lox = loxodromic_from_flag(vt, tet.index(), embed.face, our_regina_vert_indices[edge_index], init_verts_pos = init_verts_pos)
+    #     lox = loxodromic_from_flag(vt, tet.index(), embed.face, our_regina_vert_indices[edge_index], init_verts_pos = init_verts_pos)
 
-        ### has two fixed points... get dist of midpoint of the edge to the correct fixed point...
-
-
+    #     ### has two fixed points... get dist of midpoint of the edge to the correct fixed point...
 
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
@@ -253,7 +251,6 @@ class continent:
         self.infinity = self.vertices[self.tet_face.face]
         assert self.infinity.pos.is_infinity()
         self.coast = None
-        self.num_long_edges = 0
         self.max_length = None
 
         ###   c---R----b
@@ -414,8 +411,6 @@ class continent:
         else:
             self.in_fill(downriver_triangle)
         self.num_tetrahedra += 1
-        # if self.num_tetrahedra % 1000 == 0:
-        #     print self.num_long_edges
         # self.sanity_check()
 
     def build_fundamental_domain(self, max_num_tetrahedra = 50000):
@@ -433,47 +428,40 @@ class continent:
         self.max_length = max_length
         print 'max_length', max_length
         self.update_coast()
-        
-        ## count number of long edges, mark vertices as long
-        self.num_long_edges = 0
-        for i,v in enumerate(self.coast):
-            if v.anticlockwise_edge_is_ladderpole_descendant:
-                w = self.coast[i+1]  ### if we have looped then you are Icarus: close to infinity so surely not ladderpole_descendant 
-                if abs(v.pos.complex() - w.pos.complex()) > self.max_length:
-                    v.anticlockwise_edge_is_long = True
-                    self.num_long_edges += 1
 
         ## now build
 
-        while self.num_long_edges > 0 and self.num_tetrahedra < max_num_tetrahedra: 
+        # while self.num_long_edges > 0 and self.num_tetrahedra < max_num_tetrahedra: 
+        while self.num_tetrahedra < max_num_tetrahedra and self.first_non_buried_index < len(self.triangles): 
             tri = self.triangles[self.first_non_buried_index]  
 
             if tri.ladderpole_descendant_long_coastal_indices() != []:
                 self.bury(tri)
             self.first_non_buried_index += 1
-            while self.triangles[self.first_non_buried_index].is_buried:
+            while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print 'num_long_edges', self.num_long_edges, 'num_tetrahedra', self.num_tetrahedra
+        print 'num_tetrahedra', self.num_tetrahedra
+        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
 
-    def build_make_coastal_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+    def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
         print 'max_length', max_length
-        self.update_coast()
 
         ## now build
 
         while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
             tri = self.triangles[self.first_non_buried_index]  
 
-            if any( [(edge.is_ladderpole_descendant and edge.length() > self.max_length) for edge in tri.edges] ):
+            if any( [(edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges] ):
                 self.bury(tri)
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
+        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
@@ -481,7 +469,6 @@ class continent:
     def build_explore_prongs(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
         print 'max_length', max_length
-        self.update_coast()
 
         ## now build
 
@@ -491,7 +478,7 @@ class continent:
             crossing_edges = tri.all_river_crossing_edges()
             for e in crossing_edges:   ### previously only used the last edge
             # for e in crossing_edges[-1:]:   ### only the last edge
-                if e.is_ladderpole_descendant:
+                if e.is_under_ladderpole():
                     u = tri.vertices[tri.downriver_index()]
                     v, w = e.vertices
                     midpoint = 0.5*(v.pos.complex() + w.pos.complex())
@@ -509,30 +496,31 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print 'num_long_edges', self.num_long_edges, 'num_tetrahedra', self.num_tetrahedra
-        self.update_coast()
-        print 'num_long_edges_direct_count', self.count_long_edges()
-        print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
-
-    def build_loxodromics(self, max_length = 0.1, max_num_tetrahedra = 50000):
-        self.max_length = max_length
-        print 'max_length', max_length
-        self.update_coast()
-
-        ## now build
-
-        while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
-            tri = self.triangles[self.first_non_buried_index]  
-
-            if any( [(edge.is_ladderpole_descendant and tri.dist_from_lox(edge) > self.max_length) for edge in tri.edges] ):
-                self.bury(tri)
-            self.first_non_buried_index += 1
-            while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
-                self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
+        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+
+    # def build_loxodromics(self, max_length = 0.1, max_num_tetrahedra = 50000):
+    #     self.max_length = max_length
+    #     print 'max_length', max_length
+    #     self.update_coast()
+
+    #     ## now build
+
+    #     while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
+    #         tri = self.triangles[self.first_non_buried_index]  
+
+    #         if any( [(edge.is_ladderpole_descendant and tri.dist_from_lox(edge) > self.max_length) for edge in tri.edges] ):
+    #             self.bury(tri)
+    #         self.first_non_buried_index += 1
+    #         while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
+    #             self.first_non_buried_index += 1
+    #     print 'num_tetrahedra', self.num_tetrahedra
+    #     self.update_coast()
+    #     print 'num_long_edges_direct_count', self.count_long_edges()
+    #     print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
 
     def build_long_and_mid(self, max_length = 0.1, max_num_tetrahedra = 50000):  
         self.max_length = max_length
@@ -544,14 +532,12 @@ class continent:
         while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
             tri = self.triangles[self.first_non_buried_index]  
 
-            # if any( [edge.is_ladderpole_descendant for edge in tri.edges] ):
-
-            is_long = any( [(edge.is_ladderpole_descendant and edge.length() > self.max_length) for edge in tri.edges] )
+            is_long = any( (edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges )
             
             mid_is_far = False
             crossing_edges = tri.all_river_crossing_edges()
             for e in crossing_edges:   ### previously only used the last edge
-                if e.is_ladderpole_descendant:
+                if e.is_under_ladderpole():
                     u = tri.vertices[tri.downriver_index()]
                     v, w = e.vertices
                     midpoint = 0.5*(v.pos.complex() + w.pos.complex())
@@ -566,7 +552,7 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print 'num_long_edges', self.num_long_edges, 'num_tetrahedra', self.num_tetrahedra
+        print 'num_tetrahedra', self.num_tetrahedra
         print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
@@ -641,20 +627,6 @@ class continent:
             triangle_b.vertices = [vert_t, vert_n, vert_a]
         
         ## now for the edges
-
-        ###   b---R----t
-        ###   |`a    ,'|     is_upper, so faces t and n are below, a and b are new triangles above
-        ###   L  ` ,' n|
-        ###   |t ,' .  L     
-        ###   |,'    b.|
-        ###   n----R---a 
- 
-        ###   n---R----b
-        ###   |`t    ,'|     not is_upper, so t and n are above, a and b are new triangles below
-        ###   L  ` ,' a| 
-        ###   |b ,' .  L     
-        ###   |,'    n.|
-        ###   a----R---t  
 
         edge_tn = landscape_edge(self, [vert_t, vert_n]) ## never coastal
 
@@ -770,28 +742,18 @@ class continent:
         tet_shape = self.vt.tet_shapes[tet.index()]
         # print tet_shape
         tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
-        vert_t = vertex( self, developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape) )
-        # print [ vertex(p) for p in [tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]]] ]
-        # print vert_t
-        self.vertices.append(vert_t)
+        pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape)
+        
+        # ancestors = [ a for a in vert_a.ladderpole_ancestors if a in vert_b.ladderpole_ancestors ]
+        ancestors = vert_a.ladderpole_ancestors.intersection(vert_b.ladderpole_ancestors)
+
+        vert_t = vertex( self, pos)
+
+        vert_t.ladderpole_ancestors = ancestors
 
         if self.desired_vertices != []:
             if self.infinity in triangle.vertices:
                 self.check_vertex_desired(vert_t) 
-
-        vert_t.anticlockwise_edge_is_ladderpole_descendant = vert_a.anticlockwise_edge_is_ladderpole_descendant
-
-        if vert_a.anticlockwise_edge_is_ladderpole_descendant:
-            if vert_a.anticlockwise_edge_is_long:
-                self.num_long_edges -= 1
-
-            vert_a.anticlockwise_edge_is_long = (abs(vert_a.pos.complex() - vert_t.pos.complex()) > self.max_length)
-            if vert_a.anticlockwise_edge_is_long:
-                self.num_long_edges += 1
-
-            vert_t.anticlockwise_edge_is_long = (abs(vert_t.pos.complex() - vert_b.pos.complex()) > self.max_length)
-            if vert_t.anticlockwise_edge_is_long:
-                self.num_long_edges += 1   
 
         if ab_is_red == ab_is_upper:
             triangle_a.vertices = [vert_t, vert_b, vert_c]
@@ -809,10 +771,6 @@ class continent:
 
         edge_at = landscape_edge(self, [vert_a, vert_t]) ## coastal
         edge_bt = landscape_edge(self, [vert_b, vert_t]) ## coastal
-
-        edge_at.is_ladderpole_descendant = vert_a.anticlockwise_edge_is_ladderpole_descendant
-        edge_bt.is_ladderpole_descendant = vert_t.anticlockwise_edge_is_ladderpole_descendant 
-
         edge_ct = landscape_edge(self, [vert_c, vert_t]) ## never coastal
 
         if triangle.is_red == triangle.is_upper:
@@ -882,22 +840,11 @@ class continent:
         out = out[inf_vert_index:] + out[:inf_vert_index]
         self.coast = out
 
-    def mark_ladderpole_descendant_segments(self, ladderpole_descendant_segments):
-        for i,v in enumerate(self.coast):
-            for segment in ladderpole_descendant_segments:
-                if segment[0] <= i < segment[1]:
-                    v.anticlockwise_edge_is_ladderpole_descendant = True
-
-        for e in self.edges:
-            u, v = e.vertices
-            ui, vi = self.coast.index(u), self.coast.index(v)
-            vert_inds = [ui, vi]
-            vert_inds.sort()
-            if vert_inds[0] + 1 == vert_inds[1]: ## we are on the coast
-                for segment in ladderpole_descendant_segments:
-                    if segment[0] <= vert_inds[0] < segment[1]:  
-                        e.is_ladderpole_descendant = True
-                        break
+    def mark_ladderpole_descendants(self, ladderpole_descendant_segments):
+        for i, v in enumerate(self.coast):
+            for j, segment in enumerate(ladderpole_descendant_segments):
+                if segment[0] <= i <= segment[1]:
+                    v.ladderpole_ancestors.add(j)
 
     def segment_between(self, u, v):
         """return the segment of the coast between u and v inclusive"""
@@ -930,8 +877,9 @@ class continent:
     def calculate_max_ladderpole_descendant_coast_edge_length(self):
         m = 0.0
         for i,v in enumerate(self.coast):
-            if v.anticlockwise_edge_is_ladderpole_descendant:
-                edge_length = abs( v.pos.complex() - self.coast[i+1].pos.complex() )
+            w = self.coast[(i+1)%len(self.coast)]
+            if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
+                edge_length = abs( v.pos.complex() - w.pos.complex() )
                 if edge_length > m:
                     m = edge_length
         return m
@@ -939,12 +887,12 @@ class continent:
     def count_long_edges(self):
         out = 0
         for i,v in enumerate(self.coast):
-            if v.anticlockwise_edge_is_ladderpole_descendant:
-                edge_length = abs( v.pos.complex() - self.coast[i+1].pos.complex() )
+            w = self.coast[(i+1)%len(self.coast)]
+            if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
+                edge_length = abs( v.pos.complex() - w.pos.complex() )
                 if edge_length > self.max_length:
                     out += 1
         return out
-
 
 if __name__ == '__main__':
 

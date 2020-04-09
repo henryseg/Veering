@@ -24,120 +24,132 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
     B = boundary_triangulation(vt)
     B.generate_canvases(args = draw_args)
 
-    # print B.torus_triangulation_list[0].ladder_holonomy
-    T = B.torus_triangulation_list[0]
+    for T in B.torus_triangulation_list:
 
-    ### make initial_tet_face be in the lower left of the fundamental domain
-    # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
-    
-    ### make initial_tet_face be in the middle of the fundamental domain
-    num_ladders = len(T.ladder_list)
-    L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
-    num_ladder_units = len(L.ladder_unit_list)
-    initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
-    print 'initial_tet_face', initial_tet_face
+        ### make initial_tet_face be in the lower left of the fundamental domain
+        # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
+        
+        ### make initial_tet_face be in the middle of the fundamental domain
+        num_ladders = len(T.ladder_list)
+        L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
+        num_ladder_units = len(L.ladder_unit_list)
+        initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
+        print 'initial_tet_face', initial_tet_face
 
-    ladderpoles_vertices = T.left_ladder_pole_vertices() 
-    desired_vertices = [v for L in ladderpoles_vertices for v in L]
+        ladderpoles_vertices = T.left_ladder_pole_vertices() 
+        desired_vertices = [v for L in ladderpoles_vertices for v in L]
 
-    con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
-    
-    # con.build(until_have_desired_vertices = False, max_num_tetrahedra = max_num_tetrahedra)
-    con.build_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
+        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
+        
+        con.build_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
-    print 'unfound desired_vertices', con.desired_vertices
-    print 'num_tetrahedra', con.num_tetrahedra
+        print 'unfound desired_vertices', con.desired_vertices
+        print 'num_tetrahedra', con.num_tetrahedra
 
-    # now replace ladderpoles_vertices with the continent's corresponding vertices 
-    epsilon = 0.001
-    for ladderpole_vertices in ladderpoles_vertices:
-        for i, w in enumerate(ladderpole_vertices):
-            for v in con.boundary_triangulation_vertices:
-                if abs(v.pos.complex() - w) < epsilon:
-                    ladderpole_vertices[i] = v    
-                    break     
-
-    ladderpole_descendant_segments = []
-    for ladderpole_vertices in ladderpoles_vertices:
-        segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
-        segment.sort()
-        ladderpole_descendant_segments.append( segment )
-
-    # print ladderpole_descendant_segments
-
-    con.mark_ladderpole_descendant_segments(ladderpole_descendant_segments)
-
-    if build_type == 'build_on_coast':
-        con.build_on_coast(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-    elif build_type == 'build_make_coastal_edges_internal':
-        con.build_make_coastal_edges_internal(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-    elif build_type == 'build_explore_prongs':
-        con.build_explore_prongs(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-    elif build_type == 'build_long_and_mid':
-        con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-    #######
-
-    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
-    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
-
-    grad = pyx.color.gradient.Hue
-    # colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}  
-
-    ct_lw = draw_args['ct_lw']
-
-    # draw_options = [pyx.style.linewidth(ct_lw), colour])  ## needs to know which colour if we do this
-    draw_options = [pyx.style.linewidth(ct_lw), pyx.deco.colorgradient(grad)]
-
-    canv = T.canv
-
-    if draw_args['only_draw_ladderpoles']:
+        # now replace ladderpoles_vertices with the continent's corresponding vertices 
+        epsilon = 0.001
         for ladderpole_vertices in ladderpoles_vertices:
-            for i in range(len(ladderpole_vertices) - 1):  # fenceposts
-                path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
-                for v in path[:-1]:
-                    assert v.anticlockwise_edge_is_ladderpole_descendant
-                path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
-                draw_path(canv, path_C, draw_options)  
-    else:
-        path = con.coast
-        path.remove(con.infinity)
-        path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
-        draw_path(canv, path_C, draw_options)  
+            for i, w in enumerate(ladderpole_vertices):
+                for v in con.boundary_triangulation_vertices:
+                    if abs(v.pos.complex() - w) < epsilon:
+                        ladderpole_vertices[i] = v    
+                        break     
 
-    # adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()  
+        ladderpole_descendant_segments = []
+        for ladderpole_vertices in ladderpoles_vertices:
+            segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
+            segment.sort()
+            ladderpole_descendant_segments.append( segment )
 
-    ### continent drawing the boundary triangulation
-    # lines for triangles meeting infinity
+        print ladderpole_descendant_segments
 
-    # for endpoints, veering_colour in adj_edges:
-    #     z, w = [T.drawing_scale * v.pos.complex() for v in endpoints]
-    #     pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
-    #     canv.stroke(pyx.path.line( z.real, z.imag, w.real, w.imag),  [pyx.style.linewidth(lw * 5), pyx_stroke_col]  )
+        con.mark_ladderpole_descendants(ladderpole_descendant_segments)
 
-    # # dots for edges from infinity
-    # for v,veering_colour in adj_verts:
-    #     z = v.pos.complex()
-    #     pyx_fill_col = pyx.deco.filled([colours[veering_colour]])
-    #     canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
+        # for v in con.coast:
+        #     print v.ladderpole_ancestors
 
-    ### continent drawing the left_ladder_pole_vertices
-    # T = B.torus_triangulation_list[0]
-    # for L in T.ladder_list:
-    #     for v in L.left_ladder_pole_vertices():
-    #         v *= T.drawing_scale
-    #         if L.is_even:
-    #             col = colours['L']
-    #         else:
-    #             col = colours['R']
-    #         canv.stroke(pyx.path.circle(v.real, v.imag, 0.15), [pyx.style.linewidth(lw * 3), col])
+        print build_type
 
-    ### circles around found vertices
-    # for v in con.found_vertices:
-    #     pos = v.pos.complex()
-    #     pos *= T.drawing_scale
-    #     canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.2), [pyx.style.linewidth(lw * 3)])
+        if build_type == 'build_on_coast':
+            con.build_on_coast(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_make_long_descendant_edges_internal':
+            con.build_make_long_descendant_edges_internal(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_explore_prongs':
+            con.build_explore_prongs(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_long_and_mid':
+            con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        #######
 
-    canv.writePDFfile(output_filename)
+        # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
+        # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
+
+        grad = pyx.color.gradient.Hue
+        # colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}  
+        colours = {'L':pyx.color.rgb(0,0,0.5), 'R':pyx.color.rgb(0.5,0,0)}
+
+        ct_lw = draw_args['ct_lw']
+
+        draw_options = [pyx.style.linewidth(ct_lw), pyx.deco.colorgradient(grad)] ## this may get overwritten with colour information for the ladder
+
+        if draw_args['only_draw_ladderpoles']:
+            for j, ladderpole_vertices in enumerate(ladderpoles_vertices):
+                # if j%2 == 0:
+                #     col = colours['R']
+                # else:
+                #     col = colours['L']
+                # draw_options = [pyx.style.linewidth(ct_lw), col]
+                for i in range(len(ladderpole_vertices) - 1):  # fenceposts
+                    path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
+                    for v in path[:-1]:
+                        assert v.is_ladderpole_descendant()
+                    path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+                    draw_path(T.canv, path_C, draw_options)  
+        else:
+            path = con.coast
+            path.remove(con.infinity)
+            path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+            draw_path(T.canv, path_C, draw_options)  
+
+        # adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()  
+
+        ### continent drawing the boundary triangulation
+        # lines for triangles meeting infinity
+
+        # for endpoints, veering_colour in adj_edges:
+        #     z, w = [T.drawing_scale * v.pos.complex() for v in endpoints]
+        #     pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
+        #     T.canv.stroke(pyx.path.line( z.real, z.imag, w.real, w.imag),  [pyx.style.linewidth(lw * 5), pyx_stroke_col]  )
+
+        # # dots for edges from infinity
+        # for v,veering_colour in adj_verts:
+        #     z = v.pos.complex()
+        #     pyx_fill_col = pyx.deco.filled([colours[veering_colour]])
+        #     T.canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
+
+        ### continent drawing the left_ladder_pole_vertices
+        # T = B.torus_triangulation_list[0]
+        # for L in T.ladder_list:
+        #     for v in L.left_ladder_pole_vertices():
+        #         v *= T.drawing_scale
+        #         if L.is_even:
+        #             col = colours['L']
+        #         else:
+        #             col = colours['R']
+        #         T.canv.stroke(pyx.path.circle(v.real, v.imag, 0.15), [pyx.style.linewidth(lw * 3), col])
+
+        ### circles around found vertices
+        # for v in con.found_vertices:
+        #     pos = v.pos.complex()
+        #     pos *= T.drawing_scale
+        #     T.canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.2), [pyx.style.linewidth(lw * 3)])
+
+    out_canvas = pyx.canvas.canvas()
+    height_offset = 0.0
+    canvases = [T.canv for T in B.torus_triangulation_list]
+    for i,c in enumerate(canvases):
+        out_canvas.insert(c, attrs=[pyx.trafo.translate(-c.bbox().left(), height_offset - c.bbox().bottom())])
+        height_offset += c.bbox().height() + 0.05 ### add a tiny bit to stop crashes due to line width
+    out_canvas.writePDFfile(output_filename)
 
 def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_length = 0.1, num_to_draw = None, draw_args = None, build_type = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)
@@ -157,16 +169,20 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 if __name__ == '__main__':
     draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'global_drawing_scale': 1.5, 'ct_lw': 0.005, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     max_num_tetrahedra = 200000
-    max_length = 0.015
+    max_length = 0.03
+    # max_length = 0.1
 
-    # build_type = 'build_make_coastal_edges_internal'
+    # build_type = 'build_on_coast'
+    # build_type = 'build_make_long_descendant_edges_internal'
     # build_type = 'build_explore_prongs'
     build_type = 'build_long_and_mid'
 
     # veering_isosig = 'cPcbbbiht_12'
+    # veering_isosig = 'cPcbbbdxm_10'
     # veering_isosig = 'dLQacccjsnk_200'
+    veering_isosig = 'eLMkbcddddedde_2100'
     # veering_isosig = 'eLAkaccddjsnak_2001'
-    veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
+    # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
     # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     tet_shapes = shapes_data[veering_isosig]
@@ -174,7 +190,7 @@ if __name__ == '__main__':
      
     draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
-    # num_to_draw = 100
+    # num_to_draw = 50
     # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, num_to_draw = num_to_draw, draw_args = draw_args, build_type = build_type)
     
 
