@@ -41,6 +41,7 @@ class landscape_edge:
         return self.length() > self.continent.max_length
 
     def is_under_ladderpole(self):
+        return any( v.is_ladderpole_descendant() for v in self.vertices )
 
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
