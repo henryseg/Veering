@@ -111,7 +111,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
                 break
 
         embeddings = embeddings[bottom_index:] + embeddings[:bottom_index]
-        sign = 1 # we are going up the left side of the edge
+        sign = -1 # we are going up the left side of the edge
         for embed in embeddings[1:]:  # skipping the first
             tet = embed.tetrahedron()
             vert_perm = embed.vertices()
@@ -122,7 +122,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
                 coorientations[tet.index()][leading_vert_num]  == -1):
                 # we are the top embed so:
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
-                sign = -1 # now we go down the right side
+                sign = 1 # now we go down the right side
             elif ((edge_colour == "L" and tet in red_tetrahedra) or
                   (edge_colour == "R" and tet in blue_tetrahedra)): 
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
@@ -195,7 +195,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "vee
         embeddings = embeddings[bottom_index:] + embeddings[:bottom_index]
 
         face_coeffs = [ ZH(0) ] * 2 * triangulation.countTetrahedra()
-        sign = 1 # we are going up the left side of the edge
+        sign = -1 # we are going up the left side of the edge
         current_coeff = ZH(1)
 
         embed = embeddings[0]
@@ -220,7 +220,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "vee
             leading_face = tet.triangle(trailing_vert_num)
             trailing_face = tet.triangle(leading_vert_num)
 
-            if sign == 1:
+            if sign == -1:
                 use_face = trailing_face
             else: # sign == -1
                 use_face = leading_face
@@ -230,7 +230,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "vee
 
             if (coorientations[tet.index()][trailing_vert_num] == -1 and 
                 coorientations[tet.index()][leading_vert_num]  == -1): ## we are the top embed
-                sign = -1 # so now are going down the right side of the edge
+                sign = 1 # so now are going down the right side of the edge
                 current_coeff = current_coeff * (face_laurents[leading_face.index()])**sign
                 if verbose > 0:
                     print "top current_coeff", current_coeff
