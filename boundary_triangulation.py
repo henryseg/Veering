@@ -251,23 +251,23 @@ class ladder_unit(tet_face):
     #         e = drawing_scale * ( e + origin ) 
     #         canv.stroke(pyx.path.line(s.real, s.imag, e.real, e.imag), [pyx.style.linewidth(lw), colour])
 
-    def draw_ct_path(self, canv, origin, drawing_scale, veering_colour = None, lw = 0.005):
-        """draw path of edges"""
-        # if veering_colour == 'R':
-        #     colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
-        #     grad = pyx.color.gradient.RedBlack
-        # else:
-        #     colour = pyx.color.rgb(0.0,0.0,0.5)  # dark blue
-        #     grad = pyx.color.gradient.BlueBlack
-        grad = pyx.color.gradient.Hue
-        edges = self.ct_developed_edges
-        comp_coords = [edges[0].start_complex] + [edge.end_complex for edge in edges]
-        comp_coords = [drawing_scale * (c + origin) for c in comp_coords]
-        p = pyx.path.path( pyx.path.moveto(comp_coords[0].real, comp_coords[0].imag) )
-        for coord in comp_coords[1:]: 
-          p.append( pyx.path.lineto(coord.real, coord.imag) )
-        # canv.stroke(p, [pyx.style.linewidth(lw), colour])
-        canv.stroke(p, [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)])
+    # def draw_ct_path(self, canv, origin, drawing_scale, veering_colour = None, lw = 0.005):
+    #     """draw path of edges"""
+    #     # if veering_colour == 'R':
+    #     #     colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
+    #     #     grad = pyx.color.gradient.RedBlack
+    #     # else:
+    #     #     colour = pyx.color.rgb(0.0,0.0,0.5)  # dark blue
+    #     #     grad = pyx.color.gradient.BlueBlack
+    #     grad = pyx.color.gradient.Hue
+    #     edges = self.ct_developed_edges
+    #     comp_coords = [edges[0].start_complex] + [edge.end_complex for edge in edges]
+    #     comp_coords = [drawing_scale * (c + origin) for c in comp_coords]
+    #     p = pyx.path.path( pyx.path.moveto(comp_coords[0].real, comp_coords[0].imag) )
+    #     for coord in comp_coords[1:]: 
+    #       p.append( pyx.path.lineto(coord.real, coord.imag) )
+    #     # canv.stroke(p, [pyx.style.linewidth(lw), colour])
+    #     canv.stroke(p, [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)])
 
 class ladder:
     """ladder of triangles in cusp triangulation of a veering triangulation"""
@@ -357,7 +357,7 @@ class ladder:
                         veering_colour = self.vt.get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)
                         ladder_unit.generate_ct(ladder_is_even = self.is_even, args = args)
                         # print len(ladder_unit.ct_developed_edges)
-                        ladder_unit.draw_ct_path(my_canvas, origin, self.torus_triangulation.drawing_scale, veering_colour = veering_colour)
+                        # ladder_unit.draw_ct_path(my_canvas, origin, self.torus_triangulation.drawing_scale, veering_colour = veering_colour)
             ladder_unit.draw_vertex_dots(my_canvas)
 
     def make_ladder(self, start_tf):
@@ -463,7 +463,7 @@ class torus_triangulation:
                 L.ladder_origin = complex(args['ladder_width'] * i, 0)  ## ignore any stuff already in ladder_origin
             elif args['style'] == 'geometric':
                 ### we scale up if the ladders are long
-                self.drawing_scale = args['global_drawing_scale']*len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
+                self.drawing_scale = args['global_drawing_scale'] #*len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
             L.calc_verts_C(args = args)
         
         self.draw_symmetries(self.canv)
@@ -578,9 +578,13 @@ class torus_triangulation:
                     mob_tsfm = matrix(( 1, self.ladder_holonomy, 0, 1 ))
                     L.transform(mob_tsfm)
 
-            ### now rotate everything so that ladder_holonomy is i
+            # len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
 
-            mob_tsfm = matrix(( complex(0,1)/self.ladder_holonomy, 0, 0, 1 ))
+            average_ladderpole_length = sum( len(L.ladder_unit_list) for L in self.ladder_list ) / (2.0 * len(self.ladder_list))
+            
+            ### now rotate and scale everything so that ladder_holonomy is i * average_ladderpole_length
+
+            mob_tsfm = matrix(( complex(0, average_ladderpole_length)/self.ladder_holonomy, 0, 0, 1 ))
             self.transform(mob_tsfm)
 
     def transform(self, mob_tsfm):
@@ -805,14 +809,14 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'only_generate_boundary_triangulation':False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 1.5, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
+    args = {'only_generate_boundary_triangulation':False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
     # args['draw_triangles_near_poles'] = False ### for standard ladder picture, set true for CT pictures
     args['draw_triangles_near_poles'] = True
 
     # args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
     args['style'] = 'geometric'
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 10)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 30)
 
     
 

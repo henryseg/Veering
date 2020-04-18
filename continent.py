@@ -28,6 +28,11 @@ class landscape_edge:
         self.continent = continent
         self.vertices = vertices
         self.continent.edges.append(self)
+        # try:
+        #     assert self.length() > 0.0001
+        # except:
+        #     print 'edge too short', self.vertices
+        #     raise
 
     def __repr__(self):
         u, v = self.vertices
@@ -242,7 +247,7 @@ class continent:
         self.num_tetrahedra = 1
 
         self.tet_face = initial_tet_face
-        self.desired_vertices = desired_vertices
+        self.desired_vertices = desired_vertices[:]  ## copy
         self.boundary_triangulation_vertices = set()
 
         self.edges = []

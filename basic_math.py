@@ -181,7 +181,8 @@ class CP1(tuple):
             a, b, c, d = other
             # [a b][p] = [ap + bq]
             # [c d][q]   [cp + dq]
-            return self.__class__((a*p + b*q, c*p + d*q))
+            # return self.__class__((a*p + b*q, c*p + d*q)).preferred_rep_saul()
+            return self.__class__((a*p + b*q, c*p + d*q)).preferred_rep()
         else: raise TypeError
 
     def is_infinity(self, epsilon = 0.000001):
@@ -189,7 +190,7 @@ class CP1(tuple):
 
     def complex(self):
         if self.is_infinity():
-            return complex(10,10) ### hack, useful for debugging
+            return complex(1000,1000) ### hack, useful for debugging
         else:
             return self[0]/self[1]
 
@@ -199,17 +200,18 @@ class CP1(tuple):
         return abs(a*d - b*c) < epsilon
 
     def preferred_rep(self):
-      if abs(self[1]) < 0.00001:
-        return self
-      else:
-        return CP1((self[0]/self[1], complex(1.0,0.0)))  ### saul: perhaps should divide by cmath.sqrt(a[0]*a[1])
+        if abs(self[1]) < 0.000001:
+            # print 'CP1 near infinity'
+            return self
+        else:
+            return CP1((self[0]/self[1], complex(1.0,0.0)))  
 
     def preferred_rep_saul(self):
-      if abs(self[1]) < 0.00001:
-        return self
-      else:
-        denom = sqrt(self[0]*self[1]) 
-        return CP1((self[0]/denom, self[1]/denom)) 
+        if abs(self[1]) == 0.0:
+            return self
+        else:
+            denom = abs(sqrt(self[0]*self[1])) 
+            return CP1((self[0]/denom, self[1]/denom)) 
 
 
   ## g[p_,q_,r_,s_,t_,u_] is a matrix that takes p,q,r to s,t,u
