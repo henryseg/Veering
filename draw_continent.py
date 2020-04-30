@@ -68,47 +68,48 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
         con.mark_ladderpole_descendants(ladderpole_descendant_segments)
 
 ##### experimenting
-        # print 'orig verts', original_desired_vertices
-        important_vertices = []
-        con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = 1000)
-        con.update_coast()
-        for i, v in enumerate(con.coast):
-            if len(v.ladderpole_ancestors) > 0:
-                w = con.coast[(i+1)]
-                if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
-                    if not v in all_ladderpole_vertices and not w in all_ladderpole_vertices:
-                        ## we found a ladderpole descendant edge that does not touch one of the original vertices
-                        for u in con.coast:
-                            u.ladderpole_ancestors = set()
-                        v.ladderpole_ancestors.add(0)
-                        w.ladderpole_ancestors.add(0)
-                        important_vertices = [v,w]
-                        break
+        # # print 'orig verts', original_desired_vertices
+        # important_vertices = []
+        # con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = 1000)
+        # con.update_coast()
+        # for i, v in enumerate(con.coast):
+        #     if len(v.ladderpole_ancestors) > 0:
+        #         w = con.coast[(i+1)]
+        #         if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
+        #             if not v in all_ladderpole_vertices and not w in all_ladderpole_vertices:
+        #                 ## we found a ladderpole descendant edge that does not touch one of the original vertices
+        #                 for u in con.coast:
+        #                     u.ladderpole_ancestors = set()
+        #                 v.ladderpole_ancestors.add(0)
+        #                 w.ladderpole_ancestors.add(0)
+        #                 important_vertices = [v,w]
+        #                 break
 
-        con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        # con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
 
-        print 'important verts', important_vertices
-        for v in important_vertices:
-            z = T.drawing_scale * v.pos.complex()
-            pyx_fill_col = pyx.deco.filled([pyx.color.rgb.black])
-            T.canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
+        # print 'important verts', important_vertices
+        # for v in important_vertices:
+        #     z = T.drawing_scale * v.pos.complex()
+        #     pyx_fill_col = pyx.deco.filled([pyx.color.rgb.black])
+        #     T.canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
 
 
 
 #### end experimenting
 
 
-        # print build_type
-
-        # if build_type == 'build_on_coast':
-        #     con.build_on_coast(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-        # elif build_type == 'build_make_long_descendant_edges_internal':
-        #     con.build_make_long_descendant_edges_internal(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-        # elif build_type == 'build_explore_prongs':
-        #     con.build_explore_prongs(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-        # elif build_type == 'build_long_and_mid':
-        #     con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-        # #######
+        print build_type
+        if build_type == 'build_naive':
+            con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_on_coast':
+            con.build_on_coast(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_make_long_descendant_edges_internal':
+            con.build_make_long_descendant_edges_internal(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_explore_prongs':
+            con.build_explore_prongs(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_long_and_mid':
+            con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        #######
 
         # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
         # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
@@ -197,22 +198,23 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 
 
 if __name__ == '__main__':
-    draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': False, 'global_drawing_scale': 4, 'ct_lw': 0.002, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    max_num_tetrahedra = 56500
+    draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': False, 'global_drawing_scale': 4, 'ct_lw': 0.01, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    max_num_tetrahedra = 40
     max_length = 0.02
     # max_length = 0.1
 
+    build_type = 'build_naive'
     # build_type = 'build_on_coast'
     # build_type = 'build_make_long_descendant_edges_internal'
     # build_type = 'build_explore_prongs'
-    build_type = 'build_long_and_mid'
+    # build_type = 'build_long_and_mid'
 
-    # veering_isosig = 'cPcbbbiht_12'
+    veering_isosig = 'cPcbbbiht_12'
     # # veering_isosig = 'cPcbbbdxm_10'
     # # veering_isosig = 'dLQacccjsnk_200'
     # veering_isosig = 'eLMkbcddddedde_2100'
     # # veering_isosig = 'eLAkaccddjsnak_2001'
-    veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
+    # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
     # # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
 

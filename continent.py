@@ -430,6 +430,15 @@ class continent:
                 self.first_non_buried_index += 1
         self.update_coast()  ## we don't update this as we build
 
+    def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
+        while self.num_tetrahedra < max_num_tetrahedra:  
+            tri = self.triangles[self.first_non_buried_index]  
+            self.bury(tri)
+            self.first_non_buried_index += 1
+            while self.triangles[self.first_non_buried_index].is_buried:
+                self.first_non_buried_index += 1
+        self.update_coast()  ## we don't update this as we build
+
     def build_on_coast(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
         print 'max_length', max_length

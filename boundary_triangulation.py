@@ -345,13 +345,17 @@ class ladder:
             if args['style'] == 'ladders':
                 origin = self.ladder_origin
                 width = args['ladder_width']
-                ladder_unit.draw_triangle_label(my_canvas, curvy = True, args = args)
+                if args['draw_labels']:
+                    ladder_unit.draw_triangle_label(my_canvas, curvy = True, args = args)
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = True, args = args)
-                ladder_unit.draw_labels_curvy(my_canvas, width, delta = args['delta'])
-            else:                
-                ladder_unit.draw_triangle_label(my_canvas, curvy = False, args = args)
+                if args['draw_labels']:
+                    ladder_unit.draw_labels_curvy(my_canvas, width, delta = args['delta'])
+            else:        
+                if args['draw_labels']:     
+                    ladder_unit.draw_triangle_label(my_canvas, curvy = False, args = args)
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = False, args = args)
-                ladder_unit.draw_corner_and_face_labels(my_canvas)
+                if args['draw_labels']:
+                    ladder_unit.draw_corner_and_face_labels(my_canvas)
                 if args['ct_depth'] >= 0:
                     if ladder_unit.is_on_left():
                         veering_colour = self.vt.get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)
@@ -466,7 +470,8 @@ class torus_triangulation:
                 self.drawing_scale = args['global_drawing_scale'] #*len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
             L.calc_verts_C(args = args)
         
-        self.draw_symmetries(self.canv)
+        if args['draw_labels']:     
+            self.draw_symmetries(self.canv)
 
         for L in self.ladder_list:
             L.draw(self.canv, args = args)
