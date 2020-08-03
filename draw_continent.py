@@ -97,18 +97,22 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
 
 #### end experimenting
 
-
+        hit_max_tetrahedra = False ### default assumption is that we had enough tetrahedra to get the max_length we want.
         print build_type
         if build_type == 'build_naive':
             con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_on_coast':
-            con.build_on_coast(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+            hit_max_tetrahedra = con.build_on_coast(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_make_long_descendant_edges_internal':
-            con.build_make_long_descendant_edges_internal(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+            hit_max_tetrahedra = con.build_make_long_descendant_edges_internal(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_explore_prongs':
-            con.build_explore_prongs(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+            hit_max_tetrahedra = con.build_explore_prongs(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_long_and_mid':
-            con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+            hit_max_tetrahedra = con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+        
+        if hit_max_tetrahedra:
+            output_filename = output_filename[:-4] + '_hitmax.pdf'
+
         #######
 
         # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
@@ -207,9 +211,13 @@ if __name__ == '__main__':
     # draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'ct_lw': 0.002, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
 
+    
+    # max_num_tetrahedra = 50000
+    max_num_tetrahedra = 100000
     # max_num_tetrahedra = 400000
-    max_num_tetrahedra = 50000
+    # max_length = 0.1
     max_length = 0.07
+    # max_length = 0.06
     # max_length = 0.02
 
     # build_type = 'build_naive'
@@ -218,13 +226,13 @@ if __name__ == '__main__':
     # build_type = 'build_explore_prongs'
     build_type = 'build_long_and_mid'
 
-    veering_isosig = 'cPcbbbiht_12'
+    # veering_isosig = 'cPcbbbiht_12'
     # # veering_isosig = 'cPcbbbdxm_10'
     # # veering_isosig = 'dLQacccjsnk_200'
     # veering_isosig = 'eLMkbcddddedde_2100'
     # # veering_isosig = 'eLAkaccddjsnak_2001'
     # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
-    # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
+    veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
 
@@ -234,7 +242,9 @@ if __name__ == '__main__':
      
     draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
-    # num_to_draw = 10
+    ### draw many:
+
+    # num_to_draw = 87
     # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, num_to_draw = num_to_draw, draw_args = draw_args, build_type = build_type)
     
 

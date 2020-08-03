@@ -501,10 +501,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
     def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
@@ -521,10 +523,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
     def build_explore_prongs(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
@@ -556,10 +560,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
     # def build_loxodromics(self, max_length = 0.1, max_num_tetrahedra = 50000):
     #     self.max_length = max_length
@@ -611,10 +617,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
 
     def in_fill(self, triangle):
