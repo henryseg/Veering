@@ -52,6 +52,11 @@ class landscape_edge:
         u, v = self.vertices
         return 0.5*(u.pos.complex() + v.pos.complex())
 
+    def shared_vertex(self, other):
+        intersection = set(self.vertices) & set(other.vertices) 
+        assert len(intersection) == 1
+        return intersection.pop()
+
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
         self.continent = continent
@@ -990,7 +995,7 @@ class continent:
 
     def make_lightning_curves(self):
         ## first, find rivers starting from infinity on the upper landscape
-        out = []
+        dividers = []
         for tri in self.triangles:
             if not tri.is_buried:
                 if tri.is_upper:
@@ -1013,7 +1018,7 @@ class continent:
                             river_edges = [river[0].shared_edge(river[1])] + river_edges
 
                         ### now we only have to worry about pushing down through tetrahedra not incident to infinity
-                        while True:
+                        while True:  ## this is quadratic time, could be linear... but who cares
                             restart_while_loop = False
                             for i in range(1, len(river)):
                                 the_lower_tet = river[i].lower_tet
@@ -1055,8 +1060,8 @@ class continent:
                         ### finally, assert that there is nothing below any tri in the river at the end 
                         for tri in river:
                             assert tri.lower_tet == None
-                        curve = [e.midpoint() for e in river_edges]
-                        out.append(curve)   ## midpoints of these are our lightning curve
+                        # curve = [e.midpoint() for e in river_edges]
+                        dividers.append(river_edges)   ## midpoints of these are our lightning curve
 
                 else:  ### its a triangle on the bottom... swap all the uppers with lowers... 
                        ### there is some serious code factoring that could be done here!
@@ -1121,8 +1126,50 @@ class continent:
                         ### finally, assert that there is nothing below any tri in the river at the end 
                         for tri in river:
                             assert tri.upper_tet == None
-                        curve = [e.midpoint() for e in river_edges]
-                        out.append(curve)   ## midpoints of these are our lightning curve
+                        # curve = [e.midpoint() for e in river_edges]
+                        dividers.append(river_edges)   ## midpoints of these are our lightning curve
+        
+        ### now clean up each divider by removing "fan edges"
+        # out = []
+        # for divider in dividers:
+        #     if len(divider) <= 2:
+        #         out.append(divider)
+        #         continue
+        #     clean_divider = []
+        #     a, b = divider[:2]
+        #     x = a.shared_vertex(b)
+        #     clean_divider.append(a)
+        #     for c in divider[2:]:
+        #         y = b.shared_vertex(c)
+        #         if x == y:
+        #             a, b = a, c
+        #         else:
+        #             clean_divider.append(b)
+        #             a, b = b, c
+        #             x = y
+        #     clean_divider.append(divider[-1])
+        #     out.append(clean_divider)
+
+        ### now find lightning curve from the edges of the divider
+        out = []
+        for divider in dividers:
+            if len(divider) <= 2:
+                out.append(divider)
+                continue
+            a, b = divider[:2]
+            x = a.shared_vertex(b)
+            lightning_curve = [x]
+            for c in divider[2:]:
+                y = b.shared_vertex(c)
+                if x == y:
+                    a, b = a, c
+                else:
+                    lightning_curve.append(y)
+                    a, b = b, c
+                    x = y
+            out.append(lightning_curve)
+
+
         return out
 
 if __name__ == '__main__':
