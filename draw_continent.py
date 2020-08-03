@@ -174,6 +174,12 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
         #     pos *= T.drawing_scale
         #     T.canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.2), [pyx.style.linewidth(lw * 3)])
 
+        lightning_curves = con.make_lightning_curves()
+        for crv in lightning_curves:
+            crv = [ T.drawing_scale * c for c in crv ]
+            draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw)])  
+
+
     out_canvas = pyx.canvas.canvas()
     height_offset = 0.0
     canvases = [T.canv for T in B.torus_triangulation_list]
@@ -198,16 +204,19 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 
 
 if __name__ == '__main__':
-    draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': False, 'global_drawing_scale': 4, 'ct_lw': 0.01, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    max_num_tetrahedra = 40
-    max_length = 0.02
-    # max_length = 0.1
+    # draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'ct_lw': 0.002, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args = {'only_generate_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
 
-    build_type = 'build_naive'
+    # max_num_tetrahedra = 400000
+    max_num_tetrahedra = 50000
+    max_length = 0.07
+    # max_length = 0.02
+
+    # build_type = 'build_naive'
     # build_type = 'build_on_coast'
     # build_type = 'build_make_long_descendant_edges_internal'
     # build_type = 'build_explore_prongs'
-    # build_type = 'build_long_and_mid'
+    build_type = 'build_long_and_mid'
 
     veering_isosig = 'cPcbbbiht_12'
     # # veering_isosig = 'cPcbbbdxm_10'
@@ -215,6 +224,7 @@ if __name__ == '__main__':
     # veering_isosig = 'eLMkbcddddedde_2100'
     # # veering_isosig = 'eLAkaccddjsnak_2001'
     # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
+    # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
 
