@@ -190,7 +190,7 @@ class CP1(tuple):
 
     def complex(self):
         if self.is_infinity():
-            return complex(1000,1000) ### hack, useful for debugging
+            return complex(100,100) ### hack, useful for debugging
         else:
             return self[0]/self[1]
 

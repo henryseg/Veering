@@ -127,28 +127,32 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
 
         draw_options = [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad)] ## this may get overwritten with colour information for the ladder
 
-        if draw_args['only_draw_ladderpoles']:
-            for j, ladderpole_vertices in enumerate(ladderpoles_vertices):
-                # if j%2 == 0:
-                #     col = colours['R']
-                # else:
-                #     col = colours['L']
-                # draw_options = [pyx.style.linewidth(ct_lw), col]
-                for i in range(len(ladderpole_vertices) - 1):  # fenceposts
-                    path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
-                    for v in path[:-1]:
-                        assert v.is_ladderpole_descendant()
-                    path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
-                    draw_path(T.canv, path_C, draw_options)  
-        else:
-            path = con.coast
-            path.remove(con.infinity)
-            path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
-            draw_path(T.canv, path_C, draw_options)  
+        ##### draw the Cannon-Thurston curve
 
+        # if draw_args['only_draw_ladderpoles']:
+        #     for j, ladderpole_vertices in enumerate(ladderpoles_vertices):
+        #         # if j%2 == 0:
+        #         #     col = colours['R']
+        #         # else:
+        #         #     col = colours['L']
+        #         # draw_options = [pyx.style.linewidth(ct_lw), col]
+        #         for i in range(len(ladderpole_vertices) - 1):  # fenceposts
+        #             path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
+        #             for v in path[:-1]:
+        #                 assert v.is_ladderpole_descendant()
+        #             path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+        #             draw_path(T.canv, path_C, draw_options)  
+        # else:
+        #     path = con.coast
+        #     path.remove(con.infinity)
+        #     path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+        #     draw_path(T.canv, path_C, draw_options)  
+
+
+        ##############
         # adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()  
 
-        ### continent drawing the boundary triangulation
+        ### continent drawing the boundary triangulation (we don't generally do this because we have boundary_triangulation to do this)
         # lines for triangles meeting infinity
 
         # for endpoints, veering_colour in adj_edges:
@@ -179,20 +183,55 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
         #     pos *= T.drawing_scale
         #     T.canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.2), [pyx.style.linewidth(lw * 3)])
 
-        lightning_curves = con.make_lightning_curves()
-        for crv in lightning_curves:
-            ## trim to ladder poles
-            ladderpole_vertex_indices = []
-            for i, v in enumerate(crv):
-                if v in all_ladderpole_vertices:
-                    ladderpole_vertex_indices.append(i)
-            if len(ladderpole_vertex_indices) > 0:
-                crv = crv[ladderpole_vertex_indices[0]: ladderpole_vertex_indices[-1] + 1]
-                # for e in crv:
-                    # pts = [T.drawing_scale * v.pos.complex() for v in e.vertices]
-                    # draw_path(T.canv, pts, [pyx.style.linewidth(ct_lw)])  
-                crv = [ T.drawing_scale * c.pos.complex() for c in crv ]
-                draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round])  
+
+
+        #### draw upper and lower landscapes for the continent
+
+        lower_colours = {True: pyx.color.rgb(0.5,0,0), False: pyx.color.rgb(0,0,0.5)}
+        upper_colours = {True: pyx.color.rgb(0.9,0,0), False: pyx.color.rgb(0,0,0.9)}
+
+        landscape_edges = con.boundary_landscape_edges()
+
+        colours = [lower_colours, upper_colours]
+        # for i in range(2):
+        i = 1
+        for e in landscape_edges[i]:
+            col = colours[i][e.is_red]
+            u, v = e.vertices
+            if u == con.infinity or v == con.infinity:
+                if u == con.infinity:
+                    z = T.drawing_scale * v.pos.complex()
+                else:
+                    z = T.drawing_scale * u.pos.complex()
+                T.canv.fill(pyx.path.circle(z.real, z.imag, 0.05), [col])
+            else:
+                draw_path(T.canv, [T.drawing_scale * u.pos.complex(), T.drawing_scale * v.pos.complex()], [pyx.style.linewidth(0.5 * ct_lw), col])
+
+        #### draw lightning curves
+
+        # lightning_colours = [pyx.color.rgb(0,0.5,0), pyx.color.rgb(0.5,0,0.5)]
+        # lightning_curves = con.lightning_curves(all_ladderpole_vertices)
+        # for i in range(2):
+        #     for crv in lightning_curves[i]:
+        #         ## remove any infinities
+        #         crv = [c for c in crv if c != con.infinity]
+
+        #         crv = [ T.drawing_scale * c.pos.complex() for c in crv ]
+        #         draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[i]])
+        #         # ## trim to ladder poles
+        #         # ladderpole_vertex_indices = []
+        #         # for i, v in enumerate(crv):
+        #         #     if v in all_ladderpole_vertices:
+        #         #         ladderpole_vertex_indices.append(i)
+        #         # if len(ladderpole_vertex_indices) > 0:
+        #         #     crv = crv[ladderpole_vertex_indices[0]: ladderpole_vertex_indices[-1] + 1]
+        #         #     # for e in crv:
+        #         #         # pts = [T.drawing_scale * v.pos.complex() for v in e.vertices]
+        #         #         # draw_path(T.canv, pts, [pyx.style.linewidth(ct_lw)])  
+        #         #     crv = [ T.drawing_scale * c.pos.complex() for c in crv ]
+        #         #     draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round]) 
+
+
 
 
     out_canvas = pyx.canvas.canvas()
@@ -225,12 +264,14 @@ if __name__ == '__main__':
     
     # max_num_tetrahedra = 50000
     # max_num_tetrahedra = 100000
-    max_num_tetrahedra = 400000
+    # max_num_tetrahedra = 400000
+    max_num_tetrahedra = 2000000
     # max_length = 0.15
-    # max_length = 0.1
+    max_length = 0.1
     # max_length = 0.07
     # max_length = 0.06
-    max_length = 0.02
+    # max_length = 0.02
+    # max_length = 0.01
 
     draw_args['ct_lw'] = 0.2 * max_length 
 
@@ -240,25 +281,24 @@ if __name__ == '__main__':
     # build_type = 'build_explore_prongs'
     build_type = 'build_long_and_mid'
 
-    veering_isosig = 'cPcbbbiht_12'
-    # # # veering_isosig = 'cPcbbbdxm_10'
-    # # # veering_isosig = 'dLQacccjsnk_200'
-    # # veering_isosig = 'eLMkbcddddedde_2100'
-    # # # veering_isosig = 'eLAkaccddjsnak_2001'
-    # # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
-    # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
-    # # # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
-    # # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
+    # veering_isosig = 'cPcbbbiht_12'
+    # # # # veering_isosig = 'cPcbbbdxm_10'
+    # # # # veering_isosig = 'dLQacccjsnk_200'
+    # # # veering_isosig = 'eLMkbcddddedde_2100'
+    # # # # veering_isosig = 'eLAkaccddjsnak_2001'
+    # # # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
+    veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
+    # # # # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
+    # # # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     tet_shapes = shapes_data[veering_isosig]
     filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
-     
     draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
     ### draw many:
 
-    # num_to_draw = 50
+    # num_to_draw = 30
     # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, num_to_draw = num_to_draw, draw_args = draw_args, build_type = build_type)
     
 
