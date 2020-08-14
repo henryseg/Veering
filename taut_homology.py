@@ -114,10 +114,12 @@ def elem_vector(i, dim):
     return vector(vec)
 
 
-def faces_in_homology(triangulation, angle_structure):
+def faces_in_homology(triangulation, angle_structure, cycles = []):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut_reduced(triangulation, angle_structure)
     N = Matrix(N)
+    for cycle in cycles:
+        N = N.insert_row(0, cycle)
     N = N.transpose()
     S, U, V = N.smith_form()
 
