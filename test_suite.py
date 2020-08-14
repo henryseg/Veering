@@ -60,20 +60,21 @@ def run_tests(num_to_check = 1000):
 
     print "all tests not depending on sage passed"
 
-    big_polys = {"cPcbbbiht_12":"a^3 - 4*a^2 + 4*a - 1",
-                 "eLMkbcddddedde_2100":"a^6*b - a^6 - 2*a^5*b - a^4*b^2 + a^5 + 2*a^4*b + a^3*b^2 - 2*a^3*b + a^3 + 2*a^2*b + a*b^2 - a^2 - 2*a*b - b^2 + b",
-                 "gLLAQbecdfffhhnkqnc_120012":"a^7 + a^6 + a^5 + a^4 - a^3 - a^2 - a - 1",
-                 "gLLPQcdfefefuoaaauo_022110":"a^12*b^3 - a^11*b^2 - a^10*b^3 - a^10*b^2 - a^7*b^3 - a^7*b^2 - a^6*b^3 + a^7*b + a^5*b^2 - a^6 - a^5*b - a^5 - a^2*b - a^2 - a*b + 1"}
+    veering_polys = {"cPcbbbiht_12":"a^3 - 4*a^2 + 4*a - 1",
+                     "eLMkbcddddedde_2100":"a^6*b - a^6 - 2*a^5*b - a^4*b^2 + a^5 + 2*a^4*b + a^3*b^2 - 2*a^3*b + a^3 + 2*a^2*b + a*b^2 - a^2 - 2*a*b - b^2 + b",
+                     "gLLAQbecdfffhhnkqnc_120012":"a^7 + a^6 + a^5 + a^4 - a^3 - a^2 - a - 1",
+                     "gLLPQcdfefefuoaaauo_022110":"a^12*b^3 - a^11*b^2 - a^10*b^3 - a^10*b^2 - a^7*b^3 - a^7*b^2 - a^6*b^3 + a^7*b + a^5*b^2 - a^6 - a^5*b - a^5 - a^2*b - a^2 - a*b + 1"}
 
-    small_polys = {"cPcbbbiht_12":"a^2 - 3*a + 1",
-                   "eLMkbcddddedde_2100":"a^2*b - a^2 - a*b - b^2 + b",
-                   "iLLAwQcccedfghhhlnhcqeesr_12001122":"0"}
+    taut_polys = {"cPcbbbiht_12":"a^2 - 3*a + 1",
+                  "eLMkbcddddedde_2100":"a^2*b - a^2 - a*b - b^2 + b",
+                  "iLLAwQcccedfghhhlnhcqeesr_12001122":"0"}
 
     torus_bundles = ["cPcbbbiht_12", "eLMkbcdddhhqqa_1220", "gLMzQbcdefffhhqqqdl_122002"]
     
     try:
         from sage.rings.integer_ring import ZZ
         import taut_polytope
+        import taut_polynomial
         import veering_polynomial
 
         sage_working = True
@@ -88,20 +89,20 @@ def run_tests(num_to_check = 1000):
             assert not taut_polytope.is_layered(sig)
 
     if sage_working:
-        for sig in big_polys:
+        for sig in veering_polys:
             print "testing big", sig
-            p = veering_polynomial.big_polynomial(sig)
-            assert p.__repr__() == big_polys[sig]
-        for sig in small_polys:
-            print "testing small", sig
-            p = veering_polynomial.small_polynomial_via_tree(sig)
-            assert p.__repr__() == small_polys[sig]
+            p = veering_polynomial.veering_polynomial(sig)
+            assert p.__repr__() == veering_polys[sig]
+        for sig in taut_polys:
+            print "testing taut", sig
+            p = taut_polynomial.taut_polynomial_via_tree(sig)
+            assert p.__repr__() == taut_polys[sig]
         for i in range(3):
             j = int(5000*random())
             sig = veering_isosigs[j]
             print "testing divide", sig
-            p = veering_polynomial.big_polynomial(sig)
-            q = veering_polynomial.small_polynomial_via_tree(sig)
+            p = veering_polynomial.veering_polynomial(sig)
+            q = taut_polynomial.taut_polynomial_via_tree(sig)
             if q == 0:
                 assert p == 0
             else:
@@ -115,7 +116,7 @@ def run_tests(num_to_check = 1000):
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
             if M.homology().betti_number() == 1:
-                assert veering_polynomial.small_polynomial_via_tree(sig, mode = "alexander") == M.alexander_polynomial()
+                assert taut_polynomial.taut_polynomial_via_tree(sig, mode = "alexander") == M.alexander_polynomial()
 
     if sage_working:
         for sig in torus_bundles:
