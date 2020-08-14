@@ -12,13 +12,24 @@ from sage.arith.misc import gcd
 from sage.rings.rational_field import QQ
 from sage.matrix.constructor import Matrix
 
-from taut import liberal
+from taut import liberal, vert_pair_to_edge_num
 from transverse_taut import is_transverse_taut
 from taut_homology import (build_spanning_dual_tree, edge_equation_matrix_taut,
                            group_ring, faces_in_laurent, matrix_laurent_to_poly,
                            normalise_poly)
 
 verbose = 0
+
+
+# upper and lower diagonals of the tet
+
+def tet_lower_upper_edges(tetrahedron, coorientations):
+    tet_coor = coorientations[tetrahedron.index()]
+    lower_edge_endpoints = [i for i in range(4) if tet_coor[i] == +1]
+    lower_edge_endpoints.sort()
+    lower_edge_num = vert_pair_to_edge_num[ tuple(lower_edge_endpoints) ]
+    upper_edge_num = 5 - lower_edge_num
+    return ( tetrahedron.face(1, lower_edge_num), tetrahedron.face(1, upper_edge_num) )
 
 
 # Polynomials that come with snappy (in sage) - delete these or move

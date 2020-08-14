@@ -16,23 +16,10 @@ from transverse_taut import is_transverse_taut
 from taut_homology import (build_spanning_dual_tree, edge_equation_matrix_taut,
                            group_ring, faces_in_laurent, matrix_laurent_to_poly,
                            normalise_poly)
+from taut_polynomial import tet_lower_upper_edges
 from veering import is_veering
 
 verbose = 0
-
-
-# veering structure
-
-edge_vert_index_map = {(0, 1):0, (0, 2):1, (0, 3):2, (1, 2): 3, (1, 3):4, (2, 3):5 }
-
-
-def tet_lower_upper_edges(tetrahedron, coorientations):
-    tet_coor = coorientations[tetrahedron.index()]
-    lower_edge_endpoints = [i for i in range(4) if tet_coor[i] == +1]
-    lower_edge_endpoints.sort()
-    lower_edge_num = edge_vert_index_map[ tuple(lower_edge_endpoints) ]
-    upper_edge_num = 5 - lower_edge_num
-    return ( tetrahedron.face(1, lower_edge_num), tetrahedron.face(1, upper_edge_num) )
 
 
 # computing the veering veering polynomial
@@ -61,7 +48,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
     if verbose > 0:
         print "how many reds and blues", len(red_tetrahedra), len(blue_tetrahedra)
 
-    face_laurents = faces_in_laurent(triangulation, angle_structure, ZH)
+    face_laurents = faces_in_laurent(triangulation, angle_structure, [], ZH) # empty list of cycles.
     if verbose > 0:
         print "face_laurents", face_laurents
 
