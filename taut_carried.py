@@ -20,7 +20,7 @@ def boundary_cycles_from_surface(tri, angle, tet_vert_coorientations, surface):
     for vertex in tri.faces(0):   ## 0 is the dimension of the face, so this is cusps
         out.append([0] * tri.countFaces(2))
 
-    edge_sides = edge_side_face_collections(tri, angle, tet_vert_coorientations = None)
+    edge_sides = edge_side_face_collections(tri, angle, tet_vert_coorientations = tet_vert_coorientations)
 
     face_coorientations = transverse_taut.convert_tetrahedron_coorientations_to_faces(tri, tet_vert_coorientations)
 
@@ -60,9 +60,6 @@ def boundary_cycles_from_surface(tri, angle, tet_vert_coorientations, surface):
             for (f_ind, vert) in above:
                 out[cusp_index][f_ind] += weight
     return out
-
-
-
 
 
 

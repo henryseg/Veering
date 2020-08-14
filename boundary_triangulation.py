@@ -814,14 +814,14 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'only_generate_boundary_triangulation':False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0}
+    args = {'only_generate_boundary_triangulation':False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     # args['draw_triangles_near_poles'] = False ### for standard ladder picture, set true for CT pictures
     args['draw_triangles_near_poles'] = True
 
-    # args['style'] = 'ladders'
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 20)
+    args['style'] = 'ladders'
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 87)
     args['style'] = 'geometric'
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 30)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 87)
 
     
 
@@ -837,12 +837,13 @@ if __name__ == "__main__":
     # name = 'eLAkbbcdddhwqj_2102'
     # name = 'dLQacccjsnk_200' 
     # name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
+    # name = 'gLvQQadfedefjaaajkk_200211'
 
     # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     # args['tet_shapes'] = shapes_data[name]
     # args['tet_shapes'] = None
-    # draw_triangulation_boundary_from_veering_isosig(name, args = args, output_filename = name + '_' + '_' + args['style'] + str(args['ct_depth']) + '_' + str(args['ct_epsilon']) + '.pdf', verbose = 1.0)
 
+    # draw_triangulation_boundary_from_veering_isosig(name, style = 'ladders', tet_shapes = None)
 
     # names = ['kLALPPzkbcbefghgijjxxnsaaqkqqs_0110021020',
     # 'kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101',
