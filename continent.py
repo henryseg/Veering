@@ -24,10 +24,16 @@ class vertex:
         return self.__repr__()
 
 class landscape_edge:
-    def __init__(self, continent, vertices): ## could add: is_red, edge_index
+    def __init__(self, continent, vertices, is_red): ## could add: is_red, edge_index
         self.continent = continent
         self.vertices = vertices
         self.continent.edges.append(self)
+        self.is_red = is_red
+        # try:
+        #     assert self.length() > 0.0001
+        # except:
+        #     print 'edge too short', self.vertices
+        #     raise
 
     def __repr__(self):
         u, v = self.vertices
@@ -43,6 +49,15 @@ class landscape_edge:
     def is_under_ladderpole(self):
         return any( v.is_ladderpole_descendant() for v in self.vertices )
 
+    def midpoint(self):
+        u, v = self.vertices
+        return 0.5*(u.pos.complex() + v.pos.complex())
+
+    def shared_vertex(self, other):
+        intersection = set(self.vertices) & set(other.vertices) 
+        assert len(intersection) == 1
+        return intersection.pop()
+
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
         self.continent = continent
@@ -51,13 +66,32 @@ class landscape_triangle:
         self.is_red = is_red ## if self has two red edges
         self.vertices = vertices  ## list of three vertices, oriented anticlockwise as viewed from above, with the special vertex first
         ### the special vertex is incident to two edges of the same colour
+
+        ###    *                *
+        ###   / \              / \
+        ###  R   R     or     B   B  
+        ### /     \          /     \
+        ### ---B---          ---R---
+
         self.edges = edges
+        self.upper_tet = None
+        self.lower_tet = None
         self.neighbours = neighbours ## list of three triangles incident to this one, opposite corresponding vertices
         self.is_buried = False  ## either it is inside the continent, or we aren't interested in it for drawing purposes
         self.continent.triangles.append(self)
 
     def __str__(self):
         return 'continent_ind,triang_ind,upper,red,vertices,buried ' + str([self.continent.triangles.index(self), self.index, self.is_upper, self.is_red, self.vertices, self.is_buried])
+
+    def set_upper_tet(self, con_tet):
+        self.upper_tet = con_tet
+        con_tet.lower_triangles.append(self)
+        assert len(con_tet.lower_triangles) <= 2
+
+    def set_lower_tet(self, con_tet):
+        self.lower_tet = con_tet
+        con_tet.upper_triangles.append(self)
+        assert len(con_tet.upper_triangles) <= 2
 
     def downriver_index(self):
         """index of triangle in self.neighbours that is downriver of self"""
@@ -213,6 +247,11 @@ class landscape_triangle:
         tris, is_coastal = self.continent.flow(self, return_all = True)
         return [tri.edges[tri.downriver_index()] for tri in tris]
 
+    def shared_edge(self, other):
+        intersection = set(self.edges) & set(other.edges) 
+        assert len(intersection) == 1
+        return intersection.pop()
+
     # def dist_from_lox(self, edge):
     #     vt = self.continent.vt
     #     edge_index = self.edges.index(edge)
@@ -233,6 +272,21 @@ class landscape_triangle:
 
     #     ### has two fixed points... get dist of midpoint of the edge to the correct fixed point...
 
+class continent_tetrahedron:
+    def __init__(self, continent, tet_index):
+        self.continent = continent
+        self.index = tet_index ## in the quotient manifold
+        self.upper_triangles = []
+        self.lower_triangles = []
+        self.continent.tetrahedra.append(self)
+
+    def upper_edge(self):
+        return self.upper_triangles[0].shared_edge(self.upper_triangles[1])
+
+    def lower_edge(self):
+        return self.lower_triangles[0].shared_edge(self.lower_triangles[1])
+
+
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
@@ -242,11 +296,12 @@ class continent:
         self.num_tetrahedra = 1
 
         self.tet_face = initial_tet_face
-        self.desired_vertices = desired_vertices
+        self.desired_vertices = desired_vertices[:]  ## copy
         self.boundary_triangulation_vertices = set()
 
         self.edges = []
         self.vertices = []
+        self.tetrahedra = []
         for v in self.tet_face.verts_pos:
             vertex(self, v)  ## creates and adds to the list of vertices
         self.infinity = self.vertices[self.tet_face.face]
@@ -294,6 +349,14 @@ class continent:
         triangle_c = landscape_triangle(self, face_c_index, cd_is_upper, cd_is_red, None, None, None)
         triangle_d = landscape_triangle(self, face_d_index, cd_is_upper, cd_is_red, None, None, None)
 
+        ## add the tetrahedron
+
+        con_tet = continent_tetrahedron(self, self.tet_face.tet_num)
+        triangle_a.set_upper_tet(con_tet)
+        triangle_b.set_upper_tet(con_tet)
+        triangle_c.set_lower_tet(con_tet)
+        triangle_d.set_lower_tet(con_tet)
+
         ## now for the vertices
 
         vert_a = self.vertices[face_a]
@@ -324,12 +387,12 @@ class continent:
         ###   |,'    c.| 
         ###   a----R---d 
 
-        edge_ab = landscape_edge(self, [vert_a, vert_b])
-        edge_ac = landscape_edge(self, [vert_a, vert_c])
-        edge_ad = landscape_edge(self, [vert_a, vert_d])
-        edge_bc = landscape_edge(self, [vert_b, vert_c])
-        edge_bd = landscape_edge(self, [vert_b, vert_d])
-        edge_cd = landscape_edge(self, [vert_c, vert_d])
+        edge_ab = landscape_edge(self, [vert_a, vert_b], upper_edge_colour == 'R')
+        edge_ac = landscape_edge(self, [vert_a, vert_c], False)
+        edge_ad = landscape_edge(self, [vert_a, vert_d], True)
+        edge_bc = landscape_edge(self, [vert_b, vert_c], True)
+        edge_bd = landscape_edge(self, [vert_b, vert_d], False)
+        edge_cd = landscape_edge(self, [vert_c, vert_d], lower_edge_colour == 'R')
 
         if ab_is_red: ## the triangles a and b, not the edge
             triangle_a.edges = [edge_bd, edge_bc, edge_cd]
@@ -425,6 +488,15 @@ class continent:
                 self.first_non_buried_index += 1
         self.update_coast()  ## we don't update this as we build
 
+    def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
+        while self.num_tetrahedra < max_num_tetrahedra:  
+            tri = self.triangles[self.first_non_buried_index]  
+            self.bury(tri)
+            self.first_non_buried_index += 1
+            while self.triangles[self.first_non_buried_index].is_buried:
+                self.first_non_buried_index += 1
+        self.update_coast()  ## we don't update this as we build
+
     def build_on_coast(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
         print 'max_length', max_length
@@ -442,10 +514,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
     def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
@@ -462,10 +536,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
     def build_explore_prongs(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
@@ -481,9 +557,8 @@ class continent:
             # for e in crossing_edges[-1:]:   ### only the last edge
                 if e.is_under_ladderpole():
                     u = tri.vertices[tri.downriver_index()]
-                    v, w = e.vertices
-                    midpoint = 0.5*(v.pos.complex() + w.pos.complex())
-                    distance_to_prong = abs(u.pos.complex() - midpoint)
+                    m = e.midpoint()
+                    distance_to_prong = abs(u.pos.complex() - m)
                     if distance_to_prong > max_length:
                         self.bury(tri)
                         break
@@ -498,10 +573,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
     # def build_loxodromics(self, max_length = 0.1, max_num_tetrahedra = 50000):
     #     self.max_length = max_length
@@ -540,9 +617,8 @@ class continent:
             for e in crossing_edges:   ### previously only used the last edge
                 if e.is_under_ladderpole():
                     u = tri.vertices[tri.downriver_index()]
-                    v, w = e.vertices
-                    midpoint = 0.5*(v.pos.complex() + w.pos.complex())
-                    distance_to_prong = abs(u.pos.complex() - midpoint)
+                    m = e.midpoint()
+                    distance_to_prong = abs(u.pos.complex() - m)
                     if distance_to_prong > max_length: 
                         mid_is_far = True
                         break
@@ -554,10 +630,12 @@ class continent:
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
         print 'num_tetrahedra', self.num_tetrahedra
-        print 'hit max tetrahedra', self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        print 'hit max tetrahedra', hit_max_tetrahedra
         self.update_coast()
         print 'num_long_edges_direct_count', self.count_long_edges()
         print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        return hit_max_tetrahedra
 
 
     def in_fill(self, triangle):
@@ -609,6 +687,20 @@ class continent:
         triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
         triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
 
+        ## add the tetrahedron 
+
+        con_tet = continent_tetrahedron(self, tet.index())
+        if triangle.is_upper:
+            triangle.set_upper_tet(con_tet)
+            neighbour.set_upper_tet(con_tet)
+            triangle_a.set_lower_tet(con_tet)
+            triangle_b.set_lower_tet(con_tet)
+        else:
+            triangle.set_lower_tet(con_tet)
+            neighbour.set_lower_tet(con_tet)
+            triangle_a.set_upper_tet(con_tet)
+            triangle_b.set_upper_tet(con_tet)            
+
         ## now for the vertices
 
         if triangle.is_red == triangle.is_upper:
@@ -629,7 +721,7 @@ class continent:
         
         ## now for the edges
 
-        edge_tn = landscape_edge(self, [vert_t, vert_n]) ## never coastal
+        edge_tn = landscape_edge(self, [vert_t, vert_n], far_edge_colour == 'R') ## never coastal
 
         if triangle.is_red == triangle.is_upper:
             edge_bn, edge_na, edge_ab = triangle.edges 
@@ -681,7 +773,7 @@ class continent:
         ###   |`a    ,'|     is_upper, so faces t and c are below, a and b are new triangles above
         ###   L  ` ,' c|
         ###   |t ,' .  L     
-        ###   |,'    b.|
+        ###   |,'    b.|     
         ###   c----R---a 
  
         ###   c---R----b
@@ -690,6 +782,9 @@ class continent:
         ###   |b ,' .  L     
         ###   |,'    c.|
         ###   a----R---t   
+
+        ### at is red iff not triangle.is_upper
+        ### bt is red iff triangle.is_upper
 
         ## We find the easy information so we can build the new triangles
         tet, embed = triangle.outwards_tet()  
@@ -725,6 +820,20 @@ class continent:
         triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
         triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
         triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red, None, None, None)
+
+        ## add the tetrahedron 
+
+        con_tet = continent_tetrahedron(self, tet.index())
+        if triangle.is_upper:
+            triangle.set_upper_tet(con_tet)
+            triangle_c.set_upper_tet(con_tet)
+            triangle_a.set_lower_tet(con_tet)
+            triangle_b.set_lower_tet(con_tet)
+        else:
+            triangle.set_lower_tet(con_tet)
+            triangle_c.set_lower_tet(con_tet)
+            triangle_a.set_upper_tet(con_tet)
+            triangle_b.set_upper_tet(con_tet)  
 
         ## now for the vertices
 
@@ -770,9 +879,9 @@ class continent:
 
         ### now for the edges
 
-        edge_at = landscape_edge(self, [vert_a, vert_t]) ## coastal
-        edge_bt = landscape_edge(self, [vert_b, vert_t]) ## coastal
-        edge_ct = landscape_edge(self, [vert_c, vert_t]) ## never coastal
+        edge_at = landscape_edge(self, [vert_a, vert_t], not triangle.is_upper) ## coastal
+        edge_bt = landscape_edge(self, [vert_b, vert_t], triangle.is_upper) ## coastal
+        edge_ct = landscape_edge(self, [vert_c, vert_t], far_edge_colour == 'R') ## never coastal
 
         if triangle.is_red == triangle.is_upper:
             edge_bc, edge_ca, edge_ab = triangle.edges 
@@ -894,6 +1003,203 @@ class continent:
                 if edge_length > self.max_length:
                     out += 1
         return out
+
+    def lightning_curves(self, special_vertices):
+        ## remark: there are other lightning curves for, say, edges, or more generally, for an arbitrary pair of points on S^1(alpha)
+        ## A more general algorithm: lets do it for an edge on the upper landscape, say e. Take its endpoints p, q.
+        ## Let e_i be the edges on the lower landscape that link e. We calculate this from the coast.
+        ## We then put these in order: we say that e_i < e_j if e_i separates p from e_j.
+        ## Then clean up as in the following function.
+
+        ## first, find rivers starting from infinity on the upper landscape
+        dividers = [[],[]]  ### first list is upper, second list is lower
+        for tri in self.triangles:
+            if not tri.is_buried:
+                river_source = tri.vertices[tri.downriver_index()]
+                if river_source == self.infinity or river_source in special_vertices: 
+                    river, got_to_coast = self.flow(tri, return_all = True)
+                    assert got_to_coast
+                    river_edges = [tri.edges[tri.downriver_index()] for tri in river]
+
+                    if tri.is_upper:                        
+                        ### now push river down
+                        ### deal with tri next to river_source first. It must have its track pointing to a 0 angle 
+                        ### edge of the tet below because upper track cusps dont point towards the top
+                        ### edge of a tetrahedron. So push down, repeat until cannot push down any more
+                        
+                        while river[0].lower_tet != None:
+                            new_river_tris = river[0].lower_tet.lower_triangles
+                            if river_source in new_river_tris[1].vertices:
+                                new_river_tris.reverse()
+                            assert river_source not in new_river_tris[1].vertices
+                            river = new_river_tris + river[1:]
+                            river_edges = [river[0].shared_edge(river[1])] + river_edges
+
+                        ### now we only have to worry about pushing down through tetrahedra not incident to river_source
+                        while True:  ## this is quadratic time, could be linear... but who cares
+                            restart_while_loop = False
+                            for i in range(1, len(river)):
+                                the_lower_tet = river[i].lower_tet
+                                if the_lower_tet != None:
+                                    upper_tris = the_lower_tet.upper_triangles
+                                    other_tri = upper_tris[(upper_tris.index(river[i]) + 1) %2]
+                                    a, b = river_edges[i-1], river_edges[i]
+                                    assert a in river[i].edges and b in river[i].edges 
+                                    if a not in other_tri.edges and b not in other_tri.edges: 
+                                        ## so the path doesnt touch the other upper triangle,
+                                        ## so we can push down through a normal triangle
+                                        lower_tris = the_lower_tet.lower_triangles
+                                        if a in lower_tris[1].edges:
+                                            lower_tris.reverse()
+                                        assert a in lower_tris[0].edges and b in lower_tris[1].edges
+                                        river = river[:i] + lower_tris + river[i+1:]
+                                        river_edges = river_edges[:i] + [the_lower_tet.lower_edge()] + river_edges[i:]
+                                        restart_while_loop = True
+                                        break # out of for loop
+                            if restart_while_loop:
+                                continue
+                            for i in range(1, len(river) - 1):
+                                if river[i].lower_tet != None and river[i].lower_tet == river[i+1].lower_tet: ## can push down through this tet
+                                    the_lower_tet = river[i].lower_tet
+                                    a, b = river_edges[i-1], river_edges[i+1]
+                                    assert a in river[i].edges and b in river[i+1].edges 
+                                    lower_tris = the_lower_tet.lower_triangles
+                                    if a in lower_tris[1].edges:
+                                        lower_tris.reverse()
+                                    assert a in lower_tris[0].edges and b in lower_tris[1].edges
+                                    river = river[:i] + lower_tris + river[i+2:]
+                                    river_edges = river_edges[:i] + [the_lower_tet.lower_edge()] + river_edges[i+1:]
+                                    restart_while_loop = True
+                                    break # out of for loop
+                            if restart_while_loop:
+                                continue
+                        # now we exit the while loop
+                            break
+                        ### finally, assert that there is nothing below any tri in the river at the end 
+                        for tri in river:
+                            assert tri.lower_tet == None
+                        # curve = [e.midpoint() for e in river_edges]
+                        dividers[0].append(river_edges)   ## midpoints of these are our lightning curve
+
+                    else:  ### its a triangle on the bottom... swap all the uppers with lowers... 
+                        ### there is some serious code factoring that could be done here!
+                    
+                        ### now push river up
+                        
+                        while river[0].upper_tet != None:
+                            new_river_tris = river[0].upper_tet.upper_triangles
+                            if river_source in new_river_tris[1].vertices:
+                                new_river_tris.reverse()
+                            assert river_source not in new_river_tris[1].vertices
+                            river = new_river_tris + river[1:]
+                            river_edges = [river[0].shared_edge(river[1])] + river_edges
+
+                        ### now we only have to worry about pushing up through tetrahedra not incident to river_source
+                        while True:
+                            restart_while_loop = False
+                            for i in range(1, len(river)):
+                                the_upper_tet = river[i].upper_tet
+                                if the_upper_tet != None:
+                                    lower_tris = the_upper_tet.lower_triangles
+                                    other_tri = lower_tris[(lower_tris.index(river[i]) + 1) %2]
+                                    a, b = river_edges[i-1], river_edges[i]
+                                    assert a in river[i].edges and b in river[i].edges 
+                                    if a not in other_tri.edges and b not in other_tri.edges: 
+                                        ## so the path doesnt touch the other lower triangle,
+                                        ## so we can push up through a normal triangle
+                                        upper_tris = the_upper_tet.upper_triangles
+                                        if a in upper_tris[1].edges:
+                                            upper_tris.reverse()
+                                        assert a in upper_tris[0].edges and b in upper_tris[1].edges
+                                        river = river[:i] + upper_tris + river[i+1:]
+                                        river_edges = river_edges[:i] + [the_upper_tet.upper_edge()] + river_edges[i:]
+                                        restart_while_loop = True
+                                        break # out of for loop
+                            if restart_while_loop:
+                                continue
+                            for i in range(1, len(river) - 1):
+                                if river[i].upper_tet != None and river[i].upper_tet == river[i+1].upper_tet: ## can push down through this tet
+                                    the_upper_tet = river[i].upper_tet
+                                    a, b = river_edges[i-1], river_edges[i+1]
+                                    assert a in river[i].edges and b in river[i+1].edges 
+                                    upper_tris = the_upper_tet.upper_triangles
+                                    if a in upper_tris[1].edges:
+                                        upper_tris.reverse()
+                                    assert a in upper_tris[0].edges and b in upper_tris[1].edges
+                                    river = river[:i] + upper_tris + river[i+2:]
+                                    river_edges = river_edges[:i] + [the_upper_tet.upper_edge()] + river_edges[i+1:]
+                                    restart_while_loop = True
+                                    break # out of for loop
+                            if restart_while_loop:
+                                continue
+                        # now we exit the while loop
+                            break
+                        ### finally, assert that there is nothing below any tri in the river at the end 
+                        for tri in river:
+                            assert tri.upper_tet == None
+                        # curve = [e.midpoint() for e in river_edges]
+                        dividers[1].append(river_edges)   ## midpoints of these are our lightning curve
+        
+        ### now clean up each divider by removing "fan edges"
+        # out = []
+        # for divider in dividers:
+        #     if len(divider) <= 2:
+        #         out.append(divider)
+        #         continue
+        #     clean_divider = []
+        #     a, b = divider[:2]
+        #     x = a.shared_vertex(b)
+        #     clean_divider.append(a)
+        #     for c in divider[2:]:
+        #         y = b.shared_vertex(c)
+        #         if x == y:
+        #             a, b = a, c
+        #         else:
+        #             clean_divider.append(b)
+        #             a, b = b, c
+        #             x = y
+        #     clean_divider.append(divider[-1])
+        #     out.append(clean_divider)
+
+        
+        print 'dividers', len(dividers[0]), len(dividers[1])
+        ### now find lightning curve from the edges of the divider
+        out = []
+        for i in range(2):
+            foo = []
+            for divider in dividers[i]:
+                if len(divider) <= 2:
+                    foo.append(divider)
+                    continue
+                a, b = divider[:2]
+                x = a.shared_vertex(b)
+                lightning_curve = [x]
+                for c in divider[2:]:
+                    y = b.shared_vertex(c)
+                    if x == y:
+                        a, b = a, c
+                    else:
+                        lightning_curve.append(y)
+                        a, b = b, c
+                        x = y
+                foo.append(lightning_curve)
+            out.append(foo)    
+
+        return out
+
+    def boundary_landscape_edges(self):
+        upper_landscape_edges = set([])
+        lower_landscape_edges = set([])
+        for tri in self.triangles:
+            if not tri.is_buried:
+                if tri.is_upper:
+                    for e in tri.edges:
+                        upper_landscape_edges.add(e)
+                else:
+                    for e in tri.edges:
+                        lower_landscape_edges.add(e)
+        return (lower_landscape_edges, upper_landscape_edges) ### we want to draw lower first then upper
+
 
 if __name__ == '__main__':
 

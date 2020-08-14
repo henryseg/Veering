@@ -7,12 +7,49 @@ def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations
     a2,b2 = A2 ## eg 0, 1
     a3,b3 = A3 ## eg 1, 1
     Xinv = matrix((a1, a2, b1, b2))
-    assert abs(Xinv.det()) > epsilon, str(Xinv) + " " + str(abs(Xinv.det())) + " " + str([A1,A2,A3])
+
+    try:
+        assert abs(Xinv.det()) > epsilon
+    except:
+        print Xinv 
+        print abs(Xinv.det())
+        print 'A1', A1
+        print 'A2', A2
+        print 'A3', A3
+        raise 
+
     X = Xinv.inverse()
-    a3p, b3p = X * A3
-    assert abs(b3p) > epsilon and abs(a3p) > epsilon, str(X * A3) + " " + str([A1,A2,A3])
-    out = Xinv * CP1((-z/b3p, -1/a3p))
-    return out.preferred_rep() 
+    A3p = X * A3
+    a3p, b3p = A3p
+
+    try:
+        assert abs(b3p) > epsilon and abs(a3p) > epsilon
+    except: 
+        print (X * A3)
+        print 'A1', A1
+        print 'A2', A2
+        print 'A3', A3
+        raise
+
+    # B = CP1((-z/b3p, -1/a3p)).preferred_rep_saul()
+    B = CP1((-z/b3p, -1/a3p)).preferred_rep()
+    A4 = Xinv * B
+    a4, b4 = A4
+
+    try:
+        # assert (A1 - A3)(A2 - A4) / (A2 - A3)(A1 - A4) == z
+        # assert (a1/b1 - a3/b3)(a2/b2 - a4/b4) / (a2/b2 - a3/b3)(a1/b1 - a4/b4) == z
+        # assert (a1*b2*b3*b4 - a3*b1*b2*b4)*(a2*b1*b3*b4 - a4*b1*b2*b3) / (a2*b1*b3*b4 - a3*b1*b2*b4)(a1*b2*b3*b4 - a4*b1*b2*b3) == z
+        # assert b2*b4*(a1*b3 - a3*b1)*b1*b3*(a2*b4 - a4*b2) / b1*b4*(a2*b3 - a3*b2)*b2*b3*(a1*b4 - a4*b1) == z
+        # assert (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / (a2*b3 - a3*b2)*(a1*b4 - a4*b1) == z
+        # assert (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z == 0
+        assert abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z ) < epsilon
+    except:
+        print 'cross ratio', (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / ( (a2*b3 - a3*b2)*(a1*b4 - a4*b1) )
+        print 'z', z
+        print 'error', abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z )
+        raise
+    return A4
 
 unknown_vert_to_known_verts_ordering = {0:(3, 2, 1), 1:(2, 3, 0), 2:(1, 0, 3), 3:(0, 1, 2)}
 ### if we don't know the position of vert i, this gives the order of the vertices to put in for inf, 0, 1
