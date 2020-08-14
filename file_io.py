@@ -1,8 +1,6 @@
 #
 # file_io.py
 #
-
-
 import pickle
 
 def parse_data_file(filename):
@@ -15,7 +13,6 @@ def parse_data_file(filename):
     data_file.close()
     return out
 
-
 def write_data_file(data, filename):
     """Compile lines into a file."""
     data_file = open(filename, 'w') # write
@@ -27,13 +24,11 @@ def write_data_file(data, filename):
     data_file.close()
     return None
 
-    
 def read_from_pickle(filename):                                                                                                     
     f = open(filename, 'r')                                                                                                          
     data = pickle.load(f)                                                                                                           
     f.close()                                                                                                                        
     return data
-
 
 def output_to_pickle(out, filename):
     f = open(filename, 'w')
