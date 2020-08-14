@@ -114,27 +114,14 @@ def edge_equation_matrix_taut(triangulation, angle_struct):
     put +1 for one side and -1 for the other.
     """
     matrix = []
-    for edge_num in range(triangulation.countEdges()):
-        edge = triangulation.edge(edge_num)
-        embeddings = edge.embeddings()
 
-        triangle_num_sets = [[],[]]
-        which_set_to_add_to = 0
-        for embed in embeddings:
-            tet = embed.tetrahedron()
-            vert_perm = embed.vertices()
-            trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
-            # as we walk around the edge, leading is in front of us, trailing is behind us
-            # see http://regina.sourceforge.net/engine-docs/classregina_1_1NTetrahedron.html#a54d99721b2ab2a0a0a72b6216b436440
-            triangle_num_sets[which_set_to_add_to].append(tet.triangle(leading_vert_num).index())
-            if there_is_a_pi_here(angle_struct, embed):
-                which_set_to_add_to = (which_set_to_add_to + 1) % 2
-
+    edge_sides = edge_side_face_collections(triangulation, angle_struct)
+    for left_faces, right_faces in edge_sides:
         row = [0] * triangulation.countTriangles()
-        for i in triangle_num_sets[0]:
-            row[i] = row[i] + 1
-        for i in triangle_num_sets[1]:
-            row[i] = row[i] - 1
+        for (face_num, vert) in left_faces:
+            row[face_num] = row[face_num] + 1
+        for (face_num, vert) in right_faces:
+            row[face_num] = row[face_num] - 1
         matrix.append(row)
     return matrix
 
