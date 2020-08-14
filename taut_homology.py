@@ -62,13 +62,54 @@ def there_is_a_pi_here(angle_struct, embed):
         edgepair = 5 - in_tet_edge_num
     return angle_struct[tet.index()] == edgepair
 
+def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientations = None):
+    """
+    For each edge e, find the two collections of (face numbers, edge_index in that face corresponding to e)
+    on either side of the pis, ordered from bottom to top if we have coorientations
+    """
+
+    out = []
+    for edge_num in range(triangulation.countEdges()):
+        edge = triangulation.edge(edge_num)
+        embeddings = edge.embeddings()
+
+        triangle_num_sets = [[],[]]
+        which_set_to_add_to = 0
+        for embed in embeddings:
+            tet = embed.tetrahedron()
+            vert_perm = embed.vertices()
+            trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
+            # as we walk around the edge, leading is in front of us, trailing is behind us
+            # see http://regina.sourceforge.net/engine-docs/classregina_1_1NTetrahedron.html#a54d99721b2ab2a0a0a72b6216b436440
+            f = tet.triangle(leading_vert_num)  ### this is the face behind the tetrahedron as we walk around
+            fmapping = tet.faceMapping(2, leading_vert_num)
+            index_of_opposite_vert_in_f = fmapping.inverse()[trailing_vert_num]
+
+            triangle_num_sets[which_set_to_add_to].append((f.index(), index_of_opposite_vert_in_f))
+            if there_is_a_pi_here(angle_struct, embed):
+                which_set_to_add_to = (which_set_to_add_to + 1) % 2
+        triangle_num_sets[1].reverse() ## flip one so theyre going the same way.
+        ## Now if we have coorientations, make them both go up
+        if tet_vert_coorientations != None:
+            embed = embeddings[0]
+            tet = embed.tetrahedron()
+            vert_perm = embed.vertices()
+            leading_vert_num = vert_perm[3]
+            if tet_vert_coorientations[tet.index()][leading_vert_num] == +1: 
+            ### then coorientation points out of this tetrahedron through this face, which is behind the tetrahedron as we walk around
+            ### so we are the wrong way round
+                triangle_num_sets[0].reverse()
+                triangle_num_sets[1].reverse()
+        out.append(triangle_num_sets)
+    return out
+
+
 
 def edge_equation_matrix_taut(triangulation, angle_struct):
     """
     For each edge, find the face numbers on either side of the pis,
     put +1 for one side and -1 for the other.
     """
-    assert triangulation.isOriented()
     matrix = []
     for edge_num in range(triangulation.countEdges()):
         edge = triangulation.edge(edge_num)
