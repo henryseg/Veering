@@ -114,7 +114,7 @@ def elem_vector(i, dim):
     return vector(vec)
 
 
-def faces_in_homology(triangulation, angle_structure, cycles = []):
+def faces_in_homology(triangulation, angle_structure, cycles):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut_reduced(triangulation, angle_structure)
     N = Matrix(N)
@@ -151,8 +151,8 @@ def group_ring(triangulation, angle_structure, alpha = False, ring = ZZ):
         return LaurentPolynomialRing(ring, "x", betti)
 
 
-def faces_in_laurent(triangulation, angle_structure, ZH):
-    face_vecs = faces_in_homology(triangulation, angle_structure)
+def faces_in_laurent(triangulation, angle_structure, cycles, ZH):
+    face_vecs = faces_in_homology(triangulation, angle_structure, cycles)
     if len(face_vecs[0]) == 1:
         face_vecs = [vec[0] for vec in face_vecs]
     return [ ZH( {vec:1} ) for vec in face_vecs]

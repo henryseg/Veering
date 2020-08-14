@@ -35,15 +35,11 @@ def hyper_is_monic(M): # add a way to dial up the precision
     return abs(1 - lead) < 0.000001  # worry about lead = -1
 
 
-# veering structure
-
-edge_vert_index_map = {(0, 1):0, (0, 2):1, (0, 3):2, (1, 2): 3, (1, 3):4, (2, 3):5 }
-
-
 # computing the taut polynomial
 
+
 @liberal
-def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "taut"):
+def edges_to_triangles_matrix(triangulation, angle_structure, cycles, ZH, P, mode = "taut"):
     # In mode alexander, we are computing the transpose of the
     # boundary operator from relative 1-chains to relative 0-chains of
     # the dual 2-complex (relative to its vertex set).  Note that we
@@ -57,7 +53,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "tau
     coorientations = is_transverse_taut(triangulation, angle_structure, return_type = "tet_vert_coorientations")
     if verbose > 0:
         print "coorientations", coorientations
-    face_laurents = faces_in_laurent(triangulation, angle_structure, ZH)
+    face_laurents = faces_in_laurent(triangulation, angle_structure, cycles, ZH)
     if verbose > 0:
         print "face_laurents", face_laurents
 
@@ -94,7 +90,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "tau
         embed = embeddings[0]
         assert tet.index() == embed.tetrahedron().index() # sanity check
 
-        if mode == "veering":
+        if mode == "taut":
             # because of a sign change, we install the first and last by hand.
             vert_perm = embed.vertices()
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
@@ -127,7 +123,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "tau
                 current_coeff = current_coeff * (face_laurents[leading_face.index()])**sign
                 if verbose > 0:
                     print "top current_coeff", current_coeff
-            if mode == "veering":
+            if mode == "taut":
                 face_coeffs[leading_face.index()] = face_coeffs[leading_face.index()] - current_coeff
             elif mode == "alexander":
                 face_coeffs[leading_face.index()] = face_coeffs[leading_face.index()] + sign*current_coeff
@@ -141,19 +137,19 @@ def edges_to_triangles_matrix(triangulation, angle_structure, ZH, P, mode = "tau
 
 
 @liberal
-def edges_to_triangles_matrix_wrapper(tri, angle):
+def edges_to_triangles_matrix_wrapper(tri, angle, cycles):
     ZH = group_ring(tri, angle, alpha = True)
     P = ZH.polynomial_ring()
-    return edges_to_triangles_matrix(tri, angle, ZH, P, mode = "veering")
+    return edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = "taut")
 
 
 @liberal
-def small_polynomial(tri, angle, alpha = True, mode = "veering"):
+def taut_polynomial(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
     ZH = group_ring(tri, angle, alpha = alpha)
     P = ZH.polynomial_ring()
 
-    ET = edges_to_triangles_matrix(tri, angle, ZH, P, mode = mode)
+    ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
 
     # compute via minors
     minors = ET.minors(tri.countTetrahedra())
@@ -161,12 +157,12 @@ def small_polynomial(tri, angle, alpha = True, mode = "veering"):
 
 
 @liberal
-def small_polynomial_via_tree(tri, angle, alpha = True, mode = "veering"):
+def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
     ZH = group_ring(tri, angle, alpha = alpha)
     P = ZH.polynomial_ring()
 
-    ET = edges_to_triangles_matrix(tri, angle, ZH, P, mode = mode)
+    ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
     tree_faces, non_tree_faces = build_spanning_dual_tree(tri)
 
     ET = ET.transpose()
@@ -178,13 +174,13 @@ def small_polynomial_via_tree(tri, angle, alpha = True, mode = "veering"):
 
 
 @liberal
-def small_polynomial_via_smith(tri, angle, alpha = True, mode = "veering"):
+def taut_polynomial_via_smith(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
     assert tri.homology().rank() == 1 # need the polynomial ring to be a PID
     ZH = group_ring(tri, angle, alpha = alpha, ring = QQ) # ditto
     P = ZH.polynomial_ring()
 
-    ET = edges_to_triangles_matrix(tri, angle, ZH, P, mode = mode)
+    ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
 
     # compute via smith normal form
     ETs = ET.smith_form()[0]
@@ -194,13 +190,13 @@ def small_polynomial_via_smith(tri, angle, alpha = True, mode = "veering"):
 
 
 @liberal
-def small_polynomial_via_tree_and_smith(tri, angle, alpha = True, mode = "veering"):
+def taut_polynomial_via_tree_and_smith(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
     assert tri.homology().rank() == 1 # need the polynomial ring to be a PID
     ZH = group_ring(tri, angle, alpha = alpha, ring = QQ) # ditto
     P = ZH.polynomial_ring()
 
-    ET = edges_to_triangles_matrix(tri, angle, ZH, P, mode = mode)
+    ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
     tree_faces, non_tree_faces = build_spanning_dual_tree(tri)
 
     ET = ET.transpose()
@@ -213,8 +209,8 @@ def small_polynomial_via_tree_and_smith(tri, angle, alpha = True, mode = "veerin
     return normalise_poly(ETs_reduced.determinant(), ZH, P)
 
 
-# Remarks on small_polynomial_via_smith and
-# small_polynomial_via_tree_and_smith
+# Remarks on taut_polynomial_via_smith and
+# taut_polynomial_via_tree_and_smith
 
 # 1. Running on "gLLAQacdefefjkaaqks_200210" appears to involve very
 # large intermediate computations - I've never waited long enough for
@@ -229,7 +225,7 @@ def small_polynomial_via_tree_and_smith(tri, angle, alpha = True, mode = "veerin
 
 
 @liberal
-def small_polynomial_via_interpolate(tri, angle, alpha = True):
+def taut_polynomial_via_interpolate(tri, angle, cycles = [], alpha = True):
     # In the one-variable case: (1) get an upper bound on the
     # degree of the answer (2) plug integers into the matrix and
     # compute smith normal form (over ZZ).  (3) Write down the
