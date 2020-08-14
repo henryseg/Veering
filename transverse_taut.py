@@ -1,29 +1,11 @@
-# Regina-Python script for checking if a taut triangulation is transverse taut
-# By Henry Segerman, Jan 2020
+#
+# transverse_taut.py
+#
+
+# functions for working with transverse  taut ideal triangulations.
 
 import regina # needed inside of imported files
 from taut import liberal
-
-def pi_edgepair(regina_angle_struct, tet_num):
-    """
-    Given a regina angle structure that is taut, tells us which pair
-    of edges have the pi angle.
-    """
-    # 0 is edge pair 01|23, 1 is 02|13, 2 is 03|12
-    for edgepair in range(3):
-        if regina_angle_struct.angle(tet_num, edgepair) > 0:
-            return edgepair
-    assert False # we shouldn't be able to get here.
-
-def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
-    """
-    Convert a taut regina angle structure to list of which edge pair
-    is the pi pair.
-    """
-    out = []
-    for tet_num in range(regina_angle_struct.triangulation().countTetrahedra()):
-        out.append(pi_edgepair(regina_angle_struct, tet_num))
-    return out
 
 vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]
 
