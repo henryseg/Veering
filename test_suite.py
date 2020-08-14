@@ -79,6 +79,18 @@ def run_tests(num_to_check=1000):
         "gLMzQbcdefffhhqqqdl_122002",
     ]
 
+    measured = [
+        "gLLAQbecdfffhhnkqnc_120012",
+        "iLLALQcccedhgghhlnxkxrkaa_12001112",
+        "iLLAwQcccedfghhhlnhcqeesr_12001122",
+    ]
+
+    empties = [
+        "fLAMcaccdeejsnaxk_20010",
+        "gLALQbcbeeffhhwsras_211220",
+        "hLALAkbcbeefgghhwsraqj_2112202",
+    ]
+    
     try:
         from sage.rings.integer_ring import ZZ
         import taut_polytope
@@ -132,13 +144,22 @@ def run_tests(num_to_check=1000):
             assert taut_polytope.is_torus_bundle(sig)
 
     if sage_working:
+        for sig in torus_bundles:
+            print "testing layered", sig
+            assert taut_polytope.is_layered(sig)
+        for sig in measured:
+            print "testing measured", sig
+            assert taut_polytope.LMN_tri_angle(sig) == "M"
+        for sig in empties:
+            print "testing empty", sig
+            assert taut_polytope.LMN_tri_angle(sig) == "N"
+
+    if sage_working:  # warning - this takes random amounts of time!
         for i in range(3):
             j = int(10000 * random())
             sig = veering_isosigs[j]
             print "testing hom dim", sig
-            assert (taut_polytope.taut_cone_homological_dim(sig) == 0 and taut_polytope.LMN_tri_angle(sig) == "N") or (
-                taut_polytope.taut_cone_homological_dim(sig) != 0 and taut_polytope.LMN_tri_angle(sig) != "N"
-            )
+            assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")  # that is, iff
 
     if sage_working:
         print "all tests depending on sage passed"

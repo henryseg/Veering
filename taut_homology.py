@@ -107,7 +107,6 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
     return out
 
 
-
 def edge_equation_matrix_taut(triangulation, angle_struct):
     """
     For each edge, find the face numbers on either side of the pis,
