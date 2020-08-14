@@ -84,7 +84,7 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
             f = tet.triangle(leading_vert_num)  ### this is the face behind the tetrahedron as we walk around
             fmapping = tet.faceMapping(2, leading_vert_num)
             index_of_opposite_vert_in_f = fmapping.inverse()[trailing_vert_num]
-
+            assert f.edge(index_of_opposite_vert_in_f) == edge
             triangle_num_sets[which_set_to_add_to].append((f.index(), index_of_opposite_vert_in_f))
             if there_is_a_pi_here(angle_struct, embed):
                 which_set_to_add_to += 1
