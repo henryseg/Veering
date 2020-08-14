@@ -88,18 +88,18 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
             triangle_num_sets[which_set_to_add_to].append((f.index(), index_of_opposite_vert_in_f))
             if there_is_a_pi_here(angle_struct, embed):
                 which_set_to_add_to = (which_set_to_add_to + 1) % 2
-        triangle_num_sets[1].reverse() ## flip one so theyre going the same way.
-        ## Now if we have coorientations, make them both go up
-        if tet_vert_coorientations != None:
-            embed = embeddings[0]
-            tet = embed.tetrahedron()
-            vert_perm = embed.vertices()
-            leading_vert_num = vert_perm[3]
-            if tet_vert_coorientations[tet.index()][leading_vert_num] == +1: 
-            ### then coorientation points out of this tetrahedron through this face, which is behind the tetrahedron as we walk around
-            ### so we are the wrong way round
-                triangle_num_sets[0].reverse()
-                triangle_num_sets[1].reverse()
+        # triangle_num_sets[1].reverse() ## flip one so theyre going the same way.
+        # ## Now if we have coorientations, make them both go up
+        # if tet_vert_coorientations != None:
+        #     embed = embeddings[0]
+        #     tet = embed.tetrahedron()
+        #     vert_perm = embed.vertices()
+        #     leading_vert_num = vert_perm[3]
+        #     if tet_vert_coorientations[tet.index()][leading_vert_num] == +1: 
+        #     ### then coorientation points out of this tetrahedron through this face, which is behind the tetrahedron as we walk around
+        #     ### so we are the wrong way round
+        #         triangle_num_sets[0].reverse()
+        #         triangle_num_sets[1].reverse()
         out.append(triangle_num_sets)
     return out
 
