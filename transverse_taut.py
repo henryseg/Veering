@@ -1,60 +1,73 @@
-#### Regina-Python script for checking if a taut triangulation is transverse taut
-#### By Henry Segerman, Jan 2020
+# Regina-Python script for checking if a taut triangulation is transverse taut
+# By Henry Segerman, Jan 2020
 
-import regina #needed inside of imported files
+import regina # needed inside of imported files
+from taut import liberal
 
 def pi_edgepair(regina_angle_struct, tet_num):
-    """given a regina angle structure that is taut, tells us which pair of edges have the pi angle"""
-    ### 0 is edge pair 01|23, 1 is 02|13, 2 is 03|12
+    """
+    Given a regina angle structure that is taut, tells us which pair
+    of edges have the pi angle.
+    """
+    # 0 is edge pair 01|23, 1 is 02|13, 2 is 03|12
     for edgepair in range(3):
         if regina_angle_struct.angle(tet_num, edgepair) > 0:
             return edgepair
-    assert False  ### we shouldn't be able to get here.
+    assert False # we shouldn't be able to get here.
 
 def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
-    """convert a taut regina angle structure to list of which edge pair is the pi pair"""
+    """
+    Convert a taut regina angle structure to list of which edge pair
+    is the pi pair.
+    """
     out = []
     for tet_num in range(regina_angle_struct.triangulation().countTetrahedra()):
         out.append(pi_edgepair(regina_angle_struct, tet_num))
     return out
 
-vertexSplit = [ [0,1,2,3], [0,2,1,3], [0,3,1,2] ]
+vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]
 
-def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direction): 
-    """adds coorientation directions to coorientations for this tet_num, checks if they match neighbours' coorientations"""
-    ### edgepair is the taut angle structure pi angle 
-    ### direction is +1 if from the 0,1 faces to the 2,3 faces if we are in vertexSplit[0], and similarly for the other cases 
-    for i in range(0,2):
+def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direction):
+    """
+    Adds coorientation directions to coorientations for this tet_num,
+    checks if they match neighbours' coorientations
+    """
+    # edgepair is the taut angle structure pi angle direction is +1 if
+    # from the 0,1 faces to the 2,3 faces if we are in vertexSplit[0],
+    # and similarly for the other cases
+    for i in range(0, 2):
         if coorientations[tet_num][vertexSplit[edgepair][i]] == -direction:
             return False
         else:
             coorientations[tet_num][vertexSplit[edgepair][i]] = direction
-    for i in range(2,4):
+    for i in range(2, 4):
         if coorientations[tet_num][vertexSplit[edgepair][i]] == direction:
             return False
         else:
             coorientations[tet_num][vertexSplit[edgepair][i]] = -direction
-    ### now check whether these new coorientations match the tetrahedra these are glued to:
+    # now check whether these new coorientations match the tetrahedra
+    # these are glued to:
     tet = triangulation.tetrahedron(tet_num)
     for face in range(4):
         adjtet, adjgluing = tet.adjacentTetrahedron(face), tet.adjacentGluing(face)
         adjtet_num = adjtet.index()
         if coorientations[tet_num][face] * coorientations[adjtet_num][adjgluing[face]] == 1:
-            return False  # failed neighbours check 
+            return False # failed neighbours check
     return True # passed neighbours checks
 
-def is_transverse_taut(triangulation, taut_angle_struct, return_type = 'boolean'):
+@liberal
+def is_transverse_taut(triangulation, taut_angle_struct, return_type = "boolean"):
     assert triangulation.isOriented()
     coorientations = []
     for i in range(triangulation.countTetrahedra()):
         coorientations.append([0,0,0,0]) # +1 is out of tet, -1 is into tet
     # first decide coorientation for tet 0
     edgepair = taut_angle_struct[0]
-    if not add_coors_with_check(triangulation, coorientations, 0, edgepair, +1): #choose arbitrary direction for tet 0
+    if not add_coors_with_check(triangulation, coorientations, 0, edgepair, +1): # choose arbitrary direction for tet 0
         return False # tet 0 could have self gluings incompatible with the transverse taut structure, so we could fail here
 
     explored_tetrahedra = [0]
-    frontier_tet_faces = [(0,0), (0,1), (0,2), (0,3)]
+    frontier_tet_faces = [(0, 0), (0, 1), (0, 2), (0, 3)]
     while len(frontier_tet_faces) > 0:
         my_tet_num, my_face_num = frontier_tet_faces.pop()
         my_tet = triangulation.tetrahedron(my_tet_num)
@@ -65,44 +78,42 @@ def is_transverse_taut(triangulation, taut_angle_struct, return_type = 'boolean'
         else:
             newcoor = -coorientations[my_tet_num][my_face_num] # opposite of the adjacent face's coorientation
             edgepair = taut_angle_struct[neighbour_tet.index()]
-            # now calculate the direction that the flow points through neighbour_tet 
-            if neighbour_face_num in [vertexSplit[edgepair][i] for i in range(2)]:    
+            # now calculate the direction that the flow points through neighbour_tet
+            if neighbour_face_num in [vertexSplit[edgepair][i] for i in range(2)]:
                 direction = newcoor # agrees with newcoor
             else:
                 direction = -newcoor
             if not add_coors_with_check(triangulation, coorientations, neighbour_tet.index(), taut_angle_struct[neighbour_tet.index()], direction):
                 return False
-            
+
             frontier_tet_faces.extend( [(neighbour_tet.index(), i) for i in range(4) if i != neighbour_face_num] )
             explored_tetrahedra.append(neighbour_tet.index())
-    if return_type == 'tet_vert_coorientations':
+    if return_type == "tet_vert_coorientations":
         return coorientations
-    elif return_type == 'face_coorientations':
+    elif return_type == "face_coorientations":
         return convert_tetrahedron_coorientations_to_faces(triangulation, coorientations)
     else:
         return True
 
 def convert_tetrahedron_coorientations_to_faces(triangulation, coorientations):
-    '''returns a list of +-1 for each face. +1 if face numbering orientation, converted into a 
-    coorientation via the right hand rule, agrees with the coorientation coming from the 
-    transverse taut structure. In our veering tetrahedron pictures, +1 means that the 
-    face numbering orientation is anticlockwise.'''
+    """
+    returns a list of +-1 for each face. +1 if face numbering
+    orientation, converted into a coorientation via the right hand
+    rule, agrees with the coorientation coming from the transverse
+    taut structure. In our veering tetrahedron pictures, +1 means that
+    the face numbering orientation is anticlockwise.
+    """
     out = []
     for face in triangulation.faces(2):
         does_face_agree_with_coorientation = []
         for i in range(2):
             face_embedding = face.embedding(i)
             tet = face_embedding.simplex()
-            face_index_in_tet = face_embedding.vertices()[3] #which vertex of the tet is not on the face
+            face_index_in_tet = face_embedding.vertices()[3] # which vertex of the tet is not on the face
             coorientation = coorientations[tet.index()][face_index_in_tet]
-            does_face_agree_with_tet = face_embedding.vertices().sign() #+1 if they agree on orientation (?)
-            does_face_agree_with_coorientation.append(coorientation*does_face_agree_with_tet)
+            does_face_agree_with_tet = face_embedding.vertices().sign() # +1 if they agree on orientation (?)
+            does_face_agree_with_coorientation.append(coorientation * does_face_agree_with_tet)
 
         assert does_face_agree_with_coorientation[0] == does_face_agree_with_coorientation[1]
         out.append(does_face_agree_with_coorientation[0])
     return out
-
-
-
-
-
