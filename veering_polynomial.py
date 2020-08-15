@@ -2,7 +2,7 @@
 # veering_polynomial.py
 #
 
-# compute the (upper and) lower veering polynomials as defined by Sam
+# compute the lower (and upper) veering polynomials as defined by Sam
 # Taylor et al.
 
 import regina
@@ -30,8 +30,10 @@ def has_red_lower_edge(tetrahedron, coorientations, edge_colours):
 
 
 @liberal
-def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
+def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lower"):
     coorientations = is_transverse_taut(triangulation, angle_structure, return_type = "tet_vert_coorientations")
+    if mode == "upper":
+        coorientations = [[-x for x in coor] for coor in coorientations]
     if verbose > 0:
         print "coorientations", coorientations
     edge_colours = is_veering(triangulation, angle_structure, return_type = "veering_colours")
@@ -48,11 +50,11 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
     if verbose > 0:
         print "how many reds and blues", len(red_tetrahedra), len(blue_tetrahedra)
 
-    face_laurents = faces_in_laurent(triangulation, angle_structure, [], ZH) # empty list of cycles.
+    face_laurents = faces_in_laurent(triangulation, angle_structure, [], ZH)  # empty list of cycles.
     if verbose > 0:
         print "face_laurents", face_laurents
 
-    ET_matrix = [] # now to find the tet coefficients relative to each edge
+    ET_matrix = []  # now to find the tet coefficients relative to each edge
     for tet in triangulation.tetrahedra():
         if verbose > 0:
             print "tet_index", tet.index()
@@ -83,7 +85,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
                 break
 
         embeddings = embeddings[bottom_index:] + embeddings[:bottom_index]
-        sign = -1 # we are going up the left side of the edge
+        sign = -1  # we are going up the left side of the edge
         for embed in embeddings[1:]:  # skipping the first
             tet = embed.tetrahedron()
             vert_perm = embed.vertices()
@@ -94,7 +96,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
                 coorientations[tet.index()][leading_vert_num]  == -1):
                 # we are the top embed so:
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
-                sign = 1 # now we go down the right side
+                sign = 1  # now we go down the right side
             elif ((edge_colour == "L" and tet in red_tetrahedra) or
                   (edge_colour == "R" and tet in blue_tetrahedra)): 
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
@@ -108,14 +110,14 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P):
 
 
 @liberal
-def veering_polynomial(tri, angle, alpha = True):
+def veering_polynomial(tri, angle, alpha = True, mode = "lower"):
     # set up
     ZH = group_ring(tri, angle, alpha = alpha)
     P = ZH.polynomial_ring()
     if verbose > 0:
         print "angle", angle
 
-    ET = edges_to_tetrahedra_matrix(tri, angle, ZH, P)
+    ET = edges_to_tetrahedra_matrix(tri, angle, ZH, P, mode)
     return normalise_poly(ET.determinant(), ZH, P)
 
 
