@@ -161,6 +161,17 @@ def run_tests(num_to_check=1000):
             print "testing hom dim", sig
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")  # that is, iff
 
+    taut_polys_with_cycles = {
+        ('eLMkbcddddedde_2100',((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
+    }
+
+    if sage_working:
+        for sig, cycles in taut_polys_with_cycles:
+            print "testing taut with cycles", sig, cycles
+            cycles_in = [list(cycle) for cycle in cycles]
+            p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
+            assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
+            
     if sage_working:
         print "all tests depending on sage passed"
 
