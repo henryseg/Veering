@@ -125,9 +125,10 @@ def edge_equation_matrix_taut(triangulation, angle_struct):
     return matrix
 
 
-def edge_equation_matrix_taut_reduced(triangulation, angle_structure):
+def edge_equation_matrix_taut_reduced(triangulation, angle_structure, cycles):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut(triangulation, angle_structure)
+    N = N + cycles
     if verbose > 0:
         print "edge equation matrix", N
     # N is a 2n by n matrix - the rows are longer than the columns are
@@ -144,21 +145,28 @@ def elem_vector(i, dim):
     return vector(vec)
 
 
-def faces_in_homology(triangulation, angle_structure, cycles):
+def faces_in_smith(triangulation, angle_structure, cycles):
     tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
-    N = edge_equation_matrix_taut_reduced(triangulation, angle_structure)
+    N = edge_equation_matrix_taut_reduced(triangulation, angle_structure, cycles)
     N = Matrix(N)
-    for cycle in cycles:
-        N = N.insert_row(0, cycle)
     N = N.transpose()
-    S, U, V = N.smith_form()
+    return N.smith_form()
 
+
+def rank_of_quotient(S):
     image_dim = sum(1 for a in S.diagonal() if a != 0)
     ambient_dim = S.dimensions()[0]
-    betti = ambient_dim - image_dim
-    assert betti == triangulation.homology().rank()
+    return ambient_dim - image_dim
 
-    zero_vec = vector([0] * betti)
+
+def faces_in_homology(triangulation, angle_structure, cycles):
+    S, U, V = faces_in_smith(triangulation, angle_structure, cycles)
+    rank = rank_of_quotient(S)
+
+    if len(cycles) == 0:
+        assert rank == triangulation.homology().rank()
+
+    zero_vec = vector([0] * rank)
     n = len(tree_faces) + len(non_tree_faces)
     face_vecs = []
     for i in range(n):
@@ -172,13 +180,14 @@ def faces_in_homology(triangulation, angle_structure, cycles):
     return [tuple(vec) for vec in face_vecs]
 
 
-def group_ring(triangulation, angle_structure, alpha = False, ring = ZZ):
-    betti = triangulation.homology().rank()
+def group_ring(triangulation, angle_structure, cycles, alpha = False, ring = ZZ):
+    S, U, V = faces_in_smith(triangulation, angle_structure, cycles)
+    rank = rank_of_quotient(S)
     if alpha:
-        assert betti < 26
-        return LaurentPolynomialRing(ring, list(ascii)[:betti])
+        assert rank < 26
+        return LaurentPolynomialRing(ring, list(ascii)[:rank])
     else:
-        return LaurentPolynomialRing(ring, "x", betti)
+        return LaurentPolynomialRing(ring, "x", rank)
 
 
 def faces_in_laurent(triangulation, angle_structure, cycles, ZH):
