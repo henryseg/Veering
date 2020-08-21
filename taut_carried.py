@@ -18,9 +18,9 @@ def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = 
 
     if tet_vert_coorientations == None:
         tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
-    ### set up output vectors
+    # set up output vectors
     out = []
-    for vertex in tri.faces(0):   ## 0 is the dimension of the face, so this is cusps
+    for vertex in tri.faces(0):  # 0 is the dimension of the face, so this is cusps
         out.append([0] * tri.countFaces(2))
 
     edge_sides = edge_side_face_collections(tri, angle, tet_vert_coorientations = tet_vert_coorientations)
@@ -46,7 +46,7 @@ def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = 
             if pair in left:
                 side = left
             else:
-                assert pair in right:
+                assert pair in right
                 side = right
             above = side[side.index(pair) + 1:]
             for (f_ind, vert) in above:
@@ -57,7 +57,7 @@ def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = 
             if pair in left:
                 side = left
             else:
-                assert pair in right:
+                assert pair in right
                 side = right
             above = side[side.index(pair) + 1:]
             for (f_ind, vert) in above:

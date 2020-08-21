@@ -317,8 +317,12 @@ def first_coboundary(triangulation):
 
 # extracting the taut cone
 
-def taut_rays(N):
-    # get the extreme rays of the taut cone
+@liberal
+def taut_rays(tri, angle):
+    # get the extreme rays of the taut cone - note that the returned
+    # vectors are non-negative because they "point up"
+    N = edge_equation_matrix_taut(tri, angle)
+    N = Matrix(N)
     dim = N.dimensions()[1]
     elem_ieqs = [[0] + list(elem_vector(i, dim)) for i in range(dim)]
     N_rows = [v.list() for v in N.rows()]
@@ -336,10 +340,7 @@ def taut_cone_homological_dim(tri, angle):
     # boundaries of tets
     bdys = zeroth_coboundary(tri)
     bdys = matrix_transpose(bdys)
-
-    N = edge_equation_matrix_taut(tri, angle)
-    N = Matrix(N)
-    rays = taut_rays(N)
+    rays = taut_rays(tri, angle)
     # but these are all 'upwards', so we need to fix the
     # co-orientations
     coorient = is_transverse_taut(tri, angle, return_type = "face_coorientations")
