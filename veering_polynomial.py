@@ -112,7 +112,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
 @liberal
 def veering_polynomial(tri, angle, alpha = True, mode = "lower"):
     # set up
-    ZH = group_ring(tri, angle, alpha = alpha)
+    ZH = group_ring(tri, angle, [], alpha = alpha)
     P = ZH.polynomial_ring()
     if verbose > 0:
         print "angle", angle

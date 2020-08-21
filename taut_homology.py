@@ -146,7 +146,6 @@ def elem_vector(i, dim):
 
 
 def faces_in_smith(triangulation, angle_structure, cycles):
-    tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut_reduced(triangulation, angle_structure, cycles)
     N = Matrix(N)
     N = N.transpose()
@@ -156,17 +155,21 @@ def faces_in_smith(triangulation, angle_structure, cycles):
 def rank_of_quotient(S):
     image_dim = sum(1 for a in S.diagonal() if a != 0)
     ambient_dim = S.dimensions()[0]
-    return ambient_dim - image_dim
+    return ambient_dim - image_dim, ambient_dim, image_dim
 
 
 def faces_in_homology(triangulation, angle_structure, cycles):
     S, U, V = faces_in_smith(triangulation, angle_structure, cycles)
-    rank = rank_of_quotient(S)
+    rank, ambient_dim, image_dim = rank_of_quotient(S)
 
     if len(cycles) == 0:
         assert rank == triangulation.homology().rank()
 
     zero_vec = vector([0] * rank)
+
+    tree_faces, non_tree_faces = build_spanning_dual_tree(triangulation)
+    # We recompute the tree :( but we don't have to pass it around :)
+
     n = len(tree_faces) + len(non_tree_faces)
     face_vecs = []
     for i in range(n):
@@ -182,7 +185,7 @@ def faces_in_homology(triangulation, angle_structure, cycles):
 
 def group_ring(triangulation, angle_structure, cycles, alpha = False, ring = ZZ):
     S, U, V = faces_in_smith(triangulation, angle_structure, cycles)
-    rank = rank_of_quotient(S)
+    rank, _, _ = rank_of_quotient(S)
     if alpha:
         assert rank < 26
         return LaurentPolynomialRing(ring, list(ascii)[:rank])

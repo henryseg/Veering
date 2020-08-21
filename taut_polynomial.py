@@ -149,7 +149,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, cycles, ZH, P, mod
 
 @liberal
 def edges_to_triangles_matrix_wrapper(tri, angle, cycles):
-    ZH = group_ring(tri, angle, alpha = True)
+    ZH = group_ring(tri, angle, cycles, alpha = True)
     P = ZH.polynomial_ring()
     return edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = "taut")
 
@@ -157,7 +157,7 @@ def edges_to_triangles_matrix_wrapper(tri, angle, cycles):
 @liberal
 def taut_polynomial(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
-    ZH = group_ring(tri, angle, alpha = alpha)
+    ZH = group_ring(tri, angle, cycles, alpha = alpha)
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
@@ -170,7 +170,7 @@ def taut_polynomial(tri, angle, cycles = [], alpha = True, mode = "taut"):
 @liberal
 def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
-    ZH = group_ring(tri, angle, alpha = alpha)
+    ZH = group_ring(tri, angle, cycles, alpha = alpha)
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
@@ -188,7 +188,7 @@ def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut
 def taut_polynomial_via_smith(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
     assert tri.homology().rank() == 1 # need the polynomial ring to be a PID
-    ZH = group_ring(tri, angle, alpha = alpha, ring = QQ) # ditto
+    ZH = group_ring(tri, angle, cycles, alpha = alpha, ring = QQ) # ditto
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
@@ -204,7 +204,7 @@ def taut_polynomial_via_smith(tri, angle, cycles = [], alpha = True, mode = "tau
 def taut_polynomial_via_tree_and_smith(tri, angle, cycles = [], alpha = True, mode = "taut"):
     # set up
     assert tri.homology().rank() == 1 # need the polynomial ring to be a PID
-    ZH = group_ring(tri, angle, alpha = alpha, ring = QQ) # ditto
+    ZH = group_ring(tri, angle, cycles, alpha = alpha, ring = QQ) # ditto
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
