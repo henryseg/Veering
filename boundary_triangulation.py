@@ -804,7 +804,7 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
     else:
         to_draw = veering_isosigs_list
 
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
     names = shapes_data.keys()
     for veering_isosig in to_draw:
         print veering_isosig
@@ -815,13 +815,15 @@ if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
     args = {'only_generate_boundary_triangulation':False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
-    # args['draw_triangles_near_poles'] = False ### for standard ladder picture, set true for CT pictures
-    args['draw_triangles_near_poles'] = True
+    args['draw_triangles_near_poles'] = False ### for standard ladder picture, set true for CT pictures
+    # args['draw_triangles_near_poles'] = True
 
+    num_to_draw = 87 ## up to 6 tet
+    # num_to_draw = 5699 ## up to 12 tet  
     args['style'] = 'ladders'
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = 87)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
     args['style'] = 'geometric'
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = 87)
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
 
     
 

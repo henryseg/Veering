@@ -10,11 +10,13 @@ import taut
 import transverse_taut
 from taut_homology import edge_side_face_collections
 
-def boundary_cycles_from_surface(tri, angle, tet_vert_coorientations, surface):
+def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = None):
     """ Takes a carried surface. For each cusp of tri, look at the boundary curve
     of the surface on the boundary torus for that cusp. Push it up slightly, record 
     which faces of tri it goes through."""
 
+    if tet_vert_coorientations == None:
+        tet_vert_coorientations = transverse_taut.is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
     ### set up output vectors
     out = []
     for vertex in tri.faces(0):   ## 0 is the dimension of the face, so this is cusps
