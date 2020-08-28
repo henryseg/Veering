@@ -11,11 +11,11 @@ def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations
     try:
         assert abs(Xinv.det()) > epsilon
     except:
-        print Xinv 
-        print abs(Xinv.det())
-        print 'A1', A1
-        print 'A2', A2
-        print 'A3', A3
+        print(Xinv) 
+        print((abs(Xinv.det())))
+        print(('A1', A1))
+        print(('A2', A2))
+        print(('A3', A3))
         raise 
 
     X = Xinv.inverse()
@@ -25,10 +25,10 @@ def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations
     try:
         assert abs(b3p) > epsilon and abs(a3p) > epsilon
     except: 
-        print (X * A3)
-        print 'A1', A1
-        print 'A2', A2
-        print 'A3', A3
+        print((X * A3))
+        print(('A1', A1))
+        print(('A2', A2))
+        print(('A3', A3))
         raise
 
     # B = CP1((-z/b3p, -1/a3p)).preferred_rep_saul()
@@ -45,9 +45,9 @@ def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations
         # assert (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z == 0
         assert abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z ) < epsilon
     except:
-        print 'cross ratio', (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / ( (a2*b3 - a3*b2)*(a1*b4 - a4*b1) )
-        print 'z', z
-        print 'error', abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z )
+        print(('cross ratio', (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / ( (a2*b3 - a3*b2)*(a1*b4 - a4*b1) )))
+        print(('z', z))
+        print(('error', abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z )))
         raise
     return A4
 

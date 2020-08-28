@@ -18,12 +18,12 @@ def run_tests(num_to_check=1000):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
 
-    print "testing is_taut"
+    print("testing is_taut")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert taut.is_taut(tri, angle)
 
-    print "testing isosig round trip"
+    print("testing isosig round trip")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         recovered_sig = taut.isosig_from_tri_angle(tri, angle)
@@ -31,18 +31,18 @@ def run_tests(num_to_check=1000):
         # we only test this round trip - the other round trip does not
         # make sense because tri->isosig is many to one.
 
-    print "testing is_transverse_taut"
+    print("testing is_transverse_taut")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert transverse_taut.is_transverse_taut(tri, angle)
 
-    print "testing not is_transverse_taut"
+    print("testing not is_transverse_taut")
     non_transverse_taut_isosigs = parse_data_file("Data/veering_non_transverse_taut_examples.txt")
     for sig in non_transverse_taut_isosigs:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert not transverse_taut.is_transverse_taut(tri, angle)
 
-    print "testing is_veering"
+    print("testing is_veering")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert veering.is_veering(tri, angle)
@@ -51,14 +51,14 @@ def run_tests(num_to_check=1000):
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
     # # tests to see that it makes only veering triangulations as it goes
 
-    print "testing veering_dehn_surgery"
+    print("testing veering_dehn_surgery")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering.is_veering(tri_s, angle_s)
 
-    print "all tests not depending on sage passed"
+    print("all tests not depending on sage passed")
 
     veering_polys = {
         "cPcbbbiht_12": "a^3 - 4*a^2 + 4*a - 1",
@@ -99,7 +99,7 @@ def run_tests(num_to_check=1000):
 
         sage_working = True
     except:
-        print "failed to import from sage?"
+        print("failed to import from sage?")
         sage_working = False
 
     if sage_working:
@@ -110,17 +110,17 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig in veering_polys:
-            print "testing veering", sig
+            print("testing veering", sig)
             p = veering_polynomial.veering_polynomial(sig)
             assert p.__repr__() == veering_polys[sig]
         for sig in taut_polys:
-            print "testing taut", sig
+            print("testing taut", sig)
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert p.__repr__() == taut_polys[sig]
         for i in range(3):
             j = int(5000 * random())
             sig = veering_isosigs[j]
-            print "testing divide", sig
+            print("testing divide", sig)
             p = veering_polynomial.veering_polynomial(sig)
             q = taut_polynomial.taut_polynomial_via_tree(sig)
             if q == 0:
@@ -132,7 +132,7 @@ def run_tests(num_to_check=1000):
         for i in range(3):
             j = int(5000 * random())
             sig = veering_isosigs[j]
-            print "testing alex", sig
+            print("testing alex", sig)
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
             if M.homology().betti_number() == 1:
@@ -140,25 +140,25 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig in torus_bundles:
-            print "testing torus bundle", sig
+            print("testing torus bundle", sig)
             assert taut_polytope.is_torus_bundle(sig)
 
     if sage_working:
         for sig in torus_bundles:
-            print "testing layered", sig
+            print("testing layered", sig)
             assert taut_polytope.is_layered(sig)
         for sig in measured:
-            print "testing measured", sig
+            print("testing measured", sig)
             assert taut_polytope.LMN_tri_angle(sig) == "M"
         for sig in empties:
-            print "testing empty", sig
+            print("testing empty", sig)
             assert taut_polytope.LMN_tri_angle(sig) == "N"
 
     if sage_working:  # warning - this takes random amounts of time!
         for i in range(3):
             j = int(10000 * random())
             sig = veering_isosigs[j]
-            print "testing hom dim", sig
+            print("testing hom dim", sig)
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")  # that is, iff
 
     taut_polys_with_cycles = {
@@ -167,13 +167,13 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig, cycles in taut_polys_with_cycles:
-            print "testing taut with cycles", sig, cycles
+            print("testing taut with cycles", sig, cycles)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
             assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
             
     if sage_working:
-        print "all tests depending on sage passed"
+        print("all tests depending on sage passed")
 
 
 if __name__ == "__main__":

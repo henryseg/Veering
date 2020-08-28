@@ -87,7 +87,7 @@ class ladder_unit(tet_face):
     def draw_triangle_label(self, my_canvas, curvy = False, args = {}):
         #print self.verts_C
         if not curvy:
-            vertex_names = self.verts_C.keys()
+            vertex_names = list(self.verts_C.keys())
             posns = [self.verts_C[vertex_name] for vertex_name in vertex_names]
             pos = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
             pos = [pos.real, pos.imag]
@@ -103,7 +103,7 @@ class ladder_unit(tet_face):
         my_canvas.text(pos[0], pos[1], "$"+str(self.tet_num)+"_"+str(self.face)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero])
 
     def draw_corner_and_face_labels(self, my_canvas):
-        vertex_names = self.verts_C.keys()
+        vertex_names = list(self.verts_C.keys())
         posns = [self.verts_C[vertex_name] for vertex_name in vertex_names]
         center = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
         for i in range(3):
@@ -150,7 +150,7 @@ class ladder_unit(tet_face):
         triangle = tet.triangle(face_num)
         triangle_num = triangle.index()
 
-        vertex_names = self.verts_C.keys()
+        vertex_names = list(self.verts_C.keys())
         edge_verts = vertex_names[:]
         edge_verts.remove(face_num)
 
@@ -163,7 +163,7 @@ class ladder_unit(tet_face):
         my_canvas.text(pos[0], pos[1], "$"+str(triangle_num)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero, pyx.color.rgb(0,0.5,0)])
 
     def draw_labels_curvy(self, my_canvas, ladder_width, delta = 0.2):
-        vertex_names = self.verts_C.keys()
+        vertex_names = list(self.verts_C.keys())
         tet_index, face = self.tet_num, self.face
         angle_choice = self.vt.angle[tet_index]
         pi_vert = anglechoice_face2vert[(angle_choice, face)]  
@@ -205,7 +205,7 @@ class ladder_unit(tet_face):
 
     def draw_triangle_edges(self, my_canvas, curvy = True, args = {}):
         #ladder_width = None, delta = 0.2):
-        vertex_names = self.verts_C.keys()
+        vertex_names = list(self.verts_C.keys())
         for lv in self.left_vertices:
             for rv in self.right_vertices:
                 if curvy:
@@ -436,7 +436,7 @@ def find_unit_index(new_tet_face, my_ladder):
     while my_ladder.ladder_unit_list[unit_index] != new_tet_face:  ### because of how equality is defined for tet_faces
         unit_index += 1
         if unit_index >= ladder_length:
-            print 'error, couldnt find matching unit'
+            print('error, couldnt find matching unit')
             return None
     return unit_index
 
@@ -620,7 +620,7 @@ class torus_triangulation:
                         draw_symmetry_symbol(my_canvas, unit.verts_C[unit.left_vertices[0]])
                         count += 1
         #check if tet_pairings is 'order 2'
-        for tet_pairings in dict_of_tet_pairings.keys():
+        for tet_pairings in list(dict_of_tet_pairings.keys()):
             used_numbers = []
             for tet_pairing in tet_pairings:
                 if tet_pairing[0] == tet_pairing[1]:
@@ -770,7 +770,7 @@ class boundary_triangulation:
 
     def generate_canvases(self, args = {}):
         for i,T in enumerate(self.torus_triangulation_list):
-            print 'cusp:', i, '| num ladders:', len(T.ladder_list)
+            print(('cusp:', i, '| num ladders:', len(T.ladder_list)))
             T.generate_canvas(args = args)
 
     def draw(self, output_filename, args = {}):
@@ -791,7 +791,7 @@ def generate_boundary_triangulation(tri, angle, args = {}, output_filename = Non
         B.draw(output_filename, args = args)  
         
 def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, output_filename = None, verbose = 0.0):
-    if verbose > 0.0: print args
+    if verbose > 0.0: print(args)
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if output_filename == None:
         output_filename = veering_isosig + '.pdf'
@@ -806,9 +806,9 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
         to_draw = veering_isosigs_list
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
-    names = shapes_data.keys()
+    names = list(shapes_data.keys())
     for veering_isosig in to_draw:
-        print veering_isosig
+        print(veering_isosig)
         args['tet_shapes'] = shapes_data[veering_isosig]
         draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = args, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
 

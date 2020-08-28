@@ -25,7 +25,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
     B.generate_canvases(args = draw_args)
 
     for i,T in enumerate(B.torus_triangulation_list):
-        print 'cusp', i
+        print(('cusp', i))
         ### make initial_tet_face be in the lower left of the fundamental domain
         # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
         
@@ -34,7 +34,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
         L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
         num_ladder_units = len(L.ladder_unit_list)
         initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
-        print 'initial_tet_face', initial_tet_face
+        print(('initial_tet_face', initial_tet_face))
 
         ladderpoles_vertices = T.left_ladder_pole_vertices() 
         desired_vertices = [v for L in ladderpoles_vertices for v in L]
@@ -43,8 +43,8 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
         
         con.build_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
-        print 'unfound desired_vertices', con.desired_vertices
-        print 'num_tetrahedra', con.num_tetrahedra
+        print(('unfound desired_vertices', con.desired_vertices))
+        print(('num_tetrahedra', con.num_tetrahedra))
 
         # now replace ladderpoles_vertices with the continent's corresponding vertices 
         epsilon = 0.001
@@ -64,7 +64,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
             segment.sort()
             ladderpole_descendant_segments.append( segment )
 
-        print ladderpole_descendant_segments
+        print(ladderpole_descendant_segments)
 
         con.mark_ladderpole_descendants(ladderpole_descendant_segments)
 
@@ -99,7 +99,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length =
 #### end experimenting
 
         hit_max_tetrahedra = False ### default assumption is that we had enough tetrahedra to get the max_length we want.
-        print build_type
+        print(build_type)
         if build_type == 'build_naive':
             con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_on_coast':
@@ -251,7 +251,7 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     for veering_isosig in to_draw:
-        print veering_isosig
+        print(veering_isosig)
         tet_shapes = shapes_data[veering_isosig]
         filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
         draw_continent(veering_isosig, tet_shapes, max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
