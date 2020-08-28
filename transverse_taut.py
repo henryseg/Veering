@@ -99,3 +99,15 @@ def convert_tetrahedron_coorientations_to_faces(triangulation, coorientations):
         assert does_face_agree_with_coorientation[0] == does_face_agree_with_coorientation[1]
         out.append(does_face_agree_with_coorientation[0])
     return out
+
+def get_tet_top_vert_nums(tet_vert_coorientations, tet):
+    tet_num = tet.index()
+    vert_coorientations = tet_vert_coorientations[tet_num]
+    top_vert_nums = []
+    for i in range(4):
+        if vert_coorientations[i] == -1:
+            top_vert_nums.append(i)
+    assert len(top_vert_nums) == 2
+    return top_vert_nums
+
+
