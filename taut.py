@@ -105,7 +105,7 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom):
     return the taut angle structure relative to the new triangulation.
     """
     new_angle_struct_list = [None] * len(original_angle_struct_list)
-    for i in xrange(len(original_angle_struct_list)):
+    for i in range(len(original_angle_struct_list)):
         mapped_tet_index = isom.tetImage(i)
         original_triang_pi_edge = edge_num_to_vert_pair[original_angle_struct_list[i]]
         pi_edge = [isom.facetPerm(i)[original_triang_pi_edge[0]], isom.facetPerm(i)[original_triang_pi_edge[1]]]

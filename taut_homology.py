@@ -42,7 +42,7 @@ def build_spanning_dual_tree(triangulation):
     tree_faces.sort()
     non_tree_faces.sort()
     if verbose > 0:
-        print "tree and non-tree faces", (tree_faces, non_tree_faces)
+        print("tree and non-tree faces", (tree_faces, non_tree_faces))
     return (tree_faces, non_tree_faces)
 
 
@@ -130,12 +130,12 @@ def edge_equation_matrix_taut_reduced(triangulation, angle_structure, cycles):
     N = edge_equation_matrix_taut(triangulation, angle_structure)
     N = N + cycles
     if verbose > 0:
-        print "edge equation matrix", N
+        print("edge equation matrix", N)
     # N is a 2n by n matrix - the rows are longer than the columns are
     # high.  So we delete the columns corresponding to the tree edges.
     reduced = [[a for i, a in enumerate(row) if i in non_tree_faces] for row in N]
     if verbose > 0:
-        print "edge equation matrix, reduced", reduced
+        print("edge equation matrix, reduced", reduced)
     return reduced
 
 
@@ -179,7 +179,7 @@ def faces_in_homology(triangulation, angle_structure, cycles):
             j = non_tree_faces.index(i)
             face_vecs.append( (U * elem_vector(j, ambient_dim))[image_dim:] )
     if verbose > 0:
-        print "face_vecs", face_vecs
+        print("face_vecs", face_vecs)
     return [tuple(vec) for vec in face_vecs]
 
 
@@ -238,22 +238,22 @@ def laurent_to_poly(elt, P):
 def matrix_laurent_to_poly(M, ZH, P):
     # convert to polynomials after shifting rows
     if verbose > 0:
-        print "matrix"
-        print M
+        print("matrix")
+        print(M)
     muls = [ monomial_multiplier(row, ZH) for row in M ]
     if verbose > 0:
-        print "muls", muls
+        print("muls", muls)
     return Matrix( [ [ laurent_to_poly(p / mul, P) for p in row ] for row, mul in zip(M, muls) ] )
 
 
 def normalise_poly(poly, ZH, P):
     if verbose > 0:
-        print "poly", poly
+        print("poly", poly)
     if poly == 0:
         return poly
     mul = monomial_multiplier([poly], ZH)
     if verbose > 0:
-        print "mul", mul
+        print("mul", mul)
     poly = laurent_to_poly(poly / mul, P)
     if poly.coefficients()[-1] < 0:
         poly = -poly

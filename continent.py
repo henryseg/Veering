@@ -145,7 +145,7 @@ class landscape_triangle:
             if i != face_a:
                 if self.continent.vt.coorientations[tet.index()][face_a] == self.continent.vt.coorientations[tet.index()][i]:
                     face_b = i
-        verts = range(4)
+        verts = list(range(4))
         verts.remove(face_a)
         verts.remove(face_b)
         if (sign([verts[0], face_b, verts[1], face_a]) == 1) == (not self.is_upper): ## get orientation correct  
@@ -191,10 +191,10 @@ class landscape_triangle:
                         assert self.vertices[(i+1)%3] == neighbour.vertices[(j+1)%3] 
                         assert self.vertices[(i-1)%3] == neighbour.vertices[(j-1)%3] 
                 except AssertionError:
-                    print 'failed vertex check'
-                    print i, j
-                    print self
-                    print neighbour
+                    print('failed vertex check')
+                    print((i, j))
+                    print(self)
+                    print(neighbour)
                     raise
                 ## check our colouring for consistency
                 try:
@@ -202,21 +202,21 @@ class landscape_triangle:
                     neighbour_col = ((j == 0) == neighbour.is_red)
                     assert self_col == neighbour_col
                 except AssertionError:
-                    print 'failed colour check'
-                    print i, j
-                    print self
-                    print neighbour
+                    print('failed colour check')
+                    print((i, j))
+                    print(self)
+                    print(neighbour)
                     raise
                 ## check edge indices
                 try:
                     assert self_edge_indices[i] == neighbour_edge_indices[j]
                 except AssertionError:
-                    print 'failed edge index check'
-                    print i, j
-                    print self
-                    print self_edge_indices
-                    print neighbour
-                    print neighbour_edge_indices
+                    print('failed edge index check')
+                    print((i, j))
+                    print(self)
+                    print(self_edge_indices)
+                    print(neighbour)
+                    print(neighbour_edge_indices)
                     raise
 
     def coastal_indices(self):
@@ -499,7 +499,7 @@ class continent:
 
     def build_on_coast(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
-        print 'max_length', max_length
+        print(('max_length', max_length))
         self.update_coast()
 
         ## now build
@@ -513,17 +513,17 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print 'num_tetrahedra', self.num_tetrahedra
+        print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print 'hit max tetrahedra', hit_max_tetrahedra
+        print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print 'num_long_edges_direct_count', self.count_long_edges()
-        print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        print(('num_long_edges_direct_count', self.count_long_edges()))
+        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
     def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
-        print 'max_length', max_length
+        print(('max_length', max_length))
 
         ## now build
 
@@ -535,17 +535,17 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print 'num_tetrahedra', self.num_tetrahedra
+        print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print 'hit max tetrahedra', hit_max_tetrahedra
+        print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print 'num_long_edges_direct_count', self.count_long_edges()
-        print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        print(('num_long_edges_direct_count', self.count_long_edges()))
+        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
     def build_explore_prongs(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
-        print 'max_length', max_length
+        print(('max_length', max_length))
 
         ## now build
 
@@ -572,12 +572,12 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print 'num_tetrahedra', self.num_tetrahedra
+        print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print 'hit max tetrahedra', hit_max_tetrahedra
+        print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print 'num_long_edges_direct_count', self.count_long_edges()
-        print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        print(('num_long_edges_direct_count', self.count_long_edges()))
+        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
     # def build_loxodromics(self, max_length = 0.1, max_num_tetrahedra = 50000):
@@ -602,7 +602,7 @@ class continent:
 
     def build_long_and_mid(self, max_length = 0.1, max_num_tetrahedra = 50000):  
         self.max_length = max_length
-        print 'max_length', max_length
+        print(('max_length', max_length))
         self.update_coast()
 
         ## now build
@@ -629,12 +629,12 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print 'num_tetrahedra', self.num_tetrahedra
+        print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print 'hit max tetrahedra', hit_max_tetrahedra
+        print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print 'num_long_edges_direct_count', self.count_long_edges()
-        print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
+        print(('num_long_edges_direct_count', self.count_long_edges()))
+        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
 
@@ -668,7 +668,7 @@ class continent:
             if i != face_t:
                 if self.vt.coorientations[tet.index()][face_t] == self.vt.coorientations[tet.index()][i]:
                     face_n = i
-        verts = range(4)
+        verts = list(range(4))
         verts.remove(face_t)
         verts.remove(face_n)
 
@@ -796,7 +796,7 @@ class continent:
                 if self.vt.coorientations[tet.index()][face_t] == self.vt.coorientations[tet.index()][i]:
                     face_c = i
 
-        verts = range(4)
+        verts = list(range(4))
         verts.remove(face_t)
         verts.remove(face_c)
 
@@ -1162,7 +1162,7 @@ class continent:
         #     out.append(clean_divider)
 
         
-        print 'dividers', len(dividers[0]), len(dividers[1])
+        print(('dividers', len(dividers[0]), len(dividers[1])))
         ### now find lightning curve from the edges of the divider
         out = []
         for i in range(2):

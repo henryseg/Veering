@@ -30,7 +30,7 @@ def num_print(a):
 def sign(perm):
     copy = perm[:]
     copy.sort()
-    assert copy == range(len(perm))
+    assert copy == list(range(len(perm)))
     out = 1
     for i in range(len(perm)):
         for j in range(i):
@@ -44,10 +44,10 @@ def sign(perm):
 class vector(tuple):
 
     def __add__(self, other):
-        return self.__class__(map(lambda x,y: x+y, self, other)) # self.__class__ is vector, unless i am a polynomial or something!
+        return self.__class__(list(map(lambda x,y: x+y, self, other))) # self.__class__ is vector, unless i am a polynomial or something!
 
     def __neg__(self):
-        return self.__class__(map(lambda x: -x, self))
+        return self.__class__([-x for x in self])
 
     def __sub__(self, other):
         # return self.__class__(map(lambda x,y: x-y, self, other))
@@ -55,7 +55,7 @@ class vector(tuple):
 
     def __mul__(self, other): # left mul == scalar mul on left
         if isinstance(other, Number):
-            return self.__class__(map(lambda x: x*other, self))
+            return self.__class__([x*other for x in self])
         else: raise TypeError
         
     def __rmul__(self, other):
@@ -236,6 +236,6 @@ def move_in_PSL(a, b, c, p, q, r):
 
 
 if __name__ == '__main__':
-    print sign([0,1,2,3])
-    print sign([0,2,1,3])
-    print sign([0,1,2,2])
+    print((sign([0,1,2,3])))
+    print((sign([0,2,1,3])))
+    print((sign([0,1,2,2])))

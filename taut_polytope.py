@@ -6,6 +6,8 @@
 
 # TODO - Gurobi?
 
+from __future__ import print_function
+
 import regina
 import snappy
 
@@ -256,16 +258,16 @@ def analyze_deeply(tri, angle):
         assert hyper or not full # full => fibered => hyper is monic
         assert alex or not hyper # hyper is monic => alex is monic
     except AssertError:
-        print "contradiction in maths"
+        print("contradiction in maths")
         raise
     if full:
         pass
     elif non_triv:
-        print " non-triv sol (but not full)",
-        print alex, hyper
+        print(" non-triv sol (but not full)", end=' ')
+        print(alex, hyper)
     elif not alex or not hyper:
-        print " no sol",
-        print alex, hyper
+        print(" no sol", end=' ')
+        print(alex, hyper)
     return None
 
 # Code to compute the dimension of the taut cone as projected into
@@ -274,7 +276,7 @@ def analyze_deeply(tri, angle):
 # (co)homology
 
 def matrix_transpose(M):
-    return map(lambda *row: list(row), *M)
+    return list(map(lambda *row: list(row), *M))
 
 
 @liberal
