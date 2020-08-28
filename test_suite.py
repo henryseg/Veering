@@ -3,8 +3,6 @@
 #
 
 from random import random
-from hashlib import md5
-from os import remove
 
 import snappy
 
@@ -61,66 +59,68 @@ def run_tests(num_to_check=1000):
 
     print("all tests depending on regina/snappy passed")
 
-    try:
-        import pyx
-        from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
-        pyx_working = True
-    except:
-        print("failed to import from pyx?")
-        pyx_working = False
+    # try:
+    #     from hashlib import md5
+    #     from os import remove
+    #     import pyx
+    #     from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
+    #     pyx_working = True
+    # except:
+    #     print("failed to import from pyx?")
+    #     pyx_working = False
 
-    ladders_style_sigs = {
-        "cPcbbbiht_12": "f34c1fdf65db9d02994752814803ae01",
-        "gLLAQbecdfffhhnkqnc_120012": "091c85b4f4877276bfd8a955b769b496",
-        "kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101": "a0f15a8454f715f492c74ce1073a13a4",
-    }
+    # ladders_style_sigs = {
+    #     "cPcbbbiht_12": "f34c1fdf65db9d02994752814803ae01",
+    #     "gLLAQbecdfffhhnkqnc_120012": "091c85b4f4877276bfd8a955b769b496",
+    #     "kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101": "a0f15a8454f715f492c74ce1073a13a4",
+    # }
 
-    geometric_style_sigs = {
-        "cPcbbbiht_12": "1e74d0b68160c4922e85a5adb20a0f1d",
-        "gLLAQbecdfffhhnkqnc_120012": "856a1fce74eb64f519bcda083303bd8f",
-        "kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101": "33bd23b34c5d977a103fa50ffe63120a",
-    }
+    # geometric_style_sigs = {
+    #     "cPcbbbiht_12": "1e74d0b68160c4922e85a5adb20a0f1d",
+    #     "gLLAQbecdfffhhnkqnc_120012": "856a1fce74eb64f519bcda083303bd8f",
+    #     "kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101": "33bd23b34c5d977a103fa50ffe63120a",
+    # }
 
-    args = {
-        "draw_boundary_triangulation":True,
-        "draw_triangles_near_poles": False,
-        "ct_depth":-1,
-        "ct_epsilon":0.03,
-        "global_drawing_scale": 4,
-        "delta": 0.2,
-        "ladder_width": 10.0,
-        "ladder_height": 20.0,
-        "draw_labels": True,
-    }
+    # args = {
+    #     "draw_boundary_triangulation":True,
+    #     "draw_triangles_near_poles": False,
+    #     "ct_depth":-1,
+    #     "ct_epsilon":0.03,
+    #     "global_drawing_scale": 4,
+    #     "delta": 0.2,
+    #     "ladder_width": 10.0,
+    #     "ladder_height": 20.0,
+    #     "draw_labels": True,
+    # }
 
-    shapes_data = read_from_pickle("Data/veering_shapes_up_to_ten_tetrahedra.pkl")
+    # shapes_data = read_from_pickle("Data/veering_shapes_up_to_ten_tetrahedra.pkl")
 
-    if pyx_working:
-        for sig in ladders_style_sigs:
-            print("testing boundary triangulation pictures, ladder style", sig)
-            args["tet_shapes"] = shapes_data[sig]
-            args["style"] = "ladders"
-            file_name = draw_triangulation_boundary_from_veering_isosig(sig, args = args) 
-            f = open(file_name, "rb")
-            file_hash = md5(f.read())
-            assert file_hash.hexdigest() == ladders_style_sigs[sig]
-            f.close()
-            remove(file_name)
+    # if pyx_working:
+    #     for sig in ladders_style_sigs:
+    #         print("testing boundary triangulation pictures, ladder style", sig)
+    #         args["tet_shapes"] = shapes_data[sig]
+    #         args["style"] = "ladders"
+    #         file_name = draw_triangulation_boundary_from_veering_isosig(sig, args = args) 
+    #         f = open(file_name, "rb")
+    #         file_hash = md5(f.read())
+    #         assert file_hash.hexdigest() == ladders_style_sigs[sig]
+    #         f.close()
+    #         remove(file_name)
         
-    if pyx_working:
-        for sig in geometric_style_sigs:
-            print("testing boundary triangulation pictures, ladder style", sig)
-            args["tet_shapes"] = shapes_data[sig]
-            args["style'="] = "geometric"
-            file_name = draw_triangulation_boundary_from_veering_isosig(sig, args = args) 
-            f = open(file_name, "rb")
-            file_hash = md5(f.read())
-            assert file_hash.hexdigest() == geometric_style_sigs[sig]
-            f.close()
-            remove(file_name)
+    # if pyx_working:
+    #     for sig in geometric_style_sigs:
+    #         print("testing boundary triangulation pictures, ladder style", sig)
+    #         args["tet_shapes"] = shapes_data[sig]
+    #         args["style'="] = "geometric"
+    #         file_name = draw_triangulation_boundary_from_veering_isosig(sig, args = args) 
+    #         f = open(file_name, "rb")
+    #         file_hash = md5(f.read())
+    #         assert file_hash.hexdigest() == geometric_style_sigs[sig]
+    #         f.close()
+    #         remove(file_name)
 
-    if pyx_working: 
-        print("all tests depending on pyx passed")
+    # if pyx_working: 
+    #     print("all tests depending on pyx passed")
 
     veering_polys = {
         "cPcbbbiht_12": "a^3 - 4*a^2 + 4*a - 1",
