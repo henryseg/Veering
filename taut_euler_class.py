@@ -4,8 +4,13 @@
 
 
 from file_io import parse_data_file, write_data_file
-from taut import isosig_to_tri_angle
+from taut import liberal, isosig_to_tri_angle
 from transverse_taut import is_transverse_taut
+
+from sage.matrix.constructor import Matrix
+from sage.modules.free_module_element import vector
+from sage.arith.misc import gcd
+from sage.arith.functions import lcm
 
 
 #
@@ -347,8 +352,8 @@ def coboundary(tri, angle):
 
 # 7. Linear algebra
 
-# We ask: is there a one-cocycle D \in C^1(\calT', \ZZ) so that
-# \delta D = E?  If so, then [E] = E(\calT) is zero in H^2, as
+# We ask: is there a one-cocycle C \in C^1(\calT', \ZZ) so that
+# \delta C = E?  If so, then [E] = E(\calT) is zero in H^2, as
 # desired.
 
 # This is a linear algebra problem, so can be solved by, say, sage.
@@ -516,6 +521,18 @@ def order_of_euler_class(delta, E):
 # sage: attach('euler.py')
 #
 # which works for some reason???
+
+@liberal
+def order_of_euler_class_wrapper(tri, angle):
+    """
+    Returns "non-torsion" (very exciting) or the _order_ of the euler
+    class.  
+    """
+    euler = order_of_euler_class(coboundary(tri, angle), euler_cocycle(tri, angle))
+    if euler == "non_torsion":
+        print('non-torsion Euler class!!!!')
+    return euler
+    
 
 def compute_order_of_euler_classes(file_in, number=None, file_out=None):
     data_in = parse_data_file(file_in)
