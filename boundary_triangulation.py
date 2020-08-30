@@ -850,7 +850,7 @@ if __name__ == "__main__":
     names = ['cPcbbbiht_12', 'gLLAQbecdfffhhnkqnc_120012',
     'kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101']
     for name in names:
-        print name
+        print(name)
         args['tet_shapes'] = shapes_data[name]
         args['style'] = 'ladders'
         output_filename = draw_triangulation_boundary_from_veering_isosig(name, args = args) 

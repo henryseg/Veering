@@ -173,17 +173,17 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig in veering_polys:
-            print("testing veering", sig)
+            print(("testing veering", sig))
             p = veering_polynomial.veering_polynomial(sig)
             assert p.__repr__() == veering_polys[sig]
         for sig in taut_polys:
-            print("testing taut", sig)
+            print(("testing taut", sig))
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert p.__repr__() == taut_polys[sig]
         for i in range(3):
             j = int(5000 * random())
             sig = veering_isosigs[j]
-            print("testing divide", sig)
+            print(("testing divide", sig))
             p = veering_polynomial.veering_polynomial(sig)
             q = taut_polynomial.taut_polynomial_via_tree(sig)
             if q == 0:
@@ -195,7 +195,7 @@ def run_tests(num_to_check=1000):
         for i in range(3):
             j = int(5000 * random())
             sig = veering_isosigs[j]
-            print("testing alex", sig)
+            print(("testing alex", sig))
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
             if M.homology().betti_number() == 1:
@@ -203,25 +203,25 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig in torus_bundles:
-            print("testing torus bundle", sig)
+            print(("testing torus bundle", sig))
             assert taut_polytope.is_torus_bundle(sig)
 
     if sage_working:
         for sig in torus_bundles:
-            print("testing layered", sig)
+            print(("testing layered", sig))
             assert taut_polytope.is_layered(sig)
         for sig in measured:
-            print("testing measured", sig)
+            print(("testing measured", sig))
             assert taut_polytope.LMN_tri_angle(sig) == "M"
         for sig in empties:
-            print("testing empty", sig)
+            print(("testing empty", sig))
             assert taut_polytope.LMN_tri_angle(sig) == "N"
 
     if sage_working:  # warning - this takes random amounts of time!
         for i in range(3):
             j = int(10000 * random())
             sig = veering_isosigs[j]
-            print("testing hom dim", sig)
+            print(("testing hom dim", sig))
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")  # that is, iff
 
     taut_polys_with_cycles = {
@@ -230,7 +230,7 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig, cycles in taut_polys_with_cycles:
-            print("testing taut with cycles", sig, cycles)
+            print(("testing taut with cycles", sig, cycles))
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
             assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
