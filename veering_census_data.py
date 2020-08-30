@@ -11,14 +11,14 @@ import regina
 from file_io import parse_data_file, write_data_file
 from taut import isosig_to_tri_angle, apply_isom_to_angle_struct_list
 from veering import is_veering
-from transverse_taut import is_transverse_taut
+from transverse_taut import is_transverse_taut, symmetry_group_size
 from edge_orientability import is_edge_orientable
 
 def compute_census_data(filename_in, filename_out, functions, verbose = 0):
 	### each function takes in data about the triangulation, returns a string
 	census_data = parse_data_file(filename_in) 
 	out = []
-	for i, line in enumerate(census_data[:10]):
+	for i, line in enumerate(census_data):
 		line_data = line.split(' ') ## 0th is taut_sig, then may be other data we dont want to lose.
 		taut_sig = line_data[0]
 		regina_sig = taut_sig.split('_')[0]
@@ -58,17 +58,9 @@ def other_names(triang_data):
 	names = ["'" + mfld.name() + "'" for mfld in mflds]
 	return '[' + ','.join(names) + ']'
 
-def symmetry_group_size(triang_data):
-	t = triang_data['tri']
-	isoms = t.findAllIsomorphisms(t)
-	angles = [int(i) for i in list(triang_data['angle'])]
-	count = 0
-	for isom in isoms:
-		if isom.facePerm(0).sign() == 1:  ## fixes orientation of the triangulation
-			if angles == apply_isom_to_angle_struct_list(angles, isom):  ## fixes taut angle structure
-				coorientations = is_transverse_taut(t, angles, return_type = 'tet_vert_coorientations')
-				if coorientations[0][0] == coorientations[isom.tetImage(0)][isom.facetPerm(0)[0]]:  ## fixes transverse structure
-					count += 1
+def symmetry_group_size_data(triang_data):
+	sig = triang_data['sig']
+	count = symmetry_group_size(sig)
 	return str(count)
 
 def edge_orientable(triang_data):
@@ -83,20 +75,25 @@ def LMN_from_old_data(triang_data): ## layered vs measurable vs non-measurable
 def num_cusps_from_old_data(triang_data):
 	return triang_data['old_data'][2]
 
-def num_toggles_red_blue_from_old_data(triang_data):
+def symmetry_group_size_from_old_data(triang_data):
 	return triang_data['old_data'][3]
 
-def euler_class_from_old_data(triang_data):
+def edge_orientable_from_old_data(triang_data):
 	return triang_data['old_data'][4]
 
-def homology_from_old_data(triang_data):
+def euler_class_from_old_data(triang_data):
 	return triang_data['old_data'][5]
 
-def other_names_from_old_data(triang_data):
+def num_toggles_red_blue_from_old_data(triang_data):
 	return triang_data['old_data'][6]
 
-# functions_list = [veering_isosig, LMN_from_old_data, num_cusps, num_toggles_red_blue, euler_class_from_old_data, homology, other_names]
-functions_list = [veering_isosig, LMN_from_old_data, num_cusps_from_old_data, symmetry_group_size, edge_orientable, euler_class_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
+def homology_from_old_data(triang_data):
+	return triang_data['old_data'][7]
+
+def other_names_from_old_data(triang_data):
+	return triang_data['old_data'][8]
+
+functions_list = [veering_isosig, LMN_from_old_data, num_cusps_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
 
 if __name__ == '__main__':
 	compute_census_data('Data/veering_census_with_data.txt', 'Data/veering_census_with_more_data.txt', functions_list, verbose = 1)
