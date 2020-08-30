@@ -1,5 +1,5 @@
 #
-# classify_taut_ideal_triangulations
+# taut_polytope.py
 #
 
 # Analyze manifolds and their taut/veering triangulations.
