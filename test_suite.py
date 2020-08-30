@@ -10,7 +10,9 @@ from file_io import parse_data_file, read_from_pickle
 
 import taut
 import transverse_taut
+import taut_euler_class
 import veering
+import edge_orientability
 import veering_dehn_surgery
 
 def run_tests(num_to_check=1000):
@@ -235,6 +237,15 @@ def run_tests(num_to_check=1000):
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
             assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
             
+    if sage_working:
+        for i in range(3):
+            j = int(5000 * random())
+            sig = veering_isosigs[j]
+            print(("testing euler and edge orientability", sig))
+            # Theorem: If (tri, angle) is edge orientable then e = 0.
+            assert not ( (edge_orientability.is_edge_orientable(sig) == True) and
+                         (taut_euler_class.order_of_euler_class_wrapper(sig) == 2) )
+
     if sage_working:
         print("all tests depending on sage passed")
 
