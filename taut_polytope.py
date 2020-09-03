@@ -1,10 +1,12 @@
 #
-# taut_polytope.py
+# classify_taut_ideal_triangulations
 #
 
 # Analyze manifolds and their taut/veering triangulations.
 
 # TODO - Gurobi?
+
+from __future__ import print_function
 
 import regina
 import snappy
@@ -261,11 +263,11 @@ def analyze_deeply(tri, angle):
     if full:
         pass
     elif non_triv:
-        print("non-triv sol (but not full)")
-        print((alex, hyper))
+        print(" non-triv sol (but not full)", end=' ')
+        print(alex, hyper)
     elif not alex or not hyper:
-        print("no sol")
-        print((alex, hyper))
+        print(" no sol", end=' ')
+        print(alex, hyper)
     return None
 
 # Code to compute the dimension of the taut cone as projected into
