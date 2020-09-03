@@ -40,7 +40,7 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
     def develop_edge_outwards(self, depth_increment = 1, verbose = 0.0):
         """Given edge_data, find list of edges (i.e. edge_data) on far side of this edge"""
         if verbose >= 1.0: 
-            print('develop through', self)
+            print(('develop through', self))
         ### if bottom edge is right veering then as we go anticlockwise around the circle, the 
         ### the new edges we get will be in the correct order as we work down from the top of the 
         ### edge. if bottom edge is left veering then we have the opposite. 
@@ -128,8 +128,8 @@ def get_ct_edge_above(current_tet, verts_CP1, edge_vertex, face_vertex, vt, old_
     depth = old_depth + depth_increment
     assert coorientations[current_tet.index()][face_vertex] == +1
     if verbose > 3.0:
-        print('tet_num, edge_vertex, face_vertex', current_tet.index(), edge_vertex, face_vertex)
-        print('verts_CP1', verts_CP1)
+        print(('tet_num, edge_vertex, face_vertex', current_tet.index(), edge_vertex, face_vertex))
+        print(('verts_CP1', verts_CP1))
     while True:
         # print 'tet_num going up', current_tet.index()
         # print '1,2,3,f', first_edge_vertex, second_edge_vertex, third_vertex, face_vertex
@@ -143,8 +143,8 @@ def get_ct_edge_above(current_tet, verts_CP1, edge_vertex, face_vertex, vt, old_
 
         current_tet = next_tet
         if verbose > 3.0:
-            print('tet_num, edge_vertex, face_vertex', current_tet.index(), edge_vertex, face_vertex)
-            print('verts_CP1', verts_CP1)
+            print(('tet_num, edge_vertex, face_vertex', current_tet.index(), edge_vertex, face_vertex))
+            print(('verts_CP1', verts_CP1))
         assert coorientations[current_tet.index()][edge_vertex] == -1
         if coorientations[current_tet.index()][face_vertex] == -1: ### we are now at the top of the edge
             # print 'tet_num going up', current_tet.index()
@@ -204,7 +204,7 @@ def draw_path(edges, dots, name = 'foobar', lw = 0.005, verbose = 0.0):
         canv.fill(pyx.path.circle(dot.real, dot.imag, 0.02))
     comp_coords = [edges[0].start_complex] + [edge.end_complex for edge in edges]
     if verbose > 0.1:
-        print('len(comp_coords)', len(comp_coords))
+        print(('len(comp_coords)', len(comp_coords)))
     p = pyx.path.path( pyx.path.moveto(comp_coords[0].real, comp_coords[0].imag) )
     for coord in comp_coords[1:]: 
         p.append( pyx.path.lineto(coord.real, coord.imag) )
@@ -242,17 +242,17 @@ def initial_path_sideways(tri, angle, tet_shapes, verbose = 0.0):
             end_ori_e = oriented_e
             break
         oriented_edges.append( oriented_e )
-        if verbose > 2.0: print('oriented edges', oriented_edges)
+        if verbose > 2.0: print(('oriented edges', oriented_edges))
         
         children = current_edge.develop_edge_outwards(depth_increment = 0, verbose = verbose)
         children.reverse() ### we want the opposite order in the main develop function
         if verbose > 2.0:
             print('children')
             for child in children:
-                print(child.tet_num, child.forward_face_vertex, child.start_complex, child.end_complex)
+                print((child.tet_num, child.forward_face_vertex, child.start_complex, child.end_complex))
         current_edge = children.pop() 
         rho.append(children)
-    if verbose > 2.0: print('end_ori_e, index in oriented edges', end_ori_e, oriented_edges.index(end_ori_e))
+    if verbose > 2.0: print(('end_ori_e, index in oriented edges', end_ori_e, oriented_edges.index(end_ori_e)))
     rho = rho[oriented_edges.index(end_ori_e):] ### throw away the initial segment of the rho, leaving the loop
     if verbose > 2.0: 
         print('rho')
@@ -275,8 +275,8 @@ def initial_path_up_ladderpole(tri, angle, tet_shapes, verbose = 0.0):
     edges, _ = initial_path_single(tri, angle, tet_shapes, verbose = 0.0)
     current_edge = edges[0]
     if verbose > 2.0: 
-        print('current_edge', current_edge)
-        print('top, bottom', current_edge.top, current_edge.bottom)
+        print(('current_edge', current_edge))
+        print(('top, bottom', current_edge.top, current_edge.bottom))
     oriented_edges = []
     infinity_edge_endpoints = []
     ladderpole_edges = []
@@ -289,7 +289,7 @@ def initial_path_up_ladderpole(tri, angle, tet_shapes, verbose = 0.0):
             end_ori_e = oriented_e
             break
         oriented_edges.append( oriented_e )
-        if verbose > 2.0: print('oriented edges', oriented_edges)
+        if verbose > 2.0: print(('oriented edges', oriented_edges))
         vt = current_edge.vt
         current_tet = vt.tri.tetrahedron(current_edge.tet_num)
 ###              
@@ -302,11 +302,11 @@ def initial_path_up_ladderpole(tri, angle, tet_shapes, verbose = 0.0):
 ###                `*'
 ###               face_vert = new_edge_vert
         edge_vertex = current_edge.forward_face_vertex
-        if verbose > 2.0: print('edge vertex', edge_vertex)
+        if verbose > 2.0: print(('edge vertex', edge_vertex))
         for vertex in current_edge.bottom:
-            if verbose > 2.0: print('bottom vertex', vertex)
+            if verbose > 2.0: print(('bottom vertex', vertex))
             ct_edge = get_ct_edge_above(current_tet, current_edge.verts_CP1, edge_vertex, vertex, current_edge.vt, current_edge.depth, depth_increment = 0, verbose = verbose) 
-            if verbose > 2.0: print('ct edge', ct_edge)
+            if verbose > 2.0: print(('ct edge', ct_edge))
             if ct_edge.colour == current_edge.colour:
                 next_edge = ct_edge
             else:
@@ -317,7 +317,7 @@ def initial_path_up_ladderpole(tri, angle, tet_shapes, verbose = 0.0):
 def develop_cannon_thurston(to_do_edges, max_depth = 1, epsilon = 0.02, verbose = 0.0):
     max_depth_achieved = 0
     min_length_achieved = 100.0
-    if verbose > 1.0: print('len initial to_do_edges', len(to_do_edges))
+    if verbose > 1.0: print(('len initial to_do_edges', len(to_do_edges)))
     to_do_edges.reverse() 
     if verbose > 4.5: 
         print('initial to_do_edges')
@@ -326,11 +326,11 @@ def develop_cannon_thurston(to_do_edges, max_depth = 1, epsilon = 0.02, verbose 
     done_edges = []
     while len(to_do_edges) > 0:
         if verbose > 2.0:
-            print('to do edges', len(to_do_edges))
-            print('done edges', len(done_edges))
+            print(('to do edges', len(to_do_edges)))
+            print(('done edges', len(done_edges)))
         edge = to_do_edges.pop()
         if verbose >= 2.0:
-            print('depth', edge.depth)
+            print(('depth', edge.depth))
         if edge.depth >= max_depth or edge.length < epsilon or edge.too_close_to_infty():
             done_edges.append(edge)
             if edge.depth > max_depth_achieved:
@@ -340,8 +340,8 @@ def develop_cannon_thurston(to_do_edges, max_depth = 1, epsilon = 0.02, verbose 
         else:
             to_do_edges.extend( edge.develop_edge_outwards(verbose = verbose) )
     if verbose > 0.0: 
-        print('len final done_edges', len(done_edges))
-        print('max_depth_achieved, min_length_achieved', max_depth_achieved, min_length_achieved)
+        print(('len final done_edges', len(done_edges)))
+        print(('max_depth_achieved, min_length_achieved', max_depth_achieved, min_length_achieved))
     return done_edges
 
 def make_cannon_thurston(tri, angle, tet_shapes, init_function = initial_path_single, name = 'foobar', max_depth = 1, epsilon = 0.02, lw = 0.005, verbose = 0.0):

@@ -109,9 +109,9 @@ def veering_n_mobius_dehn_surgery(tri, angle, face_num, n):
 def do_all_veering_n_surgeries(tri, angle, n = 1):
     # apply veering mobius dehn surgery n times to all Mobius strips in tri, print the results
     out = []
-    print("mob strip faces: " + str(get_mobius_strip_indices(tri)))
+    print(("mob strip faces: " + str(get_mobius_strip_indices(tri))))
     for face_num in get_mobius_strip_indices(tri):
-        print("face_num", face_num)
+        print(("face_num", face_num))
         tri2 = regina.Triangulation3(tri)  # make a copy
         tri_surg, angle_surg, face_num_surg = veering_n_mobius_dehn_surgery(tri2, angle, face_num, n)
         sig = isosig_from_tri_angle(tri_surg, angle_surg)
