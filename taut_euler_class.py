@@ -68,11 +68,13 @@ from sage.arith.functions import lcm
 # when UT\calF has a section; that is, when the unit tangent bundle is
 # trivialisable.
 
+
 # Recall:
 # Suppose that X is an F-bundle over B.  We have
 #
 #      i
 # F -------> X <--.
+#            |    |
 #            |    |
 #           p|    |s
 #            |    |
@@ -418,7 +420,8 @@ def order_of_euler_class(delta, E):
     the order of [E].  So returns 1 if [E] = 0 and in general returns
     k if [E] is k--torsion.
     '''
-    # Note that we could return zero if [E]
+    # Note that we could/should return zero if [E] was
+    # non-torsion... but that never happens, so whatever. 
     
     delta = Matrix(delta)
     E = vector(E)
@@ -461,21 +464,20 @@ def order_of_euler_class(delta, E):
 
     diag = diagonal(D)
     
-    # Perhaps veering triangulations have H_1(M, \bdy M) being
-    # torsion??? In any case, the following never seems to happen.
+    # The following never happens.
 
     if any( (diag[i] == 0 and Ep[i] != 0) for i in range(len(Ep)) ):
-        print('The evil has occured!')
+        print('The evil has occured!  Inform the media')
         return 'non-torsion'
 
-    # all zeros are at the end in Smith normal form - by the above we
+    # All zeros are at the end in Smith normal form - by the above we
     # can remove them.
     
     first_zero = diag.index(0) 
     diag = diag[:first_zero]
     Ep = Ep[:first_zero]
     
-    # Since diag[i] is never zero (now) we can divide to get the
+    # Since diag[i] is (now) never zero we can divide to get the
     # fractions Ep[i]/diag[i] and then find the scaling that makes
     # them simultaneously integral.
 
@@ -508,19 +510,9 @@ def order_of_euler_class(delta, E):
 # Question: If the veering triangulation is well-framed (aka
 # edge-orientable), does the Euler class vanish?
 
-###
-### Here is the code to compute stuff... 
-### 
 
-# By the way, there is some insane sage error that throws
-#
-# NameError: global name 'Matrix' is not defined
-#
-# so just rerun
-#
-# sage: attach('euler.py')
-#
-# which works for some reason???
+# 9. Calling code
+
 
 @liberal
 def order_of_euler_class_wrapper(tri, angle):
