@@ -224,12 +224,11 @@ def run_tests(num_to_check=1000):
             j = int(10000 * random())
             sig = veering_isosigs[j]
             print(("testing hom dim", sig))
+            # dimension = zero if and only if nothing is carried.
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
-            # that is, dimension = zero iff nothing is carried.
 
 
     import taut_carried     
-
 
     boundary_cycles = {
         ('eLMkbcddddedde_2100',(2,5,5,1,3,4,7,1)): "((-7, -7, 0, 0, 4, -3, 7, 0), (7, 7, 0, 0, -4, 3, -7, 0))",
