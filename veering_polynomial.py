@@ -35,10 +35,10 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
     if mode == "upper":
         coorientations = [[-x for x in coor] for coor in coorientations]
     if verbose > 0:
-        print("coorientations", coorientations)
+        print(("coorientations", coorientations))
     edge_colours = is_veering(triangulation, angle_structure, return_type = "veering_colours")
     if verbose > 0:
-        print("edge_colours", edge_colours)
+        print(("edge_colours", edge_colours))
     red_tetrahedra = []
     blue_tetrahedra = []
 
@@ -48,34 +48,34 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
         else:
             blue_tetrahedra.append(tet)
     if verbose > 0:
-        print("how many reds and blues", len(red_tetrahedra), len(blue_tetrahedra))
+        print(("how many reds and blues", len(red_tetrahedra), len(blue_tetrahedra)))
 
     face_laurents = faces_in_laurent(triangulation, angle_structure, [], ZH)  # empty list of cycles.
     if verbose > 0:
-        print("face_laurents", face_laurents)
+        print(("face_laurents", face_laurents))
 
     ET_matrix = []  # now to find the tet coefficients relative to each edge
     for tet in triangulation.tetrahedra():
         if verbose > 0:
-            print("tet_index", tet.index())
+            print(("tet_index", tet.index()))
         edge = tet_lower_upper_edges(tet, coorientations)[1]
         if verbose > 0:
-            print("edge_index", edge.index())
+            print(("edge_index", edge.index()))
         edge_colour = edge_colours[edge.index()]
         if verbose > 0:
-            print("edge_colour", edge_colour)
+            print(("edge_colour", edge_colour))
         embeddings = edge.embeddings()
         tet_coeffs = [ZH(0)] * triangulation.countTetrahedra()
         tet_coeffs[tet.index()] = 1  # bottom tet around the edge gets a 1
         if verbose > 0:
-            print("initial tet_coeffs", tet_coeffs)
+            print(("initial tet_coeffs", tet_coeffs))
         current_coeff = ZH(1)
 
         # find index of bottom embedding in the list of embedding
         for i, embed in enumerate(embeddings):
             tet = embed.tetrahedron()
             if verbose > 0:
-                print("current_tet", tet.index())
+                print(("current_tet", tet.index()))
             vert_perm = embed.vertices()
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
 
@@ -101,7 +101,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
                   (edge_colour == "R" and tet in blue_tetrahedra)): 
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
             if verbose > 0:
-                print("current tet_coeffs", tet_coeffs)
+                print(("current tet_coeffs", tet_coeffs))
 
         ET_matrix.append(tet_coeffs)
 
@@ -115,7 +115,7 @@ def veering_polynomial(tri, angle, alpha = True, mode = "lower"):
     ZH = group_ring(tri, angle, [], alpha = alpha)
     P = ZH.polynomial_ring()
     if verbose > 0:
-        print("angle", angle)
+        print(("angle", angle))
 
     ET = edges_to_tetrahedra_matrix(tri, angle, ZH, P, mode)
     return normalise_poly(ET.determinant(), ZH, P)
