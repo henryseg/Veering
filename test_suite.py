@@ -243,9 +243,14 @@ def run_tests(num_to_check=1000):
             sig = veering_isosigs[j]
             print(("testing euler and edge orientability", sig))
             # Theorem: If (tri, angle) is edge orientable then e = 0.
-            assert not ( (edge_orientability.is_edge_orientable(sig) == True) and
+            assert not ( edge_orientability.is_edge_orientable(sig) and
                          (taut_euler_class.order_of_euler_class_wrapper(sig) == 2) )
 
+    if sage_working:
+        # Theorem: If (tri, angle) is edge orientable then taut poly = alex poly.
+        # taut_polynomial.taut_polynomial_via_tree(sig, mode = "alexander") ==
+        #      taut_polynomial.taut_polynomial_via_tree(sig, mode = "taut")
+            
     if sage_working:
         print("all tests depending on sage passed")
 
