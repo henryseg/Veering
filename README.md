@@ -9,8 +9,9 @@ Nathan Dunfield for many helpful comments (and for some code).
 ### Installing regina
 
 Essentially all of the veering code relies on regina; some of it
-relies on sage.  Installation instructions for regina (independently
-and into sage) can be found here:
+relies on sage. Other parts rely on the Python vector graphics package
+pyx. Installation instructions for regina (independently and into 
+sage) can be found here:
 
 http://regina-normal.github.io/  
 http://sageregina.unhyperbolic.org/

@@ -63,26 +63,26 @@ def edges_to_triangles_matrix(triangulation, angle_structure, cycles, ZH, P, mod
     # triangle the switch condition on its dual lower track
     coorientations = is_transverse_taut(triangulation, angle_structure, return_type = "tet_vert_coorientations")
     if verbose > 0:
-        print("coorientations", coorientations)
+        print(("coorientations", coorientations))
     face_laurents = faces_in_laurent(triangulation, angle_structure, cycles, ZH)
     if verbose > 0:
-        print("face_laurents", face_laurents)
+        print(("face_laurents", face_laurents))
 
     ET_matrix = [] # now to find the face coefficients relative to each edge
     for tet in triangulation.tetrahedra():
         # get its upper edge - we iterate over upper edges of tetrahedra
         if verbose > 0:
-            print("tet_index", tet.index())
+            print(("tet_index", tet.index()))
         edge = tet_lower_upper_edges(tet, coorientations)[1]
         if verbose > 0:
-            print("edge_index", edge.index())
+            print(("edge_index", edge.index()))
         embeddings = edge.embeddings()
 
         # find index of tet in the list of embeddings of edge
         for i, embed in enumerate(embeddings):
             tet = embed.tetrahedron()
             if verbose > 0:
-                print("current_tet", tet.index())
+                print(("current_tet", tet.index()))
             vert_perm = embed.vertices()
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
 
@@ -110,7 +110,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, cycles, ZH, P, mod
             trailing_face = tet.triangle(leading_vert_num)
             face_coeffs[trailing_face.index()] = face_coeffs[trailing_face.index()] + current_coeff
             if verbose > 0:
-                print("face_coeffs", face_coeffs)
+                print(("face_coeffs", face_coeffs))
             embeddings = embeddings[1:-1] # and remove them
 
         for embed in embeddings:
@@ -126,20 +126,20 @@ def edges_to_triangles_matrix(triangulation, angle_structure, cycles, ZH, P, mod
                 use_face = leading_face
             current_coeff = current_coeff * (face_laurents[use_face.index()])**sign
             if verbose > 0:
-                print("current_coeff", current_coeff)
+                print(("current_coeff", current_coeff))
 
             if (coorientations[tet.index()][trailing_vert_num] == -1 and 
                 coorientations[tet.index()][leading_vert_num]  == -1): ## we are the top embed
                 sign = 1 # so now are going down the right side of the edge
                 current_coeff = current_coeff * (face_laurents[leading_face.index()])**sign
                 if verbose > 0:
-                    print("top current_coeff", current_coeff)
+                    print(("top current_coeff", current_coeff))
             if mode == "taut":
                 face_coeffs[leading_face.index()] = face_coeffs[leading_face.index()] - current_coeff
             elif mode == "alexander":
                 face_coeffs[leading_face.index()] = face_coeffs[leading_face.index()] + sign*current_coeff
             if verbose > 0:
-                print("face_coeffs", face_coeffs)
+                print(("face_coeffs", face_coeffs))
 
         ET_matrix.append(face_coeffs)
 
