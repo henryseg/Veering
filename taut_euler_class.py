@@ -57,7 +57,7 @@ from sage.arith.functions import lcm
 # Candel, Conlon - Foliations, chapter four
 
 
-# 2. Background: 
+# 2. Background:
 
 # Suppose that (M, \calT) is a transverse taut triangulation.  Then
 # \calT^{2} is the "horizontal branched surface".  This caries various
@@ -83,17 +83,9 @@ from sage.arith.functions import lcm
 #
 # So s \from B \to X is a \emph{section} if p \circ s = Id_B
 
-# Various people are interested in this - Marc Culler and Nathan
-# Dunfield most directly.  (In fact, Marc asked me when I spoke in
-# Munich.)  [2019-03-27 Also - Ingrid Irmer.  She asks if the veering
-# structures that do not carry anything come from a face of the scl
-# norm ball.  Ie suppose that \gamma lies in the commutator
-# subgroup.  Look at a surface it spans - integrate the euler class
-# over the surface.  [I think that we need e = 0 for this to make
-# sense.]]
-
 
 # 3. Helper functions
+
 
 def diagonal(D):
     return [D[i][i] for i in range(min(D.dimensions()))]
@@ -147,7 +139,7 @@ def diagonal(D):
 # \{e^*_{ij}\} generates C^1(\calT', \ZZ) while \{f^*_i\} \cup
 # \{f^*_{ij}\} generates C^2(\calT', \ZZ).
 
-# For more pictures, see 
+# For more pictures, see
 # /Veering_code/NotesPictures/euler_notes_from_nathan.jpg
 
 
@@ -176,8 +168,8 @@ def diagonal(D):
 
 # E(f) = AC(f) - 2
 
-### If we flip the transverse direction: AC(f') = 3 - AC(f),
-### so E(f') = AC(f') - 2 = 1 - AC(f) = 2 - AC(f) - 1 = -E(f) - 1
+# If we flip the transverse direction: AC(f') = 3 - AC(f),
+# so E(f') = AC(f') - 2 = 1 - AC(f) = 2 - AC(f) - 1 = -E(f) - 1
 
 # \begin{remark}
 # Here is one way to remember (and explain!) this rule.  Suppose that
@@ -214,7 +206,8 @@ def diagonal(D):
 # Likewise, a direct computation shows that switching the orientation
 # of a single edge leaves E \bdy t unchanged. QED.
 
-# # It would be nice to have a less computational proof!
+### It would be nice to have a less computational proof!
+
 
 def euler_cocycle(tri, angle):
     """
@@ -223,19 +216,19 @@ def euler_cocycle(tri, angle):
     two-cocycle E representing the Euler class E(tri).
     """
     assert is_transverse_taut(tri, angle)
-    face_coorientations = is_transverse_taut(tri, angle, return_type = 'face_coorientations')
+    face_coorientations = is_transverse_taut(tri, angle, return_type = "face_coorientations")
     # E will be a _row_ vector, because it eats column vectors.
     E = []
     # First deal with the truncated faces
-    for face in tri.faces(2): # 2 = dimension
+    for face in tri.faces(2):  # 2 = dimension
         # First we compute the number of Regina oriented edges that agree with the Regina orientation on face
         AC = 0
         for i in range(3):
             perm = face.faceMapping(1, i)
             # print perm[0], perm[1]
-            if perm[1] == ((perm[0] + 1) % 3): # the edge and face orientations agree so,
+            if perm[1] == ((perm[0] + 1) % 3):  # the edge and face orientations agree so,
                 AC = AC + 1
-        # print 'AC', AC
+        # print "AC", AC
         # Now we condition on whether or not Regina and angle agree on the (co-)orientation of the face.
         if face_coorientations[face.index()] == 1:
             E.append(AC - 2)
@@ -276,13 +269,13 @@ def coboundary(tri, angle):
     # \delta^1 takes row vectors (functions on edges) and spits out
     # row vectors (functions on faces).  So, if c is a one-cochain
     # then c \cdot \delta is a two-cochain.
-    delta = [] 
+    delta = []
     assert is_transverse_taut(tri, angle)
-    tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = 'tet_vert_coorientations')
-    face_coorientations = is_transverse_taut(tri, angle, return_type = 'face_coorientations')
-    
+    tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    face_coorientations = is_transverse_taut(tri, angle, return_type = "face_coorientations")
+
     for edge in tri.edges():
-        # A row for every truncated edge 
+        # A row for every truncated edge
         row = []
         for face in tri.triangles():
             # A row entry for every truncated face
@@ -301,30 +294,29 @@ def coboundary(tri, angle):
             # when viewed from above (using the transverse taut notion
             # of up)
 
-                ##       ,'| 
-                ##     ,'  |
-                ##   ,'    |
-                ## ,'  CCW |  gets a +1
-                ## `.      ^
-                ##   `.    |
-                ##     `.  |
-                ##       `.| 
-
+            #        ,'|
+            #      ,'  |
+            #    ,'    |
+            #  ,'  CCW |  gets a +1
+            #  `.      ^
+            #    `.    |
+            #      `.  |
+            #        `.|
 
         for tet in tri.simplices():
             for i in range(4):
                 row.append(0)
         delta.append(row)
-    
+
     for face in tri.triangles():
         face_embeddings = []
         for j in range(2):
             face_embeddings.append( face.embedding(j) )
 
-        for i in range(3): # vertices of the face
+        for i in range(3):  # vertices of the face
             # A row for every peripheral edge
             row = []
-            
+
             for face2 in tri.triangles():
                 # A row entry for every truncated face
                 if face2 == face:
@@ -337,12 +329,12 @@ def coboundary(tri, angle):
                     # A row entry for every peripheral face
                     count = 0
                     for j in range(2):
-                        if (tet == face_embeddings[j].simplex()) and (face_embeddings[j].vertices()[i] == k): 
-                        # the tetrahedron is on the jth side of the
-                        # face and the ith vertex of face is the kth
-                        # vertex of tet
+                        if (tet == face_embeddings[j].simplex()) and (face_embeddings[j].vertices()[i] == k):
+                            # the tetrahedron is on the jth side of the
+                            # face and the ith vertex of face is the kth
+                            # vertex of tet
                             face_num_in_tet = face_embeddings[j].vertices()[3]
-                            count -= tet_vert_coorientations[tet.index()][face_num_in_tet]  
+                            count -= tet_vert_coorientations[tet.index()][face_num_in_tet]
                             # tet_vert_coorientations is +1 if
                             # coorientation on face points out of the
                             # tetrahedron, and we want count += 1 if
@@ -352,6 +344,7 @@ def coboundary(tri, angle):
             delta.append(row)
     return delta
 
+
 # 7. Linear algebra
 
 # We ask: is there a one-cocycle C \in C^1(\calT', \ZZ) so that
@@ -360,69 +353,14 @@ def coboundary(tri, angle):
 
 # This is a linear algebra problem, so can be solved by, say, sage.
 
-# Here is the old version - we don't understand why this works, but it
-# seems to...
-def is_coboundary(delta, E):
-    '''
-    Given the coboundary operator \delta and an Euler two-cocycle E, 
-    returns true if E is a coboundary.
-    '''
-    delta = Matrix(delta)
-    E = vector(E)
-
-    # Note that E is a coboundary if there is a one-cocycle C solving
-    #
-    # E = C*delta
-    #
-    # We can find C (if it exists at all) using Smith normal form.
-
-    D, U, V = delta.smith_form()
-    assert D == U*delta*V
-
-    # So we are trying to solve
-    #
-    # C*delta = C*U.inverse()*D*V.inverse() = E
-    #
-    # for C.  Multiply by V to get
-    #
-    # C*delta*V = C*U.inverse()*D = E*V
-    #
-    # Now set 
-    # 
-    # B = C*U.inverse(), and so B*U = C
-    # 
-    # and rewrite to get 
-    #
-    # B*U*delta*V = B*D = E*V
-    #
-    # So set
-
-    Ep = E*V
-
-    # Note that D is diagonal, so there is a solution B in integers to B*D = Ep iff 
-
-    print(Ep)
-    print(diagonal(D))
-
-    # The followng is broken - D[i][i] == 0 can happen in examples...
-    # But the zero division never threw on 80,000 manifolds.  So
-    # something subtle is happening - perhaps because Ep is zero on
-    # the peripheral faces...  Let's _not_ figure that out.  Instead
-    # let's write the code correctly in the next version.
-    return all([ (Ep[i] == 0 or ( Ep[i] % D[i][i] == 0 )) for i in range(len(Ep)) ])
-
-# Here is the new version. 
 
 def order_of_euler_class(delta, E):
-    '''
+    """
     Given the coboundary operator \delta and an Euler two-cocycle E,
-    returns 'non-torsion' if [E] is not torsion and otherwise returns
-    the order of [E].  So returns 1 if [E] = 0 and in general returns
-    k if [E] is k--torsion.
-    '''
-    # Note that we could/should return zero if [E] was
-    # non-torsion... but that never happens, so whatever. 
-    
+    returns k if [E] is k--torsion.  By convention, returns zero if
+    [E] is non-torsion.  Note that the trivial element is 1--torsion.
+    """
+
     delta = Matrix(delta)
     E = vector(E)
 
@@ -443,11 +381,11 @@ def order_of_euler_class(delta, E):
     #
     # C*delta*V = C*U.inverse()*D = E*V
     #
-    # Now set 
-    # 
+    # Now set
+    #
     # B = C*U.inverse(), and so B*U = C
-    # 
-    # and rewrite to get 
+    #
+    # and rewrite to get
     #
     # B*U*delta*V = B*D = E*V
     #
@@ -463,26 +401,24 @@ def order_of_euler_class(delta, E):
     # with B[i] integers, then [E] = 0 in cohomology.
 
     diag = diagonal(D)
-    
-    # The following never happens.
 
     if any( (diag[i] == 0 and Ep[i] != 0) for i in range(len(Ep)) ):
-        print('The evil has occured!  Inform the media')
-        return 'non-torsion'
+        return 0
 
-    # All zeros are at the end in Smith normal form - by the above we
-    # can remove them.
-    
-    first_zero = diag.index(0) 
+    # All zeros are at the end in Smith normal form.  Since we've
+    # passed the above we can now remove them.
+
+    first_zero = diag.index(0)
     diag = diag[:first_zero]
     Ep = Ep[:first_zero]
-    
+
     # Since diag[i] is (now) never zero we can divide to get the
     # fractions Ep[i]/diag[i] and then find the scaling that makes
     # them simultaneously integral.
 
     denoms = [ diag[i] / gcd(Ep[i], diag[i]) for i in range(len(Ep)) ]
     return lcm(denoms)
+
 
 # 8. Remarks
 
@@ -518,19 +454,16 @@ def order_of_euler_class(delta, E):
 def order_of_euler_class_wrapper(tri, angle):
     """
     Returns "non-torsion" (very exciting) or the _order_ of the euler
-    class.  
+    class.
     """
-    euler = order_of_euler_class(coboundary(tri, angle), euler_cocycle(tri, angle))
-    if euler == "non_torsion":
-        print('non-torsion Euler class!!!!')
-    return euler
-    
+    return order_of_euler_class(coboundary(tri, angle), euler_cocycle(tri, angle))
+
 
 def compute_order_of_euler_classes(file_in, number=None, file_out=None):
     data_in = parse_data_file(file_in)
-    data_in = [line.split(' ') for line in data_in]
-    if number != None: 
-        data_in = data_in[:number] 
+    data_in = [line.split(" ") for line in data_in]
+    if number != None:
+        data_in = data_in[:number]
     data_out = []
     evil = []
     for i, line in enumerate(data_in):
@@ -540,10 +473,10 @@ def compute_order_of_euler_classes(file_in, number=None, file_out=None):
         tri, angle = isosig_to_tri_angle(sig)
         # angle = [int(letter) for letter in angle_s]
         curr_euler = order_of_euler_class(coboundary(tri, angle), euler_cocycle(tri, angle))
-        if curr_euler == 'non-torsion':
+        if curr_euler == "non-torsion":
             evil.append(sig)
-            print(sig + ' has non-torsion Euler class!!!!')
-        elif curr_euler == 1: # order is one so [E] = 0.  Boring.
+            print(sig + " has non-torsion Euler class!!!!")
+        elif curr_euler == 1:  # order is one so [E] = 0.  Boring.
             pass
         else:
             line_out = [sig, str(curr_euler)]
