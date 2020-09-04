@@ -224,19 +224,53 @@ def run_tests(num_to_check=1000):
             j = int(10000 * random())
             sig = veering_isosigs[j]
             print(("testing hom dim", sig))
-            assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")  # that is, iff
+            assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
+            # that is, dimension = zero iff nothing is carried.
+
+
+    import taut_carried     
+
+
+    boundary_cycles = {
+        ('eLMkbcddddedde_2100',(2,5,5,1,3,4,7,1)): "((-7, -7, 0, 0, 4, -3, 7, 0), (7, 7, 0, 0, -4, 3, -7, 0))",
+        ('iLLLQPcbeegefhhhhhhahahha_01110221',(0,1,0,0,0,1,0,0,0,0,0,0,1,0,1,0)): "((0, 0, -1, 1, 1, 0, 1, 1, -1, 0, 0, 0, 0, 1, 0, 1), (0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1))",
+        ('ivvPQQcfhghgfghfaaaaaaaaa_01122000',(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)): "((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0), (-2, 0, -3, 1, 2, -1, 0, 2, -1, 0, 3, 1, -2, 1, 0, -1), (0, -2, 1, -3, 0, -1, 2, 0, -1, 2, -1, 1, 0, 1, -2, 3))",
+    }
 
     taut_polys_with_cycles = {
         ('eLMkbcddddedde_2100',((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
+        ('iLLLQPcbeegefhhhhhhahahha_01110221', ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "a^2 + 2*a + 1",
+        ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - 4*a*b - b^2 + a",
+    }
+
+    alex_polys_with_cycles = {
+        ('eLMkbcddddedde_2100',((7, 7, 0, 0, -4, 3, -7, 0),)): "a^15 - a^14 + a^9 - 2*a^8 + 2*a^7 - a^6 + a - 1",
+        ('iLLLQPcbeegefhhhhhhahahha_01110221', ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "3*a^3 - a^2 + a - 3",
+        ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - b^2 + a",
     }
 
     if sage_working:
+        for sig, surface in boundary_cycles:
+            print("testing boundary cycles", sig, surface)
+            surface_list = list(surface)
+            cycles = taut_carried.boundary_cycles_from_surface(sig,surface_list)
+            cycles = tuple(tuple(cycle) for cycle in cycles)
+            assert cycles.__repr__() == boundary_cycles[(sig, surface)]
+
+    if sage_working:
         for sig, cycles in taut_polys_with_cycles:
-            print(("testing taut with cycles", sig, cycles))
+            print("testing taut with cycles", sig, cycles)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
             assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
-            
+
+    if sage_working:
+        for sig, cycles in alex_polys_with_cycles:
+            print("testing Alex with cycles", sig, cycles)
+            cycles_in = [list(cycle) for cycle in cycles]
+            p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in, mode='alexander')
+            assert p.__repr__() == alex_polys_with_cycles[(sig, cycles)]
+
     if sage_working:
         for i in range(3):
             j = int(5000 * random())
@@ -250,6 +284,7 @@ def run_tests(num_to_check=1000):
         # Theorem: If (tri, angle) is edge orientable then taut poly = alex poly.
         # taut_polynomial.taut_polynomial_via_tree(sig, mode = "alexander") ==
         #      taut_polynomial.taut_polynomial_via_tree(sig, mode = "taut")
+        pass
             
     if sage_working:
         print("all tests depending on sage passed")
