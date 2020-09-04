@@ -5,9 +5,9 @@
 # functions for working with transverse  taut ideal triangulations.
 
 import regina # needed inside of imported files
-from taut import liberal, apply_isom_to_angle_struct_list
+from taut import liberal
 
-vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]  
+vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]
 
 def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direction):
     """
@@ -99,25 +99,3 @@ def convert_tetrahedron_coorientations_to_faces(triangulation, coorientations):
         assert does_face_agree_with_coorientation[0] == does_face_agree_with_coorientation[1]
         out.append(does_face_agree_with_coorientation[0])
     return out
-
-def get_tet_top_vert_nums(tet_vert_coorientations, tet):
-    tet_num = tet.index()
-    vert_coorientations = tet_vert_coorientations[tet_num]
-    top_vert_nums = []
-    for i in range(4):
-        if vert_coorientations[i] == -1:
-            top_vert_nums.append(i)
-    assert len(top_vert_nums) == 2
-    return top_vert_nums
-
-@liberal
-def symmetry_group_size(tri, angle):
-    isoms = tri.findAllIsomorphisms(tri)
-    count = 0
-    for isom in isoms:
-        if isom.facePerm(0).sign() == 1:  ## fixes orientation of the triangulation
-            if angle == apply_isom_to_angle_struct_list(angle, isom):  ## fixes taut angle structure
-                coorientations = is_transverse_taut(tri, angle, return_type = 'tet_vert_coorientations')
-                if coorientations[0][0] == coorientations[isom.tetImage(0)][isom.facetPerm(0)[0]]:  ## fixes transverse structure
-                    count += 1
-    return str(count)

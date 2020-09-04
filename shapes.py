@@ -13,7 +13,7 @@ from taut import isosig_to_tri_angle
 def shapes_to_pickle(isosigs, filename, progress = 100):
     shapes = {}
     for i, sig in enumerate(isosigs):
-        if i % progress == 0: print((i, sig))
+        if i % progress == 0: print(i, sig)
 
         tri, angle = isosig_to_tri_angle(sig)
 

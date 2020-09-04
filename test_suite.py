@@ -2,19 +2,18 @@
 # test_suite.py
 #
 
+from file_io import parse_data_file
 from random import random
-
-import snappy
-
-from file_io import parse_data_file, read_from_pickle
 
 import taut
 import transverse_taut
-import taut_euler_class
 import veering
-import edge_orientability
 import veering_dehn_surgery
 
+import snappy
+
+
+# def run_tests(num_to_check = 10):
 def run_tests(num_to_check=1000):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
@@ -59,70 +58,7 @@ def run_tests(num_to_check=1000):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering.is_veering(tri_s, angle_s)
 
-    print("all tests depending on regina/snappy passed")
-
-    # try:
-    #     from hashlib import md5
-    #     from os import remove
-    #     import pyx
-    #     from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
-    #     pyx_working = True
-    # except:
-    #     print("failed to import from pyx?")
-    #     pyx_working = False
-
-    # ladders_style_sigs = {
-    #     "cPcbbbiht_12": "f34c1fdf65db9d02994752814803ae01",
-    #     "gLLAQbecdfffhhnkqnc_120012": "091c85b4f4877276bfd8a955b769b496",
-    #     "kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101": "a0f15a8454f715f492c74ce1073a13a4",
-    # }
-
-    # geometric_style_sigs = {
-    #     "cPcbbbiht_12": "1e74d0b68160c4922e85a5adb20a0f1d",
-    #     "gLLAQbecdfffhhnkqnc_120012": "856a1fce74eb64f519bcda083303bd8f",
-    #     "kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101": "33bd23b34c5d977a103fa50ffe63120a",
-    # }
-
-    # args = {
-    #     "draw_boundary_triangulation":True,
-    #     "draw_triangles_near_poles": False,
-    #     "ct_depth":-1,
-    #     "ct_epsilon":0.03,
-    #     "global_drawing_scale": 4,
-    #     "delta": 0.2,
-    #     "ladder_width": 10.0,
-    #     "ladder_height": 20.0,
-    #     "draw_labels": True,
-    # }
-
-    # shapes_data = read_from_pickle("Data/veering_shapes_up_to_ten_tetrahedra.pkl")
-
-    # if pyx_working:
-    #     for sig in ladders_style_sigs:
-    #         print("testing boundary triangulation pictures, ladder style", sig)
-    #         args["tet_shapes"] = shapes_data[sig]
-    #         args["style"] = "ladders"
-    #         file_name = draw_triangulation_boundary_from_veering_isosig(sig, args = args) 
-    #         f = open(file_name, "rb")
-    #         file_hash = md5(f.read())
-    #         assert file_hash.hexdigest() == ladders_style_sigs[sig]
-    #         f.close()
-    #         remove(file_name)
-        
-    # if pyx_working:
-    #     for sig in geometric_style_sigs:
-    #         print("testing boundary triangulation pictures, ladder style", sig)
-    #         args["tet_shapes"] = shapes_data[sig]
-    #         args["style'="] = "geometric"
-    #         file_name = draw_triangulation_boundary_from_veering_isosig(sig, args = args) 
-    #         f = open(file_name, "rb")
-    #         file_hash = md5(f.read())
-    #         assert file_hash.hexdigest() == geometric_style_sigs[sig]
-    #         f.close()
-    #         remove(file_name)
-
-    # if pyx_working: 
-    #     print("all tests depending on pyx passed")
+    print("all tests not depending on sage passed")
 
     veering_polys = {
         "cPcbbbiht_12": "a^3 - 4*a^2 + 4*a - 1",
@@ -167,7 +103,6 @@ def run_tests(num_to_check=1000):
         sage_working = False
 
     if sage_working:
-        print("testing is_layered")
         for sig in veering_isosigs[:17]:
             assert taut_polytope.is_layered(sig)
         for sig in veering_isosigs[17:21]:
@@ -175,17 +110,17 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig in veering_polys:
-            print(("testing veering", sig))
+            print("testing veering", sig)
             p = veering_polynomial.veering_polynomial(sig)
             assert p.__repr__() == veering_polys[sig]
         for sig in taut_polys:
-            print(("testing taut", sig))
+            print("testing taut", sig)
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert p.__repr__() == taut_polys[sig]
         for i in range(3):
             j = int(5000 * random())
             sig = veering_isosigs[j]
-            print(("testing divide", sig))
+            print("testing divide", sig)
             p = veering_polynomial.veering_polynomial(sig)
             q = taut_polynomial.taut_polynomial_via_tree(sig)
             if q == 0:
@@ -197,7 +132,7 @@ def run_tests(num_to_check=1000):
         for i in range(3):
             j = int(5000 * random())
             sig = veering_isosigs[j]
-            print(("testing alex", sig))
+            print("testing alex", sig)
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
             if M.homology().betti_number() == 1:
@@ -205,18 +140,18 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig in torus_bundles:
-            print(("testing torus bundle", sig))
+            print("testing torus bundle", sig)
             assert taut_polytope.is_torus_bundle(sig)
 
     if sage_working:
         for sig in torus_bundles:
-            print(("testing layered", sig))
+            print("testing layered", sig)
             assert taut_polytope.is_layered(sig)
         for sig in measured:
-            print(("testing measured", sig))
+            print("testing measured", sig)
             assert taut_polytope.LMN_tri_angle(sig) == "M"
         for sig in empties:
-            print(("testing empty", sig))
+            print("testing empty", sig)
             assert taut_polytope.LMN_tri_angle(sig) == "N"
 
     if sage_working:  # warning - this takes random amounts of time!
