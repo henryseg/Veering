@@ -286,6 +286,18 @@ def run_tests(num_to_check=1000):
         pass
             
     if sage_working:
+        for i in range(3):
+            j = int(5000 * random())
+            sig = veering_isosigs[j]
+            print(("testing exotics", sig))
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            T = veering.veering_triangulation(tri, angle)
+            is_eo = T.is_edge_orientable()
+            for angle in T.exotic_angles():
+                assert taut_polytope.taut_cone_homological_dim(tri, angle) == 0
+                assert is_eo == transverse_taut.is_transverse_taut(tri, angle)
+
+    if sage_working:
         print("all tests depending on sage passed")
 
 

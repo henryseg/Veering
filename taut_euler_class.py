@@ -258,13 +258,13 @@ def euler_cocycle(tri, angle):
 
 def coboundary(tri, angle):
     """
-    Given a triangulation "tri" (\calT), with oriented edges, and a
+    Given a triangulation "tri" (T), with oriented edges, and a
     transverse taut angle structure "angle", returns the co-boundary
-    operator \delta^1 \from C^1(\calT', \ZZ) \to C^2(\calT', \ZZ), as
-    a matrix, for the truncated triangulation \calT'.  Note that,
-    strictly speaking, we don't need to use "angle" for this, but we
-    use it to determine orientation on faces for the Euler class, so
-    we might as well use it again here.
+    operator delta^1 \from C^1(T', \ZZ) \to C^2(T', \ZZ), as a matrix,
+    for the truncated triangulation T'.  Note that, strictly speaking,
+    we don't need to use "angle" for this, but we use it to determine
+    orientation on faces for the Euler class, so we might as well use
+    it again here.
     """
     # \delta^1 takes row vectors (functions on edges) and spits out
     # row vectors (functions on faces).  So, if c is a one-cochain
@@ -356,7 +356,7 @@ def coboundary(tri, angle):
 
 def order_of_euler_class(delta, E):
     """
-    Given the coboundary operator \delta and an Euler two-cocycle E,
+    Given the coboundary operator delta and an Euler two-cocycle E,
     returns k if [E] is k--torsion.  By convention, returns zero if
     [E] is non-torsion.  Note that the trivial element is 1--torsion.
     """
@@ -453,8 +453,7 @@ def order_of_euler_class(delta, E):
 @liberal
 def order_of_euler_class_wrapper(tri, angle):
     """
-    Returns "non-torsion" (very exciting) or the _order_ of the euler
-    class.
+    Returns the order of the euler class.
     """
     return order_of_euler_class(coboundary(tri, angle), euler_cocycle(tri, angle))
 
