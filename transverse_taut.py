@@ -5,7 +5,7 @@
 # functions for working with transverse  taut ideal triangulations.
 
 import regina # needed inside of imported files
-from taut import liberal, apply_isom_to_angle_struct_list
+from taut import liberal, apply_isom_to_angle_struct_list, vert_pair_to_edge_num
 
 vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]  
 
@@ -109,6 +109,13 @@ def get_tet_top_vert_nums(tet_vert_coorientations, tet):
             top_vert_nums.append(i)
     assert len(top_vert_nums) == 2
     return top_vert_nums
+
+def get_tet_top_and_bottom_edges(tet_vert_coorientations, tet):
+    top_vert_nums = get_tet_top_vert_nums(tet_vert_coorientations, tet)
+    bottom_vert_nums = list(set([0,1,2,3]) - set(top_vert_nums))
+    top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]
+    bottom_edge_num = vert_pair_to_edge_num[tuple(bottom_vert_nums)]
+    return [tet.edge(top_edge_num), tet.edge(bottom_edge_num)]
 
 @liberal
 def symmetry_group_size(tri, angle):

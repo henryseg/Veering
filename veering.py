@@ -5,8 +5,8 @@
 # Check if a taut triangulation is veering
 
 import regina #needed inside of imported files
-from transverse_taut import is_transverse_taut
-from taut import liberal, vert_pair_to_edge_num
+from transverse_taut import is_transverse_taut, get_tet_top_and_bottom_edges
+from taut import liberal, is_taut, vert_pair_to_edge_num, edge_num_to_vert_pair
 
 def tet_type(triangulation, tet_num, veering_colours):
     num_L = [ veering_colours[triangulation.tetrahedron(tet_num).edge(i).index()] for i in range(6) ].count("L")
@@ -103,4 +103,36 @@ class veering_triangulation():
     def get_edge_between_verts_colour(self, tet_num, verts):
         """returns the veering direction (colour) for the given edge of tetrahedron"""
         return self.veering_colours[self.get_edge_between_verts_index(tet_num, verts)]
+
+    def exotic_angles(self):
+        """Given a transverse taut veering triangulation, find the exotic taut structures (as defined in Futer-Gueritaud)"""
+
+        ### From Futer-Gueritaud's leading-trailing deformations, the exotic angles should be derivable even without
+        ### a transverse-taut structure, but it seems easier with.
+
+        exotic_upper = []
+        exotic_lower = []
+        for i, tet in enumerate(self.tri.tetrahedra()):
+            top_edge, bottom_edge = get_tet_top_and_bottom_edges(self.coorientations, tet)
+            top_colour, bottom_colour = self.veering_colours[top_edge.index(), bottom_edge.index()]
+            tet_angle = self.angle[i]
+
+            equator = (tet_angle + 1) % 3
+            equator_colour = self.veering_colours[ tet.edge(equator).index() ]
+            assert self.veering_colours[ tet.edge(5 - equator).index() ] == equator_colour
+            if equator_colour == top_colour:
+                exotic_upper.append(equator)
+            else:
+                exotic_upper.append((equator + 1)%3)
+
+            if equator_colour == bottom_colour:
+                exotic_lower.append(equator)
+            else:
+                exotic_lower.append((equator + 1)%3)
+        assert is_taut(self.tri, exotic_upper) and is_taut(self.tri, exotic_lower)
+        return [exotic_upper, exotic_lower]
+
+
+
+
 
