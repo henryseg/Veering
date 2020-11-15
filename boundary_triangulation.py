@@ -470,11 +470,12 @@ class torus_triangulation:
                 self.drawing_scale = args['global_drawing_scale'] #*len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
             L.calc_verts_C(args = args)
         
-        if args['draw_labels']:     
-            self.draw_symmetries(self.canv)
+        if args['draw_boundary_triangulation']:
+            if args['draw_labels']:     
+                self.draw_symmetries(self.canv)
 
-        for L in self.ladder_list:
-            L.draw(self.canv, args = args)
+            for L in self.ladder_list:
+                L.draw(self.canv, args = args)
 
     def find_sideways(self, start_tet_face):
         tet_num, face = start_tet_face.tet_num, start_tet_face.face
