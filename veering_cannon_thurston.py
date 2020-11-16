@@ -65,7 +65,7 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
         ### assuming red lower edge...
         back_edge_vertex = bottom[ top.index(forward_face_vertex) ]  ### the vertex of edge e that is behind us as we go around the edge
         front_edge_vertex = bottom[ (top.index(forward_face_vertex)+1)%2 ] ### the vertex of edge e that is in front of us as we go around the edge
-        if colour != 'R':
+        if colour != "red":
             back_edge_vertex, front_edge_vertex = front_edge_vertex, back_edge_vertex
         previous_face_vertex = top[ (top.index(forward_face_vertex)+1)%2 ]
 
@@ -116,7 +116,7 @@ class ct_edge():  ### cooriented edge is determined by the tetrahedron above it,
                 out.append( get_ct_edge_above( current_tet, verts_CP1, front_edge_vertex, back_edge_vertex, self.vt, self.depth, depth_increment = depth_increment, verbose = verbose ) )
             else: ### we are now at the bottom of the edge
                 out.append( get_ct_edge_above( current_tet, verts_CP1, back_edge_vertex, previous_face_vertex, self.vt, self.depth, depth_increment = depth_increment, verbose = verbose ) )
-                if colour != 'R': # we meet the edges in the opposite order when going anticlockwise
+                if colour != "red": # we meet the edges in the opposite order when going anticlockwise
                     out.reverse()  ### we want these edges to be in reverse order for popping off the to_do list
                 return out
 
@@ -172,7 +172,7 @@ def get_top_bottom(vt, tet_num): ## modified from draw_veering_mid-annuli2
     edge_pair.sort()
     edge_num = tri.tetrahedron(tet_num).edge(edge_vert_index_map[tuple(edge_pair)]).index()
     col = veering_colours[edge_num]
-    if col == 'L':
+    if col == "blue":
         # print 'flip orientation'
         bottom_vertices = [bottom_vertices[1], bottom_vertices[0]]
     return (top_vertices, bottom_vertices)

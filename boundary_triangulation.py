@@ -56,7 +56,7 @@ class ladder_unit(tet_face):
         red_vertices = []
         blue_vertices = []
         for v in verts:
-            if self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) == 'R':
+            if self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) == "red":
                 red_vertices.append(v)
             else:
                 blue_vertices.append(v)
@@ -121,7 +121,7 @@ class ladder_unit(tet_face):
             self.draw_vertex_dot(my_canvas, v)
 
     def draw_triangle_curvy_edge(self, my_canvas, v0, v1, ladder_width, delta = 0.2, draw=True):
-        colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
+        colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
         vp0 = self.verts_C[v0]
         vp1 = self.verts_C[v1]
         colour = colours[ self.vt.get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
@@ -129,7 +129,7 @@ class ladder_unit(tet_face):
             out_path = pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag)
             if draw: my_canvas.stroke(out_path, [pyx.deco.stroked([colour])])
             return out_path
-        elif (vp0.real < vp1.real) != (self.vt.get_edge_between_verts_colour(self.tet_num, (self.face, v0)) == 'R'):
+        elif (vp0.real < vp1.real) != (self.vt.get_edge_between_verts_colour(self.tet_num, (self.face, v0)) == "red"):
             sign = +1
         else: ### if we are at a red dot and going right, we should be concave up
             sign = -1
@@ -139,7 +139,7 @@ class ladder_unit(tet_face):
         return out_path
 
     def draw_triangle_edge(self, my_canvas, v0, v1):
-        colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
+        colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
         vp0 = self.verts_C[v0]
         vp1 = self.verts_C[v1]
         colour = colours[ self.vt.get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
@@ -253,7 +253,7 @@ class ladder_unit(tet_face):
 
     # def draw_ct_path(self, canv, origin, drawing_scale, veering_colour = None, lw = 0.005):
     #     """draw path of edges"""
-    #     # if veering_colour == 'R':
+    #     # if veering_colour == "red":
     #     #     colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
     #     #     grad = pyx.color.gradient.RedBlack
     #     # else:
@@ -410,7 +410,7 @@ class ladder:
             lu.transform(mob_tsfm)
 
 def draw_vertex_colour(my_canvas, coords, veering_direction):
-    colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}
+    colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
     circ = pyx.path.circle(coords[0], coords[1] ,0.1)
     my_canvas.fill(circ, [pyx.deco.filled([colours[veering_direction]])])
 
@@ -551,7 +551,7 @@ class torus_triangulation:
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         verts = get_triangle_vertex_order(inf_vert)
         cols = [self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) for v in verts]
-        if cols.count('R') == 2:  # pi is on the right, so sideways must be going left
+        if cols.count("red") == 2:  # pi is on the right, so sideways must be going left
             # print 'choice 2'
             # maintain first ladder convex down
             # move last ladder to start

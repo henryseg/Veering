@@ -120,8 +120,8 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
 
         grad = pyx.color.gradient.Hue
-        # colours = {'L':pyx.color.rgb.blue, 'R':pyx.color.rgb.red}  
-        colours = {'L':pyx.color.rgb(0,0,0.5), 'R':pyx.color.rgb(0.5,0,0)}
+        # colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}  
+        colours = {"blue":pyx.color.rgb(0,0,0.5), "red":pyx.color.rgb(0.5,0,0)}
 
         ct_lw = draw_args['ct_lw']
 
@@ -133,9 +133,9 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
             if draw_args['only_draw_ladderpoles']:
                 for j, ladderpole_vertices in enumerate(ladderpoles_vertices):
                     # if j%2 == 0:
-                    #     col = colours['R']
+                    #     col = colours["red"]
                     # else:
-                    #     col = colours['L']
+                    #     col = colours["blue"]
                     # draw_options = [pyx.style.linewidth(ct_lw), col]
                     for i in range(len(ladderpole_vertices) - 1):  # fenceposts
                         path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
@@ -173,9 +173,9 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         #     for v in L.left_ladder_pole_vertices():
         #         v *= T.drawing_scale
         #         if L.is_even:
-        #             col = colours['L']
+        #             col = colours["blue"]
         #         else:
-        #             col = colours['R']
+        #             col = colours["red"]
         #         T.canv.stroke(pyx.path.circle(v.real, v.imag, 0.15), [pyx.style.linewidth(lw * 3), col])
 
         ### circles around found vertices

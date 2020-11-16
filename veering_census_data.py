@@ -46,7 +46,7 @@ def num_cusps(triang_data):
 
 def num_toggles_red_blue(triang_data):
 	tet_types = is_veering(triang_data['tri'], [int(a) for a in triang_data['angle']], return_type = 'tet_types')
-	counts = [tet_types.count('toggle'), tet_types.count('right'), tet_types.count('left')]
+	counts = [tet_types.count('toggle'), tet_types.count("red"), tet_types.count("blue")]
 	return '[' + ','.join([str(i) for i in counts]) + ']'
 
 def homology(triang_data):

@@ -26,7 +26,7 @@ verbose = 0
 
 def has_red_lower_edge(tetrahedron, coorientations, edge_colours):
     lower_edge = tet_lower_upper_edges(tetrahedron, coorientations)[0]
-    return edge_colours[lower_edge.index()] == "R"
+    return edge_colours[lower_edge.index()] == "red"
 
 
 @liberal
@@ -97,8 +97,8 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
                 # we are the top embed so:
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
                 sign = 1  # now we go down the right side
-            elif ((edge_colour == "L" and tet in red_tetrahedra) or
-                  (edge_colour == "R" and tet in blue_tetrahedra)): 
+            elif ((edge_colour == "blue" and tet in red_tetrahedra) or
+                  (edge_colour == "red" and tet in blue_tetrahedra)): 
                 tet_coeffs[tet.index()] = tet_coeffs[tet.index()] - current_coeff
             if verbose > 0:
                 print(("current tet_coeffs", tet_coeffs))

@@ -84,7 +84,7 @@ def veering_mobius_dehn_surgery(triangulation, angle_struct, face_num):
     # Now actually do the surgery
     tet0.unjoin(d)  # same as tet1.unjoin(s)
     tet_new = tri.newTetrahedron()
-    if mob_colour == "R":
+    if mob_colour == "red":
         tet_new.join(0, tet_new, regina.Perm4(3, 0, 1, 2))
         tet_new.join(1, tet0, regina.Perm4(c, d, a, b))
         tet_new.join(2, tet1, regina.Perm4(q, p, s, r))

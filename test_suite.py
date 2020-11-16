@@ -10,7 +10,6 @@ from file_io import parse_data_file, read_from_pickle
 
 import taut
 import transverse_taut
-import taut_euler_class
 import veering
 import edge_orientability
 import veering_dehn_surgery
@@ -154,9 +153,10 @@ def run_tests(num_to_check=1000):
         "gLALQbcbeeffhhwsras_211220",
         "hLALAkbcbeefgghhwsraqj_2112202",
     ]
-    
+
     try:
         from sage.rings.integer_ring import ZZ
+        import taut_euler_class
         import taut_polytope
         import taut_polynomial
         import veering_polynomial
@@ -227,26 +227,26 @@ def run_tests(num_to_check=1000):
             # dimension = zero if and only if nothing is carried.
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
 
+    if sage_working:      
+        import taut_carried     
 
-    import taut_carried     
+        boundary_cycles = {
+            ("eLMkbcddddedde_2100",(2,5,5,1,3,4,7,1)): "((-7, -7, 0, 0, 4, -3, 7, 0), (7, 7, 0, 0, -4, 3, -7, 0))",
+            ("iLLLQPcbeegefhhhhhhahahha_01110221",(0,1,0,0,0,1,0,0,0,0,0,0,1,0,1,0)): "((0, 0, -1, 1, 1, 0, 1, 1, -1, 0, 0, 0, 0, 1, 0, 1), (0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1))",
+            ("ivvPQQcfhghgfghfaaaaaaaaa_01122000",(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)): "((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0), (-2, 0, -3, 1, 2, -1, 0, 2, -1, 0, 3, 1, -2, 1, 0, -1), (0, -2, 1, -3, 0, -1, 2, 0, -1, 2, -1, 1, 0, 1, -2, 3))",
+        }
 
-    boundary_cycles = {
-        ("eLMkbcddddedde_2100",(2,5,5,1,3,4,7,1)): "((-7, -7, 0, 0, 4, -3, 7, 0), (7, 7, 0, 0, -4, 3, -7, 0))",
-        ("iLLLQPcbeegefhhhhhhahahha_01110221",(0,1,0,0,0,1,0,0,0,0,0,0,1,0,1,0)): "((0, 0, -1, 1, 1, 0, 1, 1, -1, 0, 0, 0, 0, 1, 0, 1), (0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1))",
-        ("ivvPQQcfhghgfghfaaaaaaaaa_01122000",(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)): "((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0), (-2, 0, -3, 1, 2, -1, 0, 2, -1, 0, 3, 1, -2, 1, 0, -1), (0, -2, 1, -3, 0, -1, 2, 0, -1, 2, -1, 1, 0, 1, -2, 3))",
-    }
+        taut_polys_with_cycles = {
+            ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
+            ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "a^2 + 2*a + 1",
+            ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - 4*a*b - b^2 + a",
+        }
 
-    taut_polys_with_cycles = {
-        ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
-        ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "a^2 + 2*a + 1",
-        ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - 4*a*b - b^2 + a",
-    }
-
-    alex_polys_with_cycles = {
-        ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^15 - a^14 + a^9 - 2*a^8 + 2*a^7 - a^6 + a - 1",
-        ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "3*a^3 - a^2 + a - 3",
-        ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - b^2 + a",
-    }
+        alex_polys_with_cycles = {
+            ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^15 - a^14 + a^9 - 2*a^8 + 2*a^7 - a^6 + a - 1",
+            ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "3*a^3 - a^2 + a - 3",
+            ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - b^2 + a",
+        }
 
     if sage_working:
         for sig, surface in boundary_cycles:

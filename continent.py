@@ -339,9 +339,9 @@ class continent:
         upper_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, lower_face_nums)
         lower_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, upper_face_nums)
 
-        ab_is_red = ( lower_edge_colour == 'R' )  ## the triangles, not the edge
+        ab_is_red = ( lower_edge_colour == "red" )  ## the triangles, not the edge
         ab_is_upper = False
-        cd_is_red = ( upper_edge_colour == 'R' )
+        cd_is_red = ( upper_edge_colour == "red" )
         cd_is_upper = True
 
         triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
@@ -387,12 +387,12 @@ class continent:
         ###   |,'    c.| 
         ###   a----R---d 
 
-        edge_ab = landscape_edge(self, [vert_a, vert_b], upper_edge_colour == 'R')
+        edge_ab = landscape_edge(self, [vert_a, vert_b], upper_edge_colour == "red")
         edge_ac = landscape_edge(self, [vert_a, vert_c], False)
         edge_ad = landscape_edge(self, [vert_a, vert_d], True)
         edge_bc = landscape_edge(self, [vert_b, vert_c], True)
         edge_bd = landscape_edge(self, [vert_b, vert_d], False)
-        edge_cd = landscape_edge(self, [vert_c, vert_d], lower_edge_colour == 'R')
+        edge_cd = landscape_edge(self, [vert_c, vert_d], lower_edge_colour == "red")
 
         if ab_is_red: ## the triangles a and b, not the edge
             triangle_a.edges = [edge_bd, edge_bc, edge_cd]
@@ -681,7 +681,7 @@ class continent:
         face_b_index = tet.face(2,face_b).index()
 
         far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_t, face_n))
-        ab_is_red = ( far_edge_colour == 'R' )
+        ab_is_red = ( far_edge_colour == "red" )
         ab_is_upper = triangle.is_upper
 
         triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
@@ -721,7 +721,7 @@ class continent:
         
         ## now for the edges
 
-        edge_tn = landscape_edge(self, [vert_t, vert_n], far_edge_colour == 'R') ## never coastal
+        edge_tn = landscape_edge(self, [vert_t, vert_n], far_edge_colour == "red") ## never coastal
 
         if triangle.is_red == triangle.is_upper:
             edge_bn, edge_na, edge_ab = triangle.edges 
@@ -812,7 +812,7 @@ class continent:
 
         far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_c, face_t))
         # print 'far edge colour', far_edge_colour
-        ab_is_red = ( far_edge_colour == 'R' )
+        ab_is_red = ( far_edge_colour == "red" )
         c_is_red = triangle.is_red
         ab_is_upper = triangle.is_upper
         c_is_upper = not triangle.is_upper
@@ -881,7 +881,7 @@ class continent:
 
         edge_at = landscape_edge(self, [vert_a, vert_t], not triangle.is_upper) ## coastal
         edge_bt = landscape_edge(self, [vert_b, vert_t], triangle.is_upper) ## coastal
-        edge_ct = landscape_edge(self, [vert_c, vert_t], far_edge_colour == 'R') ## never coastal
+        edge_ct = landscape_edge(self, [vert_c, vert_t], far_edge_colour == "red") ## never coastal
 
         if triangle.is_red == triangle.is_upper:
             edge_bc, edge_ca, edge_ab = triangle.edges 
