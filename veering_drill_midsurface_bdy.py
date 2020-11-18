@@ -8,7 +8,7 @@
 
 import regina #needed inside of imported files
 from transverse_taut import is_transverse_taut, get_tet_top_vert_nums
-from taut import liberal, is_taut, vert_pair_to_edge_num, edge_num_to_vert_pair
+from taut import liberal, is_taut, unsorted_vert_pair_to_edge_pair
 from veering import is_veering, veering_triangulation
 
 def get_top_andb_nums(tet_vert_coors, tet):
@@ -29,6 +29,14 @@ def drill_midsurface_bdy(tri, angle):
     drilledTri = regina.Triangulation3()
     subtet_indices = []
     subtet_addresses = []
+
+    num_toggles = tet_types.count("toggle")
+    drilled_num_tet = 8 * num_toggles + 4 * (tri.countTetrahedra() - num_toggles)
+
+    meridians = [] 
+    ### in each toggle, we record the meridians for the two boundary components we are drilling
+    ### note that this repeats the same meridian many times - the construction here is purely local: it is much
+    ### easier to figure out which are duplicates of which later
 
     for i in range(tri.countTetrahedra()):
         tet = tri.tetrahedron(i)
@@ -86,6 +94,25 @@ def drill_midsurface_bdy(tri, angle):
 
             tet_s11.join(b1, tet_t0, regina.Perm4(t1, t1, b0, b0, t0, b1, b1, t0))
             tet_s11.join(t1, tet_b0, regina.Perm4(b1, b1, t0, t0, b0, t1, t1, b0))
+
+            ### meridian around upper hole
+            meridian = [0]*(3*drilled_num_tet)
+            meridian[ 3 * tet_t1.index() + unsorted_vert_pair_to_edge_pair[b0, t0] ] = -1
+            meridian[ 3 * tet_s00.index() + unsorted_vert_pair_to_edge_pair[b1, t1] ] = 1
+            meridian[ 3 * tet_b1.index() + unsorted_vert_pair_to_edge_pair[t0, t1] ] = 1
+            meridian[ 3 * tet_s01.index() + unsorted_vert_pair_to_edge_pair[b0, t1] ] = 1
+            meridian[ 3 * tet_t0.index() + unsorted_vert_pair_to_edge_pair[b1, t0] ] = -1
+            meridians.append(meridian)
+
+            ### meridian around lower hole - swap b with t everywhere. Note this also swaps s01 with s10
+            meridian = [0]*(3*drilled_num_tet)
+            meridian[ 3 * tet_b1.index() + unsorted_vert_pair_to_edge_pair[t0, b0] ] = -1
+            meridian[ 3 * tet_s00.index() + unsorted_vert_pair_to_edge_pair[t1, b1] ] = 1
+            meridian[ 3 * tet_t1.index() + unsorted_vert_pair_to_edge_pair[b0, b1] ] = 1
+            meridian[ 3 * tet_s10.index() + unsorted_vert_pair_to_edge_pair[t0, b1] ] = 1
+            meridian[ 3 * tet_b0.index() + unsorted_vert_pair_to_edge_pair[t1, b0] ] = -1
+            meridians.append(meridian)
+
         else: ## fan
             # first two tetrahedra are the top and bottom
             tet_t, tet_b = drilledTri.tetrahedron(first_subtet_index), drilledTri.tetrahedron(first_subtet_index + 1)
@@ -215,22 +242,26 @@ def drill_midsurface_bdy(tri, angle):
             gluing = regina.Perm4(toggle_e0, other_toggle_e0, toggle_e1, other_toggle_e1, toggle_face, other_toggle_face, toggle_edge, other_toggle_edge)
             subtet.join(toggle_edge, other_subtet, other_tetperm*gluing*tetperm)
 
-    return drilledTri
-
-
+    return drilledTri, meridians
 
 
 
 
 if __name__ == '__main__':
-    # sig = 'cPcbbbiht_12'
+    sig = 'cPcbbbiht_12'
     # sig = 'cPcbbbdxm_10'
     # sig = 'dLQacccjsnk_200'
     # sig = 'dLQbccchhfo_122'
-    sig = 'dLQbccchhsj_122'
+    # sig = 'dLQbccchhsj_122'
     # sig = 'eLMkbcddddedde_2100'
     # sig = 'eLMkbcdddhxqlm_1200'
+    # sig = 'fLLQcbcdeeelonlel_02211'  ## should have three different midsurface bdy components, so four total after drilling
+    # sig = 'fLLQcbddeeehrcdui_12000' ## five boundary components
     # sig = 'qvvLPQwAPLQkfhgffijlkmnopoppoaaaaaaaaaaaaadddd_1020212200111100'
-    drilled_tri = drill_midsurface_bdy(sig)
+    drilled_tri, meridians = drill_midsurface_bdy(sig)
     print drilled_tri.isoSig()
+    print meridians
     drilled_tri.save('drilled_tri_' + sig + '.rga')
+    drilled_tri.saveSnapPea('drilled_tri_' + sig + '.tri')
+
+

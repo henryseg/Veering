@@ -297,6 +297,8 @@ def run_tests(num_to_check=1000):
                 assert taut_polytope.taut_cone_homological_dim(tri, angle) == 0
                 assert is_eo == transverse_taut.is_transverse_taut(tri, angle)
 
+    ### test for drill_midsurface_bdy: drill then fill, check you get the same manifold
+
     if sage_working:
         print("all tests depending on sage passed")
 
