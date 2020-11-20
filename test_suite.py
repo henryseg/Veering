@@ -57,6 +57,22 @@ def run_tests(num_to_check=1000):
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering.is_veering(tri_s, angle_s)
+            
+    import snappy_util
+    census = snappy.OrientableCuspedCensus()
+    for i in range(3):
+        j = int(len(census) * random())
+        M = census[j]
+        n = M.num_cusps()
+        print(("testing algebraic intersection", M.name())) # random testing, so print the name. 
+        peripheral_curves = M.gluing_equations()[-2*n:]
+        for i in range(2*n):
+            for j in range(i, 2*n):
+                alg_int = snappy_util.algebraic_intersection(peripheral_curves[i], peripheral_curves[j])
+                if i % 2 == 0 and j == i + 1:
+                    assert alg_int == 1
+                else:
+                    assert alg_int == 0
 
     print("all tests depending on regina/snappy passed")
 
@@ -156,16 +172,17 @@ def run_tests(num_to_check=1000):
 
     try:
         from sage.rings.integer_ring import ZZ
-        import taut_euler_class
-        import taut_polytope
-        import taut_polynomial
-        import veering_polynomial
-
         sage_working = True
     except:
         print("failed to import from sage?")
         sage_working = False
 
+    if sage_working:
+        import taut_euler_class
+        import taut_polytope
+        import taut_polynomial
+        import veering_polynomial
+        
     if sage_working:
         print("testing is_layered")
         for sig in veering_isosigs[:17]:
