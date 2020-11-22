@@ -56,7 +56,7 @@ def cusp_slope(m, l, a):
     return (-p, -q)
 
 def get_slopes_from_peripherals(M, peripherals):
-    # given a snappy manifold and list of peripheral curves, return a
+    # given a regina manifold and list of peripheral curves, return a
     # list "slopes", where slopes[i] is the slope in cusp i.  If a cusp
     # is not visited then slopes[i] == (0, 0)
 
@@ -67,7 +67,7 @@ def get_slopes_from_peripherals(M, peripherals):
     longs  = frames[1::2]
     for curve in peripherals:
         curr_slopes = [cusp_slope(merids[i], longs[i], curve) for i in range(n)]
-        curr_booleans = [curr_slopes == (0, 0)]
+        curr_booleans = [curr_slope == (0, 0) for curr_slope in curr_slopes]
         assert curr_booleans.count(False) == 1
         ind = curr_booleans.index(False)
         slope = curr_slopes[ind]

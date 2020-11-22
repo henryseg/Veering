@@ -2,22 +2,16 @@
 # test_suite.py
 #
 
-from random import random
+import random
 
 import snappy
-
 from file_io import parse_data_file, read_from_pickle
-
-import taut
-import transverse_taut
-import veering
-import edge_orientability
-import veering_dehn_surgery
 
 def run_tests(num_to_check=1000):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
 
+    import taut
     print("testing is_taut")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -31,6 +25,7 @@ def run_tests(num_to_check=1000):
         # we only test this round trip - the other round trip does not
         # make sense because tri->isosig is many to one.
 
+    import transverse_taut
     print("testing is_transverse_taut")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -42,6 +37,7 @@ def run_tests(num_to_check=1000):
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert not transverse_taut.is_transverse_taut(tri, angle)
 
+    import veering
     print("testing is_veering")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -51,6 +47,7 @@ def run_tests(num_to_check=1000):
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
     # # tests to see that it makes only veering triangulations as it goes
 
+    import veering_dehn_surgery
     print("testing veering_dehn_surgery")
     for sig in veering_isosigs[:num_to_check]:
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -61,8 +58,7 @@ def run_tests(num_to_check=1000):
     import snappy_util
     census = snappy.OrientableCuspedCensus()
     for i in range(3):
-        j = int(len(census) * random())
-        M = census[j]
+        M = random.choice(census)
         n = M.num_cusps()
         print(("testing algebraic intersection", M.name())) # random testing, so print the name. 
         peripheral_curves = M.gluing_equations()[-2*n:]
@@ -73,6 +69,18 @@ def run_tests(num_to_check=1000):
                     assert alg_int == 1
                 else:
                     assert alg_int == 0
+
+    import veering_drill_midsurface_bdy
+    for i in range(3):
+        sig = random.choice(veering_isosigs[:10000])
+        print(("testing veering drilling and filling", sig)) # random testing, so print the name. 
+        T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
+        M = snappy.Manifold(T.snapPea())
+        M.set_peripheral_curves("shortest")
+        L = snappy_util.get_slopes_from_peripherals(M, per)
+        M.dehn_fill(L)
+        N = snappy.Manifold(sig.split("_")[0])
+        assert M.is_isometric_to(N)
 
     print("all tests depending on regina/snappy passed")
 
@@ -200,8 +208,7 @@ def run_tests(num_to_check=1000):
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert p.__repr__() == taut_polys[sig]
         for i in range(3):
-            j = int(5000 * random())
-            sig = veering_isosigs[j]
+            sig = random.choice(veering_isosigs[:5000])
             print(("testing divide", sig))
             p = veering_polynomial.veering_polynomial(sig)
             q = taut_polynomial.taut_polynomial_via_tree(sig)
@@ -212,8 +219,7 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for i in range(3):
-            j = int(5000 * random())
-            sig = veering_isosigs[j]
+            sig = random.choice(veering_isosigs[:5000])
             print(("testing Alex", sig))
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
@@ -238,8 +244,7 @@ def run_tests(num_to_check=1000):
 
     if sage_working:  # warning - this takes random amounts of time!
         for i in range(3):
-            j = int(10000 * random())
-            sig = veering_isosigs[j]
+            sig = random.choice(veering_isosigs[:10000])
             print(("testing hom dim", sig))
             # dimension = zero if and only if nothing is carried.
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
@@ -289,8 +294,7 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for i in range(3):
-            j = int(5000 * random())
-            sig = veering_isosigs[j]
+            sig = random.choice(veering_isosigs[:5000])
             print(("testing euler and edge orientability", sig))
             # Theorem: If (tri, angle) is edge orientable then e = 0.
             assert not ( edge_orientability.is_edge_orientable(sig) and
@@ -304,8 +308,7 @@ def run_tests(num_to_check=1000):
             
     if sage_working:
         for i in range(3):
-            j = int(5000 * random())
-            sig = veering_isosigs[j]
+            sig = random.choice(veering_isosigs[:5000])
             print(("testing exotics", sig))
             tri, angle = taut.isosig_to_tri_angle(sig)
             T = veering.veering_triangulation(tri, angle)
