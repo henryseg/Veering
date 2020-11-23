@@ -38,15 +38,15 @@ def excise_fans(tri, angle, fan_nums = None):
 
     fan_tets = [excisedTri.tetrahedron(fan_num) for fan_num in fan_nums]
     for k, tet in enumerate(fan_tets):
-        print 'k', k, 'tet.index', tet.index()
+        # print 'k', k, 'tet.index', tet.index()
         minority_edge_pair = minority_edge_pairs[k]
-        print minority_edge_pair
+        # print minority_edge_pair
         ### record gluings for neighbours
         neighbours = [tet.adjacentSimplex(i) for i in range(4)]
         gluings = [tet.adjacentGluing(i) for i in range(4)]
 
-        print [neighbour.index() for neighbour in neighbours]
-        print gluings
+        # print [neighbour.index() for neighbour in neighbours]
+        # print gluings
 
         tet.isolate()
 
@@ -66,7 +66,7 @@ def excise_fans(tri, angle, fan_nums = None):
                 tetj = neighbours[j]
                 teti.join( gluings[i][i], tetj, gluings[j] * regina.Perm4(j,i) * (gluings[i].inverse()) )
                 to_glue.remove(j)
-                print i,j
+                # print i,j
         else: ### tet is glued to itself, which makes it trickier to remove
             ### first, find self-gluings
             self_gluings = []
@@ -114,12 +114,7 @@ if __name__ == '__main__':
     t0, _ = isosig_to_tri_angle('cPcbbbdxm_10')
     t1, _ = isosig_to_tri_angle('cPcbbbiht_12')
 
-    print t.isIsomorphicTo(t0)
-    print t.isIsomorphicTo(t1)
+    print t.isIsomorphicTo(t0) != None or t.isIsomorphicTo(t1) != None
 
-    # print drilled_tri.isoSig()
-    # print meridians
-    # drilled_tri.save('drilled_tri_' + sig + '.rga')
-    # drilled_tri.saveSnapPea('drilled_tri_' + sig + '.tri')
 
 
