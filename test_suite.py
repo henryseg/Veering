@@ -197,12 +197,7 @@ def run_tests(num_to_check=1000):
         sage_working = False
 
     if sage_working:
-        import taut_euler_class
         import taut_polytope
-        import taut_polynomial
-        import veering_polynomial
-        
-    if sage_working:
         print("testing is_layered")
         for sig in veering_isosigs[:17]:
             assert taut_polytope.is_layered(sig)
@@ -210,12 +205,14 @@ def run_tests(num_to_check=1000):
             assert not taut_polytope.is_layered(sig)
 
     if sage_working:
+        import veering_polynomial
+        import taut_polynomial
         for sig in veering_polys:
-            print(("testing veering", sig))
+            print(("testing veering poly", sig))
             p = veering_polynomial.veering_polynomial(sig)
             assert p.__repr__() == veering_polys[sig]
         for sig in taut_polys:
-            print(("testing taut", sig))
+            print(("testing taut poly", sig))
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert p.__repr__() == taut_polys[sig]
         for i in range(3):
@@ -261,7 +258,6 @@ def run_tests(num_to_check=1000):
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
 
     if sage_working:      
-        import taut_carried     
 
         boundary_cycles = {
             ("eLMkbcddddedde_2100",(2,5,5,1,3,4,7,1)): "((-7, -7, 0, 0, 4, -3, 7, 0), (7, 7, 0, 0, -4, 3, -7, 0))",
@@ -282,6 +278,7 @@ def run_tests(num_to_check=1000):
         }
 
     if sage_working:
+        import taut_carried     
         for sig, surface in boundary_cycles:
             print("testing boundary cycles", sig, surface)
             surface_list = list(surface)
@@ -304,6 +301,8 @@ def run_tests(num_to_check=1000):
             assert p.__repr__() == alex_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
+        import edge_orientability
+        import taut_euler_class
         for i in range(3):
             sig = random.choice(veering_isosigs[:5000])
             print(("testing euler and edge orientability", sig))

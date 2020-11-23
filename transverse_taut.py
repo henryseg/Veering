@@ -109,7 +109,8 @@ def get_tet_top_vert_nums(tet_vert_coorientations, tet_num):
     assert len(top_vert_nums) == 2
     return top_vert_nums
 
-def get_tet_top_and_bottom_edges(tet_vert_coorientations, tet_num):
+def get_tet_top_and_bottom_edges(tet_vert_coorientations, tet):
+    tet_num = tet.index()
     top_vert_nums = get_tet_top_vert_nums(tet_vert_coorientations, tet_num)
     bottom_vert_nums = list(set([0,1,2,3]) - set(top_vert_nums))
     top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]

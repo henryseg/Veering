@@ -114,7 +114,7 @@ class veering_triangulation():
         exotic_upper = []
         exotic_lower = []
         for i, tet in enumerate(self.tri.tetrahedra()):
-            top_edge, bottom_edge = get_tet_top_and_bottom_edges(self.coorientations, i)
+            top_edge, bottom_edge = get_tet_top_and_bottom_edges(self.coorientations, tet)
             top_colour, bottom_colour = self.veering_colours[top_edge.index()], self.veering_colours[bottom_edge.index()]
             tet_angle = self.angle[i]
 
