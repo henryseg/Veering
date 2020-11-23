@@ -40,7 +40,7 @@ def is_edge_orientable(tri, angle, return_type = "boolean"):
     for i in range(n):
         tet = tri.tetrahedron(i)
         veering_vert_nums = [None, None, None, None]
-        top_vert_pair = get_tet_top_vert_nums(tet_vert_coorientations, tet)
+        top_vert_pair = get_tet_top_vert_nums(tet_vert_coorientations, i)
         # print(i, top_vert_pair)
         if not regina_edge_orientation_agrees(tet, top_vert_pair):
             top_vert_pair.reverse()

@@ -7,17 +7,9 @@
 ### see the file drill_fans_and_toggles_along_bdyS.3dm
 
 import regina #needed inside of imported files
-from transverse_taut import is_transverse_taut, get_tet_top_vert_nums
+from transverse_taut import is_transverse_taut, get_top_and_bottom_nums
 from taut import liberal, is_taut, unsorted_vert_pair_to_edge_pair
 from veering import is_veering, veering_triangulation
-
-def get_top_andb_nums(tet_vert_coors, tet):
-    t0, t1 = get_tet_top_vert_nums(tet_vert_coors, tet)
-    bottom_vert_nums = [0,1,2,3]
-    bottom_vert_nums.remove(t0)
-    bottom_vert_nums.remove(t1)
-    b0, b1 = bottom_vert_nums
-    return [(t0,t1), (b0,b1)]
 
 @liberal
 def drill_midsurface_bdy(tri, angle):
@@ -52,7 +44,7 @@ def drill_midsurface_bdy(tri, angle):
 
         ### glue sub-tetrahedra together. Note that some tetrahedra will be negatively oriented
 
-        [(t0,t1), (b0,b1)] = get_top_andb_nums(tet_vert_coors, tet)
+        [(t0,t1), (b0,b1)] = get_top_and_bottom_nums(tet_vert_coors, i)
         this_tet_subtet_addresses = {}
         if tet_types[i] == 'toggle':  
             ## first two subtetrahedra are top two, second two are bottom two, then the four side tetrahedra
@@ -200,7 +192,7 @@ def drill_midsurface_bdy(tri, angle):
             u, v = otherverts1
             tet1perm = regina.Perm4(face1, edge1, edge1, face1, u, u, v, v)
             gluing = embed0.simplex().adjacentGluing(face0)
-            subtet0.join(edge0, subtet1, tet1perm*gluing*tet0perm)
+            subtet0.join(edge0, subtet1, tet1perm*gluing*tet0perm) ### perms act on left
 
         else: ### we have to walk around to find the right place to glue this toggle subtet, and remove the other unglued flag from the list
             if subtet1 == None:
