@@ -1,6 +1,4 @@
 .DS_Store
 *.pyc
 *.pdf
-Images/Boundary_triangulations/Ladders/**
-Images/Boundary_triangulations/Geometric/**
-Images/Cannon-Thurston/**
+Images/**
