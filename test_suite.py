@@ -63,7 +63,7 @@ def run_tests(num_to_check=1000):
         tri, angle = taut.isosig_to_tri_angle(sig)
         tet_types = veering.is_veering(tri, angle, return_type = "tet_types")
         if tet_types.count("toggle") == 2:
-            excised_tri = veering_fan_excision.excise_fans(tri, angle)
+            excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
             assert excised_tri.isIsomorphicTo(m003) != None or excised_tri.isIsomorphicTo(m004) != None
 
     import snappy_util

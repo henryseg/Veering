@@ -904,10 +904,17 @@ if __name__ == '__main__':
     # for sig in census[:20]:
     #     draw_triangulation_from_veering_isosig(sig)
 
-    vol_inc = parse_data_file('Data/volume_rise.txt')
-    for line in vol_inc:
-        sig, tet_num = line.split(" ")
-        draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/Volume_rise/' + sig + '_tet_' + tet_num +'_mid-annuli.pdf')
+    # vol_inc = parse_data_file('Data/volume_rise.txt')
+    # for line in vol_inc:
+    #     sig, tet_num = line.split(" ")
+    #     draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/Volume_rise/' + sig + '_tet_' + tet_num +'_mid-annuli.pdf')
+
+    data = parse_data_file('Data/low_volume_stacks.txt')
+    for line in data:
+        split_data = line.split(" ")
+        sig, vol = split_data[:2]
+        stack = "".join(split_data[2:])
+        draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/Low_volume_stacks/' + sig + stack +'_mid-annuli.pdf')
 
 
 

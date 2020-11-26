@@ -54,6 +54,11 @@ def excise_fans(tri, angle, fan_nums = None):
     tet_vert_coors = vt.coorientations
     if fan_nums == None: ## do all fans
         fan_nums = [n for n in range(len(tet_types)) if tet_types[n] != "toggle"]
+    
+    excisedAngle = angle
+    for fan_num in sorted(fan_nums, reverse = True):
+        del excisedAngle[fan_num]
+
     minority_edge_pairs = []
     for fan_num in fan_nums:
         assert tet_types[fan_num] != "toggle"
@@ -124,7 +129,7 @@ def excise_fans(tri, angle, fan_nums = None):
 
         excisedTri.removeTetrahedron(tet)
 
-    return excisedTri
+    return excisedTri, excisedAngle
 
 
 
