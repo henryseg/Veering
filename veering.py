@@ -31,6 +31,8 @@ def is_veering(tri, angle, return_type = "boolean"):
     # "num_toggles" returns the number of toggle tetrahedra
     # "tet_types" returns list of tets, either "toggle", "red" or "blue" veering
 
+    assert is_taut(tri, angle)
+
     # first do quick test on edge degrees
     for e in tri.edges():
         if e.degree() < 4:
@@ -88,6 +90,7 @@ class veering_triangulation():
     def __init__(self, tri, angle, tet_shapes = None):
         self.tri = tri
         self.angle = angle
+        assert is_taut(tri, angle)
         self.coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
         assert self.coorientations != False
         self.veering_colours = is_veering(tri, angle, return_type = "veering_colours")

@@ -5,7 +5,7 @@
 # functions for working with transverse  taut ideal triangulations.
 
 import regina # needed inside of imported files
-from taut import liberal, apply_isom_to_angle_struct_list, vert_pair_to_edge_num
+from taut import liberal, is_taut, apply_isom_to_angle_struct_list, vert_pair_to_edge_num
 
 vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]  
 
@@ -39,6 +39,7 @@ def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direc
 
 @liberal
 def is_transverse_taut(triangulation, taut_angle_struct, return_type = "boolean"):
+    assert is_taut(tri, angle)
     assert triangulation.isOriented()
     coorientations = []
     for i in range(triangulation.countTetrahedra()):

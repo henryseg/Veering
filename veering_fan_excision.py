@@ -55,7 +55,7 @@ def excise_fans(tri, angle, fan_nums = None):
     if fan_nums == None: ## do all fans
         fan_nums = [n for n in range(len(tet_types)) if tet_types[n] != "toggle"]
     
-    excisedAngle = angle
+    excisedAngle = angle[:]
     for fan_num in sorted(fan_nums, reverse = True):
         del excisedAngle[fan_num]
 
@@ -158,11 +158,18 @@ if __name__ == '__main__':
 
     # print fan_stacks(sig)
 
+    import veering
+    import transverse_taut
+    import taut
     from file_io import parse_data_file
     census = parse_data_file('Data/veering_census.txt')
 
-    for sig in census[:20]:
-        print sig, fan_stacks(sig)
+    for sig in census[:200]:
+        tri, angle = excise_fans(sig)
+        print sig, tri.countTetrahedra(), angle, taut.is_taut(tri, angle)
+        assert veering.is_veering(tri, angle)
+        assert transverse_taut.is_transverse_taut(tri, angle)
+        # print sig, fan_stacks(sig)
 
 
 
