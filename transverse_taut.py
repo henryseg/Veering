@@ -39,7 +39,7 @@ def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direc
 
 @liberal
 def is_transverse_taut(triangulation, taut_angle_struct, return_type = "boolean"):
-    assert is_taut(tri, angle)
+    assert is_taut(triangulation, taut_angle_struct)
     assert triangulation.isOriented()
     coorientations = []
     for i in range(triangulation.countTetrahedra()):

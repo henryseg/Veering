@@ -842,21 +842,29 @@ if __name__ == "__main__":
     # name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
     # name = 'gLvQQadfedefjaaajkk_200211'
 
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+
     # args['tet_shapes'] = shapes_data[name]
     # args['tet_shapes'] = None
 
     # draw_triangulation_boundary_from_veering_isosig(name, style = 'ladders', tet_shapes = None)
+    # names = ['cPcbbbiht_12', 'gLLAQbecdfffhhnkqnc_120012','kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101']
 
-    names = ['cPcbbbiht_12', 'gLLAQbecdfffhhnkqnc_120012',
-    'kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101']
-    for name in names:
+
+    shapes_data = read_from_pickle('Data/flat_toggle_shapes.pkl')
+    
+    flat_toggles = ['qLLvAvAMQLQkbeehklmnjnnppopooxxxahahxxxaxqxxxq_2111200221111100',
+                    'qLLvAvPMQLQkbeehlkmnjnnpoopopxxxaaxxxxxaxaxxax_2111200221111100',
+                    'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200']
+
+
+    for name in flat_toggles:
         print(name)
         args['tet_shapes'] = shapes_data[name]
         args['style'] = 'ladders'
-        output_filename = draw_triangulation_boundary_from_veering_isosig(name, args = args) 
-        # args['style'] = 'geometric'
-        # output_filename = draw_triangulation_boundary_from_veering_isosig(name, args = args) 
+        output_filename = draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_ladders.pdf', args = args) 
+        args['style'] = 'geometric'
+        output_filename = draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_geometric.pdf', args = args) 
         
 
 
