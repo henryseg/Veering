@@ -11,6 +11,14 @@ from taut import isosig_to_tri_angle
 
 # Shapes
 
+def tet_norm(z):
+    if abs(z) < 1 and abs(1-z) < 1:   
+        return z        
+    elif z.real() > 1/2:               
+        return (z - 1)/z
+    else:   
+        return 1/(1 - z)
+    
 # From a given collection of isosigs, build the snappy shapes and put
 # them in a pickled dictionary.
 
