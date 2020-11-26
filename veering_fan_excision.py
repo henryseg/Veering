@@ -12,6 +12,42 @@ from taut import liberal, isosig_to_tri_angle
 from veering import veering_triangulation
 
 @liberal
+def fan_stacks(tri, angle):
+    """Find lists of fan tetrahedra that make up the fans"""
+    vt = veering_triangulation(tri, angle)
+    veering_colours = vt.veering_colours  ## "red" or "blue"
+    tet_types = vt.tet_types  ### "toggle", "red" or "blue"
+    tet_vert_coors = vt.coorientations
+    toggle_nums = [i for i in range(len(tet_types)) if tet_types[i] == "toggle"]
+    
+    out = []
+    for toggle_num in toggle_nums:
+        tops, bottoms = get_top_and_bottom_nums(tet_vert_coors, toggle_num)
+        for i in range(2):
+
+            fan_tet_nums = []
+            trailing_vertex = bottoms[i]
+            other_b = bottoms[(i+1)%2]
+            t0, t1 = tops
+            if vt.get_edge_between_verts_colour(toggle_num, (t0, t1)) == vt.get_edge_between_verts_colour(toggle_num, (t0, other_b)):
+                leading_vertex = t0
+            else:
+                leading_vertex = t1
+            
+            tet = tri.tetrahedron(toggle_num)
+            while True:
+                gluing = tet.adjacentGluing(trailing_vertex)
+                tet = tet.adjacentTetrahedron(trailing_vertex)
+                # e0, e1 = gluing[e0], gluing[e1]
+                leading_vertex, trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
+                if tet_types[tet.index()] != "toggle":
+                    fan_tet_nums.append(tet.index())
+                else:
+                    break
+            out.append(fan_tet_nums)
+    return out
+
+@liberal
 def excise_fans(tri, angle, fan_nums = None):
     vt = veering_triangulation(tri, angle)
     veering_colours = vt.veering_colours  ## "red" or "blue"
@@ -106,15 +142,23 @@ if __name__ == '__main__':
     # sig = 'eLAkbbcdddhwqj_2102'
     # sig = 'fLLQcbcdeeelonlel_02211'  ## should have three different midsurface bdy components, so four total after drilling
     # sig = 'fLLQcbddeeehrcdui_12000' ## five boundary components
-    sig = 'fLAMcbbcdeedhwqqs_21020'
+    # sig = 'fLAMcbbcdeedhwqqs_21020'
     # sig = 'qvvLPQwAPLQkfhgffijlkmnopoppoaaaaaaaaaaaaadddd_1020212200111100'
-    t = excise_fans(sig)
-    t.save('excise_fans_' + sig + '.rga')
+    # t = excise_fans(sig)
+    # t.save('excise_fans_' + sig + '.rga')
 
-    t0, _ = isosig_to_tri_angle('cPcbbbdxm_10')
-    t1, _ = isosig_to_tri_angle('cPcbbbiht_12')
+    # t0, _ = isosig_to_tri_angle('cPcbbbdxm_10')
+    # t1, _ = isosig_to_tri_angle('cPcbbbiht_12')
 
-    print t.isIsomorphicTo(t0) != None or t.isIsomorphicTo(t1) != None
+    # print t.isIsomorphicTo(t0) != None or t.isIsomorphicTo(t1) != None
+
+    # print fan_stacks(sig)
+
+    from file_io import parse_data_file
+    census = parse_data_file('Data/veering_census.txt')
+
+    for sig in census[:20]:
+        print sig, fan_stacks(sig)
 
 
 
