@@ -13,7 +13,7 @@ from veering import veering_triangulation
 
 @liberal
 def fan_stacks(tri, angle):
-    """Find lists of fan tetrahedra that make up the fans"""
+    """Find lists of tetrahedra that make up the fans, including the toggles at either end"""
     vt = veering_triangulation(tri, angle)
     veering_colours = vt.veering_colours  ## "red" or "blue"
     tet_types = vt.tet_types  ### "toggle", "red" or "blue"
@@ -25,7 +25,7 @@ def fan_stacks(tri, angle):
         tops, bottoms = get_top_and_bottom_nums(tet_vert_coors, toggle_num)
         for i in range(2):
 
-            fan_tet_nums = []
+            tet_nums = [toggle_num]
             trailing_vertex = bottoms[i]
             other_b = bottoms[(i+1)%2]
             t0, t1 = tops
@@ -40,11 +40,10 @@ def fan_stacks(tri, angle):
                 tet = tet.adjacentTetrahedron(trailing_vertex)
                 # e0, e1 = gluing[e0], gluing[e1]
                 leading_vertex, trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
-                if tet_types[tet.index()] != "toggle":
-                    fan_tet_nums.append(tet.index())
-                else:
+                tet_nums.append(tet.index())
+                if tet_types[tet.index()] == "toggle":
                     break
-            out.append(fan_tet_nums)
+            out.append(tet_nums)
     return out
 
 @liberal
