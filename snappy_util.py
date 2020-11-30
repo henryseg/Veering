@@ -14,7 +14,7 @@ from taut import isosig_to_tri_angle
 def tet_norm(z):
     if abs(z) < 1 and abs(1-z) < 1:   
         return z        
-    elif z.real() > 1/2:               
+    elif z.real() > 0.5:
         return (z - 1)/z
     else:   
         return 1/(1 - z)
@@ -64,7 +64,7 @@ def cusp_slope(m, l, a):
     return (-p, -q)
 
 def get_slopes_from_peripherals(M, peripherals):
-    # given a regina manifold and list of peripheral curves, return a
+    # given a snappy manifold and list of peripheral curves, return a
     # list "slopes", where slopes[i] is the slope in cusp i.  If a cusp
     # is not visited then slopes[i] == (0, 0)
 
