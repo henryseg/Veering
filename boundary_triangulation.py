@@ -771,7 +771,7 @@ class boundary_triangulation:
 
     def generate_canvases(self, args = {}):
         for i,T in enumerate(self.torus_triangulation_list):
-            print(('cusp:', i, '| num ladders:', len(T.ladder_list)))
+            # print(('cusp:', i, '| num ladders:', len(T.ladder_list)))
             T.generate_canvas(args = args)
 
     def draw(self, output_filename, args = {}):
@@ -809,7 +809,7 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
     shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
     names = list(shapes_data.keys())
     for veering_isosig in to_draw:
-        print(veering_isosig)
+        # print(veering_isosig)
         args['tet_shapes'] = shapes_data[veering_isosig]
         draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = args, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
 

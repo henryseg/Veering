@@ -1,7 +1,8 @@
 
 import pyx ### vector graphics 
+import cmath
 
-from file_io import parse_data_file, read_from_pickle
+from file_io import parse_data_file, read_from_pickle, output_to_pickle
 from taut import isosig_to_tri_angle
 from veering import veering_triangulation
 from continent import continent
@@ -17,12 +18,14 @@ def draw_path(canv, path_C, draw_options):
         p.append( pyx.path.lineto(coord.real, coord.imag) )
     canv.stroke(p, draw_options)
 
-def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, max_length = 0.1, output_filename = None, draw_args = None, build_type = None ):
+def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, draw_box_for_cohom_frac = False, draw_alignment_dots = False, max_length = 0.1, output_filename = None, draw_args = None, build_type = None ):
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
     B = boundary_triangulation(vt)
     B.generate_canvases(args = draw_args)
+
+    out_data = []
 
     for i,T in enumerate(B.torus_triangulation_list):
         print(('cusp', i))
@@ -34,7 +37,11 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
         num_ladder_units = len(L.ladder_unit_list)
         initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
-        print(('initial_tet_face', initial_tet_face))
+
+        # print(('initial_tet_face', initial_tet_face)) 
+        # print(('origin_in_C', initial_tet_face.origin_in_C))
+        # print(('verts_pos', initial_tet_face.verts_pos))
+        ### want to draw a box which will contain a fund dom, will be what we render as a cohom frac
 
         ladderpoles_vertices = T.left_ladder_pole_vertices() 
         desired_vertices = [v for L in ladderpoles_vertices for v in L]
@@ -43,8 +50,9 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         
         con.build_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
-        print(('unfound desired_vertices', con.desired_vertices))
-        print(('num_tetrahedra', con.num_tetrahedra))
+        # print(('unfound desired_vertices', con.desired_vertices))
+        assert con.desired_vertices == [] ### found all the desired vertices
+        # print(('num_tetrahedra', con.num_tetrahedra))
 
         # now replace ladderpoles_vertices with the continent's corresponding vertices 
         epsilon = 0.001
@@ -99,7 +107,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
 #### end experimenting
 
         hit_max_tetrahedra = False ### default assumption is that we had enough tetrahedra to get the max_length we want.
-        print(build_type)
+        # print(build_type)
         if build_type == 'build_naive':
             con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_on_coast':
@@ -212,16 +220,26 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         #### draw lightning curves
 
         if draw_lightning_curve:
-            lightning_colours = [pyx.color.rgb(0,0.5,0), pyx.color.rgb(0.5,0,0.5)]
+            lightning_colours = [pyx.color.rgb(0,0.5,0), pyx.color.rgb(0.5,0,0.5)]  ### green, purple
+            # lightning_colours = [pyx.color.rgb(1,0,0), pyx.color.rgb(1,0,0)]  ### red, red
             lightning_curves = con.lightning_curves([])  ## only lightning curves for infinity
             # lightning_curves = con.lightning_curves(all_ladderpole_vertices)  ## add in more lightning curves
             for i in range(2):
                 for crv in lightning_curves[i]:
                     ## remove any infinities
                     crv = [c for c in crv if c != con.infinity]
-
+                    if draw_args['only_draw_ladderpoles']:
+                        ladderpole_indices = []
+                        for j, c in enumerate(crv):
+                            if c in all_ladderpole_vertices:
+                                ladderpole_indices.append(j)
+                        if len(ladderpole_indices) <= 1:
+                            crv = []
+                        else:
+                            crv = crv[ladderpole_indices[0]:ladderpole_indices[-1] + 1]
                     crv = [ T.drawing_scale * c.pos.complex() for c in crv ]
-                    draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[i]])
+                    if len(crv) > 0:
+                        draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[i]])
                     # ## trim to ladder poles
                     # ladderpole_vertex_indices = []
                     # for i, v in enumerate(crv):
@@ -235,8 +253,72 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
                     #     crv = [ T.drawing_scale * c.pos.complex() for c in crv ]
                     #     draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round]) 
 
+        if draw_box_for_cohom_frac:
+            box = T.canv.bbox()
+            diam = pyx.unit.tocm( max([box.right() - box.left(), box.top() - box.bottom()]) )
+            ### pyx stores lengths in a weird format, we have to convert to cm to get a float out
+            box_center = complex(pyx.unit.tocm( 0.5*(box.right() + box.left()) ), pyx.unit.tocm( 0.5*(box.top() + box.bottom()) ))
+            box_right_midpoint = box_center + complex(0.5*diam, 0)
+
+            # T.canv.stroke(box.rect())
+            T.canv.stroke(pyx.path.rect(box_center.real - 0.5*diam, box_center.imag - 0.5*diam, diam, diam))  # lower left corner coords, width, height
 
 
+            inf_vert = initial_tet_face.face
+            zero_vert = inf_vert - ((inf_vert%2)*2 - 1)  ## swaps 0 with 1, 2 with 3
+            one_vert = inf_vert - 2*(((inf_vert/2) % 2)*2 - 1) ## swaps 0 with 2, 1 with 3
+
+            zero_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[zero_vert].complex()
+            one_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[one_vert].complex()
+
+            half_pos = 0.5 * (zero_vert_pos + one_vert_pos)  
+            ### we must rotate, translate, and scale the cohom fractal picture to fit in the box
+
+            if draw_alignment_dots:
+                T.canv.fill(pyx.path.circle(zero_vert_pos.real, zero_vert_pos.imag, 0.2))
+                T.canv.fill(pyx.path.circle(half_pos.real, half_pos.imag, 0.15))
+                T.canv.fill(pyx.path.circle(box_center.real, box_center.imag, 0.1))
+                T.canv.fill(pyx.path.circle(box_right_midpoint.real, box_right_midpoint.imag, 0.1))
+
+            ### need to send zero_vert_pos to box_center, and half_pos to box_right_midpoint
+
+
+
+            print veering_isosig
+            out_data.append(veering_isosig)
+            print 'tet face', initial_tet_face
+            out_data.append((initial_tet_face.tet_num, initial_tet_face.face))
+
+            picture_unit = one_vert_pos - zero_vert_pos
+            translation = (box_center - zero_vert_pos)/picture_unit ## need to write this in coord system of one_vert_pos and zero_vert_pos
+
+            print 'translation', [translation.real, translation.imag]
+            out_data.append((translation.real, translation.imag))
+
+            
+            
+            ### first rotate and scale, then do parabolicBy2DVector(v)
+            complex_scale = (box_right_midpoint - box_center)/(half_pos - zero_vert_pos)
+
+            print 'scale, rotate', cmath.polar(complex_scale)
+            out_data.append(cmath.polar(complex_scale))
+
+            # pic_center = zero_vert_pos
+            # print pyx.unit.tocm(box.right())
+            # print type(pyx.unit.tocm(box.right()))
+            # rad = pyx.unit.tocm( max([box.right() - pic_center.real, pic_center.real - box.left(), box.top() - pic_center.imag, pic_center.imag - box.bottom()]) )
+            ### pyx stores lengths in a weird format, we have to convert to cm to get a float out
+        
+
+            # T.canv.stroke(pyx.path.rect(pic_center.real - rad, pic_center.imag - rad, 2*rad, 2*rad))  # lower left corner coords, width, height
+
+            # right_midpoint = pic_center + complex(rad,0)
+            # complex_scale = (right_midpoint - pic_center) / (half_pos - pic_center)
+            # print "complex_scale", complex_scale
+
+            ### to do: 
+            ### 1. remove bits of lightning curve beyond the fund domain
+            ### 2. how to get the data into the cohom frac code
 
     out_canvas = pyx.canvas.canvas()
     height_offset = 0.0
@@ -245,6 +327,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         out_canvas.insert(c, attrs=[pyx.trafo.translate(-c.bbox().left(), height_offset - c.bbox().bottom())])
         height_offset += c.bbox().height() + 0.05 ### add a tiny bit to stop crashes due to line width
     out_canvas.writePDFfile(output_filename)
+    return out_data
 
 def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_length = 0.1, num_to_draw = None, draw_args = None, build_type = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)
@@ -253,29 +336,58 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
     else:
         to_draw = veering_isosigs_list
 
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    shapes_data = read_from_pickle('Data/veering_shapes.pkl')
     for veering_isosig in to_draw:
         print(veering_isosig)
         tet_shapes = shapes_data[veering_isosig]
         filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
         draw_continent(veering_isosig, tet_shapes, max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
 
+def draw_jigsaw_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = 0.2, num_to_draw = None):
+    veering_isosigs_list = parse_data_file(veering_isosigs_filename)
+    if num_to_draw != None:
+        to_draw = veering_isosigs_list[:num_to_draw]
+    else:
+        to_draw = veering_isosigs_list
+
+    build_type = 'build_long_and_mid'
+    # draw_args = {'draw_boundary_triangulation':False, 'only_draw_ladderpoles': True, 'ct_lw': 0.2 * max_length, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'only_draw_ladderpoles': True, 'ct_lw': 0.2 * max_length, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    
+    shapes_data = read_from_pickle('Data/veering_shapes.pkl')
+
+    data_for_cohom_fracs = {}
+    for veering_isosig in to_draw:
+        print(veering_isosig)
+        tet_shapes = shapes_data[veering_isosig]
+        print 'tet_shapes', tet_shapes
+
+
+        filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
+        # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+        out = draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, draw_lightning_curve = True, draw_landscapes = False, draw_box_for_cohom_frac = True, draw_alignment_dots = True, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+        data_for_cohom_fracs[out[0]] = out[1:]
+    output_to_pickle(data_for_cohom_fracs, jigsaw_data_out_filename)
 
 if __name__ == '__main__':
     # draw_args = {'draw_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'ct_lw': 0.002, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    draw_args = {'draw_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args = {'draw_boundary_triangulation':True, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'draw_labels': True, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    # draw_args = {'draw_boundary_triangulation':False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'draw_labels': False, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
 
     
+    # max_num_tetrahedra = 5000
     # max_num_tetrahedra = 50000
     # max_num_tetrahedra = 100000
     # max_num_tetrahedra = 400000
     max_num_tetrahedra = 2000000
+    max_length = 0.4
+    # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.1
     # max_length = 0.07
     # max_length = 0.06
     # max_length = 0.02
-    max_length = 0.0
+    # max_length = 0.0
 
     draw_args['ct_lw'] = 0.2 * max_length 
 
@@ -285,21 +397,26 @@ if __name__ == '__main__':
     # build_type = 'build_explore_prongs'
     build_type = 'build_long_and_mid'
 
-    veering_isosig = 'cPcbbbiht_12'
+    # veering_isosig = 'cPcbbbiht_12'
     # # # # veering_isosig = 'cPcbbbdxm_10'
-    # # # # veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'dLQacccjsnk_200'
     # # # veering_isosig = 'eLMkbcddddedde_2100'
     # # # # veering_isosig = 'eLAkaccddjsnak_2001'
     # # # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
     # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # # # # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     # # # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
+    # veering_isosig = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021' ## first non geometric
+    # veering_isosig = 'nLLwMLPMMkbeefeihjkjlmlmhhaaaektxnaqrs_0111000011220'  ### quite big negative shape
+    # veering_isosig = 'qLvPvvMQQLQkccgkgjkmlknpooppoqjaajqqhhqqaqxhhh_0222110112222211'
+    # veering_isosig = 'fLLQcbeddeehhnkhh_21112'
 
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-    tet_shapes = shapes_data[veering_isosig]
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
-    draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
-    # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, draw_lightning_curve = True, draw_landscapes = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
+    # # shapes_data = read_from_pickle('Data/veering_shapes.pkl')
+    # tet_shapes = shapes_data[veering_isosig]
+    # filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
+    # # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+    # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, draw_lightning_curve = True, draw_landscapes = False, draw_box_for_cohom_frac = True, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
 
     ### draw many:
@@ -307,5 +424,10 @@ if __name__ == '__main__':
     # num_to_draw = 30
     # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Cannon-Thurston', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, num_to_draw = num_to_draw, draw_args = draw_args, build_type = build_type)
     
+    ### jigsaws
+
+    # draw_jigsaw_from_veering_isosigs_file('Data/veering_for_jigsaws.txt', 'Images/Jigsaw', num_to_draw = 2)
+    # draw_jigsaw_from_veering_isosigs_file('Data/veering_for_jigsaws.txt', 'Images/Jigsaw')
+    draw_jigsaw_from_veering_isosigs_file('Data/layered_one_cusp.txt', 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data_layered_one_cusp.pkl", num_to_draw = 100)
 
 

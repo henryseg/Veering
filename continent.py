@@ -499,7 +499,7 @@ class continent:
 
     def build_on_coast(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
-        print(('max_length', max_length))
+        # print(('max_length', max_length))
         self.update_coast()
 
         ## now build
@@ -513,17 +513,17 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print(('num_tetrahedra', self.num_tetrahedra))
+        # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print(('hit max tetrahedra', hit_max_tetrahedra))
+        # print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print(('num_long_edges_direct_count', self.count_long_edges()))
-        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
+        # print(('num_long_edges_direct_count', self.count_long_edges()))
+        # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
     def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
-        print(('max_length', max_length))
+        # print(('max_length', max_length))
 
         ## now build
 
@@ -535,17 +535,17 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print(('num_tetrahedra', self.num_tetrahedra))
+        # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print(('hit max tetrahedra', hit_max_tetrahedra))
+        # print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print(('num_long_edges_direct_count', self.count_long_edges()))
-        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
+        # print(('num_long_edges_direct_count', self.count_long_edges()))
+        # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
     def build_explore_prongs(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
-        print(('max_length', max_length))
+        # print(('max_length', max_length))
 
         ## now build
 
@@ -572,12 +572,12 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print(('num_tetrahedra', self.num_tetrahedra))
+        # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print(('hit max tetrahedra', hit_max_tetrahedra))
+        # print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print(('num_long_edges_direct_count', self.count_long_edges()))
-        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
+        # print(('num_long_edges_direct_count', self.count_long_edges()))
+        # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
     # def build_loxodromics(self, max_length = 0.1, max_num_tetrahedra = 50000):
@@ -629,12 +629,12 @@ class continent:
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        print(('num_tetrahedra', self.num_tetrahedra))
+        # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
-        print(('hit max tetrahedra', hit_max_tetrahedra))
+        # print(('hit max tetrahedra', hit_max_tetrahedra))
         self.update_coast()
-        print(('num_long_edges_direct_count', self.count_long_edges()))
-        print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
+        # print(('num_long_edges_direct_count', self.count_long_edges()))
+        # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
 
@@ -1162,14 +1162,14 @@ class continent:
         #     out.append(clean_divider)
 
         
-        print(('dividers', len(dividers[0]), len(dividers[1])))
+        # print(('dividers', len(dividers[0]), len(dividers[1])))
         ### now find lightning curve from the edges of the divider
         out = []
         for i in range(2):
             foo = []
             for divider in dividers[i]:
                 if len(divider) <= 2:
-                    foo.append(divider)
+                    ### add nothing
                     continue
                 a, b = divider[:2]
                 x = a.shared_vertex(b)
