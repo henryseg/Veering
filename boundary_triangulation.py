@@ -436,8 +436,7 @@ def find_unit_index(new_tet_face, my_ladder):
     while my_ladder.ladder_unit_list[unit_index] != new_tet_face:  ### because of how equality is defined for tet_faces
         unit_index += 1
         if unit_index >= ladder_length:
-            print('error, couldnt find matching unit')
-            return None
+            assert False, 'error, couldnt find matching unit'
     return unit_index
 
 class torus_triangulation:
@@ -472,7 +471,7 @@ class torus_triangulation:
         
         if args['draw_boundary_triangulation']:
             if args['draw_labels']:     
-                self.draw_symmetries(self.canv)
+                self.draw_symmetries()
 
             for L in self.ladder_list:
                 L.draw(self.canv, args = args)
@@ -535,16 +534,19 @@ class torus_triangulation:
         sideways = rho[rho.index(current_tf):]   ### remove initial tail. Here .index ignores the verts_pos data of a tet_face
 
         not_inf_vert = (current_tf.face + 1) % 4
-        self.sideways_holonomy = current_tf.verts_pos[not_inf_vert].complex() - sideways[0].verts_pos[not_inf_vert].complex() 
+        if self.vt.tet_shapes != None:
+            self.sideways_holonomy = current_tf.verts_pos[not_inf_vert].complex() - sideways[0].verts_pos[not_inf_vert].complex() 
         ### in cases when i(sideways, ladderpole slope) > 1, this isn't what we want for moving things around
 
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
+        
         if self.vt.coorientations[tet_num][inf_vert] == 1: 
-            # print 'choice 1'
-            ## convention: 0th ladder is convex down, aka green. So:
-            ### move 0th ladder to the end
-            mob_tsfm = matrix((1, self.sideways_holonomy, 0, 1))
-            sideways[0].transform(mob_tsfm)
+                # print 'choice 1'
+                ## convention: 0th ladder is convex down, aka green. So:
+                ### move 0th ladder to the end
+            if self.vt.tet_shapes != None:
+                mob_tsfm = matrix((1, self.sideways_holonomy, 0, 1))
+                sideways[0].transform(mob_tsfm)
             sideways = sideways[1:] + sideways[:1] 
 
         ## make sideways go to the right rather than to the left
@@ -555,8 +557,9 @@ class torus_triangulation:
             # print 'choice 2'
             # maintain first ladder convex down
             # move last ladder to start
-            mob_tsfm = matrix((1, -self.sideways_holonomy, 0, 1))
-            sideways[-1].transform(mob_tsfm)
+            if self.vt.tet_shapes != None:
+                mob_tsfm = matrix((1, -self.sideways_holonomy, 0, 1))
+                sideways[-1].transform(mob_tsfm)
             sideways = sideways[-1:] + sideways[:-1] 
             sideways.reverse()
             # sideways = sideways[1:] + sideways[:1] 
@@ -604,7 +607,7 @@ class torus_triangulation:
 
     ### symmetry stuff
 
-    def draw_symmetries(self, my_canvas, draw=True):
+    def draw_symmetries(self, draw=True):
         count = 0
         dict_of_tet_pairings = {}
         for ladder_index, ladder in enumerate(self.ladder_list):
@@ -612,13 +615,14 @@ class torus_triangulation:
                 if unit.is_on_left():
                     edge_axis_unit_pair = self.find_edge_axis_unit_pair(ladder_index, unit_index) #find the pair of triangles to start developing from, checking symmetry
                     vertex_axis_unit_pair = self.find_vertex_axis_unit_pair(ladder_index, unit_index)
-
                     if self.is_symmetric_torus(edge_axis_unit_pair, dict_of_tet_pairings = dict_of_tet_pairings): #axis is midpoint of the edge to the left of this triangle
-                        v0, v1 = unit.verts_C[unit.left_vertices[0]], unit.verts_C[unit.left_vertices[1]]
-                        draw_symmetry_symbol(my_canvas, 0.5 * (v0+v1))
+                        if draw:
+                            v0, v1 = unit.verts_C[unit.left_vertices[0]], unit.verts_C[unit.left_vertices[1]]
+                            draw_symmetry_symbol(self.canv, 0.5 * (v0+v1))
                         count += 1
                     if self.is_symmetric_torus(vertex_axis_unit_pair, dict_of_tet_pairings = dict_of_tet_pairings): #axis is the back left vertex from this triangle
-                        draw_symmetry_symbol(my_canvas, unit.verts_C[unit.left_vertices[0]])
+                        if draw:
+                            draw_symmetry_symbol(self.canv, unit.verts_C[unit.left_vertices[0]])
                         count += 1
         #check if tet_pairings is 'order 2'
         for tet_pairings in list(dict_of_tet_pairings.keys()):
@@ -639,6 +643,7 @@ class torus_triangulation:
                     used_numbers.append(tet_pairing[1])
         #print 'total number of symmetries: ', count, ' dict: ', dict_of_tet_pairings
         # print '| symmetries, num of: ', dict_of_tet_pairings 
+        return count
 
     def find_edge_axis_unit_pair(self, ladder_index, unit_index): #explore the triangulation, see if the midpoint of the edge to the left of this triangle is a 180 deg rotation axis
         unit_posn_A = (ladder_index, unit_index)
@@ -813,6 +818,17 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
         args['tet_shapes'] = shapes_data[veering_isosig]
         draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = args, output_filename = output_dirname + '/' + veering_isosig + '.pdf')
 
+def number_of_boundary_symmetries(veering_isosig):
+    tri, angle = isosig_to_tri_angle(veering_isosig)
+    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
+    
+    vt = veering_triangulation(tri, angle) #, tet_shapes = shapes_data[veering_isosig])
+    B = boundary_triangulation(vt)
+    out = []
+    for T in B.torus_triangulation_list:
+        out.append(T.draw_symmetries(draw=False))
+    return out
+
 if __name__ == "__main__":
 
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
@@ -838,7 +854,7 @@ if __name__ == "__main__":
     # # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
     # name = 'eLAkaccddjsnak_2001'
     # name = 'eLAkbbcdddhwqj_2102'
-    # name = 'dLQacccjsnk_200' 
+    name = 'dLQacccjsnk_200' 
     # name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
     # name = 'gLvQQadfedefjaaajkk_200211'
 
@@ -851,20 +867,19 @@ if __name__ == "__main__":
     # names = ['cPcbbbiht_12', 'gLLAQbecdfffhhnkqnc_120012','kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101']
 
 
-    shapes_data = read_from_pickle('Data/flat_toggle_shapes.pkl')
-    
-    flat_toggles = ['qLLvAvAMQLQkbeehklmnjnnppopooxxxahahxxxaxqxxxq_2111200221111100',
-                    'qLLvAvPMQLQkbeehlkmnjnnpoopopxxxaaxxxxxaxaxxax_2111200221111100',
-                    'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200']
+    # shapes_data = read_from_pickle('Data/flat_toggle_shapes.pkl')
+    # flat_toggles = ['qLLvAvAMQLQkbeehklmnjnnppopooxxxahahxxxaxqxxxq_2111200221111100',
+    #                 'qLLvAvPMQLQkbeehlkmnjnnpoopopxxxaaxxxxxaxaxxax_2111200221111100',
+    #                 'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200']
 
 
-    for name in flat_toggles:
-        print(name)
-        args['tet_shapes'] = shapes_data[name]
-        args['style'] = 'ladders'
-        output_filename = draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_ladders.pdf', args = args) 
-        args['style'] = 'geometric'
-        output_filename = draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_geometric.pdf', args = args) 
+    # for name in flat_toggles:
+    #     print(name)
+    #     args['tet_shapes'] = shapes_data[name]
+    #     args['style'] = 'ladders'
+    #     output_filename = draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_ladders.pdf', args = args) 
+    #     args['style'] = 'geometric'
+    #     output_filename = draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_geometric.pdf', args = args) 
         
 
-
+    print number_of_boundary_symmetries(name)

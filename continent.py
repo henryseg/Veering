@@ -477,7 +477,7 @@ class continent:
         self.num_tetrahedra += 1
         # self.sanity_check()
 
-    def build_fundamental_domain(self, max_num_tetrahedra = 50000):
+    def build_fundamental_domain(self, max_num_tetrahedra = 250000):
         self.first_non_buried_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
             tri = self.triangles[self.first_non_buried_index]  
@@ -602,7 +602,7 @@ class continent:
 
     def build_long_and_mid(self, max_length = 0.1, max_num_tetrahedra = 50000):  
         self.max_length = max_length
-        print(('max_length', max_length))
+        # print(('max_length', max_length))
         self.update_coast()
 
         ## now build

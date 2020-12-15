@@ -28,7 +28,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
     out_data = []
 
     for i,T in enumerate(B.torus_triangulation_list):
-        print(('cusp', i))
+        # print(('cusp', i))
         ### make initial_tet_face be in the lower left of the fundamental domain
         # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
         
@@ -72,7 +72,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
             segment.sort()
             ladderpole_descendant_segments.append( segment )
 
-        print(ladderpole_descendant_segments)
+        # print(ladderpole_descendant_segments)
 
         con.mark_ladderpole_descendants(ladderpole_descendant_segments)
 
@@ -284,15 +284,15 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
 
 
 
-            print veering_isosig
+            # print veering_isosig
             out_data.append(veering_isosig)
-            print 'tet face', initial_tet_face
+            # print 'tet face', initial_tet_face
             out_data.append((initial_tet_face.tet_num, initial_tet_face.face))
 
             picture_unit = one_vert_pos - zero_vert_pos
             translation = (box_center - zero_vert_pos)/picture_unit ## need to write this in coord system of one_vert_pos and zero_vert_pos
 
-            print 'translation', [translation.real, translation.imag]
+            # print 'translation', [translation.real, translation.imag]
             out_data.append((translation.real, translation.imag))
 
             
@@ -300,7 +300,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
             ### first rotate and scale, then do parabolicBy2DVector(v)
             complex_scale = (box_right_midpoint - box_center)/(half_pos - zero_vert_pos)
 
-            print 'scale, rotate', cmath.polar(complex_scale)
+            # print 'scale, rotate', cmath.polar(complex_scale)
             out_data.append(cmath.polar(complex_scale))
 
             # pic_center = zero_vert_pos
@@ -357,10 +357,12 @@ def draw_jigsaw_from_veering_isosigs_file(veering_isosigs_filename, output_dirna
     shapes_data = read_from_pickle('Data/veering_shapes.pkl')
 
     data_for_cohom_fracs = {}
-    for veering_isosig in to_draw:
-        print(veering_isosig)
+    for i, veering_isosig in enumerate(to_draw):
+        # print(veering_isosig)
+        if i%50 == 0:
+            print i
         tet_shapes = shapes_data[veering_isosig]
-        print 'tet_shapes', tet_shapes
+        # print 'tet_shapes', tet_shapes
 
 
         filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
@@ -428,6 +430,6 @@ if __name__ == '__main__':
 
     # draw_jigsaw_from_veering_isosigs_file('Data/veering_for_jigsaws.txt', 'Images/Jigsaw', num_to_draw = 2)
     # draw_jigsaw_from_veering_isosigs_file('Data/veering_for_jigsaws.txt', 'Images/Jigsaw')
-    draw_jigsaw_from_veering_isosigs_file('Data/layered_one_cusp.txt', 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data_layered_one_cusp.pkl", num_to_draw = 100)
+    draw_jigsaw_from_veering_isosigs_file('Data/layered_one_cusp.txt', 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data_layered_one_cusp.pkl", num_to_draw = 500)
 
 
