@@ -447,6 +447,7 @@ class torus_triangulation:
         self.vt = vt
         self.ladder_holonomy = None
         self.sideways_holonomy = None
+        self.sideways_once_holonomy = None  ### meets every ladder only once
         self.make_torus_triangulation(start_tet_face)
         self.tet_faces = []
         for i,l in enumerate(self.ladder_list):
@@ -536,7 +537,7 @@ class torus_triangulation:
         not_inf_vert = (current_tf.face + 1) % 4
         if self.vt.tet_shapes != None:
             self.sideways_holonomy = current_tf.verts_pos[not_inf_vert].complex() - sideways[0].verts_pos[not_inf_vert].complex() 
-        ### in cases when i(sideways, ladderpole slope) > 1, this isn't what we want for moving things around
+        ### in cases when i(sideways, ladderpole slope) > 1, this isn't what we want for moving things around. sideways_once_holonomy might be better
 
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         
@@ -562,7 +563,7 @@ class torus_triangulation:
                 sideways[-1].transform(mob_tsfm)
             sideways = sideways[-1:] + sideways[:-1] 
             sideways.reverse()
-            # sideways = sideways[1:] + sideways[:1] 
+            self.sideways_holonomy = -self.sideways_holonomy
         return sideways
 
     def make_torus_triangulation(self, start_tet_face):
@@ -573,8 +574,15 @@ class torus_triangulation:
         for tf in sideways:
             if len(self.ladder_list) > 0 and tf in self.ladder_list[0].ladder_unit_list:
             # if self.is_tet_face_in_ladders(tf): ### sideways may wrap multiple times around the torus
+                not_inf_vert = (tf.face + 1) % 4
+                if self.vt.tet_shapes != None:
+                    ind = self.ladder_list[0].ladder_unit_list.index(tf)
+                    translate_tf = self.ladder_list[0].ladder_unit_list[ind]
+                    self.sideways_once_holonomy = tf.verts_pos[not_inf_vert].complex() - translate_tf.verts_pos[not_inf_vert].complex() 
                 break
             self.ladder_list.append(ladder(self, tf))
+        if self.sideways_once_holonomy == None:
+            self.sideways_once_holonomy = self.sideways_holonomy
 
         self.ladder_holonomy = self.ladder_list[0].holonomy
 
@@ -595,10 +603,15 @@ class torus_triangulation:
 
             mob_tsfm = matrix(( complex(0, average_ladderpole_length)/self.ladder_holonomy, 0, 0, 1 ))
             self.transform(mob_tsfm)
+        assert self.sideways_holonomy.real > 0.0
+        assert abs(self.ladder_holonomy.real) < 0.001
+        assert self.sideways_once_holonomy.real > 0.0
+        assert self.ladder_holonomy.imag > 0.0
 
     def transform(self, mob_tsfm):
         self.ladder_holonomy = mob_tsfm(self.ladder_holonomy)
         self.sideways_holonomy = mob_tsfm(self.sideways_holonomy)
+        self.sideways_once_holonomy = mob_tsfm(self.sideways_once_holonomy)
         for L in self.ladder_list:
             L.transform(mob_tsfm)
 
@@ -820,9 +833,7 @@ def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, outp
 
 def number_of_boundary_symmetries(veering_isosig):
     tri, angle = isosig_to_tri_angle(veering_isosig)
-    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
-    
-    vt = veering_triangulation(tri, angle) #, tet_shapes = shapes_data[veering_isosig])
+    vt = veering_triangulation(tri, angle) 
     B = boundary_triangulation(vt)
     out = []
     for T in B.torus_triangulation_list:
@@ -835,14 +846,19 @@ if __name__ == "__main__":
     args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     ### for standard ladder picture, set 'draw_triangles_near_poles' = False. Set True for CT pictures
 
-    # num_to_draw = 87 ## up to 6 tet
-    # # num_to_draw = 5699 ## up to 12 tet  
-    # args['style'] = 'ladders'
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
+    num_to_draw = 87 ## up to 6 tet
+    # num_to_draw = 5699 ## up to 12 tet  
+    args['style'] = 'ladders'
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
+    args['style'] = 'geometric'
+    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
+
+
+    # args = {'draw_boundary_triangulation':False, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     # args['style'] = 'geometric'
+    # num_to_draw = 1000
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
 
-    
 
     # # name = 'cPcbbbdxm_10'
     # name = 'cPcbbbiht_12'
@@ -854,7 +870,7 @@ if __name__ == "__main__":
     # # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
     # name = 'eLAkaccddjsnak_2001'
     # name = 'eLAkbbcdddhwqj_2102'
-    name = 'dLQacccjsnk_200' 
+    # name = 'dLQacccjsnk_200' 
     # name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
     # name = 'gLvQQadfedefjaaajkk_200211'
 
@@ -882,4 +898,4 @@ if __name__ == "__main__":
     #     output_filename = draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_geometric.pdf', args = args) 
         
 
-    print number_of_boundary_symmetries(name)
+    # print number_of_boundary_symmetries(name)

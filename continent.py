@@ -477,11 +477,25 @@ class continent:
         self.num_tetrahedra += 1
         # self.sanity_check()
 
-    def build_fundamental_domain(self, max_num_tetrahedra = 250000):
+    def build_fundamental_domain_old(self, max_num_tetrahedra = 50000):
         self.first_non_buried_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
             tri = self.triangles[self.first_non_buried_index]  
             self.bury(tri)
+            self.first_non_buried_index += 1
+            while self.triangles[self.first_non_buried_index].is_buried:
+            # while self.triangles[first_non_buried_index].is_buried or self.triangles[first_non_buried_index].is_upper:
+                self.first_non_buried_index += 1
+        self.update_coast()  ## we don't update this as we build
+
+    ### old version builds lots of things we dont care about, this is much faster.
+    def build_fundamental_domain(self, max_num_tetrahedra = 50000):
+        self.first_non_buried_index = 0
+        while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
+            tri = self.triangles[self.first_non_buried_index] 
+             ### if this tri is incident to infinity, bury it
+            if self.infinity in tri.vertices:
+                self.bury(tri)
             self.first_non_buried_index += 1
             while self.triangles[self.first_non_buried_index].is_buried:
             # while self.triangles[first_non_buried_index].is_buried or self.triangles[first_non_buried_index].is_upper:
@@ -1004,7 +1018,12 @@ class continent:
                     out += 1
         return out
 
-    def lightning_curves(self, special_vertices):
+    def lightning_dividers(self, special_vertices):
+
+        ## for every special vertex v, do the following for upper and lower landscapes. For every river R with source v,
+        ## follow it to the coast, let e be the mouth. On the lower landscape, we define a set of edges, the "dividers", for the pair
+        ## (v,e). These are the edges that link (v,e) in the circular ordering. We return all lists of dividers, for upper/lower, and for each river.
+
         ## remark: there are other lightning curves for, say, edges, or more generally, for an arbitrary pair of points on S^1(alpha)
         ## A more general algorithm: lets do it for an edge on the upper landscape, say e. Take its endpoints p, q.
         ## Let e_i be the edges on the lower landscape that link e. We calculate this from the coast.
@@ -1161,31 +1180,8 @@ class continent:
         #     clean_divider.append(divider[-1])
         #     out.append(clean_divider)
 
-        
-        # print(('dividers', len(dividers[0]), len(dividers[1])))
-        ### now find lightning curve from the edges of the divider
-        out = []
-        for i in range(2):
-            foo = []
-            for divider in dividers[i]:
-                if len(divider) <= 2:
-                    ### add nothing
-                    continue
-                a, b = divider[:2]
-                x = a.shared_vertex(b)
-                lightning_curve = [x]
-                for c in divider[2:]:
-                    y = b.shared_vertex(c)
-                    if x == y:
-                        a, b = a, c
-                    else:
-                        lightning_curve.append(y)
-                        a, b = b, c
-                        x = y
-                foo.append(lightning_curve)
-            out.append(foo)    
+        return dividers
 
-        return out
 
     def boundary_landscape_edges(self):
         upper_landscape_edges = set([])
