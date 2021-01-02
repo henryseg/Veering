@@ -29,8 +29,10 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
 
         tri, angle = isosig_to_tri_angle(sig)
 
-        N = snappy.Manifold(tri.snapPea()) 
+        N = snappy.Manifold(tri)
         N_shapes = [complex(shape['rect']) for shape in N.tetrahedra_shapes()]
+        # N = snappy.ManifoldHP(tri) 
+        # N_shapes = [shape['rect'] for shape in N.tetrahedra_shapes()]
         
         shapes[sig] = N_shapes
 
