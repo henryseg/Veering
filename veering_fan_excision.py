@@ -94,7 +94,7 @@ def excise_fans(tri, angle, fan_nums = None):
         ## now glue neighbours to each other
 
         if tet not in neighbours:
-            to_glue = range(4)
+            to_glue = [0,1,2,3]
             while to_glue != []:
                 i = to_glue.pop()
                 if i in minority_edge_pair[0]:
@@ -113,7 +113,7 @@ def excise_fans(tri, angle, fan_nums = None):
             self_gluings = [neighbours.index(tet)]
             self_gluings.append(neighbours.index(tet, self_gluings[0] + 1))  ### add second entry
 
-            other_gluings = range(4)
+            other_gluings = [0,1,2,3]
             other_gluings.remove(self_gluings[0])
             other_gluings.remove(self_gluings[1])
             i, j = other_gluings
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     for sig in census[:200]:
         tri, angle = excise_fans(sig)
-        print sig, tri.countTetrahedra(), angle, taut.is_taut(tri, angle)
+        print( (sig, tri.countTetrahedra(), angle, taut.is_taut(tri, angle)) )
         assert veering.is_veering(tri, angle)
         assert transverse_taut.is_transverse_taut(tri, angle)
         # print sig, fan_stacks(sig)

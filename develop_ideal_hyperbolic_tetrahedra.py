@@ -49,6 +49,18 @@ def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations
         print(('z', z))
         print(('error', abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z )))
         raise
+
+    try:
+        assert A4.is_infinity() or abs(A4.complex()) < 10000.0
+    except:
+        print(('abs(A4.complex())', abs(A4.complex()) ))
+        print(Xinv) 
+        print((abs(Xinv.det())))
+        print(('A1', A1))
+        print(('A2', A2))
+        print(('A3', A3))
+        raise 
+
     return A4
 
 unknown_vert_to_known_verts_ordering = {0:(3, 2, 1), 1:(2, 3, 0), 2:(1, 0, 3), 3:(0, 1, 2)}
