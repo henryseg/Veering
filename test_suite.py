@@ -4,7 +4,6 @@
 
 import random
 
-import snappy
 from file_io import parse_data_file, read_from_pickle
 
 def run_tests(num_to_check=1000):
@@ -66,35 +65,47 @@ def run_tests(num_to_check=1000):
             excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
             assert excised_tri.isIsomorphicTo(m003) != None or excised_tri.isIsomorphicTo(m004) != None
 
-    import snappy_util
-    census = snappy.OrientableCuspedCensus()
-    for i in range(3):
-        M = random.choice(census)
-        n = M.num_cusps()
-        print(("testing algebraic intersection", M.name())) # random testing, so print the name. 
-        peripheral_curves = M.gluing_equations()[-2*n:]
-        for i in range(2*n):
-            for j in range(i, 2*n):
-                alg_int = snappy_util.algebraic_intersection(peripheral_curves[i], peripheral_curves[j])
-                if i % 2 == 0 and j == i + 1:
-                    assert alg_int == 1
-                else:
-                    assert alg_int == 0
+    print("all tests depending on regina passed")
 
-    import veering_drill_midsurface_bdy
-    for i in range(3):
-        sig = random.choice(veering_isosigs[:10000])
-        print(("testing veering drilling and filling", sig)) # random testing, so print the name. 
-        T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
-        M = snappy.Manifold(T.snapPea())
-        M.set_peripheral_curves("shortest")
-        L = snappy_util.get_slopes_from_peripherals(M, per)
-        M.dehn_fill(L)
-        N = snappy.Manifold(sig.split("_")[0])
-        assert M.is_isometric_to(N)
+    try:
+        import snappy
+        import snappy_util
+        snappy_working = True
+    except:
+        print("failed to import from snappy?")
+        snappy_working = False
 
-    print("all tests depending on regina/snappy passed")
+    if snappy_working:        
+        census = snappy.OrientableCuspedCensus()
+        for i in range(3):
+            M = random.choice(census)
+            n = M.num_cusps()
+            print(("testing algebraic intersection", M.name())) # random testing, so print the name. 
+            peripheral_curves = M.gluing_equations()[-2*n:]
+            for i in range(2*n):
+                for j in range(i, 2*n):
+                    alg_int = snappy_util.algebraic_intersection(peripheral_curves[i], peripheral_curves[j])
+                    if i % 2 == 0 and j == i + 1:
+                        assert alg_int == 1
+                    else:
+                        assert alg_int == 0
+                       
+    if snappy_working:
+        import veering_drill_midsurface_bdy
+        for i in range(3):
+            sig = random.choice(veering_isosigs[:10000])
+            print(("testing veering drilling and filling", sig)) # random testing, so print the name. 
+            T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
+            M = snappy.Manifold(T.snapPea())
+            M.set_peripheral_curves("shortest")
+            L = snappy_util.get_slopes_from_peripherals(M, per)
+            M.dehn_fill(L)
+            N = snappy.Manifold(sig.split("_")[0])
+            assert M.is_isometric_to(N)
 
+    if snappy_working:
+        print("all tests depending on snappy passed")
+   
     # try:
     #     from hashlib import md5
     #     from os import remove
