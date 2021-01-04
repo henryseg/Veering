@@ -260,7 +260,7 @@ def coboundary(tri, angle):
     """
     Given a triangulation "tri" (T), with oriented edges, and a
     transverse taut angle structure "angle", returns the co-boundary
-    operator delta^1 \from C^1(T', \ZZ) \to C^2(T', \ZZ), as a matrix,
+    operator delta^1 \from C^1(T', ZZ) \to C^2(T', ZZ), as a matrix,
     for the truncated triangulation T'.  Note that, strictly speaking,
     we don't need to use "angle" for this, but we use it to determine
     orientation on faces for the Euler class, so we might as well use

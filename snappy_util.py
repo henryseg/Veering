@@ -52,12 +52,12 @@ def algebraic_intersection(a, b):
     assert len(a) == len(b)
     assert len(a) % 3 == 0
 
-    num_tets = len(a) / 3
+    num_tets = len(a) // 3
     
     # See Neumann-Zagier equation 26. There they use powers of z and 1 - z.
     # We instead use powers of z_0, z_1, and z_2.
 
-    return sum([triangle_sum(a[3*i:3*i + 3], b[3*i:3*i + 3]) for i in range(num_tets)]) / 2
+    return sum([triangle_sum(a[3*i:3*i + 3], b[3*i:3*i + 3]) for i in range(num_tets)]) // 2
 
 def cusp_slope(m, l, a):
     p, q = (algebraic_intersection(a, l), algebraic_intersection(m, a))

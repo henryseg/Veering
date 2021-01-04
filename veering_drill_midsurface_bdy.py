@@ -251,8 +251,8 @@ if __name__ == '__main__':
     # sig = 'fLLQcbddeeehrcdui_12000' ## five boundary components
     # sig = 'qvvLPQwAPLQkfhgffijlkmnopoppoaaaaaaaaaaaaadddd_1020212200111100'
     drilled_tri, meridians = drill_midsurface_bdy(sig)
-    print drilled_tri.isoSig()
-    print meridians
+    print(drilled_tri.isoSig())
+    print(meridians)
     drilled_tri.save('drilled_tri_' + sig + '.rga')
     drilled_tri.saveSnapPea('drilled_tri_' + sig + '.tri')
 
