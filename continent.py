@@ -7,12 +7,19 @@ from basic_math import sign
 class vertex:
     def __init__(self, continent, pos):
         self.continent = continent
+        self.edges = []
         self.pos = pos
         self.ladderpole_ancestors = set() ## which ladderpole edges did you come from
         self.continent.vertices.append(self)
     
     def is_ladderpole_descendant(self):
         return len(self.ladderpole_ancestors) != 0
+
+    def edge_between(self, other):
+        for e in self.edges:
+            if other in e.vertices:
+                return e  ### note, no parallel edges in univ cover of a veering triangulation
+        assert False
 
     def __repr__(self):
         if not self.pos.is_infinity():
@@ -27,6 +34,8 @@ class landscape_edge:
     def __init__(self, continent, vertices, is_red): ## could add: is_red, edge_index
         self.continent = continent
         self.vertices = vertices
+        for v in self.vertices:
+            v.edges.append(self)
         self.continent.edges.append(self)
         self.is_red = is_red
         # try:
