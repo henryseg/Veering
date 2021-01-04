@@ -52,11 +52,11 @@ def special_vertex_in_and_out(divider_list, v, v_inds):
     ### answers how we get to v and back out when we are doing the non-spiky lightning curves
     if len(v_inds) % 2 == 1:
         # print 'odd'
-        ind = (v_inds[0] + v_inds[-1])/2
+        ind = (v_inds[0] + v_inds[-1])//2
         return ( [v.pos.complex()], ind, ind ) ### last midpoint is at ind, then we do the extra point in the list, then start midpoints up again with ind
     else:
         # print 'even'
-        ind = (v_inds[0] + v_inds[-1] + 1)/2
+        ind = (v_inds[0] + v_inds[-1] + 1)//2
         mid_step = (divider_list[ind-1].midpoint() + divider_list[ind].midpoint()) * 0.5
         return ( [mid_step, v.pos.complex(), mid_step], ind - 1, ind ) ### more complicated since we have an extra point on the midpoints curve
 
@@ -148,10 +148,26 @@ def lightning_curve_from_dividers(dividers, a, b, special_vertices = [], spiky =
                     lightning_curve = lightning_curve[:-1]
                 return lightning_curve
 
+def uniquify_list(dup_list, subtract = [], epsilon = 0.001):
+    unique_list = []
+    for z in dup_list:
+        keep = True
+        for w in unique_list + subtract:
+            if abs(z-w)<0.001:
+                keep = False
+                break
+        if keep:
+            unique_list.append(z)
+    return unique_list
 
+def replace_with_continent_vertices(v_list, con, epsilon = 0.001):
+    for i, w in enumerate(v_list):
+        for v in con.boundary_triangulation_vertices:
+            if abs(v.pos.complex() - w) < epsilon:
+                v_list[i] = v    
+                break    
 
-
-def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_jordan_curve = False, draw_landscapes = False, draw_box_for_cohom_frac = False, draw_alignment_dots = False, max_length = 0.1, output_filename = None, draw_args = None, build_type = None ):
+def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_jordan_curve = False, draw_dividers = False, draw_landscapes = False, draw_box_for_cohom_frac = False, draw_alignment_dots = False, draw_desired_vertices = False, max_length = 0.1, output_filename = None, draw_args = None, build_type = None, more = False ):
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
@@ -176,11 +192,57 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         # print(('verts_pos', initial_tet_face.verts_pos))
         ### want to draw a box which will contain a fund dom, will be what we render as a cohom frac
 
-        ladderpoles_vertices = T.left_ladder_pole_vertices() 
-        more_ladderpoles_vertices = [[L[-2] - T.ladder_holonomy] + L + [L[1] + T.ladder_holonomy] for L in ladderpoles_vertices]
-        more_ladderpoles_vertices = [[z - T.sideways_once_holonomy for z in more_ladderpoles_vertices[-1]]] + more_ladderpoles_vertices + [[z + T.sideways_once_holonomy for z in more_ladderpoles_vertices[0]]]
-        
-        desired_vertices = [v for L in more_ladderpoles_vertices for v in L]
+        ladderpoles_vertices = T.left_ladder_pole_vertices() ### everything is on left of the ladders...
+
+        if more:
+            left_ladder = T.ladder_list[0]
+            right_ladder = T.ladder_list[-1]
+
+            left_ladder_nbd = []
+            for lu in left_ladder.ladder_unit_list:
+                if lu.is_on_left():
+                    # print(lu, lu.left_vertices[0])
+                    left_ladder_nbd.extend( lu.vert_positions_around_corner( lu.left_vertices[0] ) )
+            last = left_ladder.ladder_unit_list[-1]
+            # print('extra', last, last.left_vertices[-1])
+            left_ladder_nbd.extend( last.vert_positions_around_corner( last.left_vertices[-1] ) )
+            # print('right')
+            right_ladder_nbd = []
+            for lu in right_ladder.ladder_unit_list:
+                if lu.is_on_left():
+                    # print(lu, lu.left_vertices[0])
+                    right_ladder_nbd.extend( lu.vert_positions_around_corner( lu.left_vertices[0] ) )
+            last = right_ladder.ladder_unit_list[-1]
+            # print('extra', last, last.left_vertices[-1])
+            right_ladder_nbd.extend( last.vert_positions_around_corner( last.left_vertices[-1] ) )
+            
+            left_ladder_nbd = uniquify_list(left_ladder_nbd)
+            right_ladder_nbd = uniquify_list(right_ladder_nbd)
+
+            bottom_nbd = []
+            top_nbd = []
+            for i, L in enumerate(T.ladder_list):
+                if i%2 == 0:
+                    lu_bottom = L.ladder_unit_list[0]
+                    lu_top = L.ladder_unit_list[-1]
+
+                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner(lu_bottom.left_vertices[0]) )
+                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner(lu_bottom.right_vertices[0]) )
+                    top_nbd.extend( lu_top.vert_positions_around_corner(lu_top.left_vertices[-1]) )
+                    top_nbd.extend( lu_top.vert_positions_around_corner(lu_top.right_vertices[-1]) )
+            bottom_nbd = uniquify_list(bottom_nbd)
+            top_nbd = uniquify_list(top_nbd)
+
+            all_ladderpole_vertices = [v for L in ladderpoles_vertices for v in L]
+            left_ladder_nbd = uniquify_list(left_ladder_nbd, subtract = all_ladderpole_vertices)
+            right_ladder_nbd = uniquify_list(right_ladder_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd)  ### right and left can overlap
+            bottom_nbd = uniquify_list(bottom_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd) ### top and bottom cannot
+            top_nbd = uniquify_list(top_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd)
+
+            desired_vertices = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd + bottom_nbd + top_nbd
+            desired_vertices = uniquify_list(desired_vertices) ## just in case...
+        else:
+            desired_vertices = [v for L in ladderpoles_vertices for v in L]
 
         con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
         
@@ -189,50 +251,43 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
         # print(('unfound desired_vertices', con.desired_vertices))
         # assert con.desired_vertices == [] ### found all the desired vertices
         if con.desired_vertices != []:
-            print veering_isosig, 'did not find all torus triangulation vertices'
+            print(veering_isosig, 'did not find all torus triangulation vertices')
             return False
 
         # now replace ladderpoles_vertices with the continent's corresponding vertices 
-        epsilon = 0.001
         for ladderpole_vertices in ladderpoles_vertices:
-            for i, w in enumerate(ladderpole_vertices):
-                for v in con.boundary_triangulation_vertices:
-                    if abs(v.pos.complex() - w) < epsilon:
-                        ladderpole_vertices[i] = v    
-                        break     
+            replace_with_continent_vertices(ladderpole_vertices, con)    
+        if more:
+            replace_with_continent_vertices(left_ladder_nbd, con)
+            replace_with_continent_vertices(right_ladder_nbd, con)
+            replace_with_continent_vertices(bottom_nbd, con)
+            replace_with_continent_vertices(top_nbd, con)
+            nbd = left_ladder_nbd + bottom_nbd + top_nbd + right_ladder_nbd
+            nbd.sort(key = lambda v: con.coast.index(v))
 
         ### the following is the list with correctly replaced vertices
-        all_ladderpole_vertices = [v for L in ladderpoles_vertices for v in L]
+        all_ladderpole_vertices = [v for L in ladderpoles_vertices for v in L] ### dont need this to be bigger when doing "more" 
 
         ladderpole_descendant_segments = []
-        for ladderpole_vertices in ladderpoles_vertices:
-            segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
-            segment.sort()
-            ladderpole_descendant_segments.append( segment )
+        if more:  
+            ### we must sort the extra vertices of nbd into the correct ladderpoles... just do by colour of the edge connecting to infty
+            ladderpole_is_red = nbd[0].edge_between(con.infinity).is_red
+            segment_start = con.coast.index(nbd[0])
+            for i,v in enumerate(nbd):
+                if v.edge_between(con.infinity).is_red != ladderpole_is_red:
+                    ladderpole_descendant_segments.append( [segment_start, con.coast.index(nbd[i-1])] )
+                    segment_start = con.coast.index(nbd[i])
+                    ladderpole_is_red = not ladderpole_is_red
+            ladderpole_descendant_segments.append( [segment_start, con.coast.index(nbd[-1])] )
+        else:
+            for ladderpole_vertices in ladderpoles_vertices:
+                segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
+                segment.sort()
+                ladderpole_descendant_segments.append( segment )
 
-        # print(ladderpole_descendant_segments)
+
 
         con.mark_ladderpole_descendants(ladderpole_descendant_segments)
-
-##### experimenting
-        # # print 'orig verts', original_desired_vertices
-        # important_vertices = []
-        # con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = 1000)
-        # con.update_coast()
-        # for i, v in enumerate(con.coast):
-        #     if len(v.ladderpole_ancestors) > 0:
-        #         w = con.coast[(i+1)]
-        #         if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
-        #             if not v in all_ladderpole_vertices and not w in all_ladderpole_vertices:
-        #                 ## we found a ladderpole descendant edge that does not touch one of the original vertices
-        #                 for u in con.coast:
-        #                     u.ladderpole_ancestors = set()
-        #                 v.ladderpole_ancestors.add(0)
-        #                 w.ladderpole_ancestors.add(0)
-        #                 important_vertices = [v,w]
-        #                 break
-
-        # con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
 
         # print 'important verts', important_vertices
         # for v in important_vertices:
@@ -401,7 +456,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
             dividers = con.lightning_dividers([])  ## only lightning curves for infinity
 
             layer1 = T.canv.layer("layer1")
-            layer2 = T.canv.layer("layer2", below = layer1)
+            layer2 = T.canv.layer("layer2", below = "layer1")
 
             for ladder in ladderpoles_vertices:
                 for j in range(len(ladder) - 1):
@@ -425,14 +480,15 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
             box = T.canv.bbox()
             layer2.fill(box.rect(), [pyx.color.rgb(0.5,0.5,0.5)])
 
-            for divider_list in dividers[0]:
-                for edge in divider_list:
-                    edgeC = [T.drawing_scale * v.pos.complex() for v in edge.vertices]
-                    draw_path(layer1, edgeC, [pyx.color.rgb(1,0,0), pyx.style.linewidth(0.005)])
-            for divider_list in dividers[1]:
-                for edge in divider_list:
-                    edgeC = [T.drawing_scale * v.pos.complex() for v in edge.vertices]
-                    draw_path(layer1, edgeC, [pyx.color.rgb(0,0,1), pyx.style.linewidth(0.005)])
+            if draw_dividers:
+                for divider_list in dividers[0]:
+                    for edge in divider_list:
+                        edgeC = [T.drawing_scale * v.pos.complex() for v in edge.vertices]
+                        draw_path(layer1, edgeC, [pyx.color.rgb(1,0,0), pyx.style.linewidth(0.005)])
+                for divider_list in dividers[1]:
+                    for edge in divider_list:
+                        edgeC = [T.drawing_scale * v.pos.complex() for v in edge.vertices]
+                        draw_path(layer1, edgeC, [pyx.color.rgb(0,0,1), pyx.style.linewidth(0.005)])
 
 
         if draw_box_for_cohom_frac:
@@ -503,13 +559,11 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curv
             ### 2. how to get the data into the cohom frac code DONE
 
         ## circles around found vertices
-        for pos in desired_vertices:
-            # pos = v.pos.complex()
-            pos *= T.drawing_scale
-            T.canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.2), [pyx.style.linewidth(0.1), pyx.color.rgb.black])
-
-
-
+        if draw_desired_vertices:
+            for pos in desired_vertices:
+                # pos = v.pos.complex()
+                pos *= T.drawing_scale
+                T.canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.3), [pyx.style.linewidth(0.1), pyx.color.rgb.green])
 
     out_canvas = pyx.canvas.canvas()
     height_offset = 0.0
@@ -556,7 +610,7 @@ def draw_jigsaw_from_veering_isosigs_file(veering_isosigs_filename, output_dirna
     for i, veering_isosig in enumerate(to_draw):
         # print(veering_isosig)
         if i%50 == 0:
-            print i
+            print(i)
         tet_shapes = shapes_data[veering_isosig]
         # print 'tet_shapes', tet_shapes
 
@@ -579,9 +633,10 @@ if __name__ == '__main__':
     # max_num_tetrahedra = 100000
     # max_num_tetrahedra = 400000
     max_num_tetrahedra = 2000000
-    max_length = 0.4
+    # max_length = 0.4
+    # max_length = 0.3
     # max_length = 0.2
-    # max_length = 0.15
+    max_length = 0.15
     # max_length = 0.1
     # max_length = 0.07
     # max_length = 0.06
@@ -599,17 +654,17 @@ if __name__ == '__main__':
     # veering_isosig = 'cPcbbbiht_12'
     # # # # veering_isosig = 'cPcbbbdxm_10'
     # veering_isosig = 'dLQacccjsnk_200'
-    # # # veering_isosig = 'eLMkbcddddedde_2100'
-    # # # # veering_isosig = 'eLAkaccddjsnak_2001'
-    # # # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
+    # veering_isosig = 'eLMkbcddddedde_2100'
+    # veering_isosig = 'eLAkaccddjsnak_2001'
+    # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
     # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # # # # # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
-    # # # # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
+    # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
     # # veering_isosig = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021' ## first non geometric
     # # veering_isosig = 'nLLwMLPMMkbeefeihjkjlmlmhhaaaektxnaqrs_0111000011220'  ### quite big negative shape
-    # # veering_isosig = 'qLvPvvMQQLQkccgkgjkmlknpooppoqjaajqqhhqqaqxhhh_0222110112222211'
-    veering_isosig = 'fLLQcbeddeehhnkhh_21112'
-    # veering_isosig = 'eLAkbbcdddhwqj_2102'
+    # veering_isosig = 'qLvPvvMQQLQkccgkgjkmlknpooppoqjaajqqhhqqaqxhhh_0222110112222211'
+    # veering_isosig = 'fLLQcbeddeehhnkhh_21112'
+    veering_isosig = 'eLAkbbcdddhwqj_2102'
 
     # # # veering_isosig = 'mLvLLLQQQbegikhjiilkllhiardrnnkxeif_120000112222'
     # veering_isosig = 'mLvLLMMQQcehfhjlklkjlktilbbjumhtfai_011220220111'
@@ -622,11 +677,15 @@ if __name__ == '__main__':
     tet_shapes = shapes_data[veering_isosig]
     # print tet_shapes
     filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
+    
+    more = True ### generate bigger continent to get lightning curves right
     # # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = True, draw_landscapes = False, draw_box_for_cohom_frac = True, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
-    draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, draw_lightning_curve = True, draw_landscapes = False, draw_box_for_cohom_frac = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+    # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, draw_lightning_curve = True, draw_landscapes = True, draw_box_for_cohom_frac = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type, more = more )
     
-    # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, draw_lightning_curve = False, draw_jordan_curve = True, draw_landscapes = True, draw_box_for_cohom_frac = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+    draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, 
+        draw_lightning_curve = False, draw_jordan_curve = True, draw_landscapes = False, 
+        draw_box_for_cohom_frac = False, draw_desired_vertices = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type, more = more )
     
 
 

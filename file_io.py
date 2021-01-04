@@ -25,7 +25,7 @@ def write_data_file(data, filename):
     return None
 
 def read_from_pickle(filename):                                                                                                     
-    f = open(filename, 'r')                                                                                                          
+    f = open(filename, 'rb')                                                                                                          
     data = pickle.load(f)                                                                                                           
     f.close()                                                                                                                        
     return data

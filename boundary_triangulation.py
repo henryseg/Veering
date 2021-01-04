@@ -15,7 +15,8 @@ anglechoice_face2vert = {(0,0):1, (0,1):0, (0,2):3, (0,3):2,
 ### example usage: next_pi_vertex = anglechoice_face2vert[ (self.angle_structure[next_tet.index()], inf_vert) ]
 
 class tet_face:
-    def __init__(self, tet_num, face, verts_pos = None):
+    def __init__(self, vt, tet_num, face, verts_pos = None):
+        self.vt = vt
         self.tet_num = tet_num
         self.face = face
         self.verts_pos = verts_pos  ## in CP1
@@ -33,13 +34,45 @@ class tet_face:
     def transform(self, mob_tsfm):
         self.verts_pos = [ mob_tsfm * v for v in self.verts_pos]
 
+    def vert_positions_around_corner(self, vert_num):
+        assert vert_num != self.face
+        out = []
+        tet = self.vt.tri.tetrahedron( self.tet_num )
+        vert_nums = [0,1,2,3]
+        vert_nums.remove(self.face)
+        vert_nums.remove(vert_num)
+        leading_vertex, trailing_vertex = vert_nums
+        pivot_vertex = vert_num
+        inf_vertex = self.face
+        verts_pos = self.verts_pos
+
+        original_tet = tet
+        original_inf_vertex = inf_vertex
+        original_leading_vertex = leading_vertex
+        out = []
+        while True:
+            # print((tet.index(), inf_vertex), leading_vertex, trailing_vertex)
+            out.append( verts_pos[leading_vertex] )
+            gluing = tet.adjacentGluing(trailing_vertex)
+            new_tet = tet.adjacentTetrahedron(trailing_vertex)
+            new_inf_vertex = gluing[inf_vertex]
+            new_pivot_vertex = gluing[pivot_vertex]
+            new_leading_vertex, new_trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
+
+            verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()])
+            assert verts_pos[new_inf_vertex].is_infinity()
+            tet = new_tet
+            inf_vertex, pivot_vertex, leading_vertex, trailing_vertex = new_inf_vertex, new_pivot_vertex, new_leading_vertex, new_trailing_vertex
+            if tet == original_tet and inf_vertex == original_inf_vertex and leading_vertex == original_leading_vertex:
+                break
+        return [p.complex() for p in out]
+
 class ladder_unit(tet_face):
     """a triangle in a ladder, together with associated data"""
 
-    def __init__(self, vt, tf):
-        self.vt = vt
+    def __init__(self, tf):
         # self.tet_face = tf
-        tet_face.__init__(self, tf.tet_num, tf.face, verts_pos = tf.verts_pos)
+        tet_face.__init__(self, tf.vt, tf.tet_num, tf.face, verts_pos = tf.verts_pos)
         self.left_vertices = []  # of the ladder, not in terms of veering colours
         self.right_vertices = []
         self.calculate_left_right_vertices()
@@ -326,7 +359,7 @@ class ladder:
                     neighbour_tet = tet.adjacentTetrahedron(left_vert)
                     gluing = tet.adjacentGluing(left_vert)
                     neighbour_inf_vert = gluing[ladder_unit.face]
-                    neighbour_index_in_ladder_list = self.torus_triangulation.ladder_list[0].ladder_unit_list.index( tet_face(neighbour_tet.index(), neighbour_inf_vert) )
+                    neighbour_index_in_ladder_list = self.torus_triangulation.ladder_list[0].ladder_unit_list.index( tet_face(self.vt, neighbour_tet.index(), neighbour_inf_vert) )
                     neighbour = self.torus_triangulation.ladder_list[0].ladder_unit_list[neighbour_index_in_ladder_list]
                     back_vert = ladder_unit.right_vertices[0]
                     neighbour_back_vert = gluing[back_vert]
@@ -373,7 +406,7 @@ class ladder:
         current_inf_vert = inf_vert
         current_tf = start_tf
         while True: 
-            self.ladder_unit_list.append(ladder_unit(self.vt, current_tf))   
+            self.ladder_unit_list.append(ladder_unit(current_tf))   
             current_pi_vertex = anglechoice_face2vert[ (self.vt.angle[current_tet.index()], current_inf_vert) ]
             gluing = current_tet.adjacentGluing(current_pi_vertex)
             current_tet = current_tet.adjacentTetrahedron(current_pi_vertex)
@@ -381,7 +414,7 @@ class ladder:
             if current_tf.verts_pos != None:
                 verts_pos = develop_verts_pos(current_tf.verts_pos, gluing, current_pi_vertex, self.vt.tet_shapes[current_tet.index()])
             current_inf_vert = gluing[current_inf_vert]
-            current_tf = tet_face( current_tet.index(), current_inf_vert, verts_pos = verts_pos )
+            current_tf = tet_face(self.vt, current_tet.index(), current_inf_vert, verts_pos = verts_pos )
             if current_tf == start_tf:
                 not_inf_vert = (start_tf.face + 1) % 4
                 if current_tf.verts_pos != None:
@@ -493,7 +526,7 @@ class torus_triangulation:
             ordering = unknown_vert_to_known_verts_ordering[last_vert] 
             verts_pos[last_vert] = developed_position(verts_pos[ordering[0]], verts_pos[ordering[1]], verts_pos[ordering[2]], self.vt.tet_shapes[tet_num])
             # print 'tet, inf, shapes', tet_num, face, verts_pos
-        current_tf = tet_face(current_tet_face.tet_num, current_tet_face.face, verts_pos = verts_pos) 
+        current_tf = tet_face(self.vt, current_tet_face.tet_num, current_tet_face.face, verts_pos = verts_pos) 
         
         while current_tf not in rho:  ### ignoring the verts_pos information because of our equality definition for tet_faces
             rho.append(current_tf)
@@ -528,10 +561,10 @@ class torus_triangulation:
                 if self.vt.tet_shapes != None:
                     verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()])
                     # print 'tet, inf, shapes', new_tet.index(), new_inf_vert, verts_pos
-                    assert verts_pos[new_inf_vert] == CP1((1,0))
+                    assert verts_pos[new_inf_vert].is_infinity()
                 tet = new_tet
                 inf_vert, pivot_vertex, leading_vertex, trailing_vertex = new_inf_vert, new_pivot_vertex, new_leading_vertex, new_trailing_vertex
-            current_tf = tet_face( tet.index(), inf_vert, verts_pos = verts_pos )
+            current_tf = tet_face( self.vt, tet.index(), inf_vert, verts_pos = verts_pos )
         sideways = rho[rho.index(current_tf):]   ### remove initial tail. Here .index ignores the verts_pos data of a tet_face
 
         not_inf_vert = (current_tf.face + 1) % 4
@@ -666,7 +699,7 @@ class torus_triangulation:
         gluing = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.right_vertices[0])
         face_B = gluing[unit_A.face]
         ladder_B_index = (ladder_index - 1) % len(self.ladder_list)
-        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
+        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(self.vt, tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
         #print unit_posn_A, unit_A, tet_B_index, face_B
         return (unit_posn_A, unit_posn_B)
 
@@ -689,7 +722,7 @@ class torus_triangulation:
         gluing = self.vt.tri.tetrahedron(unit_temp.tet_num).adjacentGluing(unit_temp.right_vertices[0])
         face_B = gluing[unit_temp.face]
         ladder_B_index = (ladder_index - 1) % len(self.ladder_list)
-        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
+        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(self.vt, tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
         #print unit_posn_A, unit_A, tet_B_index, face_B
         return (unit_posn_A, unit_posn_B)
         
@@ -700,7 +733,7 @@ class torus_triangulation:
         tet_pairings = []
         
         num_ladders = len(self.ladder_list)
-        for i in range(num_ladders / 2):
+        for i in range(num_ladders // 2):
             if not self.is_symmetric_ladder_pair(axis_unit_pair, tet_pairings = tet_pairings):
                 return False
             axis_unit_pair = self.find_next_axis_unit_pair(axis_unit_pair)
@@ -751,7 +784,7 @@ class torus_triangulation:
         gluing = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.left_vertices[0])
         new_face_A = gluing[unit_A.face]
         new_ladder_A_index = (ladder_A_index + 1) % len(self.ladder_list)
-        new_unit_posn_A = (new_ladder_A_index, find_unit_index(tet_face(new_tet_A_index, new_face_A), self.ladder_list[new_ladder_A_index]) )
+        new_unit_posn_A = (new_ladder_A_index, find_unit_index(tet_face(self.vt, new_tet_A_index, new_face_A), self.ladder_list[new_ladder_A_index]) )
 
         unit_B = ladder_B.ladder_unit_list[unit_B_index]
         new_tet_B = self.vt.tri.tetrahedron(unit_B.tet_num).adjacentTetrahedron(unit_B.right_vertices[0])
@@ -759,7 +792,7 @@ class torus_triangulation:
         gluing = self.vt.tri.tetrahedron(unit_B.tet_num).adjacentGluing(unit_B.right_vertices[0])
         new_face_B = gluing[unit_B.face]
         new_ladder_B_index = (ladder_B_index - 1) % len(self.ladder_list)
-        new_unit_posn_B = (new_ladder_B_index, find_unit_index(tet_face(new_tet_B_index, new_face_B), self.ladder_list[new_ladder_B_index]) )
+        new_unit_posn_B = (new_ladder_B_index, find_unit_index(tet_face(self.vt, new_tet_B_index, new_face_B), self.ladder_list[new_ladder_B_index]) )
 
         return (new_unit_posn_A, new_unit_posn_B)     
 
@@ -784,7 +817,7 @@ class boundary_triangulation:
         out = []
         for i in range(self.vt.tri.countTetrahedra()):
             for j in range(4):
-                out.append( tet_face(i,j) )
+                out.append( tet_face(self.vt, i, j) )
         return out
 
     def generate_canvases(self, args = {}):
@@ -846,12 +879,12 @@ if __name__ == "__main__":
     args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     ### for standard ladder picture, set 'draw_triangles_near_poles' = False. Set True for CT pictures
 
-    num_to_draw = 87 ## up to 6 tet
-    # num_to_draw = 5699 ## up to 12 tet  
-    args['style'] = 'ladders'
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
-    args['style'] = 'geometric'
-    draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
+    # num_to_draw = 87 ## up to 6 tet
+    # # num_to_draw = 5699 ## up to 12 tet  
+    # args['style'] = 'ladders'
+    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
+    # args['style'] = 'geometric'
+    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
 
 
     # args = {'draw_boundary_triangulation':False, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
@@ -868,19 +901,18 @@ if __name__ == "__main__":
     # # # # name = 'fLLQcbecdeepuwsua_20102'
     # # # # name = 'fLLQcbeddeehhbghh_01110'
     # # # # name = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
-    # name = 'eLAkaccddjsnak_2001'
+    name = 'eLAkaccddjsnak_2001'
     # name = 'eLAkbbcdddhwqj_2102'
     # name = 'dLQacccjsnk_200' 
     # name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
     # name = 'gLvQQadfedefjaaajkk_200211'
 
-    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-
-    # args['tet_shapes'] = shapes_data[name]
+    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    args['style'] = 'geometric'
+    args['tet_shapes'] = shapes_data[name]
     # args['tet_shapes'] = None
 
-    # draw_triangulation_boundary_from_veering_isosig(name, style = 'ladders', tet_shapes = None)
-    # names = ['cPcbbbiht_12', 'gLLAQbecdfffhhnkqnc_120012','kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101']
+    draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_ladders.pdf', args = args) 
 
 
     # shapes_data = read_from_pickle('Data/flat_toggle_shapes.pkl')
