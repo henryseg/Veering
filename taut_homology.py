@@ -201,6 +201,30 @@ def faces_in_laurent(triangulation, angle_structure, cycles, ZH):
     return [ ZH( {vec:1} ) for vec in face_vecs]
 
 
+def epimorphism_in_laurent(tri, angle, cycles, ZH):
+    """
+    The argument cycles specifies a group epimorphism from the
+    manifold to the filled manifold.  This function returns the image
+    of the generators of the group ring under the induced epimorphism.
+    """
+    n = tri.countTetrahedra()
+    S,U,V = faces_in_smith(tri, angle, []) # basis before filling, so no cycles 
+    r = rank_of_quotient(S)[0]
+    S2, U2, V2 = faces_in_smith(tri, angle, cycles) # basis after filling
+    r2 = rank_of_quotient(S2)[0]
+
+    A = U.inverse().delete_columns(range(n+1-r)) 
+    B = U2.delete_rows(range(n+1-r2))
+
+    image_on_gens = (B*A).columns()
+    image_on_gens = [tuple(col) for col in image_on_gens]
+
+    if len(image_on_gens[0]) == 1: # flatten if neccesary
+        image_on_gens= [vec[0] for vec in image_on_gens]
+    image_in_laurent = [ZH( { image_on_gens[i]:1 } ) for i in range(r)]
+    return image_in_laurent
+
+
 # The code below is copied and modified (with permission) from
 # https://github.com/3-manifolds/SnapPy/blob/master/python/snap/nsagetools.py
 
