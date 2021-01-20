@@ -169,7 +169,15 @@ def taut_polynomial(tri, angle, cycles = [], alpha = True, mode = "taut"):
 
 @liberal
 def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut"):
-    # set up
+    """
+    If cycles = [] then this is the taut polynomial.  If cycles != []
+    then this is the zero-Fitting invariant of the module obtained by
+    'extension of scalars' - that is, form the epimorphism obtained by
+    killing the given boundary cycles, apply it to the presentation
+    matrix, and only then compute the gcd of the (correct minors).       
+    """
+
+    # set up 
     ZH = group_ring(tri, angle, cycles, alpha = alpha)
     P = ZH.polynomial_ring()
 

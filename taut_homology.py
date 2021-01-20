@@ -91,7 +91,7 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
         triangle_num_sets = [triangle_num_sets[2] + triangle_num_sets[0], triangle_num_sets[1]]
         ## we wrap around, have to combine the two lists on the side we started and ended on
 
-        triangle_num_sets[1].reverse() ## flip one so theyre going the same way.
+        triangle_num_sets[1].reverse() ## flip one so they are going the same way.
         ## Now if we have coorientations, make them both go up
         if tet_vert_coorientations != None:
             embed = embeddings[0]
@@ -99,7 +99,8 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
             vert_perm = embed.vertices()
             leading_vert_num = vert_perm[3]
             if tet_vert_coorientations[tet.index()][leading_vert_num] == +1: 
-            ### then coorientation points out of this tetrahedron through this face, which is behind the tetrahedron as we walk around
+            ### then coorientation points out of this tetrahedron through this face,
+            ### which is behind the tetrahedron as we walk around
             ### so we are the wrong way round
                 triangle_num_sets[0].reverse()
                 triangle_num_sets[1].reverse()
@@ -203,6 +204,7 @@ def faces_in_laurent(triangulation, angle_structure, cycles, ZH):
 # The code below is copied and modified (with permission) from
 # https://github.com/3-manifolds/SnapPy/blob/master/python/snap/nsagetools.py
 
+
 def join_lists(list_of_lists):
     out = []
     for l in list_of_lists:
@@ -258,5 +260,6 @@ def normalise_poly(poly, ZH, P):
     if poly.coefficients()[-1] < 0:
         poly = -poly
     return poly
+
 
 ### end of copied/modified code
