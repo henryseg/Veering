@@ -277,9 +277,15 @@ def run_tests(num_to_check=1000):
         }
 
         taut_polys_with_cycles = {
-            ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
+            ("eLMkbcddddedde_2100", ((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
             ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "a^2 + 2*a + 1",
             ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - 4*a*b - b^2 + a",
+        }
+
+        taut_polys_image = {
+            ('eLMkbcddddedde_2100', ((7, 8, -1, 0, -4, 4, -8, 0),)):"a^16 - a^9 - a^8 - a^7 + 1",
+            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2),)):"a*b^2*c - 2*a*b*c - b^2*c - a^2 - 2*a*b + a",
+            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))):"a*b^2 - a^2 - 4*a*b - b^2 + a"
         }
 
         alex_polys_with_cycles = {
@@ -303,6 +309,13 @@ def run_tests(num_to_check=1000):
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
             assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
+
+    if sage_working:
+        for sig, cycles in taut_polys_image:
+            print("testing taut with images", sig, cycles)
+            cycles_in = [list(cycle) for cycle in cycles]
+            p = taut_polynomial.taut_polynomial_image(sig, cycles_in)
+            assert p.__repr__() == taut_polys_image[(sig, cycles)]
 
     if sage_working:
         for sig, cycles in alex_polys_with_cycles:
