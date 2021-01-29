@@ -16,7 +16,7 @@ from taut import liberal, vert_pair_to_edge_num
 from transverse_taut import is_transverse_taut
 from taut_homology import (build_spanning_dual_tree, edge_equation_matrix_taut,
                            group_ring, faces_in_laurent, matrix_laurent_to_poly,
-                           normalise_poly)
+                           normalise_poly, epimorphism_in_laurent)
 
 verbose = 0
 
@@ -169,7 +169,15 @@ def taut_polynomial(tri, angle, cycles = [], alpha = True, mode = "taut"):
 
 @liberal
 def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut"):
-    # set up
+    """
+    If cycles = [] then this is the taut polynomial.  If cycles != []
+    then this is the zero-Fitting invariant of the module obtained by
+    'extension of scalars' - that is, form the epimorphism obtained by
+    killing the given boundary cycles, apply it to the presentation
+    matrix, and only then compute the gcd of the (correct minors).       
+    """
+
+    # set up 
     ZH = group_ring(tri, angle, cycles, alpha = alpha)
     P = ZH.polynomial_ring()
 
@@ -182,6 +190,23 @@ def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut
     # compute via minors
     minors = ET.minors(tri.countTetrahedra())
     return normalise_poly(gcd(minors), ZH, P)
+
+
+@liberal
+def taut_polynomial_image(tri, angle, cycles = [], alpha = True, mode = "taut"):
+    """
+    If cycles = [] then this is the taut polynomial.  If cycles != []
+    then this is the image of the taut polynomial under the
+    epimorphism obtained by killing the given boundary cycles.
+    """
+    taut_poly = taut_polynomial_via_tree(tri, angle, alpha = alpha, mode = mode)
+    ZG = group_ring(tri, angle, [], alpha = alpha)
+    ZH = group_ring(tri, angle, cycles, alpha = alpha)
+    P = ZH.polynomial_ring()
+
+    image_in_laurent = epimorphism_in_laurent(tri, angle, cycles, ZH)
+    epi = ZG.Hom(ZH)(image_in_laurent)
+    return normalise_poly( epi(taut_poly), ZH, P ) 
 
 
 @liberal

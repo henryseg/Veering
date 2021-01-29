@@ -446,6 +446,28 @@ def order_of_euler_class(delta, E):
 # Question: If the veering triangulation is well-framed (aka
 # edge-orientable), does the Euler class vanish?
 
+# See the discussion with Nathan 2020-04-03 - he says the following.
+
+# Suppose that F is a foliation carried by the horizontal branched
+# surface.  Let UTF be the unit tangent bundle to F.  We think of
+# e(UTF) as being the obstruction to UTF having a section.  Let G be
+# the foliation carried by the upper (aka green) branched surface.  If
+# G is transversely orientable (aka edge-orientability of the veering
+# triangulation) then G \cap F gives the desired section, and e(UTF) =
+# 0.  Note that G \cap F gives, for every point, a pair of points in
+# the unit tangent circle.  So let PUTF be the projective unit tangent
+# bundle to F.  This definitely has a section, so e(PUTF) = 0.  Now,
+# the bundle UTF is a double cover of the bundle PUTF.
+
+# Claim: The euler class is multiplicative with respect to covers (in
+# both senses).
+
+# With the claim in hand, we have
+
+# 2 * e(UTF) = e(PUTF) = 0
+
+# We deduce that e(UTF) is either zero or two-torsion.
+
 
 # 9. Calling code
 

@@ -80,7 +80,7 @@ def run_tests(num_to_check=1000):
         for i in range(3):
             M = random.choice(census)
             n = M.num_cusps()
-            print(("testing algebraic intersection", M.name())) # random testing, so print the name. 
+            print("testing algebraic intersection", M.name()) # random testing, so print the name. 
             peripheral_curves = M.gluing_equations()[-2*n:]
             for i in range(2*n):
                 for j in range(i, 2*n):
@@ -94,7 +94,7 @@ def run_tests(num_to_check=1000):
         import veering_drill_midsurface_bdy
         for i in range(3):
             sig = random.choice(veering_isosigs[:10000])
-            print(("testing veering drilling and filling", sig)) # random testing, so print the name. 
+            print("testing veering drilling and filling", sig) # random testing, so print the name. 
             T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
             M = snappy.Manifold(T.snapPea())
             M.set_peripheral_curves("shortest")
@@ -219,16 +219,16 @@ def run_tests(num_to_check=1000):
         import veering_polynomial
         import taut_polynomial
         for sig in veering_polys:
-            print(("testing veering poly", sig))
+            print("testing veering poly", sig)
             p = veering_polynomial.veering_polynomial(sig)
             assert p.__repr__() == veering_polys[sig]
         for sig in taut_polys:
-            print(("testing taut poly", sig))
+            print("testing taut poly", sig)
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert p.__repr__() == taut_polys[sig]
         for i in range(3):
             sig = random.choice(veering_isosigs[:5000])
-            print(("testing divide", sig))
+            print("testing divide", sig)
             p = veering_polynomial.veering_polynomial(sig)
             q = taut_polynomial.taut_polynomial_via_tree(sig)
             if q == 0:
@@ -239,7 +239,7 @@ def run_tests(num_to_check=1000):
     if sage_working:
         for i in range(3):
             sig = random.choice(veering_isosigs[:5000])
-            print(("testing Alex", sig))
+            print("testing alex", sig)
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
             if M.homology().betti_number() == 1:
@@ -247,24 +247,24 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig in torus_bundles:
-            print(("testing torus bundle", sig))
+            print("testing torus bundle", sig)
             assert taut_polytope.is_torus_bundle(sig)
 
     if sage_working:
         for sig in torus_bundles:
-            print(("testing layered", sig))
+            print("testing layered", sig)
             assert taut_polytope.is_layered(sig)
         for sig in measured:
-            print(("testing measured", sig))
+            print("testing measured", sig)
             assert taut_polytope.LMN_tri_angle(sig) == "M"
         for sig in empties:
-            print(("testing empty", sig))
+            print("testing empty", sig)
             assert taut_polytope.LMN_tri_angle(sig) == "N"
 
     if sage_working:  # warning - this takes random amounts of time!
         for i in range(3):
             sig = random.choice(veering_isosigs[:10000])
-            print(("testing hom dim", sig))
+            print("testing hom dim", sig)
             # dimension = zero if and only if nothing is carried.
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
 
@@ -277,9 +277,15 @@ def run_tests(num_to_check=1000):
         }
 
         taut_polys_with_cycles = {
-            ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
+            ("eLMkbcddddedde_2100", ((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
             ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "a^2 + 2*a + 1",
             ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - 4*a*b - b^2 + a",
+        }
+
+        taut_polys_image = {
+            ('eLMkbcddddedde_2100', ((7, 8, -1, 0, -4, 4, -8, 0),)):"a^16 - a^9 - a^8 - a^7 + 1",
+            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2),)):"a*b^2*c - 2*a*b*c - b^2*c - a^2 - 2*a*b + a",
+            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))):"a*b^2 - a^2 - 4*a*b - b^2 + a"
         }
 
         alex_polys_with_cycles = {
@@ -291,7 +297,7 @@ def run_tests(num_to_check=1000):
     if sage_working:
         import taut_carried     
         for sig, surface in boundary_cycles:
-            print("testing boundary cycles", sig, surface)
+            print("testing boundary cycles", sig)
             surface_list = list(surface)
             cycles = taut_carried.boundary_cycles_from_surface(sig,surface_list)
             cycles = tuple(tuple(cycle) for cycle in cycles)
@@ -299,14 +305,21 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for sig, cycles in taut_polys_with_cycles:
-            print("testing taut with cycles", sig, cycles)
+            print("testing taut with cycles", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
             assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
+        for sig, cycles in taut_polys_image:
+            print("testing taut with images", sig)
+            cycles_in = [list(cycle) for cycle in cycles]
+            p = taut_polynomial.taut_polynomial_image(sig, cycles_in)
+            assert p.__repr__() == taut_polys_image[(sig, cycles)]
+
+    if sage_working:
         for sig, cycles in alex_polys_with_cycles:
-            print("testing Alex with cycles", sig, cycles)
+            print("testing alex with cycles", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in, mode = "alexander")
             assert p.__repr__() == alex_polys_with_cycles[(sig, cycles)]
@@ -316,7 +329,7 @@ def run_tests(num_to_check=1000):
         import taut_euler_class
         for i in range(3):
             sig = random.choice(veering_isosigs[:5000])
-            print(("testing euler and edge orientability", sig))
+            print("testing euler and edge orientability", sig)
             # Theorem: If (tri, angle) is edge orientable then e = 0.
             assert not ( edge_orientability.is_edge_orientable(sig) and
                          (taut_euler_class.order_of_euler_class_wrapper(sig) == 2) )
@@ -330,7 +343,7 @@ def run_tests(num_to_check=1000):
     if sage_working:
         for i in range(3):
             sig = random.choice(veering_isosigs[:5000])
-            print(("testing exotics", sig))
+            print("testing exotics", sig)
             tri, angle = taut.isosig_to_tri_angle(sig)
             T = veering.veering_triangulation(tri, angle)
             is_eo = T.is_edge_orientable()

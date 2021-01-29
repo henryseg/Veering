@@ -91,7 +91,7 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
         triangle_num_sets = [triangle_num_sets[2] + triangle_num_sets[0], triangle_num_sets[1]]
         ## we wrap around, have to combine the two lists on the side we started and ended on
 
-        triangle_num_sets[1].reverse() ## flip one so theyre going the same way.
+        triangle_num_sets[1].reverse() ## flip one so they are going the same way.
         ## Now if we have coorientations, make them both go up
         if tet_vert_coorientations != None:
             embed = embeddings[0]
@@ -99,7 +99,8 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
             vert_perm = embed.vertices()
             leading_vert_num = vert_perm[3]
             if tet_vert_coorientations[tet.index()][leading_vert_num] == +1: 
-            ### then coorientation points out of this tetrahedron through this face, which is behind the tetrahedron as we walk around
+            ### then coorientation points out of this tetrahedron through this face,
+            ### which is behind the tetrahedron as we walk around
             ### so we are the wrong way round
                 triangle_num_sets[0].reverse()
                 triangle_num_sets[1].reverse()
@@ -200,8 +201,33 @@ def faces_in_laurent(triangulation, angle_structure, cycles, ZH):
     return [ ZH( {vec:1} ) for vec in face_vecs]
 
 
+def epimorphism_in_laurent(tri, angle, cycles, ZH):
+    """
+    The argument cycles specifies a group epimorphism from the
+    manifold to the filled manifold.  This function returns the image
+    of the generators of the group ring under the induced epimorphism.
+    """
+    n = tri.countTetrahedra()
+    S,U,V = faces_in_smith(tri, angle, []) # basis before filling, so no cycles 
+    r = rank_of_quotient(S)[0]
+    S2, U2, V2 = faces_in_smith(tri, angle, cycles) # basis after filling
+    r2 = rank_of_quotient(S2)[0]
+
+    A = U.inverse().delete_columns(range(n+1-r)) 
+    B = U2.delete_rows(range(n+1-r2))
+
+    image_on_gens = (B*A).columns()
+    image_on_gens = [tuple(col) for col in image_on_gens]
+
+    if len(image_on_gens[0]) == 1: # flatten if neccesary
+        image_on_gens= [vec[0] for vec in image_on_gens]
+    image_in_laurent = [ZH( { image_on_gens[i]:1 } ) for i in range(r)]
+    return image_in_laurent
+
+
 # The code below is copied and modified (with permission) from
 # https://github.com/3-manifolds/SnapPy/blob/master/python/snap/nsagetools.py
+
 
 def join_lists(list_of_lists):
     out = []
@@ -258,5 +284,6 @@ def normalise_poly(poly, ZH, P):
     if poly.coefficients()[-1] < 0:
         poly = -poly
     return poly
+
 
 ### end of copied/modified code
