@@ -13,6 +13,7 @@ from taut import isosig_to_tri_angle, apply_isom_to_angle_struct_list
 from veering import is_veering
 from transverse_taut import is_transverse_taut, symmetry_group_size
 from edge_orientability import is_edge_orientable
+from boundary_triangulation import generate_boundary_triangulation
 
 def compute_census_data(filename_in, filename_out, functions, verbose = 0):
 	### each function takes in data about the triangulation, returns a string
@@ -69,6 +70,11 @@ def edge_orientable(triang_data):
 	else:
 		return 'N'
 
+def ladder_counts(triang_data):
+	b = generate_boundary_triangulation(triang_data['sig'], draw = False)
+	counts = str(b.ladder_counts())
+	return counts.replace(' ','')
+
 def LMN_from_old_data(triang_data): ## layered vs measurable vs non-measurable
 	return triang_data['old_data'][1]
 
@@ -84,16 +90,19 @@ def edge_orientable_from_old_data(triang_data):
 def euler_class_from_old_data(triang_data):
 	return triang_data['old_data'][5]
 
-def num_toggles_red_blue_from_old_data(triang_data):
+def ladder_counts_from_old_data(triang_data):
 	return triang_data['old_data'][6]
 
-def homology_from_old_data(triang_data):
+def num_toggles_red_blue_from_old_data(triang_data):
 	return triang_data['old_data'][7]
 
-def other_names_from_old_data(triang_data):
+def homology_from_old_data(triang_data):
 	return triang_data['old_data'][8]
 
-functions_list = [veering_isosig, LMN_from_old_data, num_cusps_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
+def other_names_from_old_data(triang_data):
+	return triang_data['old_data'][9]
+
+functions_list = [veering_isosig, LMN_from_old_data, num_cusps_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, ladder_counts_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
 
 if __name__ == '__main__':
 	compute_census_data('Data/veering_census_with_data.txt', 'Data/veering_census_with_more_data.txt', functions_list, verbose = 1)

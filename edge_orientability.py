@@ -17,8 +17,9 @@ def regina_edge_orientation_agrees(tet, vert_pair):
 @liberal
 def is_edge_orientable(tri, angle, return_type = "boolean"):
     """
-    checks to see if this veering triangulation is
-    edge orientable. If return type is "tri angle" it returns the edge orientable double cover with its angle structure
+    checks to see if this veering triangulation is edge orientable. 
+    If return type is "tri angle" it returns the edge orientable double cover with its angle structure. 
+    Note that this is disconnected if and only if the given triangulation is edge orientable
     """
     # return type can be "boolean", "veering_tet_vert_nums", or "tri angle"
     n = tri.countTetrahedra()
