@@ -182,7 +182,7 @@ def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
-    tree_faces, non_tree_faces = build_spanning_dual_tree(tri)
+    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(tri)
 
     ET = ET.transpose()
     ET = Matrix([row for i, row in enumerate(ET) if i in non_tree_faces]).transpose()
@@ -233,7 +233,7 @@ def taut_polynomial_via_tree_and_smith(tri, angle, cycles = [], alpha = True, mo
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
-    tree_faces, non_tree_faces = build_spanning_dual_tree(tri)
+    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(tri)
 
     ET = ET.transpose()
     ET = Matrix([row for i, row in enumerate(ET) if i in non_tree_faces]).transpose()
