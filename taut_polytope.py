@@ -332,6 +332,11 @@ def taut_rays(tri, angle):
 
 # the function
 
+# Factor this - produce the image in H_1 with basis the non-tree edges
+# and then take dimension.  This is better, because we get a thurston face
+# in the "correct" basis - that is the basis where we computed the
+# taut polynomial.  This allows us to correctly compare Newton polytopes. 
+
 @liberal
 def taut_cone_homological_dim(tri, angle):
     # find the dimension of the projection of the taut cone into
