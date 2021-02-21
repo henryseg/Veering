@@ -331,8 +331,9 @@ def build_oriented_tree_cycles(tri, angle):
 @liberal
 def build_tree_gens(tri, angle):
     """
-    Returns the generators of H_1 coming from the non-tree (dual)
-    edges.
+    Returns the (dual) one-cycles coming from the non-tree edges.  
+    That is, for every non-tree edge, we have a cycle of dual edges 
+    (given as a -1/0/+1 vector of the 2*n faces). 
     """
     gens = []
     oriented_cycles, all_signs = build_oriented_tree_cycles(tri, angle) 
