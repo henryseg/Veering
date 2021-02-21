@@ -15,7 +15,7 @@ from sage.rings.polynomial.laurent_polynomial_ring import LaurentPolynomialRing
 verbose = 0
 
 
-def build_spanning_dual_tree(triangulation):
+def spanning_dual_tree(triangulation):
     """
     Returns three lists - (dual) edges in the spanning tree, (dual)
     edges not in the spanning tree, and the distance of each tet (in
@@ -63,12 +63,12 @@ def walk_towards_root(tet, tree_faces, distances_to_root):
     assert False
 
     
-def build_non_tree_edge_cycles(triangulation):
+def non_tree_edge_loops(triangulation):
     """
-    For every non-tree (dual) edge, find the corresponding cycle.
+    For every non-tree (dual) edge e, find the corresponding loop in T union e.
     """
-    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(triangulation)
-    cycles = []
+    tree_faces, non_tree_faces, distances_to_root = spanning_dual_tree(triangulation)
+    loops = []
     for orig_face_ind in non_tree_faces:
         embeddings = triangulation.triangle(orig_face_ind).embeddings()
         tet0, tet1 = (embed.simplex() for embed in embeddings)
@@ -84,8 +84,8 @@ def build_non_tree_edge_cycles(triangulation):
                 tet0, face0_ind = walk_towards_root(tet0, tree_faces, distances_to_root)
                 zero_faces.append(face0_ind)
         zero_faces.reverse()
-        cycles.append([orig_face_ind] + one_faces + zero_faces)
-    return cycles
+        loops.append([orig_face_ind] + one_faces + zero_faces)
+    return loops
                 
 
 def there_is_a_pi_here(angle_struct, embed):
@@ -169,7 +169,7 @@ def edge_equation_matrix_taut(triangulation, angle_struct):
 
 
 def edge_equation_matrix_taut_reduced(triangulation, angle_structure, cycles):
-    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(triangulation)
+    _, non_tree_faces, _ = spanning_dual_tree(triangulation)
     N = edge_equation_matrix_taut(triangulation, angle_structure)
     N = N + cycles
     if verbose > 0:
@@ -210,7 +210,7 @@ def faces_in_homology(triangulation, angle_structure, cycles):
 
     zero_vec = vector([0] * rank)
 
-    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(triangulation)
+    tree_faces, non_tree_faces, _ = spanning_dual_tree(triangulation)
     # We recompute the tree :( but we don't have to pass it around :)
 
     n = len(tree_faces) + len(non_tree_faces)
