@@ -331,9 +331,12 @@ def build_oriented_tree_cycles(tri, angle):
 @liberal
 def build_tree_gens(tri, angle):
     """
-    Returns the (dual) one-cycles coming from the non-tree edges.  
-    That is, for every non-tree edge, we have a cycle of dual edges 
-    (given as a -1/0/+1 vector of the 2*n faces). 
+    Returns the (dual) one-cycles coming from the non-tree edges.  That
+    is: Suppose that T is the dual spanning tree.  Then, for every
+    non-tree edge e, we return a vector of length 2*n (num faces) with
+    entries from {-1, 0, +1}, which tells us how the transverse
+    orientation (angle) agrees or disagrees with the unique oriented
+    cycle in T \cup e.
     """
     gens = []
     oriented_cycles, all_signs = build_oriented_tree_cycles(tri, angle) 
