@@ -14,9 +14,12 @@ from sage.matrix.constructor import Matrix
 
 from taut import liberal, vert_pair_to_edge_num
 from transverse_taut import is_transverse_taut
-from taut_homology import (build_spanning_dual_tree, edge_equation_matrix_taut,
-                           group_ring, faces_in_laurent, matrix_laurent_to_poly,
+from taut_homology import (build_spanning_dual_tree,
+                           build_non_tree_edge_cycles,
+                           edge_equation_matrix_taut, group_ring,
+                           faces_in_laurent, matrix_laurent_to_poly,
                            normalise_poly, epimorphism_in_laurent)
+
 
 verbose = 0
 
@@ -182,7 +185,7 @@ def taut_polynomial_via_tree(tri, angle, cycles = [], alpha = True, mode = "taut
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
-    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(tri)
+    _, non_tree_faces, _ = build_spanning_dual_tree(tri)
 
     ET = ET.transpose()
     ET = Matrix([row for i, row in enumerate(ET) if i in non_tree_faces]).transpose()
@@ -233,7 +236,7 @@ def taut_polynomial_via_tree_and_smith(tri, angle, cycles = [], alpha = True, mo
     P = ZH.polynomial_ring()
 
     ET = edges_to_triangles_matrix(tri, angle, cycles, ZH, P, mode = mode)
-    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(tri)
+    _, non_tree_faces, _ = build_spanning_dual_tree(tri)
 
     ET = ET.transpose()
     ET = Matrix([row for i, row in enumerate(ET) if i in non_tree_faces]).transpose()
@@ -269,3 +272,76 @@ def taut_polynomial_via_interpolate(tri, angle, cycles = [], alpha = True):
     # derivatives, back compute, and win.
     # This might also work in the multivariable case.
     return None
+
+
+@liberal
+def build_oriented_tree_cycles(tri, angle):
+    """
+    For every cycle, reorders it and computes the signs.  When done,
+    the first (dual) edge of each cycle has orientation agreeing with
+    angle and the rest are equipped with signs telling us how the
+    orientation on the cycles (dis)agrees with angle.  It then returns
+    the reordered cycles and the signs.
+    """
+    cycles = build_non_tree_edge_cycles(tri)
+    oriented_cycles = []
+    all_signs = []
+    coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    for cycle in cycles:
+        if len(cycle) == 1:
+            all_signs.append([1])
+        elif len(cycle) == 2: 
+            embeddings = tri.triangle(cycle[0]).embeddings()
+            tet0, _ = (embed.simplex() for embed in embeddings)
+            tet0_faces = [tet0.triangle(i).index() for i in range(4)]
+            local_cycle0 = tet0_faces.index(cycle[0])
+            local_cycle1 = tet0_faces.index(cycle[1])
+            tet0_coor = coorientations[tet0.index()]
+            if tet0_coor[local_cycle0] == tet0_coor[local_cycle1]:
+                all_signs.append([1, -1])
+            else:
+                all_signs.append([1, 1])
+        else: # at least three
+            # first decide if we need to reverse the cycle
+            embeddings = tri.triangle(cycle[0]).embeddings()
+            tet0, tet1 = (embed.simplex() for embed in embeddings)
+            tet0_faces = [tet0.triangle(i).index() for i in range(4)]
+            local_cycle0 = tet0_faces.index(cycle[0])
+            tet0_coor = coorientations[tet0.index()]
+            if tet0_coor[local_cycle0] != 1:
+                cycle.reverse()
+                cycle = cycle[-1:] + cycle[:-1]
+                tet0, tet1 = tet1, tet0
+            # now everything is sensible: that is, tet0 is below face0
+            cycle_signs = []
+            curr_tet = tet0
+            for face_ind in cycle:
+                curr_tet_faces = [curr_tet.triangle(i).index() for i in range(4)]
+                local_face_ind = curr_tet_faces.index(face_ind)
+                curr_tet_coor = coorientations[curr_tet.index()]
+                cycle_signs.append(curr_tet_coor[local_face_ind])
+                curr_tet = curr_tet.adjacentSimplex(local_face_ind)
+            assert cycle_signs[0] == 1
+            all_signs.append(cycle_signs)
+
+        oriented_cycles.append(cycle)
+
+    return (oriented_cycles, all_signs)
+
+@liberal
+def build_tree_gens(tri, angle):
+    """
+    Returns the generators of H_1 coming from the non-tree (dual)
+    edges.
+    """
+    gens = []
+    oriented_cycles, all_signs = build_oriented_tree_cycles(tri, angle) 
+    n = tri.countTetrahedra()
+    for cycle, signs in zip(oriented_cycles, all_signs):
+        gen = [0]*2*n
+        for face, sign in zip(cycle, signs):
+            gen[face] = sign 
+        gens.append(gen)
+    return gens
+            
+    

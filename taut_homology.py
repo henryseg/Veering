@@ -49,6 +49,45 @@ def build_spanning_dual_tree(triangulation):
     return (tree_faces, non_tree_faces, distances_to_root)
 
 
+def walk_towards_root(tet, tree_faces, distances_to_root):
+    """
+    returns the tet closer to the root, and the face we crossed
+    """
+    my_dist_to_root = distances_to_root[tet.index()]
+    assert my_dist_to_root > 0 # if we are at the root, blow up
+    for i in range(4):
+        if tet.triangle(i).index() in tree_faces:
+            neighbour = tet.adjacentSimplex(i)
+            if distances_to_root[neighbour.index()] < my_dist_to_root:
+                return (neighbour, tet.triangle(i).index())
+    assert False
+
+    
+def build_non_tree_edge_cycles(triangulation):
+    """
+    For every non-tree (dual) edge, find the corresponding cycle.
+    """
+    tree_faces, non_tree_faces, distances_to_root = build_spanning_dual_tree(triangulation)
+    cycles = []
+    for orig_face_ind in non_tree_faces:
+        embeddings = triangulation.triangle(orig_face_ind).embeddings()
+        tet0, tet1 = (embed.simplex() for embed in embeddings)
+        zero_faces = []
+        one_faces = []
+        while tet0.index() != tet1.index():
+            dist0 = distances_to_root[tet0.index()]
+            dist1 = distances_to_root[tet1.index()]
+            if dist0 < dist1:
+                tet1, face1_ind = walk_towards_root(tet1, tree_faces, distances_to_root)
+                one_faces.append(face1_ind)
+            else:
+                tet0, face0_ind = walk_towards_root(tet0, tree_faces, distances_to_root)
+                zero_faces.append(face0_ind)
+        zero_faces.reverse()
+        cycles.append([orig_face_ind] + one_faces + zero_faces)
+    return cycles
+                
+
 def there_is_a_pi_here(angle_struct, embed):
     """
     Given an embedding of an edge in a tetrahedron, tells us if there

@@ -2,10 +2,11 @@
 # transverse_taut.py
 #
 
-# functions for working with transverse  taut ideal triangulations.
+# functions for working with transverse taut ideal triangulations.
 
 import regina # needed inside of imported files
 from taut import liberal, is_taut, apply_isom_to_angle_struct_list, vert_pair_to_edge_num
+
 
 vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]  
 
@@ -137,3 +138,4 @@ def symmetry_group_size(tri, angle):
                 if coorientations[0][0] == coorientations[isom.tetImage(0)][isom.facetPerm(0)[0]]:  ## fixes transverse structure
                     count += 1
     return str(count)
+
