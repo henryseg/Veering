@@ -369,7 +369,6 @@ def cone_in_homology(tri, angle):
     else:
         non_tree_as_cycles = non_tree_edge_cycles(tri, angle)
         Q = Matrix(non_tree_as_cycles)
-        coorientations = is_transverse_taut(tri, angle, return_type="tet_vert_coorientations")
         S, U, V = faces_in_smith(tri,angle,[])
         rank, dimU, dimV = rank_of_quotient(S)
         U = Matrix(U)
