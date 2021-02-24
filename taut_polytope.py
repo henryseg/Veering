@@ -13,10 +13,13 @@ from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.geometry.polyhedron.constructor import Polyhedron
 from sage.matrix.constructor import Matrix
 from sage.modules.free_module_integer import IntegerLattice
+from sage.geometry.cone import Cone
 
 from taut import liberal
 from transverse_taut import is_transverse_taut
-from taut_homology import edge_equation_matrix_taut, elem_vector
+from taut_homology import edge_equation_matrix_taut, elem_vector, faces_in_smith, rank_of_quotient
+from taut_polynomial import non_tree_edge_cycles
+
 
 # Examining edge/face matrices
 
@@ -358,6 +361,24 @@ def taut_cone_homological_dim(tri, angle):
     Anns = Cobs.kernel()
     return Rays.intersection(Anns).dimension()
 
+@liberal
+def cone_in_homology(tri, angle):
+    rays = taut_rays(tri, angle)
+    if len(rays) == 0:
+        return 0
+    else:
+        non_tree_as_cycles = non_tree_edge_cycles(tri, angle)
+        Q = Matrix(non_tree_as_cycles)
+        coorientations = is_transverse_taut(tri, angle, return_type="tet_vert_coorientations")
+        S, U, V = faces_in_smith(tri,angle,[])
+        rank, dimU, dimV = rank_of_quotient(S)
+        U = Matrix(U)
+        P = U.transpose().inverse()
+        P = P.delete_rows(range(0, dimU-rank))
+        A = P*Q
+        projectedRays = [A*v for v in rays]
+        C = Cone(projectedRays)
+        return [ray for ray in C.rays()]
 
 @liberal
 def analyse_many_angles(tri):
