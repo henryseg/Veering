@@ -361,6 +361,17 @@ def taut_cone_homological_dim(tri, angle):
     Anns = Cobs.kernel()
     return Rays.intersection(Anns).dimension()
 
+@liberal
+def projection_to_homology(tri,angle):
+    non_tree_as_cycles = non_tree_edge_cycles(tri, angle)
+    Q = Matrix(non_tree_as_cycles)
+    S, U, V = faces_in_smith(tri,angle,[])
+    rank, dimU, dimV = rank_of_quotient(S)
+    U = Matrix(U)
+    P = U.transpose().inverse()
+    P = P.delete_rows(range(0, dimU-rank))
+    A = P*Q
+    return A
 
 @liberal
 def cone_in_homology(tri, angle):
@@ -368,14 +379,7 @@ def cone_in_homology(tri, angle):
     if len(rays) == 0:
         return []
     else:
-        non_tree_as_cycles = non_tree_edge_cycles(tri, angle)
-        Q = Matrix(non_tree_as_cycles)
-        S, U, V = faces_in_smith(tri,angle,[])
-        rank, dimU, dimV = rank_of_quotient(S)
-        U = Matrix(U)
-        P = U.transpose().inverse()
-        P = P.delete_rows(range(0, dimU-rank))
-        A = P*Q
+        A = projection_to_homology(tri,angle)
         projectedRays = [A*v for v in rays]
         C = Cone(projectedRays)
         return [ray for ray in C.rays()]
