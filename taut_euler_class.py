@@ -443,10 +443,11 @@ def order_of_euler_class(delta, E):
 # Note that there are manifolds M in the census where H^2(M, \ZZ) has
 # positive rank...  What about odd torsion?
 
-# Question: If the veering triangulation is well-framed (aka
-# edge-orientable), does the Euler class vanish?
+# Question: If the veering triangulation is edge-orientable, does the
+# Euler class vanish?
 
-# See the discussion with Nathan 2020-04-03 - he says the following.
+# Answer: Yes.  Here is a version of a discussion with Nathan
+# [2020-04-03] - he says the following:
 
 # Suppose that F is a foliation carried by the horizontal branched
 # surface.  Let UTF be the unit tangent bundle to F.  We think of
