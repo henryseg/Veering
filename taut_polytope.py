@@ -6,6 +6,7 @@
 
 # TODO - Gurobi?
 
+
 import regina
 import snappy
 
@@ -13,7 +14,9 @@ from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.geometry.polyhedron.constructor import Polyhedron
 from sage.matrix.constructor import Matrix
 from sage.modules.free_module_integer import IntegerLattice
+from sage.modules.free_module_element import vector
 from sage.geometry.cone import Cone
+from sage.rings.integer_ring import ZZ
 
 from taut import liberal
 from transverse_taut import is_transverse_taut
@@ -331,7 +334,12 @@ def taut_rays(tri, angle):
     N_rows = [v.list() for v in N.rows()]
     N_eqns = [[0] + v for v in N_rows]
     P = Polyhedron(ieqs = elem_ieqs, eqns = N_eqns)
-    return [ray.vector() for ray in P.rays()]
+
+    rays = [ray.vector() for ray in P.rays()]
+    for ray in rays:
+        assert all(a.is_integer() for a in ray)
+    # all of the entries are integers, represented in QQ, so we clean them.
+    return [vector(ZZ(a) for a in ray) for ray in rays]
 
 # the function
 

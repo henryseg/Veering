@@ -30,7 +30,7 @@ def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = 
     face_coorientations = convert_tetrahedron_coorientations_to_faces(tri, tet_vert_coorientations)
 
     for f in tri.faces(2):
-        weight = int(surface[f.index()])
+        weight = surface[f.index()]  # this should be an integer. :)
         for vert_num in range(3):
             cusp_index = f.face(0, vert_num).index()
 
@@ -39,9 +39,9 @@ def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = 
             trailing_edge = f.face(1, trailing_vert_num) 
             leading_vert_num = (vert_num - sgn) % 3
             leading_edge = f.face(1, leading_vert_num) 
-            ## these are with respect to right hand rule on surface as viewed from above
-            ## the faces above us on the trailing edge get -weight, 
-            ## the faces above us on the leading edge get +weight.
+            # these are with respect to right hand rule on surface as viewed from above
+            # the faces above us on the trailing edge get -weight, 
+            # the faces above us on the leading edge get +weight.
 
             left, right = edge_sides[trailing_edge.index()]
             pair = (f.index(), trailing_vert_num)

@@ -299,7 +299,7 @@ def run_tests(num_to_check=1000):
         for sig, surface in boundary_cycles:
             print("testing boundary cycles", sig)
             surface_list = list(surface)
-            cycles = taut_carried.boundary_cycles_from_surface(sig,surface_list)
+            cycles = taut_carried.boundary_cycles_from_surface(sig, surface_list)
             cycles = tuple(tuple(cycle) for cycle in cycles)
             assert cycles.__repr__() == boundary_cycles[(sig, surface)]
 
