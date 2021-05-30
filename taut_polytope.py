@@ -21,7 +21,7 @@ from sage.rings.integer_ring import ZZ
 from taut import liberal
 from transverse_taut import is_transverse_taut
 from taut_homology import edge_equation_matrix_taut, elem_vector, faces_in_smith, rank_of_quotient
-from taut_polynomial import non_tree_edge_cycles
+from fundamental_domain import non_tree_edge_cycles
 
 
 # Examining edge/face matrices

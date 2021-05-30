@@ -4,6 +4,8 @@
 
 # Computation of loops in pi_1(M) by building a fundamental domain realised as a spanning tree in the dual 1 skeleton.
 
+from taut import liberal
+
 verbose = 0
 
 def spanning_dual_tree(triangulation):
@@ -77,3 +79,78 @@ def non_tree_edge_loops(triangulation):
         zero_faces.reverse()
         loops.append([orig_face_ind] + one_faces + zero_faces)
     return loops
+
+@liberal
+def non_tree_edge_loops_oriented(tri, angle):
+    """
+    Suppose that T is the (dual) spanning tree.  For every non-tree
+    edge e, there is a unique oriented loop in T union e whose
+    orientation agrees with the orientation of e (as given by alpha).
+    We return this as a list of faces (starting with e) and a list of
+    signs (starting with +1).
+    """
+    loops = non_tree_edge_loops(tri)
+    oriented_loops = []
+    all_signs = []
+    coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    for loop in loops:
+        if len(loop) == 1:
+            all_signs.append([1])
+        elif len(loop) == 2: 
+            embeddings = tri.triangle(loop[0]).embeddings()
+            tet0, _ = (embed.simplex() for embed in embeddings)
+            tet0_faces = [tet0.triangle(i).index() for i in range(4)]
+            local_loop0 = tet0_faces.index(loop[0])
+            local_loop1 = tet0_faces.index(loop[1])
+            tet0_coor = coorientations[tet0.index()]
+            if tet0_coor[local_loop0] == tet0_coor[local_loop1]:
+                all_signs.append([1, -1])
+            else:
+                all_signs.append([1, 1])
+        else: # at least three
+            # first decide if we need to reverse the loop
+            embeddings = tri.triangle(loop[0]).embeddings()
+            tet0, tet1 = (embed.simplex() for embed in embeddings)
+            tet0_faces = [tet0.triangle(i).index() for i in range(4)]
+            local_loop0 = tet0_faces.index(loop[0])
+            tet0_coor = coorientations[tet0.index()]
+            if tet0_coor[local_loop0] != 1:
+                loop.reverse()
+                loop = loop[-1:] + loop[:-1]
+                tet0, tet1 = tet1, tet0
+            # now everything is sensible: that is, tet0 is below face0
+            loop_signs = []
+            curr_tet = tet0
+            for face_ind in loop:
+                curr_tet_faces = [curr_tet.triangle(i).index() for i in range(4)]
+                local_face_ind = curr_tet_faces.index(face_ind)
+                curr_tet_coor = coorientations[curr_tet.index()]
+                loop_signs.append(curr_tet_coor[local_face_ind])
+                curr_tet = curr_tet.adjacentSimplex(local_face_ind)
+            assert loop_signs[0] == 1
+            all_signs.append(loop_signs)
+
+        oriented_loops.append(loop)
+
+    return (oriented_loops, all_signs)
+
+@liberal
+def non_tree_edge_cycles(tri, angle):
+    """
+    Returns the (dual) one-cycles associated to the non-tree edges.
+
+    In other words: Suppose that T is the dual spanning tree.  Then,
+    for every non-tree edge e, we return a vector of length 2*n (num
+    faces) with entries from {-1, 0, +1}, which tells us how the
+    transverse orientation (angle) agrees or disagrees with the unique
+    oriented loop in T union e.
+    """
+    cycles = []
+    oriented_loops, all_signs = non_tree_edge_loops_oriented(tri, angle) 
+    n = tri.countTetrahedra()
+    for loop, signs in zip(oriented_loops, all_signs):
+        cycle = [0]*2*n
+        for face, sign in zip(loop, signs):
+            cycle[face] = sign 
+        cycles.append(cycle)
+    return cycles
