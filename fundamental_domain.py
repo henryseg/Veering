@@ -55,10 +55,12 @@ def walk_towards_root(tet, tree_faces, distances_to_root):
                 return (neighbour, tet.triangle(i).index())
     assert False
 
-    
 def non_tree_edge_loops(triangulation, include_tetrahedra = False):
     """
-    For every non-tree (dual) edge e, find the corresponding loop in T union e.
+    For every non-tree (dual) edge e, find the corresponding loop in T union e, 
+    given as a sequence of face indices, starting with e. If include_tetrahedra, 
+    we also return the interstitial tetrahedra. In incidence order, we 
+    have f0,t0,f1,t1,...
     """
     tree_faces, non_tree_faces, distances_to_root = spanning_dual_tree(triangulation)
     loops = []
@@ -165,3 +167,12 @@ def non_tree_edge_cycles(tri, angle):
             cycle[face] = sign 
         cycles.append(cycle)
     return cycles
+
+if __name__ == '__main__':
+    from taut import isosig_to_tri_angle
+    tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
+    loops = non_tree_edge_loops(tri, include_tetrahedra = True)
+    for (faces,tets) in loops:
+        print('faces', faces)
+        print('tets', [t.index() for t in tets])
+
