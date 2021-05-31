@@ -56,7 +56,7 @@ def walk_towards_root(tet, tree_faces, distances_to_root):
     assert False
 
     
-def non_tree_edge_loops(triangulation):
+def non_tree_edge_loops(triangulation, include_tetrahedra = False):
     """
     For every non-tree (dual) edge e, find the corresponding loop in T union e.
     """
@@ -67,17 +67,27 @@ def non_tree_edge_loops(triangulation):
         tet0, tet1 = (embed.simplex() for embed in embeddings)
         zero_faces = []
         one_faces = []
+        zero_tetrahedra = [tet0]
+        one_tetrahedra = [tet1]
         while tet0.index() != tet1.index():
             dist0 = distances_to_root[tet0.index()]
             dist1 = distances_to_root[tet1.index()]
             if dist0 < dist1:
                 tet1, face1_ind = walk_towards_root(tet1, tree_faces, distances_to_root)
                 one_faces.append(face1_ind)
+                one_tetrahedra.append(tet1)
             else:
                 tet0, face0_ind = walk_towards_root(tet0, tree_faces, distances_to_root)
                 zero_faces.append(face0_ind)
+                zero_tetrahedra.append(tet0)
         zero_faces.reverse()
-        loops.append([orig_face_ind] + one_faces + zero_faces)
+        zero_tetrahedra.reverse()
+        face_loop = [orig_face_ind] + one_faces + zero_faces
+        tet_loop = one_tetrahedra[:-1] + zero_tetrahedra
+        if include_tetrahedra:
+            loops.append((face_loop, tet_loop))
+        else:
+            loops.append(face_loop)
     return loops
 
 @liberal
@@ -93,6 +103,7 @@ def non_tree_edge_loops_oriented(tri, angle):
     oriented_loops = []
     all_signs = []
     coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    assert coorientations != False
     for loop in loops:
         if len(loop) == 1:
             all_signs.append([1])
