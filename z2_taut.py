@@ -6,7 +6,8 @@
 
 import regina
 from copy import deepcopy
-from taut import liberal, edge_pair_to_edge_numbers
+from taut import liberal, edge_pair_to_edge_numbers, vert_pair_to_edge_pair
+from fundamental_domain import non_tree_edge_loops
 
 # check Z2 tautness
 
@@ -36,6 +37,7 @@ def try_build_z2_taut_struct(tri, partial_taut_structure, num_pis_at_edges, rema
 
     if len(partial_taut_structure) == tri.countTetrahedra():
         # print partial_taut_structure, num_pis_at_edges, veering_directions
+        assert is_z2_taut(tri, partial_taut_structure)
         pass_back_structures.append(partial_taut_structure)
         return True
     #try to add next tetrahedron in
@@ -69,14 +71,42 @@ def try_add_z2_taut_tet(tri, partial_taut_structure, num_pis_at_edges, remaining
     #print new_partial_taut_structure, new_num_pis_at_edges, new_veering_directions
     try_build_z2_taut_struct(tri, new_partial_taut_structure, new_num_pis_at_edges, new_remaining_edge_degrees, pass_back_structures)
 
+def is_trivial_in_cohomology(tri, angle):
+    """Test all loops in this triangulation, do any of them pass an odd number
+    of pi's. If so, return False"""
+    loops = non_tree_edge_loops(tri, include_tetrahedra = True)
+    for (face_inds, tets) in loops:
+        n = len(tets)
+        pi_count = 0
+        for i in range(n):
+            tet = tets[i]
+            face_ind0 = face_inds[i]
+            face_ind1 = face_inds[(i+1)%n]
+            tet_face_indices = [tet.triangle(j).index() for j in range(4)]
+            k0 = tet_face_indices.index(face_ind0)
+            k1 = tet_face_indices.index(face_ind1)
+            if k0 == k1:
+                assert n == 1
+                k1 = tet_face_indices.index(face_ind1, k0 + 1)  ## start looking from index k0 + 1
+            edge_pair = vert_pair_to_edge_pair[tuple(sorted((k0, k1)))]
+            if angle[tet.index()] == edge_pair:
+                pi_count += 1
+        if pi_count%2 != 0:
+            return False
+    return True
+
+
 def test():
-    t = regina.Triangulation3.fromIsoSig('cPcbbbiht')
+    # t = regina.Triangulation3.fromIsoSig('cPcbbbiht')
     # t = regina.Triangulation3.fromIsoSig('dLQbcccdero')
-    t.orient()
+    # t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m019.tri')
+    ### t = regina.SnapPeaCensusManifold(regina.SnapPeaCensusManifold.SEC_5, 19).construct() ### seems to be broken
+    t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m015.tri')
+
+    # t.orient()
     structs = find_z2_taut_structures(t)
     for s in structs:
-        print(s)
-        print(is_z2_taut(t, s))
+        print(s, is_trivial_in_cohomology(t,s))
 
 if __name__ == '__main__':
     test()
