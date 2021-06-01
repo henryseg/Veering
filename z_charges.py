@@ -4,14 +4,17 @@
 
 # Goal - generate z_charges, following [BB]
 
+from sage.matrix.constructor import Matrix
+from sage.modules.free_module_element import vector
+
 def tet_vector(i, num_tet):
     """
     Gives the tet equation for the i^th tetrahedron.
     """
     out = []
     for j in range(num_tet): 
-        if i == j: out.append([1]*3)
-        else: out.append([0]*3)
+        if i == j: out.extend([1]*3)
+        else: out.extend([0]*3)
     return out
 
 def solution_vector(num_tet, num_cusps):
