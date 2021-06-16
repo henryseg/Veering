@@ -101,6 +101,4 @@ def reduced_charges(M):
 
     tri = regina.Triangulation3.fromSnapPea(M._to_string())
     out = [charges_to_taut_struct(v) for v in out]
-    out_new = [angle for angle in out if is_trivial_in_cohomology(tri, angle)]
-    if len(out_new) < len(out): print("yay")
-    return out_new
+    return [angle for angle in out if is_trivial_in_cohomology(tri, angle)]
