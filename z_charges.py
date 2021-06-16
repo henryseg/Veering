@@ -90,15 +90,18 @@ def reduce(u):
 
 def reduced_charges(M):
     """
-    Given a snappy manifold M, find all reduced charges so that:
+    Given a snappy manifold M, we find all reduced charges so that:
     (1) no tetrahedron has three pi's and 
     (2) no loop in the triangulation passes an odd number of pi's.
+    We return these after converting them to "angle structures".  
+    The quotes are there because the edge equations are only satisfied 
+    modulo two. 
     """
     t, A = int_sol_and_kernel(M)
     nt = M.num_tetrahedra()
-    out = [reduce(t + sum(B)) for B in powerset(A)]
-    out = [v for v in out if sum(v) == nt] # reject if there are three pi's in any tet.
+    charges = [reduce(t + sum(B)) for B in powerset(A)] 
+    charges = [c for c in charges if sum(c) == nt] # reject if there are three pi's in any tet.
 
-    tri = regina.Triangulation3.fromSnapPea(M._to_string())
-    out = [charges_to_taut_struct(v) for v in out]
-    return [angle for angle in out if is_trivial_in_cohomology(tri, angle)]
+    tri = regina.Triangulation3(M)
+    angles = [charges_to_taut_struct(c) for c in charges] 
+    return [angle for angle in angles if is_trivial_in_cohomology(tri, angle)]
