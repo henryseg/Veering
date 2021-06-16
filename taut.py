@@ -71,15 +71,21 @@ def isosig_from_tri_angle(tri, angle):
     """
     isosig, isom = tri.isoSigDetail()  # isom is the mapping between the original triangulation and the isosig triangulation
     isosig_tri = regina.Triangulation3.fromIsoSig(isosig)
-    isosig_tri_angle_struct_list = apply_isom_to_angle_struct_list(angle, isom)
-    # Now find the lexicographically smallest angle structure string of symmetries of the one we have
-    all_isoms = isosig_tri.findAllIsomorphisms(isosig_tri)
-    all_angles_lists = []
-    for isom in all_isoms:
-        all_angles_lists.append( apply_isom_to_angle_struct_list(isosig_tri_angle_struct_list, isom) )
-    all_angles_strings = ["".join([str(num) for num in angles_list]) for angles_list in all_angles_lists]
-    all_angles_strings.sort()
-    return isosig + "_" + all_angles_strings[0]
+    # isosig_tri_angle_struct_list = apply_isom_to_angle_struct_list(angle, isom)
+    angle = apply_isom_to_angle_struct_list(angle, isom)
+
+    # # Now find the lexicographically smallest angle structure string of symmetries of the one we have
+    # all_isoms = isosig_tri.findAllIsomorphisms(isosig_tri)
+    # all_angles_lists = []
+    # for isom in all_isoms:
+    #     all_angles_lists.append( apply_isom_to_angle_struct_list(isosig_tri_angle_struct_list, isom) )
+    # all_angles_strings = ["".join([str(num) for num in angles_list]) for angles_list in all_angles_lists]
+    # all_angles_strings.sort()
+
+    smallest_angle = lex_smallest_angle_structure(isosig_tri, angle)
+    smallest_angle_string = "".join([str(num) for num in smallest_angle])
+
+    return isosig + "_" + smallest_angle_string
 
 
 # checking tautness
@@ -118,6 +124,14 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edg
         new_angle_struct_list[mapped_tet_index] = pi_number
     return new_angle_struct_list
 
+def lex_smallest_angle_structure(tri, angle):
+    """find the lexicographically smallest angle structure among symmetries of the one we have"""
+    all_isoms = tri.findAllIsomorphisms(tri)
+    all_angles = []
+    for isom in all_isoms:
+        all_angles.append( apply_isom_to_angle_struct_list(angle, isom) )
+    all_angles.sort()
+    return all_angles[0]
 
 # functions to deal with orientations
 

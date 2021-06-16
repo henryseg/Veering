@@ -11,7 +11,7 @@ from sage.modules.free_module_element import vector
 from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.misc.misc import powerset
 
-from taut import charges_to_taut_struct
+from taut import charges_to_taut_struct, lex_smallest_angle_structure
 from taut_polytope import dot_prod, extract_solution
 from z2_taut import is_trivial_in_cohomology
 
@@ -104,4 +104,11 @@ def reduced_charges(M):
 
     tri = regina.Triangulation3(M)
     angles = [charges_to_taut_struct(c) for c in charges] 
+
+    lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]
+    angles = []
+    for angle in lex_angles:  ## remove symmetries
+        if angle not in angles:
+            angles.append(angle) 
+
     return [angle for angle in angles if is_trivial_in_cohomology(tri, angle)]
