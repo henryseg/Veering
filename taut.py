@@ -229,7 +229,7 @@ def charges_to_taut_struct(charges):
     n = int(round(len(charges)/3))
     out = []
     for i in range(n):
-        tet = charges[ 3*n : 3*n+3 ]
+        tet = charges[ 3*i : 3*i+3 ]
         out.append( pi_edgepair_dict[tuple(tet)] )
     return out
 
