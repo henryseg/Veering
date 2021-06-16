@@ -13,6 +13,7 @@ from sage.misc.misc import powerset
 
 from taut import charges_to_taut_struct
 from taut_polytope import dot_prod, extract_solution
+from z2_taut import is_trivial_in_cohomology
 
 def tet_vector(i, num_tet):
     """
@@ -99,6 +100,7 @@ def reduced_charges(M):
     out = [v for v in out if sum(v) == nt] # reject if there are three pi's in any tet.
 
     tri = regina.Triangulation3.fromSnapPea(M._to_string())
-    out_new = [v for v in out if is_trivial_in_cohomology(tri, charges_to_taut_struct(v))]
+    out = [charges_to_taut_struct(v) for v in out]
+    out_new = [angle for angle in out if is_trivial_in_cohomology(tri, angle)]
     if len(out_new) < len(out): print("yay")
     return out_new
