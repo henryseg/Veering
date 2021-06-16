@@ -99,7 +99,7 @@ def is_taut(tri, angle):
 # dealing with relabelling triangulations
 
 
-def apply_isom_to_angle_struct_list(original_angle_struct_list, isom):
+def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edge_pair = False):
     """
     Given a taut angle structure and an isomorphism of a triangulation,
     return the taut angle structure relative to the new triangulation.
@@ -111,7 +111,10 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom):
         pi_edge = [isom.facetPerm(i)[original_triang_pi_edge[0]], isom.facetPerm(i)[original_triang_pi_edge[1]]]
         pi_edge.sort()
         pi_edge = tuple(pi_edge)
-        pi_number = vert_pair_to_edge_num[pi_edge]
+        if return_edge_pair:
+            pi_number = vert_pair_to_edge_pair[pi_edge]
+        else:
+            pi_number = vert_pair_to_edge_num[pi_edge]
         new_angle_struct_list[mapped_tet_index] = pi_number
     return new_angle_struct_list
 
@@ -214,4 +217,23 @@ def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
     for tet_num in range(regina_angle_struct.triangulation().countTetrahedra()):
         out.append(pi_edgepair(regina_angle_struct, tet_num))
     return out
+
+pi_edgepair_dict = { (1,0,0) : 0, (0,1,0) : 1, (0,0,1) : 2 }
+
+def charges_to_taut_struct(charges):
+    """
+    Given a list of 3*n integers with each triple of the form (1,0,0), (0,1,0), or (0,0,1), 
+    convert into our angle structure format.
+    """
+    assert len(charges) % 3 == 0
+    n = int(round(len(charges)/3))
+    out = []
+    for i in range(n):
+        tet = charges[ 3*n : 3*n+3 ]
+        out.append( pi_edgepair_dict[tuple(tet)] )
+    return out
+
+
+
+
 

@@ -74,8 +74,10 @@ def try_add_z2_taut_tet(tri, partial_taut_structure, num_pis_at_edges, remaining
 def is_trivial_in_cohomology(tri, angle):
     """Test all loops in this triangulation, do any of them pass an odd number
     of pi's. If so, return False"""
+    # print('angle', angle)
     loops = non_tree_edge_loops(tri, include_tetrahedra = True)
     for (face_inds, tets) in loops:
+        # print('face_inds', face_inds)
         n = len(tets)
         pi_count = 0
         for i in range(n):
@@ -89,24 +91,36 @@ def is_trivial_in_cohomology(tri, angle):
                 assert n == 1
                 k1 = tet_face_indices.index(face_ind1, k0 + 1)  ## start looking from index k0 + 1
             edge_pair = vert_pair_to_edge_pair[tuple(sorted((k0, k1)))]
+            # print('k0, tet, k1, edge_pair', k0, tet.index(), k1, edge_pair, angle[tet.index()] == edge_pair)
             if angle[tet.index()] == edge_pair:
                 pi_count += 1
         if pi_count%2 != 0:
             return False
     return True
 
+def find_cohomology_trivial_z2_taut_structures(tri):
+    structs = find_z2_taut_structures(tri)
+    return [s for s in structs if is_trivial_in_cohomology(tri, s)]
 
 def test():
     # t = regina.Triangulation3.fromIsoSig('cPcbbbiht')
     # t = regina.Triangulation3.fromIsoSig('dLQbcccdero')
     # t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m019.tri')
     ### t = regina.SnapPeaCensusManifold(regina.SnapPeaCensusManifold.SEC_5, 19).construct() ### seems to be broken
-    t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m015.tri')
-
+    # t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m015.tri')
+    # t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m011.tri')
+    #t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m129.tri')
+    t = regina.SnapPeaTriangulation('/Users/segerman/Dropbox/Schleimer-Segerman/Veering/Finiteness/NotesAndPictures/m129_v2.tri')
     # t.orient()
-    structs = find_z2_taut_structures(t)
-    for s in structs:
-        print(s, is_trivial_in_cohomology(t,s))
+    # structs = find_z2_taut_structures(t)
+    # for s in structs:
+    #     if is_trivial_in_cohomology(t,s):
+    #         print(s, is_trivial_in_cohomology(t,s))
+
+    structs = find_cohomology_trivial_z2_taut_structures(t)
+    print(structs)
+    #for s in structs:
+    #    print(s)
 
 if __name__ == '__main__':
     test()
