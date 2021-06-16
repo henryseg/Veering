@@ -141,8 +141,3 @@ class veering_triangulation():
     def is_edge_orientable(self, return_type = "boolean"):
         from edge_orientability import is_edge_orientable as is_eo
         return is_eo(self.tri, self.angle, return_type = return_type)
-
-
-
-
-
