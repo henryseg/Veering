@@ -11,9 +11,10 @@ from sage.modules.free_module_element import vector
 from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.misc.misc import powerset
 
-from taut import charges_to_taut_struct, lex_smallest_angle_structure
-from taut_polytope import dot_prod, extract_solution
+from taut import charges_to_taut_struct, lex_smallest_angle_structure, is_taut
+from taut_polytope import dot_prod, extract_solution, is_layered
 from z2_taut import is_trivial_in_cohomology
+from veering import is_veering
 
 def tet_vector(i, num_tet):
     """
@@ -112,3 +113,21 @@ def reduced_charges(M):
             angles.append(angle) 
 
     return [angle for angle in angles if is_trivial_in_cohomology(tri, angle)]
+
+def can_deal_with_reduced_charges(M):
+    """
+    Returns True or False, answering the question of whether our techniques 
+    recognise each of the reduced charges we find.
+    """
+    angles = reduced_charges(M)
+    tri = regina.Triangulation3(M)
+    for angle in angles:
+        if not is_taut(tri, angle):
+            return False
+        elif not (is_veering(tri, angle) or is_layered(tri, angle)):
+            return False
+    return True
+
+
+
+
