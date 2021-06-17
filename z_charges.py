@@ -37,7 +37,7 @@ def solution_vector(M):
     sol.extend([1]*num_tet) # pi
     sol.extend([2]*num_tet) # 2 pi
     sol.extend([0]*2*num_cusps) # zero
-    return vector(sol)
+    return vector(ZZ, sol)
 
 def angle_equations(M):
     """
@@ -46,7 +46,7 @@ def angle_equations(M):
     """
     num_tet = M.num_tetrahedra()
     G = M.gluing_equations()
-    T = Matrix(tet_vector(i, num_tet) for i in range(num_tet))
+    T = Matrix(ZZ, tet_vector(i, num_tet) for i in range(num_tet))
     return T.transpose().augment(G.transpose()).transpose() # sigh
 
 def sol_and_kernel(M):
@@ -174,4 +174,18 @@ def can_deal_with_reduced_charges(M):
     return True
 
 def final_int_sol_and_kernel(M):
-    pass
+    A = angle_equations(M)
+    b = solution_vector(M)
+    D, U, V = A.smith_form()
+    min_dim, max_dim = A.dimensions()
+    assert min_dim <= max_dim
+    b = U*b
+    if not all(D[i][i].divides(bp[i]) for i in range(min_dim)):
+        return None
+    b = [b[i] / D[i][i] if D[i][i] != 0 else b[i] for i in range(min_dim)]
+    padding = vector(ZZ, [0]*(max_dim - min_dim))
+    b.extend(padding)
+    b = vector(ZZ, b)
+    x = V * b
+    assert A*x == b
+    return x
