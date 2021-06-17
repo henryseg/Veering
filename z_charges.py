@@ -47,6 +47,35 @@ def sol_and_kernel(M):
     S = solution_vector(M.num_tetrahedra(), M.num_cusps())
     return E.solve_right(S), E.right_kernel().basis()
 
+def last_row_with_non_zero_ith_entry(A, i):
+    out = None
+    for row in A:
+        if row[i] != 0:
+            out = row
+    return out
+
+def intify_sol(t, A):
+    """
+    t is rational, A is a list of integer vectors of same length as t. 
+    Use multiples of rows of A to intify t
+    """
+    for i in range(len(t)):
+        if not t[i].is_integer():
+            row = last_row_with_non_zero_ith_entry(A, i)
+            t = t - (t[i]/row[i]) * row  ### make ith entry zero, which is an integer!
+    for x in t:
+        if not x.is_integer():
+            return None
+    return t
+
+def better_int_sol_and_kernel(M):
+    t, A = sol_and_kernel(M)
+    t = intify_sol(t, A)
+    if t == None:
+        return None
+    else:
+        return t, A
+
 def real_sol_and_kernel(M):
     nt = M.num_tetrahedra()
     nc = M.num_cusps()
@@ -98,7 +127,10 @@ def reduced_charges(M):
     The quotes are there because the edge equations are only satisfied 
     modulo two. 
     """
-    t, A = int_sol_and_kernel(M)
+    out = better_int_sol_and_kernel(M)
+    if out == None:
+        return None
+    t, A = out
     nt = M.num_tetrahedra()
     charges = [reduce(t + sum(B)) for B in powerset(A)] 
     charges = [c for c in charges if sum(c) == nt] # reject if there are three pi's in any tet.
@@ -120,6 +152,8 @@ def can_deal_with_reduced_charges(M):
     recognise each of the reduced charges we find.
     """
     angles = reduced_charges(M)
+    if angles == None:
+        return False
     tri = regina.Triangulation3(M)
     for angle in angles:
         if not is_taut(tri, angle):
