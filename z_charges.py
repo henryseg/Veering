@@ -26,26 +26,37 @@ def tet_vector(i, num_tet):
         else: out.extend([0]*3)
     return out
 
-def solution_vector(num_tet, num_cusps):
+def solution_vector(M):
     """
-    The desired sums of the tet, edge, and holonomy equations.
+    Given a snappy manifold, returns the desired sums of the tet,
+    edge, and holonomy equations.
     """
-    out = []
-    out.extend([1]*num_tet) # pi
-    out.extend([2]*num_tet) # 2 pi
-    out.extend([0]*2*num_cusps) # zero
-    return vector(out)
+    num_tet = M.num_tetrahedra()
+    num_cusps = M.num_cusps()
+    sol = []
+    sol.extend([1]*num_tet) # pi
+    sol.extend([2]*num_tet) # 2 pi
+    sol.extend([0]*2*num_cusps) # zero
+    return vector(sol)
+
+def angle_equations(M):
+    """
+    Given a snappy manifold M, returns the matrix of angle equations
+    (that is, the tet, edge, and cusp equations).
+    """
+    num_tet = M.num_tetrahedra()
+    G = M.gluing_equations()
+    T = Matrix(tet_vector(i, num_tet) for i in range(num_tet))
+    return T.transpose().augment(G.transpose()).transpose() # sigh
 
 def sol_and_kernel(M):
     """
-    Given a snappy manifold M, returns a solution to the tet, edge,
-    and holonomy equations, as well as a basis for the kernel.
+    Given a snappy manifold M, returns a solution to the angle
+    equations, as well as a basis for the kernel.
     """
-    G = M.gluing_equations()
-    T = Matrix(tet_vector(i, M.num_tetrahedra()) for i in range(M.num_tetrahedra()))
-    E = T.transpose().augment(G.transpose()).transpose()
-    S = solution_vector(M.num_tetrahedra(), M.num_cusps())
-    return E.solve_right(S), E.right_kernel().basis()
+    A = angle_equations(M)
+    b = solution_vector(M)
+    return A.solve_right(b), A.right_kernel().basis()
 
 def last_row_with_non_zero_ith_entry(A, i):
     out = None
@@ -162,6 +173,5 @@ def can_deal_with_reduced_charges(M):
             return False
     return True
 
-
-
-
+def final_int_sol_and_kernel(M):
+    pass
