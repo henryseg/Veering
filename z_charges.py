@@ -10,6 +10,7 @@ from sage.matrix.constructor import Matrix
 from sage.modules.free_module_element import vector
 from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.misc.misc import powerset
+from sage.rings.integer_ring import ZZ
 
 from taut import charges_to_taut_struct, lex_smallest_angle_structure, is_taut
 from taut_polytope import dot_prod, extract_solution, is_layered
@@ -46,7 +47,7 @@ def angle_equations(M):
     """
     num_tet = M.num_tetrahedra()
     G = M.gluing_equations()
-    T = Matrix(ZZ, tet_vector(i, num_tet) for i in range(num_tet))
+    T = Matrix(ZZ, [tet_vector(i, num_tet) for i in range(num_tet)])
     return T.transpose().augment(G.transpose()).transpose() # sigh
 
 def sol_and_kernel(M):
@@ -138,7 +139,8 @@ def reduced_charges(M):
     The quotes are there because the edge equations are only satisfied 
     modulo two. 
     """
-    out = better_int_sol_and_kernel(M)
+    out = final_int_sol_and_kernel(M)
+    # out = better_int_sol_and_kernel(M)
     if out == None:
         return None
     t, A = out
@@ -179,13 +181,13 @@ def final_int_sol_and_kernel(M):
     D, U, V = A.smith_form()
     min_dim, max_dim = A.dimensions()
     assert min_dim <= max_dim
-    b = U*b
-    if not all(D[i][i].divides(bp[i]) for i in range(min_dim)):
+    c = U*b
+    if not all(D[i][i].divides(c[i]) for i in range(min_dim)):
         return None
-    b = [b[i] / D[i][i] if D[i][i] != 0 else b[i] for i in range(min_dim)]
+    c = [c[i] / D[i][i] if D[i][i] != 0 else c[i] for i in range(min_dim)]
     padding = vector(ZZ, [0]*(max_dim - min_dim))
-    b.extend(padding)
-    b = vector(ZZ, b)
-    x = V * b
+    c.extend(padding)
+    c = vector(ZZ, c)
+    x = V * c
     assert A*x == b
-    return x
+    return x, A.right_kernel().basis()
