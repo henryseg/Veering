@@ -65,6 +65,3 @@ def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = 
             for (f_ind, vert) in above:
                 out[cusp_index][f_ind] += weight
     return out
-
-
-
