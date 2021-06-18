@@ -221,15 +221,19 @@ def final_int_sol_and_kernel(M):
     return x, A.right_kernel().basis()
 
 def has_internal_singularities(M, angle):
-    """Given a snappy manifold M and an angle structure (assumed to be
+    """
+    Given a snappy manifold M and an angle structure (assumed to be
     layered), convert M to a t3m triangulation, convert angle to the
     flipper format, use them to get a flipper TautStructure, find the
     monodromy, and then check the stratum.  If there are internal
     singularities, then return True.
     """
     T = t3m.Mcomplex(M)
+    # the veering code uses "vertex with 0 (minus one)"
+    # flipper and t3m use "vertex with 3".  So: 
+    angle = [2 - a for a in angle]
     angle_vector = angle_to_charges(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
-    h = taut_struct.monodromy()
-    s = h.stratum()
-    return not all(punc.filled() for punc in s.keys())
+    mono = taut_struct.monodromy()
+    strat = mono.stratum()
+    return any(punc.filled for punc in strat.keys())
