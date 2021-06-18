@@ -260,7 +260,7 @@ def angle_to_charges(angle, flipper_format = False):
     """
     Given a list of n integers in [0,2], convert to charges structure format.
     """
-    out = [0] * (3*n)
+    out = [0] * (3*len(angle))
     for i, a in enumerate(angle):
         out[3*i + a] = 1
     if flipper_format:
