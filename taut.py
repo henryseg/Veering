@@ -256,13 +256,15 @@ def charges_to_angle(charges):
         out.append( pi_edgepair_dict[tuple(tet)] )
     return out
 
-def angle_to_charges(angle):
+def angle_to_charges(angle, flipper_format = False):
     """
     Given a list of n integers in [0,2], convert to charges structure format.
     """
     out = [0] * (3*n)
     for i, a in enumerate(angle):
         out[3*i + a] = 1
+    if flipper_format:
+        out.append(0)  ### flipper adds a variable to homogenise, so we have to do the same.
     return out
 
 
