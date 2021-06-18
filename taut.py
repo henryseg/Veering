@@ -7,6 +7,7 @@
 # orientable.
 
 import regina
+from functools import wraps
 
 # convention - A "regina isosig" is a string specifying a labelled,
 # triangulated three-manifold.  An "angle string" specifies the
@@ -16,11 +17,12 @@ import regina
 # regina_isosig + "_" + angle_string
 
 
-# Let's be liberal in what we accept.  This might slow things down,
-# ever so slightly, but it is worth it.  Here is the decorator.
-
+# Let's be liberal in what we accept.
+# Pro - we can use functions interactively.
+# Con - this borks the query "func?"
 
 def liberal(func):
+    @wraps(func)
     def liberal_wrapper(*args, **kwargs):
         if type(args[0]) is str:
             sig = args[0]
@@ -246,8 +248,3 @@ def charges_to_taut_struct(charges):
         tet = charges[ 3*i : 3*i+3 ]
         out.append( pi_edgepair_dict[tuple(tet)] )
     return out
-
-
-
-
-
