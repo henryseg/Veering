@@ -135,36 +135,47 @@ def reduced_charges(M):
     Given a snappy manifold M, we find all reduced charges so that:
     (1) no tetrahedron has three pi's and 
     (2) no loop in the triangulation passes an odd number of pi's.
-    We return these after converting them to "angle structures".  
-    The quotes are there because the edge equations are only satisfied 
-    modulo two. 
     """
     out = final_int_sol_and_kernel(M)
     # out = better_int_sol_and_kernel(M)
     if out == None:
         return None
-    t, A = out
+    x, A = out
     nt = M.num_tetrahedra()
-    charges = [reduce(t + sum(B)) for B in powerset(A)] 
+    charges = [reduce(x + sum(B)) for B in powerset(A)] 
     charges = [c for c in charges if sum(c) == nt] # reject if there are three pi's in any tet.
+    return charges
 
+def reduced_angles(M):
+    """
+    Given a snappy manifold M, compute the reduced charges, convert to
+    angle structures, remove repeated structures (using symmetries of
+    the triangulation), remove non-trivial structures (in cohomology),
+    and return what remains.
+    """
+    charges = reduced_charges(M)    
+    if charges == None:
+        return None
     tri = regina.Triangulation3(M)
     angles = [charges_to_taut_struct(c) for c in charges] 
 
+    # remove symmetries
     lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]
     angles = []
-    for angle in lex_angles:  ## remove symmetries
+    for angle in lex_angles:  
         if angle not in angles:
             angles.append(angle) 
 
-    return [angle for angle in angles if is_trivial_in_cohomology(tri, angle)]
+    # remove the angles that flip a triangle over 
+    angles = [angle for angle in angles if is_trivial_in_cohomology(tri, angle)] 
+    return angles
 
-def can_deal_with_reduced_charges(M):
+def can_deal_with_reduced_angles(M):
     """
-    Returns True or False, answering the question of whether our techniques 
-    recognise each of the reduced charges we find.
+    Returns True or False, as our techniques can recognise each of the
+    reduced angles we find.
     """
-    angles = reduced_charges(M)
+    angles = reduced_angles(M)
     if angles == None:
         return False
     tri = regina.Triangulation3(M)
@@ -178,16 +189,29 @@ def can_deal_with_reduced_charges(M):
 def final_int_sol_and_kernel(M):
     A = angle_equations(M)
     b = solution_vector(M)
-    D, U, V = A.smith_form()
+    D, U, V = A.smith_form() 
+    # UAV = D so Uinv D Vinv = A
+    # want to solve Ax = b
+    # that is Uinv D Vinv x = b
+    # that is D Vinv x = Ub
+    c = U * b
+    
     min_dim, max_dim = A.dimensions()
     assert min_dim <= max_dim
-    c = U*b
+    # D is diagonal, so Dinv means "divide".
+    # we check if we can divide:
     if not all(D[i][i].divides(c[i]) for i in range(min_dim)):
+        # there is no solution so
         return None
-    c = [c[i] / D[i][i] if D[i][i] != 0 else c[i] for i in range(min_dim)]
+    # divide, and set 0 / 0 equal to 0
+    c = [c[i] / D[i][i] if D[i][i] != 0 else 0 for i in range(min_dim)]
+
+    # need to have the correct dimension
     padding = vector(ZZ, [0]*(max_dim - min_dim))
     c.extend(padding)
     c = vector(ZZ, c)
+    # thus Vinv x = Dinv U b
+    # thus x = V Dinv U b
     x = V * c
     assert A*x == b
     return x, A.right_kernel().basis()
