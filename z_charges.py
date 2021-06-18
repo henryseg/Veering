@@ -5,6 +5,9 @@
 # Goal - generate z_charges, following [BB]
 
 import regina
+import flipper
+
+from snappy.snap import t3mlite as t3m
 
 from sage.matrix.constructor import Matrix
 from sage.modules.free_module_element import vector
@@ -12,10 +15,11 @@ from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.misc.misc import powerset
 from sage.rings.integer_ring import ZZ
 
-from taut import charges_to_angle, lex_smallest_angle_structure, is_taut
+from taut import is_taut, charges_to_angle, angle_to_charges, lex_smallest_angle_structure
 from taut_polytope import dot_prod, extract_solution, is_layered
 from z2_taut import is_trivial_in_cohomology
 from veering import is_veering
+
 
 def tet_vector(i, num_tet):
     """
@@ -215,3 +219,17 @@ def final_int_sol_and_kernel(M):
     x = V * c
     assert A*x == b
     return x, A.right_kernel().basis()
+
+def has_internal_singularities(M, angle):
+    """Given a snappy manifold M and an angle structure (assumed to be
+    layered), convert M to a t3m triangulation, convert angle to the
+    flipper format, use them to get a flipper TautStructure, find the
+    monodromy, and then check the stratum.  If there are internal
+    singularities, then return True.
+    """
+    T = t3m.Mcomplex(M)
+    angle_vector = angle_to_charges(angle, flipper_format = True)
+    taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
+    h = taut_struct.monodromy()
+    s = h.stratum()
+    return not all(punc.filled() for punc in s.keys())
