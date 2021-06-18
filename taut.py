@@ -6,8 +6,10 @@
 # taut ideal triangulations.  We assume that the given manifolds are
 # orientable.
 
+
 import regina
 from functools import wraps
+
 
 # convention - A "regina isosig" is a string specifying a labelled,
 # triangulated three-manifold.  An "angle string" specifies the
@@ -17,10 +19,7 @@ from functools import wraps
 # regina_isosig + "_" + angle_string
 
 
-# Let's be liberal in what we accept.
-# Pro - we can use functions interactively.
-# Con - this borks the query "func?"
-
+# "Be liberal in what you accept" - Postel's law
 def liberal(func):
     @wraps(func)
     def liberal_wrapper(*args, **kwargs):
@@ -38,6 +37,7 @@ def liberal(func):
 
 
 # converting between vertices, edges, and edge pairs.
+
 
 edge_num_to_vert_pair  = {0: (0, 1), 1: (0, 2), 2: (0, 3), 3: (2, 3), 4: (1, 3), 5: (1, 2)}    
 vert_pair_to_edge_num = {(0, 1):0, (1, 0):0, (0, 2):1, (2, 0):1, (0, 3):2, (3, 0):2, (1, 2):3, (2, 1):3, (1, 3):4, (3, 1):4, (2, 3):5, (3, 2):5}
@@ -126,6 +126,7 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edg
         new_angle_struct_list[mapped_tet_index] = pi_number
     return new_angle_struct_list
 
+
 def lex_smallest_angle_structure(tri, angle):
     """find the lexicographically smallest angle structure among symmetries of the one we have"""
     all_isoms = tri.findAllIsomorphisms(tri)
@@ -134,6 +135,7 @@ def lex_smallest_angle_structure(tri, angle):
         all_angles.append( apply_isom_to_angle_struct_list(angle, isom) )
     all_angles.sort()
     return all_angles[0]
+
 
 # functions to deal with orientations
 
@@ -211,7 +213,9 @@ def fix_orientations(tri, angle):
         if orientation == -1:
             reverse_tet_orientation(tri, tri.tetrahedron(i), angle[i])
 
-### functions for converting regina's angle structure format to ours
+
+# functions for converting regina's angle structure format to ours
+
 
 def pi_edgepair(regina_angle_struct, tet_num):
     """
@@ -224,6 +228,7 @@ def pi_edgepair(regina_angle_struct, tet_num):
             return edgepair
     assert False # we shouldn't be able to get here.
 
+
 def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
     """
     Convert a taut regina angle structure to list of which edge pair
@@ -234,12 +239,14 @@ def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
         out.append(pi_edgepair(regina_angle_struct, tet_num))
     return out
 
+
 pi_edgepair_dict = { (1,0,0) : 0, (0,1,0) : 1, (0,0,1) : 2 }
+
 
 def charges_to_taut_struct(charges):
     """
-    Given a list of 3*n integers with each triple of the form (1,0,0), (0,1,0), or (0,0,1), 
-    convert into our angle structure format.
+    Given a list of 3*n integers with each triple of the form (1,0,0),
+    (0,1,0), or (0,0,1), convert to our angle structure format.
     """
     assert len(charges) % 3 == 0
     n = int(round(len(charges)/3))
