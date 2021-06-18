@@ -4,6 +4,7 @@
 
 # Functions that call upon snappy.
 
+
 import snappy
 
 from file_io import output_to_pickle
@@ -11,6 +12,7 @@ from taut import isosig_to_tri_angle
 
 
 # Shapes
+
 
 def tet_norm(z):
     if abs(z) < 1 and abs(1-z) < 1:   
@@ -20,8 +22,10 @@ def tet_norm(z):
     else:   
         return 1/(1 - z)
     
+
 # From a given collection of isosigs, build the snappy shapes and put
 # them in a pickled dictionary.
+
 
 def shapes_to_pickle(isosigs, filename, progress = 100):
     shapes = {}
@@ -40,7 +44,9 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
     output_to_pickle(shapes, filename)
     return None
 
+
 # Peripheral intersection numbers
+
 
 def triangle_sum(x, y):
     x0, x1, x2 = x
@@ -60,11 +66,13 @@ def algebraic_intersection(a, b):
 
     return sum([triangle_sum(a[3*i:3*i + 3], b[3*i:3*i + 3]) for i in range(num_tets)]) // 2
 
+
 def cusp_slope(m, l, a):
     p, q = (algebraic_intersection(a, l), algebraic_intersection(m, a))
     if p > 0 or (p == 0 and q > 0):
         return (p, q)
     return (-p, -q)
+
 
 def get_slopes_from_peripherals(M, peripherals):
     # given a snappy manifold and list of peripheral curves, return a
@@ -92,3 +100,36 @@ def get_slopes_from_peripherals(M, peripherals):
             slopes[i] = (0, 0) 
 
     return [slopes[i] for i in range(n)]
+
+
+# torus bundles
+
+
+letters = {"L", "R"}
+
+def build_bundles(n):
+    """
+    Builds (the snappy names of) oriented punctured torus bundles of
+    length at most n-1.
+    """
+    bundles = set()
+
+    # perhaps more intelligent to enumerate fractions and find their
+    # continued fractions.  However, the code below is only too slow
+    # by a factor of n, and generates the bundles in the correct
+    # "order" (harmonic >> Lebesgue as we care about the number of
+    # tetrahedra, not the number of syllables)
+    for i in range(n):
+        for s in cartesian_product([letters]*i):
+            s = "".join(s)
+            try:
+                M = snappy.Manifold("b++" + s)
+                for N in M.identify(): bundles.add(N.name())
+            except:
+                pass
+            try:
+                M = snappy.Manifold("b+-" + s)
+                for N in M.identify(): bundles.add(N.name())
+            except:
+                pass
+    return bundles
