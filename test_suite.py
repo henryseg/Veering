@@ -6,18 +6,19 @@ import random
 
 from file_io import parse_data_file, read_from_pickle
 
+
 def run_tests(num_to_check=1000):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
 
     import taut
     print("testing is_taut")
-    for sig in veering_isosigs[:num_to_check]:
+    for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert taut.is_taut(tri, angle)
 
     print("testing isosig round trip")
-    for sig in veering_isosigs[:num_to_check]:
+    for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         recovered_sig = taut.isosig_from_tri_angle(tri, angle)
         assert sig == recovered_sig
@@ -26,7 +27,7 @@ def run_tests(num_to_check=1000):
 
     import transverse_taut
     print("testing is_transverse_taut")
-    for sig in veering_isosigs[:num_to_check]:
+    for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert transverse_taut.is_transverse_taut(tri, angle)
 
@@ -38,7 +39,7 @@ def run_tests(num_to_check=1000):
 
     import veering
     print("testing is_veering")
-    for sig in veering_isosigs[:num_to_check]:
+    for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert veering.is_veering(tri, angle)
 
@@ -48,7 +49,7 @@ def run_tests(num_to_check=1000):
 
     import veering_dehn_surgery
     print("testing veering_dehn_surgery")
-    for sig in veering_isosigs[:num_to_check]:
+    for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
@@ -58,7 +59,7 @@ def run_tests(num_to_check=1000):
     print("testing veering_fan_excision")
     m003, _ = taut.isosig_to_tri_angle('cPcbbbdxm_10')
     m004, _ = taut.isosig_to_tri_angle('cPcbbbiht_12')
-    for sig in veering_isosigs[:num_to_check]:
+    for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         tet_types = veering.is_veering(tri, angle, return_type = "tet_types")
         if tet_types.count("toggle") == 2:
