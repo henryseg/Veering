@@ -105,7 +105,7 @@ def is_taut(tri, angle):
 # dealing with relabelling triangulations
 
 
-def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edge_pair = False):
+def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edge_pair = True):
     """
     Given a taut angle structure and an isomorphism of a triangulation,
     return the taut angle structure relative to the new triangulation.
