@@ -243,7 +243,7 @@ def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
 pi_edgepair_dict = { (1,0,0) : 0, (0,1,0) : 1, (0,0,1) : 2 }
 
 
-def charges_to_taut_struct(charges):
+def charges_to_angle(charges):
     """
     Given a list of 3*n integers with each triple of the form (1,0,0),
     (0,1,0), or (0,0,1), convert to our angle structure format.
@@ -255,3 +255,16 @@ def charges_to_taut_struct(charges):
         tet = charges[ 3*i : 3*i+3 ]
         out.append( pi_edgepair_dict[tuple(tet)] )
     return out
+
+def angle_to_charges(angle):
+    """
+    Given a list of n integers in [0,2], convert to charges structure format.
+    """
+    out = [0] * (3*n)
+    for i, a in enumerate(angle):
+        out[3*i + a] = 1
+    return out
+
+
+
+

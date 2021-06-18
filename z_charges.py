@@ -12,7 +12,7 @@ from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.misc.misc import powerset
 from sage.rings.integer_ring import ZZ
 
-from taut import charges_to_taut_struct, lex_smallest_angle_structure, is_taut
+from taut import charges_to_angle, lex_smallest_angle_structure, is_taut
 from taut_polytope import dot_prod, extract_solution, is_layered
 from z2_taut import is_trivial_in_cohomology
 from veering import is_veering
@@ -157,7 +157,7 @@ def reduced_angles(M):
     if charges == None:
         return None
     tri = regina.Triangulation3(M)
-    angles = [charges_to_taut_struct(c) for c in charges] 
+    angles = [charges_to_angle(c) for c in charges] 
 
     # remove symmetries
     lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]
