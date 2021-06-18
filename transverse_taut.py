@@ -137,5 +137,5 @@ def symmetry_group_size(tri, angle):
                 coorientations = is_transverse_taut(tri, angle, return_type = 'tet_vert_coorientations')
                 if coorientations[0][0] == coorientations[isom.tetImage(0)][isom.facetPerm(0)[0]]:  ## fixes transverse structure
                     count += 1
-    return str(count)
+    return count
 
