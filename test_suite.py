@@ -94,7 +94,7 @@ def run_tests(num_to_check=1000):
     if snappy_working:
         import veering_drill_midsurface_bdy
         for i in range(3):
-            sig = random.choice(veering_isosigs[:10000])
+            sig = random.choice(veering_isosigs[:3000])
             print("testing veering drilling and filling", sig) # random testing, so print the name. 
             T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
             M = snappy.Manifold(T.snapPea())
@@ -228,7 +228,7 @@ def run_tests(num_to_check=1000):
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert p.__repr__() == taut_polys[sig]
         for i in range(3):
-            sig = random.choice(veering_isosigs[:5000])
+            sig = random.choice(veering_isosigs[:3000])
             print("testing divide", sig)
             p = veering_polynomial.veering_polynomial(sig)
             q = taut_polynomial.taut_polynomial_via_tree(sig)
@@ -239,7 +239,7 @@ def run_tests(num_to_check=1000):
 
     if sage_working:
         for i in range(3):
-            sig = random.choice(veering_isosigs[:5000])
+            sig = random.choice(veering_isosigs[:3000])
             print("testing alex", sig)
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
@@ -264,7 +264,7 @@ def run_tests(num_to_check=1000):
 
     if sage_working:  # warning - this takes random amounts of time!
         for i in range(3):
-            sig = random.choice(veering_isosigs[:10000])
+            sig = random.choice(veering_isosigs[:3000])
             print("testing hom dim", sig)
             # dimension = zero if and only if nothing is carried.
             assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
@@ -329,7 +329,7 @@ def run_tests(num_to_check=1000):
         import edge_orientability
         import taut_euler_class
         for i in range(3):
-            sig = random.choice(veering_isosigs[:5000])
+            sig = random.choice(veering_isosigs[:3000])
             print("testing euler and edge orientability", sig)
             # Theorem: If (tri, angle) is edge orientable then e = 0.
             assert not ( edge_orientability.is_edge_orientable(sig) and
@@ -343,7 +343,7 @@ def run_tests(num_to_check=1000):
             
     if sage_working:
         for i in range(3):
-            sig = random.choice(veering_isosigs[:5000])
+            sig = random.choice(veering_isosigs[:3000])
             print("testing exotics", sig)
             tri, angle = taut.isosig_to_tri_angle(sig)
             T = veering.veering_triangulation(tri, angle)
@@ -354,6 +354,22 @@ def run_tests(num_to_check=1000):
 
     ### test for drill_midsurface_bdy: drill then fill, check you get the same manifold
 
+    if sage_working:
+        from sage.combinat.words.word_generators import words
+        import z_charges
+        for i in range(3):
+            sig = "b++" + str(words.RandomWord(10, 2, "LR"))  # 10 is a magic number
+            print("testing charges for punc torus bundle", sig)
+            M = snappy.Manifold(sig)
+            assert z_charges.can_deal_with_reduced_angles(M)
+    
+    if sage_working:
+        for i in range(3):
+            sig = "b+-" + str(words.RandomWord(10, 2, "LR"))  # 10 is a magic number
+            print("testing charges for punc torus bundle", sig)
+            M = snappy.Manifold(sig)
+            assert z_charges.can_deal_with_reduced_angles(M)
+    
     if sage_working:
         print("all tests depending on sage passed")
 
