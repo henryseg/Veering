@@ -258,17 +258,21 @@ def charges_to_angle(charges):
 
 def angle_to_charges(angle, flipper_format = False):
     """
-    Given a list of n integers in [0,2], convert to charges structure format.
+    Given a list of n integers in [0,2], convert to charges structure
+    format.
     """
     if flipper_format:
-        # the veering code uses "vertex with 0 (minus one)"
-        # flipper and t3m use "vertex with 3".  So: 
+        # The veering code uses "vertex with 0 (minus one)". On the
+        # other hand, flipper and t3m use "vertex with 3".
+        # See line 25 of
+        # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
         angle = [2 - a for a in angle]
     out = [0] * (3*len(angle))
     for i, a in enumerate(angle):
         out[3*i + a] = 1
     if flipper_format:
-        out.append(0)  ### flipper adds a variable to homogenise, so we have to do the same.
+        # flipper adds a variable to homogenise, so we do the same.
+        out.append(-1)  
     return out
 
 
