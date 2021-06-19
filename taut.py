@@ -260,6 +260,10 @@ def angle_to_charges(angle, flipper_format = False):
     """
     Given a list of n integers in [0,2], convert to charges structure format.
     """
+    if flipper_format:
+        # the veering code uses "vertex with 0 (minus one)"
+        # flipper and t3m use "vertex with 3".  So: 
+        angle = [2 - a for a in angle]
     out = [0] * (3*len(angle))
     for i, a in enumerate(angle):
         out[3*i + a] = 1

@@ -229,9 +229,6 @@ def has_internal_singularities(M, angle):
     singularities, then return True.
     """
     T = t3m.Mcomplex(M)
-    # the veering code uses "vertex with 0 (minus one)"
-    # flipper and t3m use "vertex with 3".  So: 
-    angle = [2 - a for a in angle]
     angle_vector = angle_to_charges(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
     mono = taut_struct.monodromy()
