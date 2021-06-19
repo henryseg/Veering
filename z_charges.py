@@ -234,6 +234,5 @@ def has_internal_singularities(M, angle):
     T = t3m.Mcomplex(M)
     angle_vector = angle_to_charges(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
-    mono = taut_struct.monodromy()
-    strat = mono.stratum()
+    strat = taut_struct.monodromy().stratum()
     return any(punc.filled for punc in strat.keys())
