@@ -358,14 +358,14 @@ def run_tests(num_to_check=1000):
         from sage.combinat.words.word_generators import words
         import z_charges
         for i in range(3):
-            sig = "b++" + str(words.RandomWord(10, 2, "LR"))  # 10 is a magic number
+            sig = "b++LR" + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
             print("testing charges for punc torus bundle", sig)
             M = snappy.Manifold(sig)
             assert z_charges.can_deal_with_reduced_angles(M)
     
     if sage_working:
         for i in range(3):
-            sig = "b+-" + str(words.RandomWord(10, 2, "LR"))  # 10 is a magic number
+            sig = "b+-LR" + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
             print("testing charges for punc torus bundle", sig)
             M = snappy.Manifold(sig)
             assert z_charges.can_deal_with_reduced_angles(M)
