@@ -272,7 +272,7 @@ def angle_to_charges(angle, flipper_format = False):
         out[3*i + a] = 1
     if flipper_format:
         # flipper adds a variable to homogenise, so we do the same.
-        out.append(-1)  
+        out.append(-1)
     return out
 
 
