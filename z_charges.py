@@ -154,7 +154,7 @@ def can_deal_with_reduced_angles(M):
     if angles == None:
         return False 
     tri = regina.Triangulation3(M)
-    return all(can_deal_with_reduced_angle(tri, angle)) 
+    return all(can_deal_with_reduced_angle(tri, angle) for angle in angles) 
 
 def has_internal_singularities(tri, angle):
     """
