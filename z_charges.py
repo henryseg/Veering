@@ -228,6 +228,9 @@ def has_internal_singularities(M, angle):
     monodromy, and then check the stratum.  If there are internal
     singularities, then return True.
     """
+    # See
+    # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
+    # for the relevant code in flipper
     T = t3m.Mcomplex(M)
     angle_vector = angle_to_charges(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
