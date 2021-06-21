@@ -357,30 +357,46 @@ def run_tests(num_to_check=1000):
     if sage_working:
         from sage.combinat.words.word_generators import words
         from sage.modules.free_module_integer import IntegerLattice
+        from sage.modules.free_module import VectorSpace
+        from sage.matrix.constructor import Matrix
         import z_charges
+        import z2_taut
+        import regina
+
+        ZZ2 = ZZ.quotient(ZZ(2))
+
+        sig_starts = ["b+-LR", "b++LR"]
+
         for i in range(3):
-            sig = "b+-LR" + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
-            print("testing lattice for punc torus bundle", sig)
-            M = snappy.Manifold(sig)
-            t, A = z_charges.sol_and_kernel(M)
-            B = z_charges.leading_trailing_deformations(M)
-            AA = IntegerLattice(A)
-            BB = IntegerLattice(B)
-            assert AA == BB.saturation()
-            
+            for sig_start in sig_starts:
+                sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
+                print("testing lattice for punc torus bundle", sig)
+                M = snappy.Manifold(sig)
+                tri = regina.Triangulation3(M)
+                t, A = z_charges.sol_and_kernel(M)
+                B = z_charges.leading_trailing_deformations(M)
+                C = z2_taut.cohomology_loops(tri)
+
+                AA = IntegerLattice(A)
+                BB = IntegerLattice(B)
+                assert AA == BB.saturation()
+
+                dim = 3*M.num_tetrahedra()
+                V = VectorSpace(ZZ2, dim)
+                AA = V.subspace(A)
+                BB = V.subspace(B)
+                CM = Matrix(ZZ2, C)
+                CC = CM.right_kernel()
+                assert AA.intersection(CC) == BB 
+                ## so l-t defms are the part of the kernel that doesn't flip over
+
     if sage_working:
         for i in range(3):
-            sig = "b++LR" + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
-            print("testing charges for punc torus bundle", sig)
-            M = snappy.Manifold(sig)
-            assert z_charges.can_deal_with_reduced_angles(M)
-    
-    if sage_working:
-        for i in range(3):
-            sig = "b+-LR" + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
-            print("testing charges for punc torus bundle", sig)
-            M = snappy.Manifold(sig)
-            assert z_charges.can_deal_with_reduced_angles(M)
+            for sig_start in sig_starts:
+                sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
+                print("testing charges for punc torus bundle", sig)
+                M = snappy.Manifold(sig)
+                assert z_charges.can_deal_with_reduced_angles(M)
             
     if sage_working:
         print("all tests depending on sage passed")
