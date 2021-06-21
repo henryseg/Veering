@@ -98,6 +98,29 @@ def is_trivial_in_cohomology(tri, angle):
             return False
     return True
 
+def cohomology_loops(tri):
+    loops = non_tree_edge_loops(tri, include_tetrahedra = True)
+    num_tet = tri.countTetrahedra()
+    out = []
+    for (face_inds, tets) in loops:
+        equ = [0] * (3 * num_tet)
+        n = len(tets)
+        for i in range(n):
+            tet = tets[i]
+            face_ind0 = face_inds[i]
+            face_ind1 = face_inds[(i+1)%n]
+            tet_face_indices = [tet.triangle(j).index() for j in range(4)]
+            k0 = tet_face_indices.index(face_ind0)
+            k1 = tet_face_indices.index(face_ind1)
+            if k0 == k1:
+                assert n == 1
+                k1 = tet_face_indices.index(face_ind1, k0 + 1)  ## start looking from index k0 + 1
+            edge_pair = vert_pair_to_edge_pair[tuple(sorted((k0, k1)))]
+            equ[3*tet.index() + edge_pair] += 1  ### everything is mod 2, so can't tell the difference between + or - anyway
+        equ = [x % 2 for x in equ]
+        out.append(equ)
+    return out
+
 def find_cohomology_trivial_z2_taut_structures(tri):
     structs = find_z2_taut_structures(tri)
     return [s for s in structs if is_trivial_in_cohomology(tri, s)]
