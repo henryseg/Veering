@@ -17,7 +17,7 @@ import flipper
 
 from snappy.snap import t3mlite as t3m
 
-from taut import is_taut, charges_to_angle, angle_to_charges, lex_smallest_angle_structure
+from taut import is_taut, charges_to_angle, angle_to_charges, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair
 from taut_polytope import dot_prod, extract_solution, is_layered
 from veering import is_veering
 from z2_taut import is_trivial_in_cohomology
@@ -89,6 +89,22 @@ def sol_and_kernel(M):
     x = V * c
     assert A*x == b
     return x, A.right_kernel().basis()
+
+def leading_trailing_deformations(tri):
+    num_tet = tri.countTetrahedra()
+    out = []
+    for e in tri.edges():
+        defm = [0] * (3 * num_tet)
+        for i in range(e.degree()):
+            emb = e.embedding(i)
+            tet_num = emb.simplex().index()
+            v0, v1, v2 = emb.vertices()[0], emb.vertices()[1], emb.vertices()[2]
+            a = unsorted_vert_pair_to_edge_pair[(v0, v2)]
+            b = unsorted_vert_pair_to_edge_pair[(v1, v2)]
+            defm[3*tet_num + a] += 1
+            defm[3*tet_num + b] -= 1
+        out.append(vector(defm))
+    return out
 
 def reduce(u):
     return vector(a % 2 for a in u)
