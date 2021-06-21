@@ -10,9 +10,11 @@ from sage.rings.integer_ring import ZZ
 from sage.misc.misc import powerset
 from sage.matrix.constructor import Matrix
 from sage.modules.free_module_element import vector
+from sage.modules.free_module import VectorSpace
 from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 
 import regina
+import snappy
 import flipper
 
 from snappy.snap import t3mlite as t3m
@@ -21,6 +23,8 @@ from taut import is_taut, charges_to_angle, angle_to_charges, lex_smallest_angle
 from taut_polytope import dot_prod, extract_solution, is_layered
 from veering import is_veering
 from z2_taut import is_trivial_in_cohomology
+
+ZZ2 = ZZ.quotient(ZZ(2))
 
 
 def tet_vector(i, num_tet):
@@ -73,11 +77,9 @@ def sol_and_kernel(M):
     min_dim, max_dim = A.dimensions()
     assert min_dim <= max_dim
     # D is diagonal, so Dinv means "divide".
-    # we check if we can divide:
-    if not all(D[i][i].divides(c[i]) for i in range(min_dim)):
-        # there is no solution so
-        return None
-    # divide, and set 0 / 0 equal to 0
+    # by [L] + [BB] there is always a solution:
+    assert all(D[i][i].divides(c[i]) for i in range(min_dim))
+    # so divide, and set 0 / 0 equal to 0
     c = [c[i] / D[i][i] if D[i][i] != 0 else 0 for i in range(min_dim)]
 
     # need to have the correct dimension
@@ -107,23 +109,31 @@ def leading_trailing_deformations(M):
         out.append(vector(defm))
     return out
 
-def reduce(u):
-    return vector(a % 2 for a in u)
+def has_pi_triple(u):
+    n = len(u)
+    assert n % 3 == 0
+    one = vector([1, 1, 1])
+    for i in range(int(n/3)):
+        if u[3*i:3*i + 3] == one: 
+            return True
+    return False
 
 def reduced_charges(M):
     """
     Given a snappy manifold M, we find all reduced charges so that:
-    (1) no tetrahedron has three pi's and 
-    (2) no loop in the triangulation passes an odd number of pi's.
+    (1) no loop in the triangulation passes an odd number of pi's.
+    (2) no tetrahedron has three pi's and 
     """
     out = sol_and_kernel(M)
-    # out = better_int_sol_and_kernel(M)
-    if out == None:
-        return None
     x, A = out
     nt = M.num_tetrahedra()
-    charges = [reduce(x + sum(B)) for B in powerset(A)] 
-    charges = [c for c in charges if sum(c) == nt] # reject if there are three pi's in any tet.
+    dim = 3*nt
+    V = VectorSpace(ZZ2, dim)
+    AA = V.subspace(A) # the reduced kernel
+    xx = V(x) # the reduced solution
+    
+    charges = [xx + sum(B) for B in powerset(AA.basis())]    
+    charges = [c for c in charges if not has_pi_triple(c)] # reject if there are three pi's in any tet.
     return charges
 
 def reduced_angles(M):
@@ -134,8 +144,6 @@ def reduced_angles(M):
     and return what remains.
     """
     charges = reduced_charges(M)    
-    if charges == None:
-        return None
     tri = regina.Triangulation3(M)
     angles = [charges_to_angle(c) for c in charges] 
 
@@ -168,10 +176,34 @@ def can_deal_with_reduced_angles(M):
     Returns True if we can deal with all of the reduced angles. 
     """
     angles = reduced_angles(M)
-    if angles == None:
-        return False 
     tri = regina.Triangulation3(M)
     return all(can_deal_with_reduced_angle(tri, angle) for angle in angles) 
+
+def num_veering_structs(M):
+    """
+    Tries to count them.  Haha!
+    """
+    angles = reduced_angles(M)
+    tri = regina.Triangulation3(M)
+    for angle in angles:
+        if not is_taut(tri, angle):
+            return None
+    for angle in angles:
+        if not (is_veering(tri, angle) or is_layered(tri, angle)):
+            return None
+    total = 0
+    for angle in angles:
+        if is_veering(tri, angle):
+            total = total + 1
+        else:
+            assert is_layered(tri, angle)
+            print(M.name(), angle, "needs flipper")
+            try: 
+                if not has_internal_singularities(tri, angle):
+                    total = total + 1
+            except:
+                print("flipper failed")
+    return total
 
 def has_internal_singularities(tri, angle):
     """
@@ -184,7 +216,7 @@ def has_internal_singularities(tri, angle):
     # See
     # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
     # for the relevant code in flipper
-    T = t3m.Mcomplex(snappy.Manifold(M))
+    T = t3m.Mcomplex(snappy.Manifold(tri))
     angle_vector = angle_to_charges(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
     strat = taut_struct.monodromy().stratum()
