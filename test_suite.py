@@ -358,14 +358,12 @@ def run_tests(num_to_check=1000):
         from sage.combinat.words.word_generators import words
         from sage.modules.free_module_integer import IntegerLattice
         import z_charges
-        import regina
         for i in range(3):
             sig = "b+-LR" + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
             print("testing lattice for punc torus bundle", sig)
             M = snappy.Manifold(sig)
-            tri = regina.Triangulation3(M)
             t, A = z_charges.sol_and_kernel(M)
-            B = z_charges.leading_trailing_deformations(tri)
+            B = z_charges.leading_trailing_deformations(M)
             AA = IntegerLattice(A)
             BB = IntegerLattice(B)
             assert AA == BB.saturation()
