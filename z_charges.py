@@ -90,7 +90,8 @@ def sol_and_kernel(M):
     assert A*x == b
     return x, A.right_kernel().basis()
 
-def leading_trailing_deformations(tri):
+def leading_trailing_deformations(M):
+    tri = regina.Triangulation3(M)
     num_tet = tri.countTetrahedra()
     out = []
     for e in tri.edges():
