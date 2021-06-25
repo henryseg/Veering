@@ -171,19 +171,24 @@ def can_deal_with_reduced_angle(tri, angle):
         return True
     return False
 
-def can_deal_with_reduced_angles(M):
+def can_deal_with_reduced_angles(M, report = False):
     """
     Returns True if we can deal with all of the reduced angles. 
     """
     angles = reduced_angles(M)
     tri = regina.Triangulation3(M)
-    return all(can_deal_with_reduced_angle(tri, angle) for angle in angles) 
+    if report:
+        nv = num_veering_structs(M, angles = angles, use_flipper = False)
+        return all(can_deal_with_reduced_angle(tri, angle) for angle in angles), len(angles), nv
+    else: 
+        return all(can_deal_with_reduced_angle(tri, angle) for angle in angles) 
 
-def num_veering_structs(M):
+def num_veering_structs(M, angles = None, use_flipper = True):
     """
-    Tries to count them.  Haha!
+    Tries to count them.  If use_flipper = False then we get a lower bound
     """
-    angles = reduced_angles(M)
+    if angles == None:
+        angles = reduced_angles(M)
     tri = regina.Triangulation3(M)
     for angle in angles:
         if not is_taut(tri, angle):
@@ -195,7 +200,7 @@ def num_veering_structs(M):
     for angle in angles:
         if is_veering(tri, angle):
             total = total + 1
-        else:
+        elif use_flipper:
             assert is_layered(tri, angle)
             print(M.name(), angle, "needs flipper")
             try: 
