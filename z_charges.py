@@ -185,7 +185,11 @@ def can_deal_with_reduced_angles(M, report = False):
 
 def num_veering_structs(M, angles = None, use_flipper = True):
     """
-    Tries to count them.  If use_flipper = False then we get a lower bound
+    Tries to count them (in a very naive way). 
+    Tries to eliminate overcounting due to symmetries (in reduced_angles)
+    but will fail if one of the symmetries is hidden by retriangulation. 
+    If use_flipper = False then we get a (true) lower bound, since then it only
+    counts veering structures on the given triangulation.
     """
     if angles == None:
         angles = reduced_angles(M)
