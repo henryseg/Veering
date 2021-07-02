@@ -247,11 +247,14 @@ def run_tests(num_to_check=1000):
                 assert taut_polynomial.taut_polynomial_via_tree(sig, mode = "alexander") == M.alexander_polynomial()
 
     if sage_working:
-        for sig in torus_bundles:
+        # would be nice to automate this - need to fetch the angle
+        # structure say via z_charge.py...
+        for sig in torus_bundles: 
             print("testing torus bundle", sig)
             assert taut_polytope.is_torus_bundle(sig)
 
     if sage_working:
+        # ditto
         for sig in torus_bundles:
             print("testing layered", sig)
             assert taut_polytope.is_layered(sig)
@@ -359,7 +362,7 @@ def run_tests(num_to_check=1000):
         from sage.modules.free_module_integer import IntegerLattice
         from sage.modules.free_module import VectorSpace
         from sage.matrix.constructor import Matrix
-        import z_charges
+        import z_charge
         import z2_taut
         import regina
 
@@ -373,8 +376,8 @@ def run_tests(num_to_check=1000):
                 print("testing lattice for punc torus bundle", sig)
                 M = snappy.Manifold(sig)
                 tri = regina.Triangulation3(M)
-                t, A = z_charges.sol_and_kernel(M)
-                B = z_charges.leading_trailing_deformations(M)
+                t, A = z_charge.sol_and_kernel(M)
+                B = z_charge.leading_trailing_deformations(M)
                 C = z2_taut.cohomology_loops(tri)
 
                 AA = IntegerLattice(A)
@@ -396,7 +399,7 @@ def run_tests(num_to_check=1000):
                 sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
                 print("testing charges for punc torus bundle", sig)
                 M = snappy.Manifold(sig)
-                assert z_charges.can_deal_with_reduced_angles(M)
+                assert z_charge.can_deal_with_reduced_angles(M)
             
     if sage_working:
         print("all tests depending on sage passed")
