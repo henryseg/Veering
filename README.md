@@ -2,9 +2,9 @@
 
 Regina-python and sage code for working with transverse taut and
 veering ideal triangulations; implemented by Anna Parlak, Saul
-Schleimer, and Henry Segerman.  The "big" and "small" veering
-polynomials are defined by Sam Taylor and Michael Landry.  We thank
-Nathan Dunfield for many helpful comments (and for some code).
+Schleimer, and Henry Segerman.  The taut and veering
+polynomials are defined by Michael Landry, Yair Minsky and Sam Taylor.  
+We thank Nathan Dunfield for many helpful comments (and for some code).
 
 ### Installing regina
 
@@ -59,18 +59,31 @@ dihedral angle pi in each tetrahedron.
 This taut structure is layered; we deduce that the figure eight knot
 is a fibered knot.
 
+    sage: import taut_polynomial
+    sage: taut_polynomial.taut_polynomial_via_tree(sig)
+    a^2 - 3*a + 1
+    sage: taut_polynomial.taut_polynomial_via_tree(sig, mode = 'alexander')
+    a^2 - 3*a + 1
     sage: import veering_polynomial
-    sage: veering_polynomial.big_polynomial(sig)
+    sage: veering_polynomial.veering_polynomial(sig)
     a^3 - 4*a^2 + 4*a - 1
-    sage: veering_polynomial.small_polynomial(sig)
-    a^2 - 3*a + 1
-    sage: veering_polynomial.small_polynomial(sig, mode = 'alexander')
-    a^2 - 3*a + 1
+    
+Note that the taut polynomial divides the veering
+polynomial; this is true in general. The taut polynomial of this veering 
+triangulation is equal to the Alexander polynomial of the underlying
+manifold; this is not true in general.
 
-Note that the small veering polynomial divides the big veering
-polynomial; this is true in general.  For the figure eight knot the
-small polynomial equals the Alexander polynomial; this is not true in
-general.
+    sage: sig = veering_isosigs[257]
+    sage: import taut_polytope
+    sage: taut_polytope.cone_in_homology(sig)
+    [N(1, -1), N(1, 1)]
+    
+The cone of homology classes carried by the veering triangulation 
+veering_isosigs[257] is spanned by the rays passing through (1,-1) and (1,1). 
+Landry, Minsky and Taylor proved that, if nonempty, this cone is equal to a 
+cone on a (not necessarily top-dimensional) face of the Thurston norm ball. 
+The chosen basis on H^1 is dual to the basis of H_1 used to compute the taut 
+and veering polynomials.
 
 ### Webpage
 
