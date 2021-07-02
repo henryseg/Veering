@@ -1,8 +1,8 @@
 # Veering
 
 Python code for working with transverse taut and veering ideal triangulations; 
-implemented by Anna Parlak, Saul Schleimer, and Henry Segerman.  The taut and 
-veering polynomials are defined by Michael Landry, Yair Minsky and Sam Taylor.  
+implemented by Anna Parlak, Saul Schleimer, and Henry Segerman. The taut and 
+veering polynomials are defined by Michael Landry, Yair Minsky and Sam Taylor. 
 We thank Nathan Dunfield for many helpful comments (and for some code).
 
 ### Installation
@@ -16,7 +16,7 @@ https://doc.sagemath.org/html/en/installation/ \
 https://snappy.math.uic.edu/installing.html \
 https://github.com/3-manifolds/regina_wheels
 
-To install *veering* via the command line type:
+To install veering via the command line type:
 
     git clone https://github.com/henryseg/Veering
 
