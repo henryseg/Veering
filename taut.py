@@ -127,7 +127,10 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edg
     return new_angle_struct_list
 
 def lex_smallest_angle_structure(tri, angle):
-    """find the lexicographically smallest angle structure among symmetries of the one we have"""
+    """
+    Finds the lexicographically smallest angle structure among
+    symmetries of the one we have.
+    """
     all_isoms = tri.findAllIsomorphisms(tri)
     all_angles = []
     for isom in all_isoms:
@@ -136,12 +139,15 @@ def lex_smallest_angle_structure(tri, angle):
     return all_angles[0]
 
 def num_taut_automorphisms(tri, angle):
-    """find the number of taut automorphisms"""
+    """
+    Finds the number of taut automorphisms
+    """
     all_isoms = tri.findAllIsomorphisms(tri)
     all_angles = []
     for isom in all_isoms:
         all_angles.append( apply_isom_to_angle_struct_list(angle, isom) )
     return all_angles.count(all_angles[0])
+
 
 # functions to deal with orientations
 
@@ -279,7 +285,3 @@ def angle_to_charge(angle, flipper_format = False):
         # flipper adds a variable to homogenise, so we do the same.
         out.append(-1)
     return out
-
-
-
-
