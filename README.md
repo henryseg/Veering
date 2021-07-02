@@ -16,15 +16,15 @@ https://doc.sagemath.org/html/en/installation/ \
 https://snappy.math.uic.edu/installing.html \
 https://github.com/3-manifolds/regina_wheels
 
-To install veering via the command line type:
+To install Veering via the command line type:
 
     git clone https://github.com/henryseg/Veering
 
 ### Download and testing
 
 After cloning or downloading the veering code, move into the new
-directory (called 'Veering' if cloned) and run the test suite.  The
-exact command depends on the location of your regina install(s).  From
+directory (called 'Veering' if cloned) and run the test suite. The
+exact command depends on the location of your regina install(s). From
 the command line:
 
     python test_suite.py
@@ -44,14 +44,14 @@ As an example, start a sage session in the directory and type:
     sage: veering_isosigs = parse_data_file('Data/veering_census.txt')
 
 The list veering_isosigs now contains all taut isomorphism signatures
-for the veering triangulations with at most 16 tetrahedra.  These are
+for the veering triangulations with at most 16 tetrahedra. These are
 ordered lexicographically.
 
     sage: sig = veering_isosigs[1]; sig
     'cPcbbbiht_12'
 
 This is the taut isomorphism signature for the only known veering
-structure on the figure eight knot complement.  The string before the
+structure on the figure eight knot complement. The string before the
 underscore is the isomorphism signature for the triangulation; the
 string after the underscore records the positions of the edges with
 dihedral angle pi in each tetrahedron.
@@ -72,10 +72,10 @@ is a fibered knot.
     sage: veering_polynomial.veering_polynomial(sig)
     a^3 - 4*a^2 + 4*a - 1
     
-Note that the taut polynomial divides the veering
-polynomial; this is true in general. The taut polynomial of this veering 
-triangulation is equal to the Alexander polynomial of the underlying
-manifold; this is not true in general.
+Note that the taut polynomial divides the veering polynomial; this is 
+true in general. The taut polynomial of this veering triangulation is
+equal to the Alexander polynomial of the underlying manifold; this is
+not true in general.
 
     sage: sig = veering_isosigs[257]
     sage: import taut_polytope
@@ -83,19 +83,23 @@ manifold; this is not true in general.
     [N(1, -1), N(1, 1)]
     
 The cone of homology classes carried by the veering triangulation 
-veering_isosigs[257] is spanned by the rays passing through (1,-1) and (1,1). 
-Landry, Minsky and Taylor proved that, if nonempty, this cone is equal to a 
-cone on a (not necessarily top-dimensional) face of the Thurston norm ball. 
-The chosen basis on H^1 is dual to the basis of H_1 used to compute the taut 
-and veering polynomials.
+veering_isosigs[257] is spanned by the rays passing through (1,-1) and
+(1,1). Landry, Minsky and Taylor proved that, if nonempty, this cone is
+equal to a cone on a (not necessarily top-dimensional) face of the Thurston 
+norm ball. The chosen basis on H^1 is dual to the basis of H_1 used to 
+compute the taut and veering polynomials.
 
 ### Webpage
 
-For references, for information about the census, and for many
-diagrams, please see:
+For references, for information about the census, and for many diagrams, 
+please see:
 
 https://math.okstate.edu/people/segerman/veering.html
 
+### Contact
+
+Please do contact us with any and all suggestions, questions, and/or corrections.
+
 ### Licence
 
-This work is in the public domain.  See the LICENCE for details.
+This work is in the public domain. See the LICENCE for details.
