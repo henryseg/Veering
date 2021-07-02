@@ -243,23 +243,22 @@ def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
 pi_edgepair_dict = { (1,0,0) : 0, (0,1,0) : 1, (0,0,1) : 2 }
 
 
-def charges_to_angle(charges):
+def charge_to_angle(charge):
     """
     Given a list of 3*n integers with each triple of the form (1,0,0),
     (0,1,0), or (0,0,1), convert to our angle structure format.
     """
-    assert len(charges) % 3 == 0
-    n = int(round(len(charges)/3))
+    assert len(charge) % 3 == 0
+    n = int(round(len(charge)/3))
     out = []
     for i in range(n):
-        tet = charges[ 3*i : 3*i+3 ]
+        tet = charge[ 3*i : 3*i+3 ]
         out.append( pi_edgepair_dict[tuple(tet)] )
     return out
 
-def angle_to_charges(angle, flipper_format = False):
+def angle_to_charge(angle, flipper_format = False):
     """
-    Given a list of n integers in [0,2], convert to charges structure
-    format.
+    Given a list of n integers in [0,2], convert to charge format.
     """
     if flipper_format:
         # The veering code uses "vertex with 0 (minus one)". On the
