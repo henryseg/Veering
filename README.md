@@ -1,20 +1,24 @@
 # Veering
 
-Regina-python and sage code for working with transverse taut and
-veering ideal triangulations; implemented by Anna Parlak, Saul
-Schleimer, and Henry Segerman.  The taut and veering
-polynomials are defined by Michael Landry, Yair Minsky and Sam Taylor.  
+Python code for working with transverse taut and veering ideal triangulations; 
+implemented by Anna Parlak, Saul Schleimer, and Henry Segerman.  The taut and 
+veering polynomials are defined by Michael Landry, Yair Minsky and Sam Taylor.  
 We thank Nathan Dunfield for many helpful comments (and for some code).
 
-### Installing regina
+### Installation
 
 Essentially all of the veering code relies on regina; some of it
-relies on sage. Other parts rely on the Python vector graphics package
-pyx. Installation instructions for regina (independently and into 
-sage) can be found here:
+relies on snappy and some on SageMath. Other parts rely on the 
+Python vector graphics package pyx. Installation instructions for 
+SageMath, snappy, and regina can be found at the following webpages:
 
-http://regina-normal.github.io/  
-http://sageregina.unhyperbolic.org/
+https://doc.sagemath.org/html/en/installation/ \
+https://snappy.math.uic.edu/installing.html \
+https://github.com/3-manifolds/regina_wheels
+
+To install *veering* via the command line type:
+
+    git clone https://github.com/henryseg/Veering
 
 ### Download and testing
 
