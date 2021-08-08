@@ -5,6 +5,7 @@
 # Computation of loops in pi_1(M) by building a fundamental domain realised as a spanning tree in the dual 1 skeleton.
 
 from taut import liberal
+from transverse_taut import is_transverse_taut
 
 verbose = 0
 
