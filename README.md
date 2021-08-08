@@ -103,7 +103,7 @@ When citing the codebase, please use the following (updating the year).
 ```
 @Misc{Veering,
     author = {Anna Parlak and Saul Schleimer and Henry Segerman},
-    title = {Veering (Computer Software)},
+    title = {Veering, code for studying taut and veering ideal triangulations},
     howpublished = {\url{https://github.com/henryseg/Veering}},
     year = {20xx},
 }
