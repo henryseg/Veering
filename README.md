@@ -96,6 +96,19 @@ please see:
 
 https://math.okstate.edu/people/segerman/veering.html
 
+### Citation
+
+When citing the codebase, please use the following (updating the year). 
+
+```
+@Misc{Veering,
+    author = {Anna Parlak and Saul Schleimer and Henry Segerman},
+    title = {Veering (Computer Software)},
+    howpublished = {\url{https://github.com/henryseg/Veering}},
+    year = {20xx},
+}
+```
+
 ### Contact
 
 Please do contact us with any and all suggestions, questions, and/or corrections.
