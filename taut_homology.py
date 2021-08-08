@@ -50,6 +50,7 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
             vert_perm = embed.vertices()
             trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
             # as we walk around the edge, leading is in front of us, trailing is behind us
+            # FIX - the following link is broken. 
             # see http://regina.sourceforge.net/engine-docs/classregina_1_1NTetrahedron.html#a54d99721b2ab2a0a0a72b6216b436440
             f = tet.triangle(leading_vert_num)  ### this is the face behind the tetrahedron as we walk around
             fmapping = tet.faceMapping(2, leading_vert_num)
