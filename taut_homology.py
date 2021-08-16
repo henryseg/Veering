@@ -160,15 +160,13 @@ def group_ring(triangulation, angle_structure, cycles, alpha = False, ring = ZZ)
     rank, _, _ = rank_of_quotient(S)
     if alpha:
         assert rank < 26
-        return LaurentPolynomialRing(ring, list(ascii)[:rank])
+        return LaurentPolynomialRing(ring, list(ascii)[:rank], rank)
     else:
         return LaurentPolynomialRing(ring, "x", rank)
 
 
 def faces_in_laurent(triangulation, angle_structure, cycles, ZH):
     face_vecs = faces_in_homology(triangulation, angle_structure, cycles)
-    if len(face_vecs[0]) == 1:
-        face_vecs = [vec[0] for vec in face_vecs]
     return [ ZH( {vec:1} ) for vec in face_vecs]
 
 
@@ -190,8 +188,6 @@ def epimorphism_in_laurent(tri, angle, cycles, ZH):
     image_on_gens = (B*A).columns()
     image_on_gens = [tuple(col) for col in image_on_gens]
 
-    if len(image_on_gens[0]) == 1: # flatten if neccesary
-        image_on_gens= [vec[0] for vec in image_on_gens]
     image_in_laurent = [ZH( { image_on_gens[i]:1 } ) for i in range(r)]
     return image_in_laurent
 
@@ -221,8 +217,6 @@ def monomial_multiplier(elts, ZH):
     elts = [ZH(elt) for elt in elts]
     A =  Matrix(ZZ, join_lists([ uniform_exponents(p) for p in elts]))
     min_exp = tuple( [min(row) for row in A.transpose()] )
-    if len(min_exp) == 1:
-        min_exp = min_exp[0]
     return ZH( {min_exp:1} )
 
 
@@ -252,9 +246,10 @@ def normalise_poly(poly, ZH, P):
     if verbose > 0:
         print(("mul", mul))
     poly = laurent_to_poly(poly / mul, P)
-    if poly.coefficients()[-1] < 0:
+    # if poly.coefficients()[-1] < 0:  # I don't trust this.
+    # if str(poly)[0] == "-":  # This is a hack, of course.
+    if poly.lt().coefficients()[0] < 0:  # lt = leading term
         poly = -poly
     return poly
-
 
 ### end of copied/modified code
