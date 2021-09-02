@@ -13,24 +13,9 @@ from sage.matrix.constructor import Matrix
 from sage.rings.polynomial.laurent_polynomial_ring import LaurentPolynomialRing
 
 from fundamental_domain import spanning_dual_tree
+from taut import there_is_a_pi_here
 
 verbose = 0
-
-def there_is_a_pi_here(angle_struct, embed):
-    """
-    Given an embedding of an edge in a tetrahedron, tells us if there
-    is a pi at that edge.
-    """
-    tet = embed.tetrahedron()
-    vert_perm = embed.vertices()
-    vert_nums = [vert_perm[0], vert_perm[1]]
-    vert_nums.sort()
-    in_tet_edge_num = [(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)].index(tuple(vert_nums))
-    if in_tet_edge_num <= 2:
-        edgepair = in_tet_edge_num
-    else:
-        edgepair = 5 - in_tet_edge_num
-    return angle_struct[tet.index()] == edgepair
 
 def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientations = None):
     """

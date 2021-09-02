@@ -285,3 +285,19 @@ def angle_to_charge(angle, flipper_format = False):
         # flipper adds a variable to homogenise, so we do the same.
         out.append(-1)
     return out
+
+def there_is_a_pi_here(angle_struct, embed):
+    """
+    Given an embedding of an edge in a tetrahedron, tells us if there
+    is a pi at that edge.
+    """
+    tet = embed.tetrahedron()
+    vert_perm = embed.vertices()
+    vert_nums = [vert_perm[0], vert_perm[1]]
+    vert_nums.sort()
+    in_tet_edge_num = [(0,1), (0,2), (0,3), (1,2), (1,3), (2,3)].index(tuple(vert_nums))
+    if in_tet_edge_num <= 2:
+        edgepair = in_tet_edge_num
+    else:
+        edgepair = 5 - in_tet_edge_num
+    return angle_struct[tet.index()] == edgepair
