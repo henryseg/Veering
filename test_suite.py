@@ -66,6 +66,13 @@ def run_tests(num_to_check=1000):
             excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
             assert excised_tri.isIsomorphicTo(m003) != None or excised_tri.isIsomorphicTo(m004) != None
 
+    import taut_pachner
+    print("testing taut_pachner")
+    for sig in random.sample(veering_isosigs, num_to_check):
+        tri, angle = taut.isosig_to_tri_angle(sig)
+        face_num = random.randrange(tri.countTriangles())
+        taut_pachner.twoThreeMove(tri, angle, face_num)   # all taut 2-3 moves on veering triangulations are valid
+
     print("all basic tests passed")
 
     try:
