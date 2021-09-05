@@ -71,15 +71,11 @@ def run_tests(num_to_check=1000):
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         face_num = random.randrange(tri.countTriangles())
-        taut_pachner.twoThreeMove(tri, angle, face_num, return_edge = True)
-        # print(sig)
-        # print(face_num)
-        # print(taut_pachner.twoThreeMove(tri, angle, face_num, return_edge = True))
-        # tri2, angle2, edge_num = taut_pachner.twoThreeMove(tri, angle, face_num, return_edge = True)  # all taut 2-3 moves on veering triangulations are valid
-        # tri3, angle3 = taut_pachner.threeTwoMove(tri2, angle2, edge_num)
-        # print( taut.isosig_from_tri_angle(tri, angle) )
-        # print( taut.isosig_from_tri_angle(tri3, angle3) )
-        # assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
+        result = taut_pachner.twoThreeMove(tri, angle, face_num, return_edge = True)  
+        if result != False: 
+            tri2, angle2, edge_num = result
+            tri3, angle3 = taut_pachner.threeTwoMove(tri2, angle2, edge_num)
+            assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
 
     print("all basic tests passed")
 

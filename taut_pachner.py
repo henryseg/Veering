@@ -26,10 +26,12 @@ def twoThreeMove(tri, angle, face_num, perform = True, return_edge = False):
     tet_1_face_num = embed1.face()
     vertices1 = embed1.vertices() # Maps vertices (0,1,2) of face to the corresponding vertex numbers of tet1
 
-    if tet0 == tet1:
+    if tet0 == tet1:  ### Cannot perform a 2-3 move across a self-gluing
         return False
 
     ### taut 2-3 move is valid if the pis are on different edges of face
+    ### this never happens if we start with a veering triangulation.
+    ### for veering, the two-tetrahedron ball is always a continent.
 
     for i in range(3):
         j = (i+1) % 3
