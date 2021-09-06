@@ -4,23 +4,32 @@ from taut import isosig_to_tri_angle, isosig_from_tri_angle
 from taut_pachner import twoThreeMove, threeTwoMove
 
 class taut_pachner_node():
-    def __init__(self, isoSig, ceiling = 9999, floor = 0):
+    def __init__(self, isoSig, tri = None, angle = None, ceiling = 9999, floor = 0):
         self.isoSig = isoSig
-        self.neighbour_isoSigs_down = {}
-        self.neighbour_isoSigs_up = {}
+        self.neighbour_moves_up_faces = {}
+        self.neighbour_moves_down_edges = {}
+        self.neighbour_moves_up_tri_angles = {}
+        self.neighbour_moves_down_tri_angles = {}
+        self.neighbour_moves_tri_angles = None
+        if tri == None:
+            print('gen new triang')
+            self.tri, self.angle = self.getTriang()
+        else:
+            self.tri, self.angle = tri, angle
         # self.is_frontier = False #is a node on the boundary of what we have explored
         self.generate_neighbour_isoSigs(ceiling, floor)
 
-    def get_neighbour_isoSigs(self):
-        # return self.neighbour_isoSigs_up | self.neighbour_isoSigs_down  #union
-        return set(self.neighbour_isoSigs_up.keys()) | set(self.neighbour_isoSigs_down.keys())
+    def all_neighbour_isoSigs(self):
+        # return self.neighbour_moves_up_faces | self.neighbour_moves_down_edges  #union
+        return set(self.neighbour_moves_up_faces.keys()) | set(self.neighbour_moves_down_edges.keys())
 
     def getTriang(self):
         # return regina.NTriangulation(self.isoSig)
         return isosig_to_tri_angle(self.isoSig)
 
     def generate_neighbour_isoSigs(self, ceiling, floor):
-        tri, angle = self.getTriang()
+        # tri, angle = self.getTriang()
+        tri, angle = self.tri, self.angle
         num_tetrahedra = tri.countTetrahedra()
         assert num_tetrahedra <= ceiling
         assert num_tetrahedra >= floor
@@ -32,9 +41,8 @@ class taut_pachner_node():
                 output = twoThreeMove(tri_copy, angle_copy, face_index)
                 if output != False:
                     tri_new, angle_new = output
-                    self.neighbour_isoSigs_up[isosig_from_tri_angle(tri_new, angle_new)] = 'f' + str(face_index)
-        # else:
-        #     self.is_frontier = True  #frontier either because we are at ceiling # tet, or because this is last layer of search
+                    self.neighbour_moves_up_faces[isosig_from_tri_angle(tri_new, angle_new)] = 'f' + str(face_index)
+                    self.neighbour_moves_up_tri_angles[isosig_from_tri_angle(tri_new, angle_new)] = (tri_new, angle_new)
 
         if num_tetrahedra > floor:
             for edge_index in range(tri.countEdges()):
@@ -43,20 +51,35 @@ class taut_pachner_node():
                 output = threeTwoMove(tri_copy, angle_copy, edge_index)
                 if output != False:
                     tri_new, angle_new = output
-                    self.neighbour_isoSigs_down[isosig_from_tri_angle(tri_new, angle_new)] = 'e' + str(edge_index)
+                    self.neighbour_moves_down_edges[isosig_from_tri_angle(tri_new, angle_new)] = 'e' + str(edge_index)
+                    self.neighbour_moves_down_tri_angles[isosig_from_tri_angle(tri_new, angle_new)] = (tri_new, angle_new)
+        self.neighbour_moves_tri_angles = {**self.neighbour_moves_up_tri_angles, **self.neighbour_moves_down_tri_angles} ## union of the dictionaries
 
-def print_path_home(target_isoSig, big_dict_of_nodes):
-    current_node = big_dict_of_nodes[target_isoSig]
-    while True:
-        print(current_node.isoSig)
-        if current_node.came_from == None:
-            break
-        else:
-            if current_node.came_from in current_node.neighbour_isoSigs_down:
-                print(current_node.neighbour_isoSigs_down[current_node.came_from])
+def print_path(target_isoSig, big_dict_of_nodes):
+    ### Given the target isoSig and the big dict of nodes, each node of which 
+    ### knows where it came from in the search, build the path from target back
+    ### to the start. Print out the list of nodes and save them as regina files.
+    target_node = big_dict_of_nodes[target_isoSig]
+    path = [target_node]
+    current_node = target_node
+    while current_node.came_from != None:
+        current_node = big_dict_of_nodes[current_node.came_from]
+        path.append(current_node)
+    path.reverse()  ### now goes from start to target
+    for i, node in enumerate(path):
+        filename = node.isoSig + '|' + "".join([str(num) for num in node.angle]) + '.rga'
+        ### First part is the tri-angle isoSig, second part is the angle structure as it comes
+        ### in the sequence of triangulations without relabelling vertices as in the canonical
+        ### isoSig triangulation.
+        print(filename)
+        node.tri.save('Output/' + filename)
+        if i < len(path) - 1:  ## not the last one
+            next_node = path[i+1]
+            if next_node.isoSig in node.neighbour_moves_up_faces:
+                print(node.neighbour_moves_up_faces[next_node.isoSig])
             else:
-                print(current_node.neighbour_isoSigs_up[current_node.came_from])
-            current_node = big_dict_of_nodes[current_node.came_from]
+                assert next_node.isoSig in node.neighbour_moves_down_edges
+                print(node.neighbour_moves_down_edges[next_node.isoSig])
 
 def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=None, search_depth = 3, ceiling = 5, check_property = False, property = None, save_dir = None):
     start_node = taut_pachner_node( start_isoSig, ceiling = ceiling )
@@ -71,33 +94,22 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=Non
         new_frontier_isoSigs = set([]) 
         # for each element in the frontier check to see if it appears on the big_list_of_sigs if not we add it to the big list 
         for cur_isoSig in frontier_isoSigs:
-            neighbour_isoSigs = big_dict_of_nodes[cur_isoSig].get_neighbour_isoSigs()
+            current_node = big_dict_of_nodes[cur_isoSig]
+            neighbour_isoSigs = current_node.all_neighbour_isoSigs()
             for nb_isoSig in neighbour_isoSigs: 
-
-                # if nb_isoSig == target_isoSig:
-                #         print('found', target_isoSig)
-                #         print_path_home(cur_isoSig, big_dict_of_nodes)
-                #         print('---')
-
                 if not nb_isoSig in big_dict_of_nodes:
-                    new_node = taut_pachner_node(nb_isoSig, ceiling = ceiling)
+                    nb_tri, nb_angle = current_node.neighbour_moves_tri_angles[nb_isoSig]
+                    new_node = taut_pachner_node(nb_isoSig, tri = nb_tri, angle = nb_angle, ceiling = ceiling)
                     new_node.came_from = cur_isoSig
-                    # if check_property:
-                    #     if property(start_node, name, save_dir):
-                    #         print start_node.isoSig
                     if counter == search_depth - 1: #last layer
                         new_node.is_frontier = True
-                    # update_neighbours(new_node, frontier_nodes) 
-                    # # neighbours of new_node cannot be in new_frontier_nodes by parity of num tet, must be in frontier_nodes
-                    # # cannot be in rest of nodes, since their neighbours have all been found 
+
                     new_frontier_isoSigs.add(nb_isoSig)
                     big_dict_of_nodes[nb_isoSig] = new_node
 
-                    if nb_isoSig.split('_')[0] == target_isoSig:
-                        print_path_home(nb_isoSig, big_dict_of_nodes)
-                        break
-
-                    
+                    if nb_isoSig == target_isoSig:
+                        print_path(nb_isoSig, big_dict_of_nodes)
+                        break 
 
         frontier_isoSigs = new_frontier_isoSigs
         print(len(big_dict_of_nodes), len(frontier_isoSigs))
@@ -105,13 +117,13 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=Non
     return None
 
 def main():
-    depth = 1000
+    depth = 100
     ceiling = 8
 
     print('depth', depth)
     print('ceiling', ceiling)
 
-    target_isoSig = 'gLLPQceeffefiiaellu'  ### drilled
+    target_isoSig = 'gLLPQceeffefiiaellu_012110'  ### drilled
     start_isoSig = 'gLLPQccdfeffhggaagb_201022'  ### veering
     graph = search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
 

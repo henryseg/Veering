@@ -2,4 +2,5 @@
 *.pyc
 *.pdf
 Images/**
+Output/**
 Data/veering_shapes.pkl
