@@ -59,6 +59,9 @@ def twoThreeMove(tri, angle, face_num, perform = True, return_edge = False):
     tets = [tet0, tet1]
     vertices = [vertices0, vertices1]
 
+    # print('2-3 vertices signs')
+    # print([v.sign() for v in vertices])
+
     gluings = [] 
     for i in range(2):
         tet_gluings = []
@@ -109,15 +112,34 @@ def twoThreeMove(tri, angle, face_num, perform = True, return_edge = False):
     # permutations taking the vertices for a face of the 3-tet ball to the 
     # vertices of the same face for the 2-tet ball
 
-    perms = [[regina.Perm4( vertices[0][3], vertices[0][0], vertices[0][1], vertices[0][2] ),   ### opposite v00
-              regina.Perm4( vertices[0][3], vertices[0][1], vertices[0][2], vertices[0][0] ),   ### opposite v01
-              regina.Perm4( vertices[0][3], vertices[0][2], vertices[0][0], vertices[0][1] )    ### opposite v02
+    # these should be even in order to preserve orientability.
+    # exactly one of vertices[0] and vertices[1] is even, but it seems to depend on the face.
+
+    # perms = [[regina.Perm4( vertices[0][3], vertices[0][0], vertices[0][1], vertices[0][2] ),   ### opposite v00
+    #           regina.Perm4( vertices[0][3], vertices[0][1], vertices[0][2], vertices[0][0] ),   ### opposite v01
+    #           regina.Perm4( vertices[0][3], vertices[0][2], vertices[0][0], vertices[0][1] )    ### opposite v02
+    #           ],  
+    #          [regina.Perm4( vertices[1][0], vertices[1][3], vertices[1][1], vertices[1][2] ),   ### opposite v10
+    #           regina.Perm4( vertices[1][1], vertices[1][3], vertices[1][2], vertices[1][0] ),   ### opposite v11
+    #           regina.Perm4( vertices[1][2], vertices[1][3], vertices[1][0], vertices[1][1] )    ### opposite v12
+    #           ]
+    #         ]
+
+    perms = [[vertices[0] * regina.Perm4( 3,0,1,2 ),   ### opposite v00
+              vertices[0] * regina.Perm4( 3,1,2,0 ),   ### opposite v01
+              vertices[0] * regina.Perm4( 3,2,0,1 )    ### opposite v02
               ],  
-             [regina.Perm4( vertices[1][0], vertices[1][3], vertices[1][1], vertices[1][2] ),   ### opposite v10
-              regina.Perm4( vertices[1][1], vertices[1][3], vertices[1][2], vertices[1][0] ),   ### opposite v11
-              regina.Perm4( vertices[1][2], vertices[1][3], vertices[1][0], vertices[1][1] )    ### opposite v12
+             [vertices[1] * regina.Perm4( 0,3,1,2 ),   ### opposite v10
+              vertices[1] * regina.Perm4( 1,3,2,0 ),   ### opposite v11
+              vertices[1] * regina.Perm4( 2,3,0,1 )    ### opposite v12
               ]
             ]
+    flip = perms[0][0].sign() == -1
+    if flip:  #then all of the signs are wrong, switch 0 and 1 on input
+        perms = [[p * regina.Perm4( 1,0,2,3 ) for p in a] for a in perms]
+
+    # print('2-3 perms signs')
+    # print([[p.sign() for p in a] for a in perms])
 
     for i in range(2):
         for j in range(3):
@@ -148,9 +170,13 @@ def twoThreeMove(tri, angle, face_num, perform = True, return_edge = False):
     for i in range(2):
         for j in range(3):
             if gluings[i][j] != None:
-                new_tets[j].join(1 - i, gluings[i][j][0], gluings[i][j][1])
+                if flip:
+                    new_tets[j].join(i, gluings[i][j][0], gluings[i][j][1])
+                else:
+                    new_tets[j].join(1 - i, gluings[i][j][0], gluings[i][j][1])
 
     assert tri.isIsomorphicTo(tri2)
+    assert tri.isOriented()
 
     ### update the angle structure
     tet_indices = [tet_num0, tet_num1]
@@ -168,6 +194,8 @@ def twoThreeMove(tri, angle, face_num, perform = True, return_edge = False):
     else:
         assert (pi_num_0 - third_index) % 3 == 2
         new_angle[third_index] = 2
+    if flip:
+        new_angle[third_index] = 3 - new_angle[third_index]
     
     angle.extend(new_angle)
 
@@ -200,10 +228,6 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
             assert non_pi_tet_num == None
             non_pi_tet_num = embed.simplex().index()
             local_non_pi_tet_num = i
-
-    # for i in range(3):
-    #     for j in range(4):
-    #         print(i,j,vertices[i][j])
 
     if len(set(tets)) != 3: 
         return False  ### tetrahedra must be distinct
@@ -243,16 +267,16 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
 
     ### write vertices[i][j] as vij
 
-    ###                 tets[0]                                   new_tet0
+    ###                 tets[0]                                   new_tet1
     ###                _________                                 _________
     ###              ,'\`.v00,'/`.                             ,'\       /`.
     ###            ,'   \ `.' /   `.                         ,'   \  3  /   `. 
     ###          ,'   v10\ | /v20   `.                     ,'      \   /      `.
     ###         /|\       \|/       /|\                   / \       \ /       / \
     ###        / | \       *       / | \                 /   \       *       /   \
-    ###    v12/  |  \..... | ...../  |  \v23            /  2 _\..... | ...../_ 1  \ 
+    ###    v12/  |  \..... | ...../  |  \v23            /  1 _\..... | ...../_ 2  \ 
     ###      /  ,'  /      *      \  `.  \             /_--"" /      *      \ ""--_\
-    ###      \`.|  /v03   /|\   v02\  |,'/      `.     \`. 1 /      / \      \ 2 ,'/ 
+    ###      \`.|  /v03   /|\   v02\  |,'/      `.     \`. 2 /      / \      \ 1 ,'/ 
     ###       \ `./      / | \      \,' /     ----}     \ `./      /   \      \,' /
     ###        \|/`.    /  |  \    ,'\|/        ,'       \ /`.    /  0  \    ,'\ /
     ###         \   `. /   |   \ ,'   /                   \   `. /       \ ,'   /
@@ -261,7 +285,7 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
     ###            \    \  |  /    /                         \    \  0  /    /
     ###             \    \ | /    /                           \    \   /    /  
     ###    tets[1]   \    \|/    /   tets[2]                   \    \ /    /
-    ###               \    *    /                               \    *    / new_tet1
+    ###               \    *    /                               \    *    / new_tet0
     ###                \..v01../                                 \...|.../
     ###                 \`.|.'/                                   \  |  /
     ###               v11\ | /v21                                  \ 3 /
@@ -271,14 +295,27 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
     # permutations taking the vertices for a face of the 2-tet ball to the 
     # vertices of the same face for the 3-tet ball
 
-    perms = [[regina.Perm4( vertices[0][0], vertices[0][3], vertices[0][2], vertices[0][1] ),   ### opposite v00
-              regina.Perm4( vertices[0][1], vertices[0][2], vertices[0][3], vertices[0][0] )    ### opposite v01
+    # these should be even in order to preserve orientability.
+
+    # perms = [[regina.Perm4( vertices[0][0], vertices[0][2], vertices[0][3], vertices[0][1] ),   ### opposite v00
+    #           regina.Perm4( vertices[0][1], vertices[0][3], vertices[0][2], vertices[0][0] )    ### opposite v01
+    #           ],
+    #          [regina.Perm4( vertices[1][3], vertices[1][0], vertices[1][2], vertices[1][1] ),   ### opposite v10
+    #           regina.Perm4( vertices[1][3], vertices[1][2], vertices[1][1], vertices[1][0] )    ### opposite v11
+    #           ],
+    #          [regina.Perm4( vertices[2][2], vertices[2][3], vertices[2][0], vertices[2][1] ),   ### opposite v20
+    #           regina.Perm4( vertices[2][2], vertices[2][1], vertices[2][3], vertices[2][0] )    ### opposite v21
+    #           ]
+    #         ]
+
+    perms = [[vertices[0] * regina.Perm4( 0, 2, 3, 1 ),   ### opposite v00
+              vertices[0] * regina.Perm4( 1, 3, 2, 0 )    ### opposite v01
               ],
-             [regina.Perm4( vertices[1][3], vertices[1][2], vertices[1][0], vertices[1][1] ),   ### opposite v10
-              regina.Perm4( vertices[1][3], vertices[1][1], vertices[1][2], vertices[1][0] )    ### opposite v11
+             [vertices[1] * regina.Perm4( 3, 0, 2, 1 ),   ### opposite v10
+              vertices[1] * regina.Perm4( 3, 2, 1, 0 )    ### opposite v11
               ],
-             [regina.Perm4( vertices[2][2], vertices[2][0], vertices[2][3], vertices[2][1] ),   ### opposite v20
-              regina.Perm4( vertices[2][2], vertices[2][3], vertices[2][1], vertices[2][0] )    ### opposite v21
+             [vertices[2] * regina.Perm4( 2, 3, 0, 1 ),   ### opposite v20
+              vertices[2] * regina.Perm4( 2, 1, 3, 0 )    ### opposite v21
               ]
             ]
 
@@ -296,7 +333,7 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
                     assert gluings[i_other][j_other][1].inverse() == gluings[i][j][1]
 
                     gluings[i_other][j_other] = None ### only do a self gluing from one side 
-                    gluing[0] = new_tets[1 - j_other]  ### gluing goes to the tet... j refers to the vertex opposite on the 3 side, so we need to flip
+                    gluing[0] = new_tets[j_other]  ### j refers to the vertex on the same 3 side
                     gluing[1] = perms[i_other][j_other].inverse() * gluing[1] * perms[i][j] 
 
     ### unglue three tetrahedra
@@ -311,12 +348,17 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
     for i in range(3):
         for j in range(2):
             if gluings[i][j] != None:
-                if j == 1 or i == 0:
-                    new_tets[1 - j].join(i, gluings[i][j][0], gluings[i][j][1])
+                if j == 0 or i == 0:
+                    assert new_tets[j].adjacentTetrahedron(i) == None ## not glued
+                    assert gluings[i][j][0].adjacentTetrahedron(gluings[i][j][1][i]) == None
+                    new_tets[j].join(i, gluings[i][j][0], gluings[i][j][1])
                 else:
-                    new_tets[1 - j].join(3 - i, gluings[i][j][0], gluings[i][j][1])  ## swap 1 and 2
+                    assert new_tets[j].adjacentTetrahedron(3 - i) == None ## not glued
+                    assert gluings[i][j][0].adjacentTetrahedron(gluings[i][j][1][3 - i]) == None
+                    new_tets[j].join(3 - i, gluings[i][j][0], gluings[i][j][1])  ## swap 1 and 2
 
     assert tri.isIsomorphicTo(tri2)
+    assert tri.isOriented()
 
     # ### update the angle structure
     tet_nums.sort()
@@ -326,20 +368,20 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
 
     if local_non_pi_tet_num == 0:
         if is_positive_slope:
-            new_angle = [1, 1]
-        else:
             new_angle = [0, 0]
+        else:
+            new_angle = [1, 1]
     elif local_non_pi_tet_num == 1:
         if is_positive_slope:
-            new_angle = [0, 2]
-        else:
             new_angle = [2, 1]
+        else:
+            new_angle = [0, 2]
     else:
         assert local_non_pi_tet_num == 2
         if is_positive_slope:
-            new_angle = [2, 0]
-        else:
             new_angle = [1, 2]
+        else:
+            new_angle = [2, 0]
     
     angle.extend(new_angle)
 
