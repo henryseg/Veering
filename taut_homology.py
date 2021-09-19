@@ -14,6 +14,7 @@ from sage.rings.polynomial.laurent_polynomial_ring import LaurentPolynomialRing
 
 from fundamental_domain import spanning_dual_tree
 from taut import there_is_a_pi_here
+from transverse_taut import is_transverse_taut
 
 verbose = 0
 
@@ -49,7 +50,9 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
 
         triangle_num_sets[1].reverse() ## flip one so they are going the same way.
         ## Now if we have coorientations, make them both go up
-        if tet_vert_coorientations != None:
+        if tet_vert_coorientations == None: ### try to install them
+            tet_vert_coorientations = is_transverse_taut(triangulation, angle_struct, return_type = "tet_vert_coorientations")
+        if tet_vert_coorientations != False:
             embed = embeddings[0]
             tet = embed.tetrahedron()
             vert_perm = embed.vertices()
