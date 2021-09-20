@@ -48,6 +48,11 @@ unsorted_vert_pair_to_edge_pair = {(0, 1): 0, (1, 0): 0, (2, 3): 0, (3, 2): 0, (
 def edge_pair_to_edge_numbers(e):
     return (e, 5 - e)
 
+def edge_number_to_edge_pair(n):
+    if n < 3:
+        return n
+    else:
+        return 5 - n
 
 # converting a taut isosig to (tri,angle) pair and back again
 
