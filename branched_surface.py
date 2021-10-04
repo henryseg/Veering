@@ -5,7 +5,8 @@
 # Code for working with branched surfaces.
 
 from taut import isosig_to_tri_angle, isosig_from_tri_angle, edge_number_to_edge_pair, edge_num_to_vert_pair
-from taut import vert_pair_to_edge_num, vert_pair_to_edge_pair, edge_pair_to_edge_numbers
+from taut import vert_pair_to_edge_num, unsorted_vert_pair_to_edge_pair, edge_pair_to_edge_numbers
+from itertools import product
 
 def isosig_to_tri_angle_branch(isosig):
     """
@@ -95,8 +96,9 @@ def apply_isom_to_branched_surface(branch, isom):
 
         mixed_edge_verts = (0, mixed_edge_pair_num + 1) ### one of the mixed edges
         new_mixed_edge_verts = [tetPerm[v] for v in mixed_edge_verts]
-        new_mixed_edge_verts.sort()
-        new_mixed_edge_pair_num = vert_pair_to_edge_pair[tuple(new_mixed_edge_verts)]
+        new_mixed_edge_pair_num = unsorted_vert_pair_to_edge_pair(new_mixed_edge_verts)
+        # new_mixed_edge_verts.sort()
+        # new_mixed_edge_pair_num = vert_pair_to_edge_pair[tuple(new_mixed_edge_verts)]
 
         new_branch[mapped_tet_index] = branch_num_from_large_edge_and_mixed_edge_pair_num(new_large_edge_num, new_mixed_edge_pair_num)
     return new_branch
@@ -163,6 +165,72 @@ def is_branched(tri, branch):
         if large_edge_in_face0 != large_edge_in_face1:
             return False
     return True
+
+def all_branched_surfaces(tri):
+    n = tri.countTetrahedra()
+    candidates = product([0,1,2,3,4,5,6,7,8,9,10,11], repeat = n)
+    out = []
+    for cand in candidates:
+        if is_branched(tri, cand):
+            out.append(cand)
+    return out
+
+def determine_possible_branch_given_two_faces(faces_info):
+    """
+    Given train tracks on two faces of a tet, what are the possible branch surfaces inside it
+    """
+    f0, f1 = faces_info
+    face0, large_vert0 = f0   # large vert is vertex number in the tet that in the face is opposite large edge of that face
+    face1, large_vert1 = f1
+
+    possible_branches = []
+
+    ## 4 cases:
+
+    ### large edges for the two faces are at the shared edge: get two branched surfaces - choice of which is mixed edge pair
+    ### one large edge is on shared edge, the other is not: shared edge is mixed. other points at large edge for tet
+    ### neither large edge is on shared edge but they are not opposite in the tet: get two branched surfaces - either could be large
+    ### neither large edge is on shared edge and they are opposite in the tet: shared edge is tiny
+
+    if face0 == large_vert1 and face1 == large_vert0: ### case 1
+        ### large edges for the two faces are at the shared edge: get two branched surfaces - choice of which is mixed edge pair
+        large_edge_num = 5 - vert_pair_to_edge_num[(face0, face1)]
+        for handedness_bit in range(2):
+            possible_branches.append(2 * large_edge_num + handedness_bit)
+    elif (face0 == large_vert1) ^ (face1 == large_vert0): # xor ### case 2
+        if face1 == large_vert0:
+            face_pointing_at_shared = face0
+            face_pointing_away = face1
+            large_vert_pointing_at_shared = large_vert0
+            large_vert_pointing_away = large_vert1
+        else:
+            face_pointing_at_shared = face1
+            face_pointing_away = face0
+            large_vert_pointing_at_shared = large_vert1
+            large_vert_pointing_away = large_vert0
+        large_edge_num = 5 - vert_pair_to_edge_num[(face_pointing_away, large_vert_pointing_away)]
+        mixed_edge_pair_num = unsorted_vert_pair_to_edge_pair[(face_pointing_at_shared, face_pointing_away)]
+        possible_branches.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num) )
+    else:  ### neither face0 == large_vert1 nor face1 == large_vert0
+        if large_vert0 == large_vert1: ### case 3
+            large_edge_for_face0 = 5 - vert_pair_to_edge_num[(face0, large_vert0)]
+            large_edge_for_face1 = 5 - vert_pair_to_edge_num[(face1, large_vert1)]
+            possible_branches.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_for_face0, edge_number_to_edge_pair(large_edge_for_face1) ))
+            possible_branches.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_for_face1, edge_number_to_edge_pair(large_edge_for_face0) ))
+        else: ### case 4
+            large_edge_num = vert_pair_to_edge_num[(face0, face1)]
+            mixed_edge_pair_num = unsorted_vert_pair_to_edge_pair[(face0, large_vert0)]
+            possible_branches.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num) )
+    return possible_branches
+
+def check_consistency():
+    for branch_num in range(12):
+        for i in range(4):
+            large_verti = large_edge_of_face(branch_num, i)
+            for j in range(i):
+                large_vertj = large_edge_of_face(branch_num, j)
+                assert branch_num in determine_possible_branch_given_two_faces([(i, large_verti),(j, large_vertj)])
+
 
 
 
