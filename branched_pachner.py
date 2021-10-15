@@ -7,6 +7,7 @@
 import regina
 from taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair
 from branched_surface import large_edge_of_face, determine_possible_branch_given_two_faces, is_branched
+from branched_surface import all_branched_surfaces, lex_smallest_branched_surface
 
 def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
     """Apply a 2-3 move to a triangulation with a branched surface, if possible. 
@@ -132,6 +133,9 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
     flip = perms[0][0].sign() == -1
     if flip:  #then all of the signs are wrong, switch 0 and 1 on input
         perms = [[p * regina.Perm4( 1,0,2,3 ) for p in a] for a in perms]
+    #     print('flip')
+    # else:
+    #     print('no flip')
 
     # print('2-3 perms signs')
     # print([[p.sign() for p in a] for a in perms])
@@ -191,8 +195,10 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
 
     candidate_branches = []
     for j in range(3):
-        candidate_branches.append( determine_possible_branch_given_two_faces([ (0,large_edges_new[0][j]), (1,large_edges_new[1][j] ) ]) )
-        ### or possibly the other way round... and maybe flip changes something?
+        if flip:   
+            candidate_branches.append( determine_possible_branch_given_two_faces([ (0,large_edges_new[0][j]), (1,large_edges_new[1][j] ) ]) )
+        else:
+            candidate_branches.append( determine_possible_branch_given_two_faces([ (1,large_edges_new[0][j]), (0,large_edges_new[1][j] ) ]) )
 
     ### update the branch structure, many possible ways
     tet_indices = [tet_num0, tet_num1]
@@ -207,40 +213,47 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
                 candidate = branch[:] + [cand0, cand1, cand2]
                 if is_branched(tri, candidate):
                     out.append(candidate)
-
-    print(out)
-
+    return out
 
 
-# sage: for i in range(4): 
-# ....:     tri, angle = taut.isosig_to_tri_angle('cPcbbbiht_12')      
-# ....:     branched_pachner.twoThreeMove(tri, [2,7], i) 
-# ....:     print(branched_surface.all_branched_surfaces(tri)) 
-# ....:                                                                                            
-# [[4, 3, 1]]
-# [(4, 3, 1), (6, 1, 9)]
-# []
-# [(0, 4, 3), (6, 0, 9)]
-# [[1, 4, 3]]
-# [(1, 4, 3), (9, 6, 1)]
-# []
-# [(3, 0, 4), (9, 6, 0)]
+def main():
+    # for i in range(4): 
+    #     print(i)
+    #     # tri, angle = isosig_to_tri_angle('cPcbbbiht_12') 
+    # sigs = ['dLQacccjsnk_200', 'dLQbccchhfo_122','dLQbccchhsj_122']
+    # for sig in sigs:
+    #     print(sig)
+    #     tri, angle = isosig_to_tri_angle(sig)   
+    #     for branch in all_branched_surfaces(tri):
+    #         print(lex_smallest_branched_surface(tri, branch))
 
+    sig = 'dLQacccjsnk_200'
+    for i in range(6):
+        print(i)
+        tri, angle = isosig_to_tri_angle(sig)  
+        tri.triangle(i)
+        print(twoThreeMove(tri, [4,11,0], i))
+        print(all_branched_surfaces(tri)) 
 
-    
-    # new_branch = [None, None, None]
+# 0
+# False
+# [(4, 11, 0), (6, 0, 11)]
+# 1
+# [[11, 3, 4, 2]]
+# [(0, 6, 0, 9), (4, 0, 0, 0), (11, 3, 4, 2)]
+# 2
+# [[0, 4, 3, 0]]
+# [(0, 4, 3, 0), (6, 0, 0, 0), (11, 9, 8, 6)]
+# 3
+# [[4, 9, 6, 1]]
+# [(4, 9, 6, 1), (6, 1, 4, 3)]
+# 4
+# [[4, 4, 3, 1]]
+# [(4, 4, 3, 1), (6, 6, 1, 9), (10, 0, 0, 0)]
+# 5
+# [[4, 6, 0, 9]]
+# [(4, 6, 0, 9), (6, 0, 4, 3)]
 
-    # ### stuff goes here
-
-
-    # branch.extend(new_branch)
-
-    # assert is_branched(tri, branch)
-
-    # if not return_edge:
-    #     return [ tri, branch ]
-    # else:
-    #     return [ tri, branch, new_tets[0].edge(0).index() ]
 
 # def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
 #     """Apply a 3-2 move to a taut triangulation, if possible. 

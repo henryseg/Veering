@@ -96,7 +96,7 @@ def apply_isom_to_branched_surface(branch, isom):
 
         mixed_edge_verts = (0, mixed_edge_pair_num + 1) ### one of the mixed edges
         new_mixed_edge_verts = [tetPerm[v] for v in mixed_edge_verts]
-        new_mixed_edge_pair_num = unsorted_vert_pair_to_edge_pair(new_mixed_edge_verts)
+        new_mixed_edge_pair_num = unsorted_vert_pair_to_edge_pair[tuple(new_mixed_edge_verts)]
         # new_mixed_edge_verts.sort()
         # new_mixed_edge_pair_num = vert_pair_to_edge_pair[tuple(new_mixed_edge_verts)]
 
@@ -117,7 +117,7 @@ def lex_smallest_branched_surface(tri, branch):
     for isom in all_isoms:
         all_branches.append( apply_isom_to_branched_surface(branch, isom) )
     all_branches.sort()
-    print(all_branches)
+    # print(all_branches)
     return all_branches[0]
 
 def large_edge_of_face(branch_num, face_num):
@@ -182,6 +182,9 @@ def determine_possible_branch_given_two_faces(faces_info):
     f0, f1 = faces_info
     face0, large_vert0 = f0   # large vert is vertex number in the tet that in the face is opposite large edge of that face
     face1, large_vert1 = f1
+    assert face0 != face1
+    assert face0 != large_vert0
+    assert face1 != large_vert1
 
     possible_branches = []
 
