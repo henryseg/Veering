@@ -175,13 +175,12 @@ def all_branched_surfaces(tri):
             out.append(cand)
     return out
 
-def determine_possible_branch_given_two_faces(faces_info):
+def determine_possible_branch_given_two_faces(faces, large_verts):
     """
     Given train tracks on two faces of a tet, what are the possible branch surfaces inside it
     """
-    f0, f1 = faces_info
-    face0, large_vert0 = f0   # large vert is vertex number in the tet that in the face is opposite large edge of that face
-    face1, large_vert1 = f1
+    face0, face1 = faces   # large vert is vertex number in the tet that in the face is opposite large edge of that face
+    large_vert0, large_vert1 = large_verts
     assert face0 != face1
     assert face0 != large_vert0
     assert face1 != large_vert1
@@ -226,13 +225,60 @@ def determine_possible_branch_given_two_faces(faces_info):
             possible_branches.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num) )
     return possible_branches
 
+def determine_possible_branch_given_three_faces(faces, large_verts):
+    """
+    Given train tracks on three faces of a tet, what are the possible branch surfaces inside it
+    """
+    assert len(set(faces)) == 3
+    assert faces[0] != large_verts[0]
+    assert faces[1] != large_verts[1]
+    assert faces[2] != large_verts[2]
+    fourth_face = [i for i in [0,1,2,3] if i not in faces][0]
+    ### find mixed edges
+    mixed_indices = [] ### face indices that point at mixed edges
+    for i in range(3):
+        if large_verts[i] in faces:
+            j = faces.index(large_verts[i])
+            if large_verts[j] != faces[i]:
+                mixed_indices.append(i)
+    if len(mixed_indices) != 1:
+        return None
+    mixed_index = mixed_indices[0]
+    face_pointing_at_mixed_edge = faces[mixed_index]
+    face_pointing_away_from_mixed_edge = large_verts[mixed_index]
+    mixed_edge_pair_num = unsorted_vert_pair_to_edge_pair[(face_pointing_at_mixed_edge, face_pointing_away_from_mixed_edge)]
+
+    j = faces.index(large_verts[mixed_index])
+    face_pointed_at_by_face_pointing_away_from_mixed_edge = large_verts[j]
+    if face_pointed_at_by_face_pointing_away_from_mixed_edge == fourth_face:  ### then (fourth_face, face_pointing_away_from_mixed_edge) is tiny
+        large_edge_num = 5 - vert_pair_to_edge_num[(fourth_face, face_pointing_away_from_mixed_edge)]
+        return branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num)
+    else:
+        large_edge_num = vert_pair_to_edge_num[(fourth_face, face_pointing_at_mixed_edge)]
+        return branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num)
+
 def check_consistency():
     for branch_num in range(12):
         for i in range(4):
             large_verti = large_edge_of_face(branch_num, i)
             for j in range(i):
                 large_vertj = large_edge_of_face(branch_num, j)
-                assert branch_num in determine_possible_branch_given_two_faces([(i, large_verti),(j, large_vertj)])
+                faces = (i, j)
+                large_verts = (large_verti, large_vertj)
+                assert branch_num in determine_possible_branch_given_two_faces(faces, large_verts)
+
+    for branch_num in range(12):
+        for i in range(4):
+            large_verti = large_edge_of_face(branch_num, i)
+            for j in range(i):
+                large_vertj = large_edge_of_face(branch_num, j)
+                for k in range(j):
+                    large_vertk = large_edge_of_face(branch_num, k)
+                    faces = [i,j,k]
+                    large_verts = [large_verti, large_vertj, large_vertk]
+                    # print(faces, large_verts, branch_num)
+                    # print(determine_possible_branch_given_three_faces(faces, large_verts))
+                    assert branch_num == determine_possible_branch_given_three_faces(faces, large_verts)
 
 
 
