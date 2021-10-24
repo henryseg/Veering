@@ -8,6 +8,9 @@ from taut import isosig_to_tri_angle, isosig_from_tri_angle, edge_number_to_edge
 from taut import vert_pair_to_edge_num, unsorted_vert_pair_to_edge_pair, edge_pair_to_edge_numbers
 from itertools import product
 
+from veering import is_veering
+from transverse_taut import is_transverse_taut
+
 def isosig_to_tri_angle_branch(isosig):
     """
     Given a taut branched isosig, returns an oriented regina triangulation,
@@ -279,6 +282,26 @@ def check_consistency():
                     # print(faces, large_verts, branch_num)
                     # print(determine_possible_branch_given_three_faces(faces, large_verts))
                     assert branch_num == determine_possible_branch_given_three_faces(faces, large_verts)
+
+def upper_branched_surface(tri, angle, return_lower = False):
+    """Returns the upper branched surface for a veering triangulation"""
+    veering_colours = is_veering(tri, angle, return_type = "veering_colours")
+    tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    assert veering_colours != False and tet_vert_coorientations != False
+    branch = []
+    for i, a in enumerate(angle):
+        assert tet_vert_coorientations[i][0] == tet_vert_coorientations[i][a+1] ### the other end of the pi edge at 0
+        large_edge_num = vert_pair_to_edge_num[(0, a+1)]
+        tiny_edge_num = 5 - large_edge_num
+        if (tet_vert_coorientations[i][0] == -1) != return_lower: ### into the tetrahedron through face 0, xor get lower branched surface
+            large_edge_num, tiny_edge_num = tiny_edge_num, large_edge_num # swap
+        tiny_edge_colour = veering_colours[tri.tetrahedron(i).edge(tiny_edge_num).index()]
+        mixed_edge_pair_num = (vert_pair_to_edge_num[(0, a+1)] + 1) % 3  ### can view as an edge num too...
+        if veering_colours[tri.tetrahedron(i).edge(mixed_edge_pair_num).index()] != tiny_edge_colour:
+            mixed_edge_pair_num = (mixed_edge_pair_num + 1) % 3 ### then its the other one
+        branch.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num) )
+    assert is_branched(tri, branch)
+    return branch
 
 
 

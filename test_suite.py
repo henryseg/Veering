@@ -77,6 +77,24 @@ def run_tests(num_to_check=1000):
             tri3, angle3 = taut_pachner.threeTwoMove(tri2, angle2, edge_num)
             assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
 
+    import branched_surface
+    import branched_pachner
+    import regina
+    print("testing branched_surface and branched_pachner")
+    for sig in random.sample(veering_isosigs, num_to_check):
+        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri_original = regina.Triangulation3(tri) #copy
+        branch = branched_surface.upper_branched_surface(tri, angle, return_lower = random.choice([True, False]))
+        branch_original = branch[:] #copy
+        face_num = random.randrange(tri.countTriangles())
+        out = branched_pachner.twoThreeMove(tri, branch, face_num, return_edge = True)
+        if out != False:
+            tri, possible_branches, edge_num = out
+            tri, branch = branched_pachner.threeTwoMove(tri, possible_branches[0], edge_num)
+            all_isoms = tri.findAllIsomorphisms(tri_original)
+            all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
+            assert branch_original in all_branches
+
     print("all basic tests passed")
 
     try:

@@ -7,7 +7,7 @@
 import regina
 from taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair
 from branched_surface import large_edge_of_face, determine_possible_branch_given_two_faces, determine_possible_branch_given_three_faces, is_branched
-from branched_surface import all_branched_surfaces, lex_smallest_branched_surface
+from branched_surface import all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface
 
 def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
     """Apply a 2-3 move to a triangulation with a branched surface, if possible. 
@@ -425,16 +425,19 @@ def main():
 
     sig = 'dLQacccjsnk_200'
     for i in range(6):
-        print(i)
+        # print(i)
         tri, angle = isosig_to_tri_angle(sig)  
-        tri.triangle(i)
+        tri_original = regina.Triangulation3(tri) #copy
 
         out = twoThreeMove(tri, [4,11,0], i, return_edge = True)
         if out != False:
             tri, possible_branches, edge_num = out
-            print('possible_branches', possible_branches)
-            print('all branches', all_branched_surfaces(tri)) 
-            print(threeTwoMove(tri, possible_branches[0], edge_num))
+            # print('possible_branches', possible_branches)
+            # print('all branches', all_branched_surfaces(tri)) 
+            tri, branch = threeTwoMove(tri, possible_branches[0], edge_num)
+            all_isoms = tri.findAllIsomorphisms(tri_original)
+            all_branches = [apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
+            assert [4,11,0] in all_branches
 
 # 0
 # False
