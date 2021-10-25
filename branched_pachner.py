@@ -13,7 +13,11 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
     """Apply a 2-3 move to a triangulation with a branched surface, if possible. 
     If perform = False, returns if the move is possible.
     If perform = True, modifies tri, returns (tri, possible_branches) for the performed move"""
+
+    ### possible_branches is a list
     
+    assert is_branched(tri, branch)
+
     face = tri.triangle(face_num)
 
     embed0 = face.embedding(0)
@@ -211,8 +215,10 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
         for cand1 in candidate_branches[1]:
             for cand2 in candidate_branches[2]:
                 candidate = branch[:] + [cand0, cand1, cand2]
+                # print('candidate', candidate)
                 if is_branched(tri, candidate):
                     out.append(candidate)
+    assert len(out) > 0
     if not return_edge:
         return (tri, out)
     else:
@@ -222,7 +228,12 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
 def threeTwoMove(tri, branch, edge_num, return_triangle = False):
     """Apply a 3-2 move to a triangulation with a branched surface, if possible. 
     If perform = False, returns if the move is possible.
-    Mmodifies tri, returns (tri, branch) for the performed move"""
+    modifies tri, returns (tri, branch) for the performed move"""
+
+    ### note if this function does not return False, then there is only one 
+    ### possible branch so we just return it rather than a list
+
+    assert is_branched(tri, branch)
 
     edge = tri.edge(edge_num)
     if edge.degree() != 3:
@@ -404,7 +415,8 @@ def threeTwoMove(tri, branch, edge_num, return_triangle = False):
 
     branch.extend([branch0, branch1])
 
-    assert is_branched(tri, branch)
+    if not is_branched(tri, branch):
+        return False
 
     if not return_triangle:
         return (tri, branch)    

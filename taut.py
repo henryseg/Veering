@@ -63,7 +63,8 @@ def isosig_to_tri_angle(isosig):
     the list of angles for the taut angle structure, for the new
     labelling.
     """
-    isosig, angle = isosig.split("_")
+    data = isosig.split("_")
+    isosig, angle = data[0], data[1]  ## we don't care if there is extra data in the sig, such as a branched surface
     tri = regina.Triangulation3.fromIsoSig(isosig)
     angle = [int(i) for i in list(angle)]
     fix_orientations(tri, angle)  # this does not alter what the angles_string should be
@@ -71,7 +72,7 @@ def isosig_to_tri_angle(isosig):
     return tri, angle
 
 
-def isosig_from_tri_angle(tri, angle):
+def isosig_from_tri_angle(tri, angle, return_isom = False):
     """
     Given a triangulation and taut angle structure, generate the taut
     isosig.
@@ -92,7 +93,10 @@ def isosig_from_tri_angle(tri, angle):
     smallest_angle = lex_smallest_angle_structure(isosig_tri, angle)
     smallest_angle_string = "".join([str(num) for num in smallest_angle])
 
-    return isosig + "_" + smallest_angle_string
+    if return_isom:
+        return isosig + "_" + smallest_angle_string, isom
+    else:
+        return isosig + "_" + smallest_angle_string
 
 
 # checking tautness

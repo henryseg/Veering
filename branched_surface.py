@@ -7,6 +7,7 @@
 from taut import isosig_to_tri_angle, isosig_from_tri_angle, edge_number_to_edge_pair, edge_num_to_vert_pair
 from taut import vert_pair_to_edge_num, unsorted_vert_pair_to_edge_pair, edge_pair_to_edge_numbers
 from itertools import product
+import string
 
 from veering import is_veering
 from transverse_taut import is_transverse_taut
@@ -17,20 +18,28 @@ def isosig_to_tri_angle_branch(isosig):
     the list of angles for the taut angle structure, and the branched surface
     for the new labelling.
     """
+    ### WARNING: this is currently broken: the branch needs to be altered by the isomorphism that fix_orientations uses.
     sig_parts = isosig.split("_")
     tri, angle = isosig_to_tri_angle(sig_parts[0] + '_' + sig_parts[1])
     branch = list(sig_parts[2])
     branch = [ord(letter) - 97 for letter in branch]
     assert all([0 <= l and l <= 11 for l in branch])
+    assert is_branched(tri, branch) ## will fail until we fix things
     return tri, angle, branch
 
 
 def isosig_from_tri_angle_branch(tri, angle, branch):
     """
-    Given a triangulation and taut angle structure, generate the taut
+    Given a triangulation and taut angle structure and a branched surface, generate the taut branched
     isosig.
     """
-    pass
+    taut_isoSig, isom = isosig_from_tri_angle(tri, angle, return_isom = True)
+    branch = apply_isom_to_branched_surface(branch, isom)
+    branch_sig = "".join([string.ascii_lowercase[b] for b in branch])
+    ### we could have a taut triangulation with symmetry preserving the taut structure but moving a branched surface
+    ### these two surfaces get different names
+    return taut_isoSig + '_' + branch_sig
+    
 
 # dealing with relabelling triangulations
 
@@ -170,6 +179,7 @@ def is_branched(tri, branch):
     return True
 
 def all_branched_surfaces(tri):
+    ### warning, this will be exponentially slow for not tiny triangulations
     n = tri.countTetrahedra()
     candidates = product([0,1,2,3,4,5,6,7,8,9,10,11], repeat = n)
     out = []
@@ -302,6 +312,21 @@ def upper_branched_surface(tri, angle, return_lower = False):
         branch.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num) )
     assert is_branched(tri, branch)
     return branch
+
+### The following function doesnt care about the transverse taut structure, and probably it should.
+### We should also have the pachner moves carry a transverse taut structure with them.
+def branch_veeringness(tri, angle, branch):
+    """Count the number of tetrahedra for which the branch looks like it should in a veering triangulation"""
+    count = 0
+    for i in range(tri.countTetrahedra()):
+        a = angle[i]
+        b = branch[i]
+        large_edge_num, _ = branch_num_to_large_edge_and_mixed_edge_pair_num(b)
+        if large_edge_num in [a, 5 - a]:
+            count += 1
+    return count
+
+
 
 
 
