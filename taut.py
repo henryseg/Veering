@@ -57,50 +57,60 @@ def edge_number_to_edge_pair(n):
 # converting a taut isosig to (tri,angle) pair and back again
 
 
-def isosig_to_tri_angle(isosig):
+def isosig_to_tri_angle(isosig, return_isom = False):
     """
     Given a taut isosig, returns an oriented regina triangulation and
     the list of angles for the taut angle structure, for the new
     labelling.
+    If return_isom, returns the isomorphism from the regina isosig triang to the oriented triangulation
     """
     data = isosig.split("_")
     isosig, angle = data[0], data[1]  ## we don't care if there is extra data in the sig, such as a branched surface
     tri = regina.Triangulation3.fromIsoSig(isosig)
     angle = [int(i) for i in list(angle)]
-    fix_orientations(tri, angle)  # this does not alter what the angles_string should be
+    if return_isom:
+        isom = fix_orientations(tri, angle, return_isom = return_isom)  # this does not alter what the angles_string should be
+    else:
+        fix_orientations(tri, angle, return_isom = return_isom)  # this does not alter what the angles_string should be
     assert tri.isOriented()
-    return tri, angle
+    if return_isom:
+        return tri, angle, isom
+    else:
+        return tri, angle
 
+def isoms_move_tetrahedra_to_same_tetrahedra(isom1, isom2):
+    assert isom1.size() == isom2.size()
+    for i in range(isom1.size()):
+        if isom1.simpImage(i) != isom2.simpImage(i):
+            return False
+    return True
 
 def isosig_from_tri_angle(tri, angle, return_isom = False):
     """
     Given a triangulation and taut angle structure, generate the taut
-    isosig.
+    isosig. If return_isom, give the isom between original triang and 
+    the symmetry of the isosig triang with lex smallest angle struct.
     """
-    isosig, isom = tri.isoSigDetail()  # isom is the mapping between the original triangulation and the isosig triangulation
+    isosig, isosig_isom = tri.isoSigDetail()  # isom is the mapping from the original triangulation to the isosig triangulation
     isosig_tri = regina.Triangulation3.fromIsoSig(isosig)
-    # isosig_tri_angle_struct_list = apply_isom_to_angle_struct_list(angle, isom)
-    angle = apply_isom_to_angle_struct_list(angle, isom)
+    angle = apply_isom_to_angle_struct_list(angle, isosig_isom)
 
-    # # Now find the lexicographically smallest angle structure string of symmetries of the one we have
-    # all_isoms = isosig_tri.findAllIsomorphisms(isosig_tri)
-    # all_angles_lists = []
-    # for isom in all_isoms:
-    #     all_angles_lists.append( apply_isom_to_angle_struct_list(isosig_tri_angle_struct_list, isom) )
-    # all_angles_strings = ["".join([str(num) for num in angles_list]) for angles_list in all_angles_lists]
-    # all_angles_strings.sort()
-
-    smallest_angle = lex_smallest_angle_structure(isosig_tri, angle)
+    smallest_angle, isom2 = lex_smallest_angle_structure(isosig_tri, angle, return_isom = True)
     smallest_angle_string = "".join([str(num) for num in smallest_angle])
 
     if return_isom:
-        return isosig + "_" + smallest_angle_string, isom
+        ### regina's implementation of isomorphisms doesn't give group operations, so we cannot write isom2*isom... instead we have to do this:
+        lex_smallest_tri = isom2.apply(isosig_tri)
+        all_isoms = tri.findAllIsomorphisms(lex_smallest_tri)
+        for isom in all_isoms:
+            if isoms_move_tetrahedra_to_same_tetrahedra(isom, isosig_isom): ### uses fact that isom2 doesn't reorder the tetrahedra, only their vertices inside
+                return isosig + "_" + smallest_angle_string, isom
+        assert False ### should never get here
     else:
         return isosig + "_" + smallest_angle_string
 
 
 # checking tautness
-
 
 @liberal
 def is_taut(tri, angle):
@@ -135,7 +145,7 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edg
         new_angle_struct_list[mapped_tet_index] = pi_number
     return new_angle_struct_list
 
-def lex_smallest_angle_structure(tri, angle):
+def lex_smallest_angle_structure(tri, angle, return_isom = False):
     """
     Finds the lexicographically smallest angle structure among
     symmetries of the one we have.
@@ -143,9 +153,12 @@ def lex_smallest_angle_structure(tri, angle):
     all_isoms = tri.findAllIsomorphisms(tri)
     all_angles = []
     for isom in all_isoms:
-        all_angles.append( apply_isom_to_angle_struct_list(angle, isom) )
-    all_angles.sort()
-    return all_angles[0]
+        all_angles.append( (apply_isom_to_angle_struct_list(angle, isom), isom) )
+    all_angles.sort(key = lambda pair: pair[0])
+    if return_isom:
+        return all_angles[0]
+    else:
+        return all_angles[0][0]
 
 def num_taut_automorphisms(tri, angle):
     """
@@ -222,17 +235,40 @@ def reverse_tet_orientation(triangulation, tet, pi_location):
         tet.join(swap[face], adjtets[face], adjgluings[face])
     return swap
 
+def moves_tetrahedra(isom):
+    for i in range(isom.size()):
+        if isom.simpImage(i) != i:
+            return True
+    return False
 
-def fix_orientations(tri, angle):
+def fix_orientations(tri, angle, return_isom = False):
     """
     Fix the orientations of the tetrahedra in triangulation so that
     they are consistently oriented.  We choose how to flip each
     tetrahedron so that the angle structure list does not change.
+    If return_isom, return the isomorphism from the original tri to the fixed orientations tri
     """
+    orig_tri = regina.Triangulation3(tri)
+
     old_orientations = find_orientations(tri)
+    swaps = []
     for i, orientation in enumerate(old_orientations):
         if orientation == -1:
-            reverse_tet_orientation(tri, tri.tetrahedron(i), angle[i])
+            swaps.append( reverse_tet_orientation(tri, tri.tetrahedron(i), angle[i]) )
+        else:
+            swaps.append( regina.Perm4() ) ## identity
+
+
+    if return_isom:  ### Regina doesn't seem to let us build the isom directly from perms in python
+        all_isoms = orig_tri.findAllIsomorphisms(tri) ### we will be order two, so we dont care which way this goes
+        for isom in all_isoms:
+            if not moves_tetrahedra(isom):
+                for i in range(tri.countTetrahedra()):
+                    assert swaps[i] == isom.facetPerm(i)
+                return isom
+        assert False ## should never get here
+
+
 
 
 # functions for converting regina's angle structure format to ours

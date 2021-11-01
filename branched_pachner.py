@@ -8,6 +8,7 @@ import regina
 from taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair
 from branched_surface import large_edge_of_face, determine_possible_branch_given_two_faces, determine_possible_branch_given_three_faces, is_branched
 from branched_surface import all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface
+from branched_surface import has_non_sing_semiflow
 
 def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
     """Apply a 2-3 move to a triangulation with a branched surface, if possible. 
@@ -16,7 +17,8 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
 
     ### possible_branches is a list
     
-    assert is_branched(tri, branch)
+    # assert is_branched(tri, branch)
+    assert has_non_sing_semiflow(tri, branch)
 
     face = tri.triangle(face_num)
 
@@ -216,9 +218,12 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
             for cand2 in candidate_branches[2]:
                 candidate = branch[:] + [cand0, cand1, cand2]
                 # print('candidate', candidate)
-                if is_branched(tri, candidate):
+                # if is_branched(tri, candidate):
+                if has_non_sing_semiflow(tri, candidate):
                     out.append(candidate)
-    assert len(out) > 0
+    # assert len(out) > 0  ### this works if we check is_branched three lines above, but not if we check has_non_sing_semiflow
+    if len(out) == 0: ### with has_non_sing_semiflow instead, we might not get any
+        return False
     if not return_edge:
         return (tri, out)
     else:
@@ -233,7 +238,8 @@ def threeTwoMove(tri, branch, edge_num, return_triangle = False):
     ### note if this function does not return False, then there is only one 
     ### possible branch so we just return it rather than a list
 
-    assert is_branched(tri, branch)
+    # assert is_branched(tri, branch)
+    assert has_non_sing_semiflow(tri, branch)
 
     edge = tri.edge(edge_num)
     if edge.degree() != 3:
@@ -415,7 +421,8 @@ def threeTwoMove(tri, branch, edge_num, return_triangle = False):
 
     branch.extend([branch0, branch1])
 
-    if not is_branched(tri, branch):
+    # if not is_branched(tri, branch):
+    if not has_non_sing_semiflow(tri, branch):
         return False
 
     if not return_triangle:
@@ -450,6 +457,29 @@ def main():
             all_isoms = tri.findAllIsomorphisms(tri_original)
             all_branches = [apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
             assert [4,11,0] in all_branches
+
+
+def go_deeper(tri, branch):
+    for i in range(tri.countTriangles()):
+        tri_copy = regina.Triangulation3(tri) #copy
+        branch_copy = branch[:]
+        out = twoThreeMove(tri_copy, branch_copy, i)
+        if out != False:
+            tri_copy2, possible_branches = out
+            return tri_copy2, possible_branches[0]
+
+def go_deep():
+    sig = 'dLQacccjsnk_200'
+    branch = [4,11,0]
+    tri, angle = isosig_to_tri_angle(sig) 
+    for j in range(20):
+        print(j)
+        tri, branch = go_deeper(tri, branch)
+        if not has_non_sing_semiflow(tri, branch):
+            print(tri, branch)
+                
+
+
 
 # 0
 # False

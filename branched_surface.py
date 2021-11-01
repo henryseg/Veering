@@ -20,11 +20,12 @@ def isosig_to_tri_angle_branch(isosig):
     """
     ### WARNING: this is currently broken: the branch needs to be altered by the isomorphism that fix_orientations uses.
     sig_parts = isosig.split("_")
-    tri, angle = isosig_to_tri_angle(sig_parts[0] + '_' + sig_parts[1])
+    tri, angle, isom = isosig_to_tri_angle(sig_parts[0] + '_' + sig_parts[1], return_isom = True)
     branch = list(sig_parts[2])
     branch = [ord(letter) - 97 for letter in branch]
     assert all([0 <= l and l <= 11 for l in branch])
-    assert is_branched(tri, branch) ## will fail until we fix things
+    branch = apply_isom_to_branched_surface(branch, isom)
+    assert is_branched(tri, branch) 
     return tri, angle, branch
 
 
@@ -36,8 +37,6 @@ def isosig_from_tri_angle_branch(tri, angle, branch):
     taut_isoSig, isom = isosig_from_tri_angle(tri, angle, return_isom = True)
     branch = apply_isom_to_branched_surface(branch, isom)
     branch_sig = "".join([string.ascii_lowercase[b] for b in branch])
-    ### we could have a taut triangulation with symmetry preserving the taut structure but moving a branched surface
-    ### these two surfaces get different names
     return taut_isoSig + '_' + branch_sig
     
 
@@ -178,6 +177,24 @@ def is_branched(tri, branch):
             return False
     return True
 
+def has_non_sing_semiflow(tri, branch):
+    if not is_branched(tri, branch):
+        return False
+    for edge in tri.edges():
+        mixed_count = 0
+        for embed in edge.embeddings():
+            b = branch[embed.simplex().index()]
+            large_edge_num, mixed_edge_pair_num = branch_num_to_large_edge_and_mixed_edge_pair_num(b)
+            verts = embed.vertices()
+            edge_pair = unsorted_vert_pair_to_edge_pair[ (verts[0], verts[1]) ]
+            if edge_pair == mixed_edge_pair_num:
+                mixed_count += 1
+                if mixed_count > 2:
+                    return False
+        if mixed_count != 2:
+            return False
+    return True
+
 def all_branched_surfaces(tri):
     ### warning, this will be exponentially slow for not tiny triangulations
     n = tri.countTetrahedra()
@@ -310,7 +327,8 @@ def upper_branched_surface(tri, angle, return_lower = False):
         if veering_colours[tri.tetrahedron(i).edge(mixed_edge_pair_num).index()] != tiny_edge_colour:
             mixed_edge_pair_num = (mixed_edge_pair_num + 1) % 3 ### then its the other one
         branch.append( branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num) )
-    assert is_branched(tri, branch)
+    # assert is_branched(tri, branch)
+    assert has_non_sing_semiflow(tri, branch)
     return branch
 
 ### The following function doesnt care about the transverse taut structure, and probably it should.

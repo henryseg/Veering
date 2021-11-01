@@ -85,6 +85,12 @@ def run_tests(num_to_check=1000):
         tri, angle = taut.isosig_to_tri_angle(sig)
         tri_original = regina.Triangulation3(tri) #copy
         branch = branched_surface.upper_branched_surface(tri, angle, return_lower = random.choice([True, False]))
+        
+        ### test branch isosig round trip
+        sig_with_branch = branched_surface.isosig_from_tri_angle_branch(tri, angle, branch)
+        tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
+        assert branch == branch2
+
         branch_original = branch[:] #copy
         face_num = random.randrange(tri.countTriangles())
         out = branched_pachner.twoThreeMove(tri, branch, face_num, return_edge = True)
