@@ -1,0 +1,126 @@
+#
+# drill.py
+#
+
+### Given a triangulation and a loop of triangles, drill along that loop
+
+import regina
+from taut import isosig_to_tri_angle
+
+
+def tet_to_face_data(tri, tet_num, face_num, vertices): ### vertices is list in order (trailing, pivot, leading) in numbering for the tet
+    """given a tetrahedron, face_num and vertices in the labelling for the tetrahedron,
+       convert to face_index and vertices in the labelling for the face.
+       This is the correct format to feed into drill."""
+
+    assert face_num not in vertices
+    tet = tri.tetrahedron(tet_num)
+    facemapping = tet.faceMapping(2,face_num)
+    face = tet.triangle(face_num)
+    new_vertices = facemapping.inverse() * regina.Perm4(vertices[0], vertices[1], vertices[2], face_num)
+    return (face.index(), regina.Perm3(new_vertices[0], new_vertices[1], new_vertices[2]))
+
+### anatomy of a loop of triangles:
+###
+### It is a list of tuples (tri_index, (v0, v1, v2), <add ordering info for multiple loop triangles carried by one triangulation triangle>)
+### where tri_index is the index of the triangle the loop passes through
+### v0 is the trailing vertex
+### v1 is the pivot vertex
+### v2 is the leading vertex
+
+
+def drill(tri, loop):
+
+    ### add new tetrahedra
+    new_lower_tets = [] 
+    new_upper_tets = [] ## both relative to regina's choice of coorientation for the face
+    for i in range(len(loop)):
+        new_lower_tets.append(tri.newTetrahedron())
+        new_upper_tets.append(tri.newTetrahedron())
+
+    ### we will glue tetrahedra together with a numbering that is convenient but 
+    ### unfortunately not oriented. We will orient later.
+
+    #           1  pivot
+    #          /|\
+    #         / | \
+    #        / ,3. \
+    #       /,'   `.\
+    #      0---------2 leading
+    # trailing
+
+    for i in range(len(loop)):
+        new_lower_tets[i].join(1, new_upper_tets[i], regina.Perm4(0,1,2,3))
+
+    ### now glue along the loop path, need to worry about regina's coorientation for neighbouring triangles
+
+    for i in range(len(loop)):
+        print('i', i)
+        face_data = loop[i]
+        face_index = face_data[0]
+        vert_nums = face_data[1]
+        face = tri.triangles()[face_index]
+        face_embed0 = face.embedding(0) 
+        face_tet = face_embed0.simplex()
+        face_vertices = face_embed0.vertices()
+        face_opposite_vert = face_vertices[3]
+        face_other_non_edge_vert = face_vertices[vert_nums[0]] ## opposite trailing vertex
+
+        face_data_next = loop[(i+1)%len(loop)]
+        face_index_next = face_data_next[0]
+        vert_nums_next = face_data_next[1]
+        face_next = tri.triangles()[face_index_next]
+        face_next_embed0 = face_next.embedding(0) 
+        face_next_tet = face_next_embed0.simplex()
+        face_next_vertices = face_next_embed0.vertices()
+        face_next_opposite_vert = face_next_vertices[3]
+        face_next_other_non_edge_vert = face_next_vertices[vert_nums_next[2]] ## opposite leading vertex
+
+
+        edge = face.edge(vert_nums[0]) ## opposite trailing vertex
+        print('edge index', edge.index())
+        assert edge == face_next.edge(vert_nums_next[2]) ## opposite leading vertex
+
+        edgemapping = face.faceMapping(1,vert_nums[0])
+        next_edgemapping = face_next.faceMapping(1,vert_nums_next[2])
+        face_gluing_regina_numbering = next_edgemapping * (edgemapping.inverse()) ### maps vertices 0,1,2 on face to corresponding vertices on face_next
+        assert face_gluing_regina_numbering[3] == 3
+        face_gluing_regina_numbering = regina.Perm3(face_gluing_regina_numbering[0], face_gluing_regina_numbering[1], face_gluing_regina_numbering[2])
+        assert face_gluing_regina_numbering[vert_nums[0]] == vert_nums_next[2]
+        face_gluing = vert_nums_next.inverse() * face_gluing_regina_numbering * vert_nums
+        assert face_gluing[0] == 2
+
+        signs = []
+        edge_embeddings = edge.embeddings()
+        for embed in edge_embeddings:
+            if embed.simplex() == face_tet:
+                if set([embed.vertices()[2], embed.vertices()[3]]) == set([face_opposite_vert, face_other_non_edge_vert]):
+                    print('embed data face_tet', embed.simplex().index(), embed.vertices())
+                    print('embed edge vert nums', embed.vertices()[0], embed.vertices()[1])
+                    signs.append( face_opposite_vert == embed.vertices()[2] )
+            if embed.simplex() == face_next_tet:
+                if set([embed.vertices()[2], embed.vertices()[3]]) == set([face_next_opposite_vert, face_next_other_non_edge_vert]):
+                    print('embed data face_next_tet', embed.simplex().index(), embed.vertices())
+                    print('embed edge vert nums', embed.vertices()[0], embed.vertices()[1])
+                    signs.append( face_next_opposite_vert == embed.vertices()[2] )
+        print('signs', signs)
+        assert len(signs) == 2
+        if signs[0] == signs[1]:  ### coorientations are same around the edge
+            new_lower_tets[i].join(0, new_upper_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+            new_upper_tets[i].join(0, new_lower_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+        else:
+            new_lower_tets[i].join(0, new_lower_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+            new_upper_tets[i].join(0, new_upper_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+
+    ### now unglue tri along the loop and glue in the new tetrahedra
+
+def test():
+    tri, angle = isosig_to_tri_angle('cPcbbbiht_12')
+    tri.save('cPcbbbiht_12.rga')
+    loop = [tet_to_face_data(tri, 0, 3, [2,0,1]), tet_to_face_data(tri, 0, 1, [0,2,3])]
+    print( loop )
+    drill(tri, loop)
+    tri.save('cPcbbbiht_12_drilled.rga')
+
+
+
