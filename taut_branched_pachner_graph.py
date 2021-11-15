@@ -2,6 +2,7 @@
 import regina
 from taut import isosig_from_tri_angle, isosig_to_tri_angle
 from branched_surface import isosig_to_tri_angle_branch, isosig_from_tri_angle_branch, upper_branched_surface
+from taut_polytope import is_layered
 import taut_pachner
 import branched_pachner
 import string
@@ -96,6 +97,7 @@ def print_path(target_isoSig, big_dict_of_nodes):
         ### Third part is the branched surface 
         print(filename)
         # node.tri.save('Output/' + filename)
+        print(is_layered(node.tri, node.angle))
         if i < len(path) - 1:  ## not the last one
             next_node = path[i+1]
             if next_node.isoSig in node.neighbour_moves_up_faces:

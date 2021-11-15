@@ -5,7 +5,7 @@
 ### Given a triangulation and a loop of triangles, drill along that loop
 
 import regina
-from taut import isosig_to_tri_angle
+from taut import isosig_to_tri_angle, reverse_tet_orientation
 
 
 def tet_to_face_data(tri, tet_num, face_num, vertices): ### vertices is list in order (trailing, pivot, leading) in numbering for the tet
@@ -22,7 +22,7 @@ def tet_to_face_data(tri, tet_num, face_num, vertices): ### vertices is list in 
 
 ### anatomy of a loop of triangles:
 ###
-### It is a list of tuples (tri_index, (v0, v1, v2), <add ordering info for multiple loop triangles carried by one triangulation triangle>)
+### It is a list of tuples (tri_index, Perm3(v0, v1, v2), <add ordering info for multiple loop triangles carried by one triangulation triangle>)
 ### where tri_index is the index of the triangle the loop passes through
 ### v0 is the trailing vertex
 ### v1 is the pivot vertex
@@ -30,7 +30,7 @@ def tet_to_face_data(tri, tet_num, face_num, vertices): ### vertices is list in 
 
 
 def drill(tri, loop):
-
+    original_countTetrahedra = tri.countTetrahedra()
     ### add new tetrahedra
     new_lower_tets = [] 
     new_upper_tets = [] ## both relative to regina's choice of coorientation for the face
@@ -54,6 +54,11 @@ def drill(tri, loop):
 
     ### now glue along the loop path, need to worry about regina's coorientation for neighbouring triangles
 
+    loop_face_tets0 = []
+    loop_face_vertices0 = []  
+    loop_face_tets1 = []
+    loop_face_vertices1 = []   ### need to store these because they cannot be recomputed once we start ungluing faces
+
     for i in range(len(loop)):
         print('i', i)
         face_data = loop[i]
@@ -76,6 +81,13 @@ def drill(tri, loop):
         face_next_opposite_vert = face_next_vertices[3]
         face_next_other_non_edge_vert = face_next_vertices[vert_nums_next[2]] ## opposite leading vertex
 
+        ### things to store for later
+
+        loop_face_tets0.append(face_tet) # store for later
+        loop_face_vertices0.append(face_vertices) #store for later
+        face_embed1 = face.embedding(1) 
+        loop_face_tets1.append( face_embed1.simplex() )
+        loop_face_vertices1.append( face_embed1.vertices() )
 
         edge = face.edge(vert_nums[0]) ## opposite trailing vertex
         print('edge index', edge.index())
@@ -114,13 +126,52 @@ def drill(tri, loop):
 
     ### now unglue tri along the loop and glue in the new tetrahedra
 
+    print('modify original triangulation')
+    for i in range(len(loop)):
+        print('i', i)
+        vert_nums = loop[i][1]
+
+        face_tet0 = loop_face_tets0[i]
+        face_vertices0 = loop_face_vertices0[i] 
+        face_tet1 = loop_face_tets1[i]
+        face_vertices1 = loop_face_vertices1[i] 
+    
+        face_opposite_vert0 = face_vertices0[3]
+        face_tet0.unjoin(face_opposite_vert)
+    ### glue torus shell to the old tetrahedra
+
+        vert_nums_Perm4 = regina.Perm4(vert_nums[0], vert_nums[1], vert_nums[2], 3)
+        new_lower_tets[i].join(3, face_tet0, face_vertices0 * vert_nums_Perm4)
+        new_upper_tets[i].join(3, face_tet1, face_vertices1 * vert_nums_Perm4)
+
+    ### now orient
+    swaps = [regina.Perm4()] * original_countTetrahedra ### identity permutations
+    for i in range(len(loop)):
+        if new_lower_tets[i].adjacentGluing(3).sign() == 1:
+            swaps.append( reverse_tet_orientation(tri, new_lower_tets[i], 0) )  ### pi_location = 0 is an arbitrary choice
+        else:
+            swaps.append( regina.Perm4() )
+        if new_upper_tets[i].adjacentGluing(3).sign() == 1:
+            swaps.append( reverse_tet_orientation(tri, new_upper_tets[i], 0) ) ### pi_location = 0 is an arbitrary choice
+        else:
+            swaps.append( regina.Perm4() )
+
+
 def test():
-    tri, angle = isosig_to_tri_angle('cPcbbbiht_12')
-    tri.save('cPcbbbiht_12.rga')
-    loop = [tet_to_face_data(tri, 0, 3, [2,0,1]), tet_to_face_data(tri, 0, 1, [0,2,3])]
+    # tri, angle = isosig_to_tri_angle('cPcbbbiht_12')
+    # tri.save('cPcbbbiht_12.rga')
+    # loop = [tet_to_face_data(tri, 0, 3, [2,0,1]), tet_to_face_data(tri, 0, 1, [0,2,3])]
+    # print( loop )
+    # drill(tri, loop)
+    # tri.save('cPcbbbiht_12_drilled_short.rga')
+
+    # loop = [tet_to_face_data(tri, 0, 3, [0,2,1]), tet_to_face_data(tri, 0, 0, [2,1,3]), tet_to_face_data(tri, 1, 3, [1,2,0]), tet_to_face_data(tri, 1, 1, [2,0,3])]
+    # print( loop )  ### goes through a face twice
+    # drill(tri, loop)
+    # tri.save('cPcbbbiht_12_drilled_upwards.rga') 
+
+    tri, angle = isosig_to_tri_angle('cPcbbbdxm_10')
+    loop = [tet_to_face_data(tri, 0, 3, [0,2,1])]
     print( loop )
     drill(tri, loop)
-    tri.save('cPcbbbiht_12_drilled.rga')
-
-
-
+    tri.save('cPcbbbdxm_10_drilled_mobius.rga')
