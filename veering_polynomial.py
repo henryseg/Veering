@@ -103,8 +103,10 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
             if verbose > 0:
                 print(("current tet_coeffs", tet_coeffs))
 
-        ET_matrix.append(tet_coeffs)
-
+        ET_matrix.append(tet_coeffs)        
+        print("Here is the uncleared ET matrix")
+        print(ET)
+        
     # convert and return
     return matrix_laurent_to_poly(ET_matrix, ZH, P)
 
