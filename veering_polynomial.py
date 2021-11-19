@@ -19,8 +19,7 @@ from taut_homology import (edge_equation_matrix_taut, group_ring,
 from taut_polynomial import tet_lower_upper_edges
 from veering import is_veering
 
-verbose = 0
-
+verbose = 100
 
 # computing the veering veering polynomial
 
