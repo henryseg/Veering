@@ -19,7 +19,7 @@ from taut_homology import (edge_equation_matrix_taut, group_ring,
 from taut_polynomial import tet_lower_upper_edges
 from veering import is_veering
 
-verbose = 100
+verbose = 0
 
 # computing the veering veering polynomial
 
@@ -103,8 +103,8 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
                 print(("current tet_coeffs", tet_coeffs))
 
         ET_matrix.append(tet_coeffs)        
-        print("Here is the uncleared ET matrix")
-        print(ET_matrix)
+    # print("Here is the uncleared ET matrix")
+    # print(ET_matrix)
         
     # convert and return
     return matrix_laurent_to_poly(ET_matrix, ZH, P)
