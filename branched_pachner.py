@@ -42,7 +42,6 @@ def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
 
     ### check we do the same as regina... 
     tri2 = regina.Triangulation3(tri)  ## make a copy
-    # tri2.twoThreeMove(tri2.triangle(face_num))
     tri2.pachner(tri2.triangle(face_num))
 
     ### We have to implement twoThreeMove ourselves. e.g. we do a 2-3 move to canonical fig 8 knot complement triangulation. 
@@ -255,12 +254,12 @@ def threeTwoMove(tri, branch, edge_num, return_triangle = False):
         tet_nums.append(tets[i].index())
         vertices.append(embed.vertices())
 
-    if len(set(tets)) != 3: 
+    if len(set([tet.index() for tet in tets])) != 3: 
         return False  ### tetrahedra must be distinct
      
     ### check we do the same as regina... 
     tri2 = regina.Triangulation3(tri)  ## make a copy
-    tri2.threeTwoMove(tri2.edge(edge_num))
+    tri2.pachner(tri2.edge(edge_num))
 
     ## record the tetrahedra and gluings adjacent to the tets 
 

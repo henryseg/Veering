@@ -48,7 +48,6 @@ def twoThreeMove(tri, angle, face_num, perform = True, return_edge = False):
 
     ### check we do the same as regina... 
     tri2 = regina.Triangulation3(tri)  ## make a copy
-    #tri2.twoThreeMove(tri2.triangle(face_num))
     tri2.pachner(tri2.triangle(face_num))
 
     ### We have to implement twoThreeMove ourselves. e.g. we do a 2-3 move to canonical fig 8 knot complement triangulation. 
@@ -230,7 +229,7 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
             non_pi_tet_num = embed.simplex().index()
             local_non_pi_tet_num = i
 
-    if len(set(tets)) != 3: 
+    if len(set([tet.index() for tet in tets])) != 3: 
         return False  ### tetrahedra must be distinct
 
     if not perform:
@@ -242,7 +241,7 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
      
     ### check we do the same as regina... 
     tri2 = regina.Triangulation3(tri)  ## make a copy
-    tri2.threeTwoMove(tri2.edge(edge_num))
+    tri2.pachner(tri2.edge(edge_num))
 
     ## record the tetrahedra and gluings adjacent to the tets 
 
