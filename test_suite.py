@@ -6,6 +6,13 @@ import random
 
 from file_io import parse_data_file, read_from_pickle
 
+def check_polynomial_coefficients(p, correct_coeffs):
+    p = p.coefficients()
+    p.sort()
+    n = [-c for c in p]
+    n.reverse()
+    assert p == correct_coeffs or n == correct_coeffs
+
 
 def run_tests(num_to_check=1000):
 
@@ -206,17 +213,30 @@ def run_tests(num_to_check=1000):
     #     print("all tests depending on pyx passed")
 
     veering_polys = {
-        "cPcbbbiht_12": "a^3 - 4*a^2 + 4*a - 1",
-        "eLMkbcddddedde_2100": "a^6*b - a^6 - 2*a^5*b - a^4*b^2 + a^5 + 2*a^4*b + a^3*b^2 - 2*a^3*b + a^3 + 2*a^2*b + a*b^2 - a^2 - 2*a*b - b^2 + b",
-        "gLLAQbecdfffhhnkqnc_120012": "a^7 + a^6 + a^5 + a^4 - a^3 - a^2 - a - 1",
-        "gLLPQcdfefefuoaaauo_022110": "a^12*b^3 - a^11*b^2 - a^10*b^3 - a^10*b^2 - a^7*b^3 - a^7*b^2 - a^6*b^3 + a^7*b + a^5*b^2 - a^6 - a^5*b - a^5 - a^2*b - a^2 - a*b + 1",
+        "cPcbbbiht_12": [-4, -1, 1, 4],
+        "eLMkbcddddedde_2100": [-2, -2, -2, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 2, 2],
+        "gLLAQbecdfffhhnkqnc_120012": [-1, -1, -1, -1, 1, 1, 1, 1],
+        "gLLPQcdfefefuoaaauo_022110": [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1],
     }
 
+    # veering_polys = { ### old
+    #     "cPcbbbiht_12": "a^3 - 4*a^2 + 4*a - 1",
+    #     "eLMkbcddddedde_2100": "a^6*b - a^6 - 2*a^5*b - a^4*b^2 + a^5 + 2*a^4*b + a^3*b^2 - 2*a^3*b + a^3 + 2*a^2*b + a*b^2 - a^2 - 2*a*b - b^2 + b",
+    #     "gLLAQbecdfffhhnkqnc_120012": "a^7 + a^6 + a^5 + a^4 - a^3 - a^2 - a - 1",
+    #     "gLLPQcdfefefuoaaauo_022110": "a^12*b^3 - a^11*b^2 - a^10*b^3 - a^10*b^2 - a^7*b^3 - a^7*b^2 - a^6*b^3 + a^7*b + a^5*b^2 - a^6 - a^5*b - a^5 - a^2*b - a^2 - a*b + 1",
+    # }
+
     taut_polys = {
-        "cPcbbbiht_12": "a^2 - 3*a + 1",
-        "eLMkbcddddedde_2100": "a^2*b - a^2 - a*b - b^2 + b",
-        "iLLAwQcccedfghhhlnhcqeesr_12001122": "0",
+        "cPcbbbiht_12": [-3, 1, 1],
+        "eLMkbcddddedde_2100": [-1, -1, -1, 1, 1],
+        "iLLAwQcccedfghhhlnhcqeesr_12001122": [],
     }
+
+    # taut_polys = { ### old
+    #     "cPcbbbiht_12": "a^2 - 3*a + 1",
+    #     "eLMkbcddddedde_2100": "a^2*b - a^2 - a*b - b^2 + b",
+    #     "iLLAwQcccedfghhhlnhcqeesr_12001122": "0",
+    # }
 
     torus_bundles = [
         "cPcbbbiht_12",
@@ -257,11 +277,16 @@ def run_tests(num_to_check=1000):
         for sig in veering_polys:
             print("testing veering poly", sig)
             p = veering_polynomial.veering_polynomial(sig)
-            assert p.__repr__() == veering_polys[sig]
+            check_polynomial_coefficients(p, veering_polys[sig])
+            ### Nov 2021: sage 9.4 changed how smith normal form works, which changed our polynomials
+            ### to equivalent but not equal polynomials. To avoid this kind of change breaking things
+            ### in the future, we changed to comparing the list of coefficients.
+            # assert p.__repr__() == veering_polys[sig]
         for sig in taut_polys:
             print("testing taut poly", sig)
             p = taut_polynomial.taut_polynomial_via_tree(sig)
-            assert p.__repr__() == taut_polys[sig]
+            check_polynomial_coefficients(p, taut_polys[sig])
+        #     assert p.__repr__() == taut_polys[sig]
         for i in range(3):
             sig = random.choice(veering_isosigs[:3000])
             print("testing divide", sig)
@@ -316,22 +341,41 @@ def run_tests(num_to_check=1000):
         }
 
         taut_polys_with_cycles = {
-            ("eLMkbcddddedde_2100", ((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
-            ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "a^2 + 2*a + 1",
-            ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - 4*a*b - b^2 + a",
+            ("eLMkbcddddedde_2100", ((7, 7, 0, 0, -4, 3, -7, 0),)): [-1, -1, -1, 1, 1],
+            ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): [1, 1, 2],
+            ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): [-4, -1, -1, 1, 1],
         }
+
+        # taut_polys_with_cycles = {
+        #     ("eLMkbcddddedde_2100", ((7, 7, 0, 0, -4, 3, -7, 0),)): "a^14 - a^8 - a^7 - a^6 + 1",
+        #     ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "a^2 + 2*a + 1",
+        #     ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - 4*a*b - b^2 + a",
+        # }
+
 
         taut_polys_image = {
-            ('eLMkbcddddedde_2100', ((7, 8, -1, 0, -4, 4, -8, 0),)):"a^16 - a^9 - a^8 - a^7 + 1",
-            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2),)):"a*b^2*c - 2*a*b*c - b^2*c - a^2 - 2*a*b + a",
-            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))):"a*b^2 - a^2 - 4*a*b - b^2 + a"
+            ('eLMkbcddddedde_2100', ((7, 8, -1, 0, -4, 4, -8, 0),)):[-1, -1, -1, 1, 1],
+            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2),)):[-2, -2, -1, -1, 1, 1],
+            ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))):[-4, -1, -1, 1, 1]
         }
 
+        # taut_polys_image = {
+        #     ('eLMkbcddddedde_2100', ((7, 8, -1, 0, -4, 4, -8, 0),)):"a^16 - a^9 - a^8 - a^7 + 1",
+        #     ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2),)):"a*b^2*c - 2*a*b*c - b^2*c - a^2 - 2*a*b + a",
+        #     ('ivvPQQcfhghgfghfaaaaaaaaa_01122000', ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))):"a*b^2 - a^2 - 4*a*b - b^2 + a"
+        # }
+
         alex_polys_with_cycles = {
-            ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^15 - a^14 + a^9 - 2*a^8 + 2*a^7 - a^6 + a - 1",
-            ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "3*a^3 - a^2 + a - 3",
-            ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - b^2 + a",
+            ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): [-2, -1, -1, -1, 1, 1, 1, 2],
+            ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): [-3, -1, 1, 3],
+            ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): [-1, -1, 1, 1],
         }
+
+        # alex_polys_with_cycles = {
+        #     ("eLMkbcddddedde_2100",((7, 7, 0, 0, -4, 3, -7, 0),)): "a^15 - a^14 + a^9 - 2*a^8 + 2*a^7 - a^6 + a - 1",
+        #     ("iLLLQPcbeegefhhhhhhahahha_01110221", ((0, 0, 1, -1, -1, 0, -1, -1, 1, 0, 0, 0, 0, -1, 0, -1),)): "3*a^3 - a^2 + a - 3",
+        #     ("ivvPQQcfhghgfghfaaaaaaaaa_01122000", ((1, 1, 2, 0, -1, 2, 1, -3, 0, -1, 0, -2, -1, 0, 3, -2), (1, 1, 0, 2, -1, 0, -3, 1, 2, -1, -2, 0, 3, -2, -1, 0))): "a*b^2 - a^2 - b^2 + a",
+        # }
 
     if sage_working:
         import taut_carried     
@@ -347,21 +391,24 @@ def run_tests(num_to_check=1000):
             print("testing taut with cycles", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
-            assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
+            check_polynomial_coefficients(p, taut_polys_with_cycles[(sig, cycles)])
+            # assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
         for sig, cycles in taut_polys_image:
             print("testing taut with images", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_image(sig, cycles_in)
-            assert p.__repr__() == taut_polys_image[(sig, cycles)]
+            check_polynomial_coefficients(p, taut_polys_image[(sig, cycles)])
+            # assert p.__repr__() == taut_polys_image[(sig, cycles)]
 
     if sage_working:
         for sig, cycles in alex_polys_with_cycles:
             print("testing alex with cycles", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in, mode = "alexander")
-            assert p.__repr__() == alex_polys_with_cycles[(sig, cycles)]
+            check_polynomial_coefficients(p, alex_polys_with_cycles[(sig, cycles)])
+            # assert p.__repr__() == alex_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
         import edge_orientability
