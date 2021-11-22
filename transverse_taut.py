@@ -139,3 +139,18 @@ def symmetry_group_size(tri, angle):
                     count += 1
     return count
 
+def get_tet_above_edge(tri, angle, edge, tet_vert_coorientations = None):
+    """
+    Find the tetrahedron above an edge
+    """
+    if tet_vert_coorientations == None:
+        tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    embeddings = edge.embeddings()
+    for embed in embeddings:
+        tet = embed.tetrahedron()
+        _, bottom_edge = get_tet_top_and_bottom_edges(tet_vert_coorientations, tet)
+        if bottom_edge == edge:
+            return tet
+
+
+            

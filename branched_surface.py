@@ -72,15 +72,20 @@ def isosig_from_tri_angle_branch(tri, angle, branch):
 
 ### This is branched surface with edge 0 and mixed "offset" -1. This gets branched surface "b" (in the ordering "a" to "l")
 
-def branch_num_to_large_edge_and_mixed_edge_pair_num(branch_num):
+def branch_num_to_large_edge_and_mixed_edge_pair_num(branch_num, return_small = False):
     large_edge_num = branch_num // 2 ### divide by two, round down
     handedness_bit = branch_num % 2
     large_tiny_edge_pair_num = edge_number_to_edge_pair(large_edge_num)
     if handedness_bit == 0:
         mixed_edge_pair_num = (large_tiny_edge_pair_num + 1) % 3
+        small_edge_pair_num = (large_tiny_edge_pair_num - 1) % 3
     else:
         mixed_edge_pair_num = (large_tiny_edge_pair_num - 1) % 3
-    return large_edge_num, mixed_edge_pair_num
+        small_edge_pair_num = (large_tiny_edge_pair_num + 1) % 3
+    if return_small:
+        return large_edge_num, mixed_edge_pair_num, small_edge_pair_num
+    else:
+        return large_edge_num, mixed_edge_pair_num
 
 def branch_num_from_large_edge_and_mixed_edge_pair_num(large_edge_num, mixed_edge_pair_num):
     large_tiny_edge_pair_num = edge_number_to_edge_pair(large_edge_num)
