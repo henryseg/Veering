@@ -60,7 +60,7 @@ def drill(tri, loop):
     loop_face_vertices1 = []   ### need to store these because they cannot be recomputed once we start ungluing faces
 
     for i in range(len(loop)):
-        print('i', i)
+        print('collect info: i', i)
         face_data = loop[i]
         face_index = face_data[0]
         vert_nums = face_data[1]
@@ -126,9 +126,8 @@ def drill(tri, loop):
 
     ### now unglue tri along the loop and glue in the new tetrahedra
 
-    print('modify original triangulation')
     for i in range(len(loop)):
-        print('i', i)
+        print('modify triangulation: i', i)
         vert_nums = loop[i][1]
 
         face_tet0 = loop_face_tets0[i]
@@ -137,7 +136,7 @@ def drill(tri, loop):
         face_vertices1 = loop_face_vertices1[i] 
     
         face_opposite_vert0 = face_vertices0[3]
-        face_tet0.unjoin(face_opposite_vert)
+        face_tet0.unjoin(face_opposite_vert0)
     ### glue torus shell to the old tetrahedra
 
         vert_nums_Perm4 = regina.Perm4(vert_nums[0], vert_nums[1], vert_nums[2], 3)
@@ -170,8 +169,15 @@ def test():
     # drill(tri, loop)
     # tri.save('cPcbbbiht_12_drilled_upwards.rga') 
 
-    tri, angle = isosig_to_tri_angle('cPcbbbdxm_10')
-    loop = [tet_to_face_data(tri, 0, 3, [0,2,1])]
-    print( loop )
+    # tri, angle = isosig_to_tri_angle('cPcbbbdxm_10')
+    # loop = [tet_to_face_data(tri, 0, 3, [0,2,1])]
+    # print( loop )
+    # drill(tri, loop)
+    # tri.save('cPcbbbdxm_10_drilled_mobius.rga')
+
+    tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
+    loop = [(6, regina.Perm3(0,1,2)), (2, regina.Perm3(0,1,2))]
     drill(tri, loop)
-    tri.save('cPcbbbdxm_10_drilled_mobius.rga')
+    tri.save('s227_drilled_upwards.rga')
+
+
