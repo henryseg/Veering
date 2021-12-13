@@ -5,7 +5,8 @@
 ### Given a triangulation and a loop of triangles, drill along that loop
 
 import regina
-from taut import isosig_to_tri_angle, reverse_tet_orientation
+from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
+from transverse_taut import is_transverse_taut
 
 
 def tet_to_face_data(tri, tet_num, face_num, vertices): ### vertices is list in order (trailing, pivot, leading) in numbering for the tet
@@ -29,7 +30,13 @@ def tet_to_face_data(tri, tet_num, face_num, vertices): ### vertices is list in 
 ### v2 is the leading vertex
 
 
-def drill(tri, loop):
+def drill(tri, loop, angle = None, branch = None):
+    if angle != None:
+        # face_coorientations = is_transverse_taut(tri, angle, return_type = "face_coorientations")
+        # assert face_coorientations != False
+        tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+        # assert tet_vert_coorientations != False
+
     original_countTetrahedra = tri.countTetrahedra()
     ### add new tetrahedra
     new_lower_tets = [] 
@@ -60,7 +67,7 @@ def drill(tri, loop):
     loop_face_vertices1 = []   ### need to store these because they cannot be recomputed once we start ungluing faces
 
     for i in range(len(loop)):
-        print('collect info: i', i)
+        # print('collect info: i', i)
         face_data = loop[i]
         face_index = face_data[0]
         vert_nums = face_data[1]
@@ -90,7 +97,7 @@ def drill(tri, loop):
         loop_face_vertices1.append( face_embed1.vertices() )
 
         edge = face.edge(vert_nums[0]) ## opposite trailing vertex
-        print('edge index', edge.index())
+        # print('edge index', edge.index())
         assert edge == face_next.edge(vert_nums_next[2]) ## opposite leading vertex
 
         edgemapping = face.faceMapping(1,vert_nums[0])
@@ -107,17 +114,17 @@ def drill(tri, loop):
         for embed in edge_embeddings:
             if embed.simplex() == face_tet:
                 if set([embed.vertices()[2], embed.vertices()[3]]) == set([face_opposite_vert, face_other_non_edge_vert]):
-                    print('embed data face_tet', embed.simplex().index(), embed.vertices())
-                    print('embed edge vert nums', embed.vertices()[0], embed.vertices()[1])
+                    # print('embed data face_tet', embed.simplex().index(), embed.vertices())
+                    # print('embed edge vert nums', embed.vertices()[0], embed.vertices()[1])
                     signs.append( face_opposite_vert == embed.vertices()[2] )
             if embed.simplex() == face_next_tet:
                 if set([embed.vertices()[2], embed.vertices()[3]]) == set([face_next_opposite_vert, face_next_other_non_edge_vert]):
-                    print('embed data face_next_tet', embed.simplex().index(), embed.vertices())
-                    print('embed edge vert nums', embed.vertices()[0], embed.vertices()[1])
+                    # print('embed data face_next_tet', embed.simplex().index(), embed.vertices())
+                    # print('embed edge vert nums', embed.vertices()[0], embed.vertices()[1])
                     signs.append( face_next_opposite_vert == embed.vertices()[2] )
-        print('signs', signs)
+        # print('signs', signs)
         assert len(signs) == 2
-        if signs[0] == signs[1]:  ### coorientations are same around the edge
+        if signs[0] == signs[1]:  ### coorientations are same around the edge (not a transverse taut coorientation!)
             new_lower_tets[i].join(0, new_upper_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
             new_upper_tets[i].join(0, new_lower_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
         else:
@@ -127,7 +134,7 @@ def drill(tri, loop):
     ### now unglue tri along the loop and glue in the new tetrahedra
 
     for i in range(len(loop)):
-        print('modify triangulation: i', i)
+        # print('modify triangulation: i', i)
         vert_nums = loop[i][1]
 
         face_tet0 = loop_face_tets0[i]
@@ -143,17 +150,41 @@ def drill(tri, loop):
         new_lower_tets[i].join(3, face_tet0, face_vertices0 * vert_nums_Perm4)
         new_upper_tets[i].join(3, face_tet1, face_vertices1 * vert_nums_Perm4)
 
-    ### now orient
-    swaps = [regina.Perm4()] * original_countTetrahedra ### identity permutations
-    for i in range(len(loop)):
-        if new_lower_tets[i].adjacentGluing(3).sign() == 1:
-            swaps.append( reverse_tet_orientation(tri, new_lower_tets[i], 0) )  ### pi_location = 0 is an arbitrary choice
-        else:
-            swaps.append( regina.Perm4() )
-        if new_upper_tets[i].adjacentGluing(3).sign() == 1:
-            swaps.append( reverse_tet_orientation(tri, new_upper_tets[i], 0) ) ### pi_location = 0 is an arbitrary choice
-        else:
-            swaps.append( regina.Perm4() )
+    if angle != None:
+        for i in range(len(loop)):
+            face_data = loop[i]
+            face_index = face_data[0]
+            face = tri.triangles()[face_index]
+            face_embed0 = face.embedding(0) 
+            face_tet = face_embed0.simplex()
+            face_vertices = face_embed0.vertices()
+            face_opposite_vert = face_vertices[3]
+
+            # if face_coorientations[face_index] == +1: ### doesnt seem to be correct
+            if tet_vert_coorientations[face_tet.index()][face_opposite_vert] == +1:  ### this doesnt seem correct either!
+                angle.extend([0,2])
+            else:
+                angle.extend([2,0])
+        print('taut???', is_taut(tri, angle), angle)
+
+
+        # angle.extend([0,2] * len(loop))  ## wrong: lower and upper need to be relative to the taut coorientation, not the embed ordering
+
+
+
+    # ### now orient
+    # swaps = [regina.Perm4()] * original_countTetrahedra ### identity permutations
+    # for i in range(len(loop)):
+    #     if new_lower_tets[i].adjacentGluing(3).sign() == 1:
+    #         swaps.append( reverse_tet_orientation(tri, new_lower_tets[i], 0) )  ### pi_location = 0 is an arbitrary choice
+    #     else:
+    #         swaps.append( regina.Perm4() )
+    #     if new_upper_tets[i].adjacentGluing(3).sign() == 1:
+    #         swaps.append( reverse_tet_orientation(tri, new_upper_tets[i], 0) ) ### pi_location = 0 is an arbitrary choice
+    #     else:
+    #         swaps.append( regina.Perm4() )
+
+    assert tri.isValid()
 
 
 def test():
@@ -177,7 +208,7 @@ def test():
 
     tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
     loop = [(6, regina.Perm3(0,1,2)), (2, regina.Perm3(0,1,2))]
-    drill(tri, loop)
+    drill(tri, loop, angle = angle)
     tri.save('s227_drilled_upwards.rga')
 
 

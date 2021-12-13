@@ -143,10 +143,21 @@ def test():
 	# 	print(loop)
 
 	# loop = flow_cycle_to_triangle_loop(tri, branch, [(0,0)]) ### sideways
-	loop = flow_cycle_to_triangle_loop(tri, branch, [(2,5)]) ### upwards
-	print('drilling')
-	print('loop', loop)
-	drill(tri, loop)
-	tri.save('drilled_s227.rga')
+	# loop = flow_cycle_to_triangle_loop(tri, branch, [(2,5)]) ### upwards
+	# print('drilling')
+	# print('loop', loop)
+	# drill(tri, loop)
+	# tri.save('drilled_s227.rga')
+
+	for loop in found_loops:
+		tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
+		tri_loop = flow_cycle_to_triangle_loop(tri, branch, loop)
+		if tri_loop == False:
+			print('couldnt make loop', loop)
+		else:
+			print(loop, tri_loop)
+			drill(tri, tri_loop, angle = angle)
+			print(tri.countTetrahedra())
+
 		
 
