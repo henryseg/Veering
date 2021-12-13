@@ -6,7 +6,7 @@
 
 
 import regina
-# import snappy
+import snappy
 
 from file_io import parse_data_file, write_data_file
 from taut import isosig_to_tri_angle, apply_isom_to_angle_struct_list
@@ -25,8 +25,8 @@ def compute_census_data(filename_in, filename_out, functions, verbose = 0):
 		regina_sig = taut_sig.split('_')[0]
 
 		tri, angle = isosig_to_tri_angle(taut_sig)
-		# snappy_triang = snappy.Manifold(regina_sig)
-		snappy_triang = None
+		snappy_triang = snappy.Manifold(regina_sig)
+		# snappy_triang = None
 		triang_data = {'sig': taut_sig, 'angle': angle, 'tri': tri, 'snappy_triang': snappy_triang, 'old_data': line_data}
 
 		line_out = []
@@ -44,6 +44,12 @@ def veering_isosig(triang_data):
 
 def num_cusps(triang_data):
 	return str(triang_data['snappy_triang'].num_cusps())
+
+def is_geometric(triang_data):
+	if triang_data['snappy_triang'].verify_hyperbolicity()[0]:
+		return 'G' # for geometric
+	else:
+		return 'N'
 
 def num_toggles_red_blue(triang_data):
 	tet_types = is_veering(triang_data['tri'], [int(a) for a in triang_data['angle']], return_type = 'tet_types')
@@ -81,28 +87,43 @@ def LMN_from_old_data(triang_data): ## layered vs measurable vs non-measurable
 def num_cusps_from_old_data(triang_data):
 	return triang_data['old_data'][2]
 
-def symmetry_group_size_from_old_data(triang_data):
+def is_geometric_from_old_data(triang_data):
 	return triang_data['old_data'][3]
 
-def edge_orientable_from_old_data(triang_data):
+def symmetry_group_size_from_old_data(triang_data):
 	return triang_data['old_data'][4]
 
-def euler_class_from_old_data(triang_data):
+def edge_orientable_from_old_data(triang_data):
 	return triang_data['old_data'][5]
 
-def ladder_counts_from_old_data(triang_data):
+def euler_class_from_old_data(triang_data):
 	return triang_data['old_data'][6]
 
-def num_toggles_red_blue_from_old_data(triang_data):
+def ladder_counts_from_old_data(triang_data):
 	return triang_data['old_data'][7]
 
-def homology_from_old_data(triang_data):
+def num_toggles_red_blue_from_old_data(triang_data):
 	return triang_data['old_data'][8]
 
-def other_names_from_old_data(triang_data):
+def homology_from_old_data(triang_data):
 	return triang_data['old_data'][9]
 
-functions_list = [veering_isosig, LMN_from_old_data, num_cusps_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, ladder_counts_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
+def other_names_from_old_data(triang_data):
+	return triang_data['old_data'][10]
 
-if __name__ == '__main__':
+functions_list = [veering_isosig, LMN_from_old_data, num_cusps_from_old_data, is_geometric_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, ladder_counts_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
+
+def recompute():
 	compute_census_data('Data/veering_census_with_data.txt', 'Data/veering_census_with_more_data.txt', functions_list, verbose = 1)
+
+def search():
+	census_data = parse_data_file('Data/veering_census_with_data.txt') 
+	out = []
+	for i, line in enumerate(census_data):
+		line_data = line.split(' ')
+		if line_data[3] == 'N': # non geometric
+			out.append([line_data[0]])
+	write_data_file(out, 'Data/veering_non_geometric.txt')
+
+
+
