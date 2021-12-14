@@ -516,7 +516,8 @@ class torus_triangulation:
 
     def generate_canvas(self, args = {}): #style = 'ladders', ladder_width = 5.0, height = 10.0, , ct_depth = 5):
         ### global_drawing_scale is just so that the text looks good
-        assert self.canv == None
+        self.canv = None
+        # assert self.canv == None
         self.canv = pyx.canvas.canvas()
         for i,L in enumerate(self.ladder_list):
             if args['style'] == 'ladders':
