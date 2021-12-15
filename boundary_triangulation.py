@@ -134,16 +134,27 @@ class ladder_unit(tet_face):
             points = [rung.at(0.7*rung.arclen()) for rung in rungs]
             pos = [0.5*(points[0][0] + points[1][0]), 0.5*(points[0][1] + points[1][1])]
 
-        my_canvas.text(pos[0], pos[1], "$"+str(self.tet_num)+"_"+str(self.face)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero])
+        tet_col = pyx.color.rgb(0.0,0.0,0.0)
+        if 'tet_shapes' in args:
+            if args['tet_shapes'][self.tet_num].imag < 0:
+                tet_col = pyx.color.rgb(0.0,0.8,0.8)
 
-    def draw_corner_and_face_labels(self, my_canvas):
+        my_canvas.text(pos[0], pos[1], "$"+str(self.tet_num)+"_"+str(self.face)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero, tet_col])
+
+    def draw_corner_and_face_labels(self, my_canvas, args = {}):
         vertex_names = list(self.verts_C.keys())
         posns = [self.verts_C[vertex_name] for vertex_name in vertex_names]
         center = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
+
+        tet_col = pyx.color.rgb(0.0,0.0,0.0)
+        if 'tet_shapes' in args:
+            if args['tet_shapes'][self.tet_num].imag < 0:
+                tet_col = pyx.color.rgb(0.0,0.8,0.8)
+
         for i in range(3):
             self.draw_face_label(my_canvas, vertex_names[i], curvy = False)
             pos = (1.0/3.0)*(center + 2.0*posns[i])
-            my_canvas.text(pos.real, pos.imag, "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
+            my_canvas.text(pos.real, pos.imag, "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero, tet_col])
 
     def draw_vertex_dot(self, my_canvas, vertex):
         x,y = self.verts_C[vertex].real, self.verts_C[vertex].imag
@@ -196,7 +207,8 @@ class ladder_unit(tet_face):
             pos = [pos_C.real, pos_C.imag]
         my_canvas.text(pos[0], pos[1], "$"+str(triangle_num)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero, pyx.color.rgb(0,0.5,0)])
 
-    def draw_labels_curvy(self, my_canvas, ladder_width, delta = 0.2):
+    def draw_labels_curvy(self, my_canvas, ladder_width, args = {}):
+        delta = args['delta']
         vertex_names = list(self.verts_C.keys())
         tet_index, face = self.tet_num, self.face
         angle_choice = self.vt.angle[tet_index]
@@ -210,6 +222,11 @@ class ladder_unit(tet_face):
 
         posns = [self.verts_C[vertex_name] for vertex_name in vertex_names]
         center = (1.0/3.0)*(posns[0]+posns[1]+posns[2])
+
+        tet_col = pyx.color.rgb(0.0,0.0,0.0)
+        if 'tet_shapes' in args:
+            if args['tet_shapes'][self.tet_num].imag < 0:
+                tet_col = pyx.color.rgb(0.0,0.8,0.8)
 
         magic_number = 0.6
         for i in range(3):
@@ -235,7 +252,7 @@ class ladder_unit(tet_face):
                 pos = self.verts_C[vname] + complex(sign*ladder_width * 0.03, 0)
                 pos = [pos.real, pos.imag]
 
-            my_canvas.text(pos[0], pos[1], "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
+            my_canvas.text(pos[0], pos[1], "$"+str(vertex_names[i])+"$", textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero, tet_col])
 
     def draw_triangle_edges(self, my_canvas, curvy = True, args = {}):
         #ladder_width = None, delta = 0.2):
@@ -389,13 +406,13 @@ class ladder:
                     ladder_unit.draw_triangle_label(my_canvas, curvy = True, args = args)
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = True, args = args)
                 if args['draw_labels']:
-                    ladder_unit.draw_labels_curvy(my_canvas, width, delta = args['delta'])
+                    ladder_unit.draw_labels_curvy(my_canvas, width, args = args)
             else:        
                 if args['draw_labels']:     
                     ladder_unit.draw_triangle_label(my_canvas, curvy = False, args = args)
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = False, args = args)
                 if args['draw_labels']:
-                    ladder_unit.draw_corner_and_face_labels(my_canvas)
+                    ladder_unit.draw_corner_and_face_labels(my_canvas, args = args)
                 if args['ct_depth'] >= 0:
                     if ladder_unit.is_on_left():
                         veering_colour = self.vt.get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)

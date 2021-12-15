@@ -97,7 +97,7 @@ def find_veering_isosigs_from_regina_isosig_file(filename):
     out = []
     for i, regina_isosig in enumerate(data):
         if i%500 == 0:
-            print float(i)/float(len(data))
+            print(float(i)/float(len(data)))
         out.extend( find_veering_isosigs_from_regina_isosig(regina_isosig) )
     out = [[foo] for foo in out]
     write_data_file(out, filename.split('.')[0] + '_veering_isosigs.txt')
@@ -109,5 +109,5 @@ if __name__ == '__main__':
     # print t.edges()
 
     regina_isosig = 'iLLLQPcbeefeghhhhhhqhqxxa'
-    print find_veering_isosigs_from_regina_isosig(regina_isosig)
+    print(find_veering_isosigs_from_regina_isosig(regina_isosig))
     # find_veering_isosigs_from_regina_isosig_file('Veering_census/veering_covers.txt')

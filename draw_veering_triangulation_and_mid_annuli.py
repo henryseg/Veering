@@ -8,6 +8,10 @@ import taut
 import pyx
 import math
 
+from file_io import parse_data_file
+
+from snappy import Manifold
+
 # pyx.text.set(mode="latex")
 # pyx.text.preamble(r"\usepackage{times}")
 
@@ -19,9 +23,11 @@ light_red = pyx.color.rgb(1.0,0.8,0.8)
 light_blue = pyx.color.rgb(0.8,0.8,1.0)
 direction_to_col = {'blue':blue, 'red':red}
 
+black = pyx.color.rgb(0.0,0.0,0.0)
 green = pyx.color.rgb(0.0,0.5,0.0)
 purple = pyx.color.rgb(0.5,0.0,0.5)
 grey = pyx.color.rgb(0.5,0.5,0.5)
+cyan = pyx.color.rgb(0.0,1.0,1.0)
 
 tet_width = 5.0
 tet_gap = 1.0
@@ -116,7 +122,7 @@ def draw_vertex_num(canvas, vert_posns, vert_num):
     canvas.text(pos.real, pos.imag, str(vert_num), textattrs=[pyx.text.size(sizename="small"), pyx.text.halign.center, pyx.text.vshift.middlezero])
 
 def draw_triangle_num(canvas, veering_colours, vert_posns, tetrahedron, tri_num): #, offset_down = False):
-    tri_verts = range(4)
+    tri_verts = list(range(4))
     tri_verts.pop(tri_num)
     cols = [get_edge_between_verts_colour(veering_colours, tetrahedron, tri_verts[0], tri_verts[1]),
             get_edge_between_verts_colour(veering_colours, tetrahedron, tri_verts[1], tri_verts[2]),
@@ -235,7 +241,7 @@ def get_consistent_tet_vert_posns(triangulation, angle, tet_types, coorientation
 
     blue_zigzags = []
     red_zigzags = []
-    tet_nums_to_visit = range(triangulation.countTetrahedra()) ## these will all be on the bottom of zigzags
+    tet_nums_to_visit = list(range(triangulation.countTetrahedra())) ## these will all be on the bottom of zigzags
     while len(tet_nums_to_visit) > 0: # find all components of all colour complex regions
         ### first time around, assume that the last tet is good, move from there.
         first_tet_num = tet_nums_to_visit.pop() ## start new component
@@ -672,7 +678,7 @@ def draw_triangle_green_and_purple(c, triangle_corners, majority_colour, edge_or
         c.stroke(straight_path_green,  [pyx.style.linewidth(1.5*lw2), pyx.deco.stroked([grey])])
         # c.stroke(connector_1_green, [pyx.style.linewidth(1.5*lw2), pyx.deco.stroked([grey])])
 
-def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns, tet_num, is_upper_half = True, edge_orientations_relative_to_regina = None):
+def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns, tet_num, is_upper_half = True, edge_orientations_relative_to_regina = None, oriented = None):
     top_vertices, bottom_vertices = tet_vert_posns[tet_num]
 
     red_vertex_pairs = [[top_vertices[0], top_vertices[1]], #top
@@ -779,9 +785,13 @@ def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, ve
             c.text(label_diamond_midpts[i].real, label_diamond_midpts[i].imag, tri_string, textattrs=[pyx.text.size(sizename="large"), pyx.text.halign.center, pyx.text.vshift.middlezero, dark_col])
 
     # draw tet_num label
-    c.text(diamond_center.real, diamond_center.imag + tet_label_shift, str(tet_num), textattrs=[pyx.text.size(sizename="Huge"), pyx.text.halign.center, pyx.text.vshift.middlezero])
+    if oriented[tet_num]:
+        tet_col = black
+    else:
+        tet_col = cyan
+    c.text(diamond_center.real, diamond_center.imag + tet_label_shift, str(tet_num), textattrs=[pyx.text.size(sizename="Huge"), pyx.text.halign.center, pyx.text.vshift.middlezero, tet_col])
 
-def draw_midannuli(c, triangulation, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina):
+def draw_midannuli(c, triangulation, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina, oriented = None):
     for j,this_midannulus in enumerate(midannuli):
         tet_class_below, tet_class_above = this_midannulus.tet_class_below, this_midannulus.tet_class_above
 
@@ -790,8 +800,8 @@ def draw_midannuli(c, triangulation, midannuli, edges_between_midannuli, veering
                     tet_width*0.5*math.cos(i*2*math.pi/4) + j*(tet_gap + 0.5*tet_width) + tet_width) for i in range(4)]
             diamond_pts_up = [v + complex(0.5*tet_width, 0.5*tet_width) for v in diamond_pts]
 
-            draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_class_below[k], is_upper_half = True, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
-            draw_half_diamond(c, diamond_pts_up, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_above, tet_class_above[k], is_upper_half = False, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+            draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_class_below[k], is_upper_half = True, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, oriented = oriented)
+            draw_half_diamond(c, diamond_pts_up, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_above, tet_class_above[k], is_upper_half = False, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, oriented = oriented)
 
 
 def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, angle = None, draw_stuff = True, draw_green = True, draw_purple = True):
@@ -801,9 +811,9 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
         veering_structures = veering_detect.find_veering_structures(triangulation)
         assert len(veering_structures) > 0
         if len(veering_structures) > 1:
-            print 'warning, not drawing all veering structures!'
+            print('warning, not drawing all veering structures!')
         angle_structure = veering_structures[0]
-        print 'angle structure:', str(angle)
+        print('angle structure:', str(angle))
 
     veering_colours = veering.is_veering(triangulation, angle, return_type = 'veering_colours')
     assert veering_colours != False
@@ -821,13 +831,18 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
     midannuli, edges_between_midannuli = make_midannuli_and_edges(triangulation, tet_vert_posns_below, tet_vert_posns_above, zigzags, cut_edges)
     midannuli = flip_and_order_midannuli(midannuli, edges_between_midannuli, tet_types, tet_vert_posns_above, tet_vert_posns_below) ### adds flips to midannuli, also reorders midannuli list
    
+    M = Manifold(triangulation)
+    tet_shapes = M.tetrahedra_shapes()
+    tet_shapes = [complex(shape["rect"]) for shape in tet_shapes]
+    oriented = [shape.imag >= 0 for shape in tet_shapes]
+
     if draw_stuff:
         ct = pyx.canvas.canvas() 
         draw_tetrahedra(ct, triangulation, veering_colours, tet_vert_posns_below, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_green = draw_green, draw_purple = draw_purple)
         ct.writePDFfile(tetrahedra_filename)
 
         cm = pyx.canvas.canvas() 
-        draw_midannuli(cm, triangulation, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina)
+        draw_midannuli(cm, triangulation, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina, oriented = oriented)
         cm.writePDFfile(midannuli_filename)
 
     return has_orientable_mid_surfaces(edges_between_midannuli)
@@ -837,11 +852,11 @@ def draw_triangulation_from_veering_isosig(veering_isosig, midannuli_filename = 
     if midannuli_filename == None:
         midannuli_filename = 'Images/Mid-annuli/' + veering_isosig + '_mid-annuli.pdf'
     if tetrahedra_filename == None:
-        tetrahedra_filename = 'Images/Triangulations/' + veering_isosig + '_tetrahedra.pdf'
+        tetrahedra_filename = 'Images/Triangulation/' + veering_isosig + '_tetrahedra.pdf'
     return draw_triangulation(tri, midannuli_filename, tetrahedra_filename, angle = angle, draw_stuff = draw_stuff, draw_green = True, draw_purple = True)
 
-def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, midannuli_dirname, tetrahedra_dirname):
-    veering_isosigs_list = veering_isosigs.parse_data_file(veering_isosigs_filename)
+def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, midannuli_dirname = 'Images/Mid-annuli', tetrahedra_dirname = 'Images/Triangulation'):
+    veering_isosigs_list = parse_data_file(veering_isosigs_filename)
     for veering_isosig in veering_isosigs_list:
         draw_triangulation_from_veering_isosig(veering_isosig, 
             midannuli_filename = midannuli_dirname + '/' + veering_isosig + '_mid-annuli.pdf',
@@ -852,7 +867,7 @@ def calculate_orientable_mid_surfaces_from_veering_isosigs_file(veering_isosigs_
     out_data = []
     for i, veering_isosig in enumerate(veering_isosigs_list):
         if i%1000 == 0:
-            print float(i)/float(len(veering_isosigs_list))
+            print(float(i)/float(len(veering_isosigs_list)))
         orientable_mid_surfaces = draw_triangulation_from_veering_isosig(veering_isosig, draw_stuff = False)
         out_data.append(veering_isosig + ' ' + str(orientable_mid_surfaces))
     file_out = open('Veering_census/' + file_out, 'w')
