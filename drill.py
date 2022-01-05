@@ -8,19 +8,6 @@ import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
 from transverse_taut import is_transverse_taut
 
-
-def tet_to_face_data(tri, tet_num, face_num, vertices): ### vertices is list in order (trailing, pivot, leading) in numbering for the tet
-    """given a tetrahedron, face_num and vertices in the labelling for the tetrahedron,
-       convert to face_index and vertices in the labelling for the face.
-       This is the correct format to feed into drill."""
-
-    assert face_num not in vertices
-    tet = tri.tetrahedron(tet_num)
-    facemapping = tet.faceMapping(2,face_num)
-    face = tet.triangle(face_num)
-    new_vertices = facemapping.inverse() * regina.Perm4(vertices[0], vertices[1], vertices[2], face_num)
-    return (face.index(), regina.Perm3(new_vertices[0], new_vertices[1], new_vertices[2]))
-
 ### anatomy of a loop of triangles:
 ###
 ### It is a list of tuples (tri_index, Perm3(v0, v1, v2), <add ordering info for multiple loop triangles carried by one triangulation triangle>)
@@ -38,6 +25,7 @@ def drill(tri, loop, angle = None, branch = None):
         # assert tet_vert_coorientations != False
 
     original_countTetrahedra = tri.countTetrahedra()
+    original_countComponents = tri.countComponents()
     ### add new tetrahedra
     new_lower_tets = [] 
     new_upper_tets = [] ## both relative to regina's choice of coorientation for the face
@@ -150,6 +138,9 @@ def drill(tri, loop, angle = None, branch = None):
         new_lower_tets[i].join(3, face_tet0, face_vertices0 * vert_nums_Perm4)
         new_upper_tets[i].join(3, face_tet1, face_vertices1 * vert_nums_Perm4)
 
+    assert tri.isValid()
+    assert tri.countComponents() == original_countComponents + 1
+
     if angle != None:
         for i in range(len(loop)):
             face_data = loop[i]
@@ -165,7 +156,7 @@ def drill(tri, loop, angle = None, branch = None):
                 angle.extend([0,2])
             else:
                 angle.extend([2,0])
-        print('taut???', is_taut(tri, angle), angle)
+        print('taut?', is_taut(tri, angle), angle)
 
 
         # angle.extend([0,2] * len(loop))  ## wrong: lower and upper need to be relative to the taut coorientation, not the embed ordering
@@ -184,7 +175,7 @@ def drill(tri, loop, angle = None, branch = None):
     #     else:
     #         swaps.append( regina.Perm4() )
 
-    assert tri.isValid()
+    
 
 
 def test():

@@ -1,10 +1,6 @@
 #
-# veering_drill_midsurface_bdy.py
+# veering_fan_excision.py
 #
-
-### given a veering triangulation, produce an ideal triangulation that is the result of drilling out the 
-### boundary curves of the midsurfaces. The fan and toggle tetrahedra have different decompositions after drilling, 
-### see the file drill_fans_and_toggles_along_bdyS.3dm
 
 import regina #needed inside of imported files
 from transverse_taut import get_top_and_bottom_nums
