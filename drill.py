@@ -17,21 +17,23 @@ from transverse_taut import is_transverse_taut
 ### v2 is the leading vertex
 
 
-def drill(tri, loop, angle = None, branch = None):
+def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for diagnostics
     if angle != None:
-        # face_coorientations = is_transverse_taut(tri, angle, return_type = "face_coorientations")
-        # assert face_coorientations != False
+        face_coorientations = is_transverse_taut(tri, angle, return_type = "face_coorientations")
+        assert face_coorientations != False
         tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
-        # assert tet_vert_coorientations != False
+        assert tet_vert_coorientations != False
+
+    original_tri = regina.Triangulation3(tri)
 
     original_countTetrahedra = tri.countTetrahedra()
-    original_countComponents = tri.countComponents()
+    original_countBoundaryComponents = tri.countBoundaryComponents()
     ### add new tetrahedra
-    new_lower_tets = [] 
-    new_upper_tets = [] ## both relative to regina's choice of coorientation for the face
+    new_0_tets = [] 
+    new_1_tets = [] ## both relative to regina's two embeddings for the face
     for i in range(len(loop)):
-        new_lower_tets.append(tri.newTetrahedron())
-        new_upper_tets.append(tri.newTetrahedron())
+        new_0_tets.append(tri.newTetrahedron())
+        new_1_tets.append(tri.newTetrahedron())
 
     ### we will glue tetrahedra together with a numbering that is convenient but 
     ### unfortunately not oriented. We will orient later.
@@ -45,9 +47,9 @@ def drill(tri, loop, angle = None, branch = None):
     # trailing
 
     for i in range(len(loop)):
-        new_lower_tets[i].join(1, new_upper_tets[i], regina.Perm4(0,1,2,3))
+        new_0_tets[i].join(1, new_1_tets[i], regina.Perm4(0,1,2,3))
 
-    ### now glue along the loop path, need to worry about regina's coorientation for neighbouring triangles
+    ### now glue along the loop path, need to worry about regina's embeddings for neighbouring triangles
 
     loop_face_tets0 = []
     loop_face_vertices0 = []  
@@ -113,11 +115,11 @@ def drill(tri, loop, angle = None, branch = None):
         # print('signs', signs)
         assert len(signs) == 2
         if signs[0] == signs[1]:  ### coorientations are same around the edge (not a transverse taut coorientation!)
-            new_lower_tets[i].join(0, new_upper_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
-            new_upper_tets[i].join(0, new_lower_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+            new_0_tets[i].join(0, new_1_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+            new_1_tets[i].join(0, new_0_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
         else:
-            new_lower_tets[i].join(0, new_lower_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
-            new_upper_tets[i].join(0, new_upper_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+            new_0_tets[i].join(0, new_0_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
+            new_1_tets[i].join(0, new_1_tets[(i+1)%len(loop)], regina.Perm4(2,face_gluing[1],face_gluing[2],3))
 
     ### now unglue tri along the loop and glue in the new tetrahedra
 
@@ -135,28 +137,47 @@ def drill(tri, loop, angle = None, branch = None):
     ### glue torus shell to the old tetrahedra
 
         vert_nums_Perm4 = regina.Perm4(vert_nums[0], vert_nums[1], vert_nums[2], 3)
-        new_lower_tets[i].join(3, face_tet0, face_vertices0 * vert_nums_Perm4)
-        new_upper_tets[i].join(3, face_tet1, face_vertices1 * vert_nums_Perm4)
+        new_0_tets[i].join(3, face_tet0, face_vertices0 * vert_nums_Perm4)
+        new_1_tets[i].join(3, face_tet1, face_vertices1 * vert_nums_Perm4)
 
     assert tri.isValid()
-    assert tri.countComponents() == original_countComponents + 1
+    assert tri.countBoundaryComponents() == original_countBoundaryComponents + 1
 
     if angle != None:
         for i in range(len(loop)):
             face_data = loop[i]
             face_index = face_data[0]
             face = tri.triangles()[face_index]
+            vert_nums = face_data[1]
+
+            # flow_agrees_with_regina_numbers = (((vert_nums[0] + 2) % 3) == vert_nums[2])
+            # face_cor_agrees_with_regina_numbers = (face_coorientations[face_index] == +1)
+
             face_embed0 = face.embedding(0) 
             face_tet = face_embed0.simplex()
             face_vertices = face_embed0.vertices()
             face_opposite_vert = face_vertices[3]
+            coor_points_out_of_tet0 = (tet_vert_coorientations[face_tet.index()][face_opposite_vert] == +1)
 
-            # if face_coorientations[face_index] == +1: ### doesnt seem to be correct
-            if tet_vert_coorientations[face_tet.index()][face_opposite_vert] == +1:  ### this doesnt seem correct either!
+            # if (flow_agrees_with_regina_numbers != face_cor_agrees_with_regina_numbers) != coor_points_out_of_tet0:
+            if coor_points_out_of_tet0:
                 angle.extend([0,2])
             else:
                 angle.extend([2,0])
-        print('taut?', is_taut(tri, angle), angle)
+        # assert is_taut(tri, angle)
+        # print('taut?', is_taut(tri, angle), angle)
+        
+        if not is_taut(tri, angle):
+            print(sig, 'our angle', angle, 'is taut', is_taut(tri, angle))
+            neighbouring_tets = []
+            for i in range(len(loop)):
+                face_data = loop[i]
+                face_index = face_data[0]
+                face = original_tri.triangles()[face_index]
+                neighbouring_tets.append( (face.embedding(0).simplex().index(), face.embedding(1).simplex().index()) )
+            print(neighbouring_tets)
+            tri.save(sig + '_' + str(loop) + '_not_taut.rga')
+            # assert False
 
 
         # angle.extend([0,2] * len(loop))  ## wrong: lower and upper need to be relative to the taut coorientation, not the embed ordering

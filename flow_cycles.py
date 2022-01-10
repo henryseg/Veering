@@ -11,8 +11,10 @@ from transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is
 from taut import isosig_to_tri_angle, edge_num_to_vert_pair
 from drill import drill
 
+from file_io import parse_data_file
 
-### format for loops: it is a list of tuples, each tuple is (tet_index, edge_index within this tet that we exit through)
+### format for loops: it is a list of tuples, 
+### each tuple is (tet_index, edge_index within this tet that we exit through)
 
 def lex_smallest_loop(loop):
     ind = loop.index(min(loop))
@@ -186,37 +188,43 @@ def test():
 # eLMkbcdddhxqlm_1200
 # eLPkaccddjnkaj_2002
 # eLPkbcdddhrrcv_1200
-    sig = 'gLLAQbecdfffhhnkqnc_120012'
+    # sig = 'gLLAQbecdfffhhnkqnc_120012'
 
-    tri, angle = isosig_to_tri_angle(sig)
-    # tri.save(sig + '.rga')
-    branch = upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
-    found_loops = flow_cycles(tri, branch)
-    # print(len(found_loops))
-    # for loop in found_loops:
-    #   print(loop)
+    sigs = parse_data_file('Data/veering_census.txt')
 
-    # loop = flow_cycle_to_triangle_loop(tri, branch, [(0,0)]) ### sideways
-    # loop = flow_cycle_to_triangle_loop(tri, branch, [(2,5)]) ### upwards
-    # print('drilling')
-    # print('loop', loop)
-    # drill(tri, loop)
-    # tri.save('drilled_s227.rga')
+    for sig in sigs[:10]:
 
-    # print('found_loops', found_loops)
-    print(sig)
-    for loop in found_loops:
         tri, angle = isosig_to_tri_angle(sig)
-        tri_loop = flow_cycle_to_triangle_loop(tri, branch, loop)
-        if tri_loop == False:
-            print('couldnt make loop', loop)
-        elif tri_loop_is_boundary_parallel(tri_loop, tri):
-            print('tri loop is boundary parallel')
-        else:
-            print(loop, tri_loop) 
-            drill(tri, tri_loop, angle = angle)
-            # tri.save('drilled_' + sig + '_' + str(tri_loop) + '.rga')
-            print(tri.countTetrahedra())
+        # tri.save(sig + '.rga')
+        branch = upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
+        found_loops = flow_cycles(tri, branch)
+        # print(len(found_loops))
+        # for loop in found_loops:
+        #   print(loop)
+
+        # loop = flow_cycle_to_triangle_loop(tri, branch, [(0,0)]) ### sideways
+        # loop = flow_cycle_to_triangle_loop(tri, branch, [(2,5)]) ### upwards
+        # print('drilling')
+        # print('loop', loop)
+        # drill(tri, loop)
+        # tri.save('drilled_s227.rga')
+
+        # print('found_loops', found_loops)
+        # print(sig)
+        for loop in found_loops:
+            tri, angle = isosig_to_tri_angle(sig)
+            tri_loop = flow_cycle_to_triangle_loop(tri, branch, loop)
+            if tri_loop == False:
+                # print('couldnt make loop', loop)
+                pass
+            elif tri_loop_is_boundary_parallel(tri_loop, tri):
+                # print('tri loop is boundary parallel')
+                pass
+            else:
+                # print('loop', loop, 'tri_loop', tri_loop) 
+                drill(tri, tri_loop, angle = angle, sig = sig)
+                # tri.save('drilled_' + sig + '_' + str(tri_loop) + '.rga')
+                # print(tri.countTetrahedra())
 
         
 
