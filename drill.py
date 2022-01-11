@@ -8,6 +8,8 @@ import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
 from transverse_taut import is_transverse_taut
 
+import snappy ### for diagnostics only
+
 ### anatomy of a loop of triangles:
 ###
 ### It is a list of tuples (tri_index, Perm3(v0, v1, v2), <add ordering info for multiple loop triangles carried by one triangulation triangle>)
@@ -165,7 +167,9 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
             else:
                 angle.extend([2,0])
         
-        assert not is_taut(tri, angle)
+        # print(sig, loop, angle, is_taut(tri, angle))
+        assert is_taut(tri, angle)
+
         # if not is_taut(tri, angle):
         #     print(sig, 'our angle', angle, 'is taut', is_taut(tri, angle))
         #     neighbouring_tets = []
@@ -177,6 +181,14 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         #     print(neighbouring_tets)
         #     tri.save(sig + '_' + str(loop) + '_not_taut.rga')
         #     assert False
+
+        M = snappy.Manifold(tri)
+        if M.volume() < 1.0:
+            print(sig, loop, angle, M.volume())
+            assert False
+        # print(M.verify_hyperbolicity())  ### very slow
+        # print(M.volume())
+        # assert M.volume() > 1.0 ### 
 
 
     # ### now orient
