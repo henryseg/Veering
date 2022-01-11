@@ -147,7 +147,7 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         for i in range(len(loop)):
             face_data = loop[i]
             face_index = face_data[0]
-            face = tri.triangles()[face_index]
+            face = original_tri.triangles()[face_index]
             vert_nums = face_data[1]
 
             # flow_agrees_with_regina_numbers = (((vert_nums[0] + 2) % 3) == vert_nums[2])
@@ -164,24 +164,19 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
                 angle.extend([0,2])
             else:
                 angle.extend([2,0])
-        # assert is_taut(tri, angle)
-        # print('taut?', is_taut(tri, angle), angle)
         
-        if not is_taut(tri, angle):
-            print(sig, 'our angle', angle, 'is taut', is_taut(tri, angle))
-            neighbouring_tets = []
-            for i in range(len(loop)):
-                face_data = loop[i]
-                face_index = face_data[0]
-                face = original_tri.triangles()[face_index]
-                neighbouring_tets.append( (face.embedding(0).simplex().index(), face.embedding(1).simplex().index()) )
-            print(neighbouring_tets)
-            tri.save(sig + '_' + str(loop) + '_not_taut.rga')
-            # assert False
-
-
-        # angle.extend([0,2] * len(loop))  ## wrong: lower and upper need to be relative to the taut coorientation, not the embed ordering
-
+        assert not is_taut(tri, angle)
+        # if not is_taut(tri, angle):
+        #     print(sig, 'our angle', angle, 'is taut', is_taut(tri, angle))
+        #     neighbouring_tets = []
+        #     for i in range(len(loop)):
+        #         face_data = loop[i]
+        #         face_index = face_data[0]
+        #         face = original_tri.triangles()[face_index]
+        #         neighbouring_tets.append( (face.embedding(0).simplex().index(), face.embedding(1).simplex().index()) )
+        #     print(neighbouring_tets)
+        #     tri.save(sig + '_' + str(loop) + '_not_taut.rga')
+        #     assert False
 
 
     # ### now orient

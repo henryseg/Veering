@@ -192,8 +192,9 @@ def test():
 
     sigs = parse_data_file('Data/veering_census.txt')
 
-    for sig in sigs[:10]:
-
+    for j, sig in enumerate(sigs[:1000]):
+        if j%100 == 0:
+            print(j)
         tri, angle = isosig_to_tri_angle(sig)
         # tri.save(sig + '.rga')
         branch = upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
@@ -201,13 +202,6 @@ def test():
         # print(len(found_loops))
         # for loop in found_loops:
         #   print(loop)
-
-        # loop = flow_cycle_to_triangle_loop(tri, branch, [(0,0)]) ### sideways
-        # loop = flow_cycle_to_triangle_loop(tri, branch, [(2,5)]) ### upwards
-        # print('drilling')
-        # print('loop', loop)
-        # drill(tri, loop)
-        # tri.save('drilled_s227.rga')
 
         # print('found_loops', found_loops)
         # print(sig)
