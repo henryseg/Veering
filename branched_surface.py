@@ -18,7 +18,6 @@ def isosig_to_tri_angle_branch(isosig):
     the list of angles for the taut angle structure, and the branched surface
     for the new labelling.
     """
-    ### WARNING: this is currently broken: the branch needs to be altered by the isomorphism that fix_orientations uses.
     sig_parts = isosig.split("_")
     tri, angle, isom = isosig_to_tri_angle(sig_parts[0] + '_' + sig_parts[1], return_isom = True)
     branch = list(sig_parts[2])

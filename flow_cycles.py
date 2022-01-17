@@ -6,7 +6,7 @@
 
 import regina
 from veering import is_veering
-from branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num
+from branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num, isosig_from_tri_angle_branch
 from transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
 from taut import isosig_to_tri_angle, edge_num_to_vert_pair
 from drill import drill
@@ -192,7 +192,7 @@ def test():
 
     sigs = parse_data_file('Data/veering_census.txt')
 
-    for j, sig in enumerate(sigs[:1000]):
+    for j, sig in enumerate(sigs[:5]):
         if j%100 == 0:
             print(j)
         tri, angle = isosig_to_tri_angle(sig)
@@ -209,17 +209,14 @@ def test():
             tri, angle = isosig_to_tri_angle(sig)
             branch = upper_branched_surface(tri, angle) 
             tri_loop = flow_cycle_to_triangle_loop(tri, branch, loop)
-            if tri_loop == False:
-                # print('couldnt make loop', loop)
-                pass
-            elif tri_loop_is_boundary_parallel(tri_loop, tri):
-                # print('tri loop is boundary parallel')
-                pass
-            else:
-                # print('loop', loop, 'tri_loop', tri_loop) 
-                drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
-                # tri.save('drilled_' + sig + '_' + str(tri_loop) + '.rga')
-                # print(tri.countTetrahedra())
+            if tri_loop != False:
+                if not tri_loop_is_boundary_parallel(tri_loop, tri):
+                    print('sig', isosig_from_tri_angle_branch(tri, angle, branch), 'loop', loop, 'tri_loop', tri_loop) 
+                    drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
+                    print('new angle, branch', angle, branch)
+                    print(isosig_from_tri_angle_branch(tri, angle, branch))
+                    # tri.save('drilled_' + sig + '_' + str(tri_loop) + '.rga')
+                    # print(tri.countTetrahedra())
 
         
 

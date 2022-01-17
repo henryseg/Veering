@@ -95,7 +95,7 @@ def run_tests(num_to_check=1000, smaller_num_to_check = 10):
         ### test branch isosig round trip
         sig_with_branch = branched_surface.isosig_from_tri_angle_branch(tri, angle, branch)
         tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
-        assert branch == branch2
+        assert branch == branch2, angle == angle2
 
         branch_original = branch[:] #copy
         face_num = random.randrange(tri.countTriangles())
