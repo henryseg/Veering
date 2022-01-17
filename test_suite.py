@@ -73,21 +73,20 @@ def run_tests(num_to_check=1000, smaller_num_to_check = 10):
             excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
             assert excised_tri.isIsomorphicTo(m003) != None or excised_tri.isIsomorphicTo(m004) != None
 
-    import taut_pachner
-    print("testing taut_pachner")
+    import pachner
+    print("testing pachner with taut structure")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         face_num = random.randrange(tri.countTriangles())
-        result = taut_pachner.twoThreeMove(tri, angle, face_num, return_edge = True)  
+        result = pachner.twoThreeMove(tri, face_num, angle = angle, return_edge = True)  
         if result != False: 
             tri2, angle2, edge_num = result
-            tri3, angle3 = taut_pachner.threeTwoMove(tri2, angle2, edge_num)
+            tri3, angle3 = pachner.threeTwoMove(tri2, edge_num, angle = angle2)
             assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
 
     import branched_surface
-    import branched_pachner
     import regina
-    print("testing branched_surface and branched_pachner")
+    print("testing branched_surface and pachner with branched surface")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         tri_original = regina.Triangulation3(tri) #copy
@@ -100,10 +99,10 @@ def run_tests(num_to_check=1000, smaller_num_to_check = 10):
 
         branch_original = branch[:] #copy
         face_num = random.randrange(tri.countTriangles())
-        out = branched_pachner.twoThreeMove(tri, branch, face_num, return_edge = True)
+        out = pachner.twoThreeMove(tri, face_num, branch = branch, return_edge = True)
         if out != False:
             tri, possible_branches, edge_num = out
-            tri, branch = branched_pachner.threeTwoMove(tri, possible_branches[0], edge_num)
+            tri, branch = pachner.threeTwoMove(tri, edge_num, branch = possible_branches[0])
             all_isoms = tri.findAllIsomorphisms(tri_original)
             all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
             assert branch_original in all_branches
