@@ -6,6 +6,7 @@
 
 import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
+from branched_surface import is_branched
 from transverse_taut import is_transverse_taut
 
 import snappy ### for diagnostics only
@@ -181,11 +182,20 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         #     print(neighbouring_tets)
         #     tri.save(sig + '_' + str(loop) + '_not_taut.rga')
         #     assert False
+            
+        
+        # print(sig, loop, angle, is_taut(tri, angle))
+        
+    if branch != None:
+        for i in range(len(loop)):
+            branch.extend([1,1])
+    
+        assert is_branched(tri, branch)
 
-        M = snappy.Manifold(tri)
-        if M.volume() < 1.0:
-            print(sig, loop, angle, M.volume())
-            assert False
+    M = snappy.Manifold(tri)
+    if M.volume() < 1.0:
+        print(sig, loop, angle, M.volume())
+        assert False
         # print(M.verify_hyperbolicity())  ### very slow
         # print(M.volume())
         # assert M.volume() > 1.0 ### 
