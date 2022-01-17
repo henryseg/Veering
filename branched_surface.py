@@ -119,6 +119,28 @@ def apply_isom_to_branched_surface(branch, isom):
         new_branch[mapped_tet_index] = branch_num_from_large_edge_and_mixed_edge_pair_num(new_large_edge_num, new_mixed_edge_pair_num)
     return new_branch
 
+def apply_swaps_to_branched_surface(branch, swaps): ### workaround since regina doesnt currently support constructing our own isomorphisms
+    """
+    Given a branched surface and a list of Perm4s, one for each tetrahedron,
+    return the branched surface relative to the new triangulation.
+    """
+    new_branch = [None] * len(branch)
+    for i in range(len(branch)):
+        tetPerm = swaps[i]
+        large_edge_num, mixed_edge_pair_num = branch_num_to_large_edge_and_mixed_edge_pair_num(branch[i])
+        large_edge_verts = edge_num_to_vert_pair[large_edge_num]
+        new_large_edge_verts = tuple([tetPerm[v] for v in large_edge_verts])
+        new_large_edge_num = vert_pair_to_edge_num[new_large_edge_verts]
+
+        mixed_edge_verts = (0, mixed_edge_pair_num + 1) ### one of the mixed edges
+        new_mixed_edge_verts = [tetPerm[v] for v in mixed_edge_verts]
+        new_mixed_edge_pair_num = unsorted_vert_pair_to_edge_pair[tuple(new_mixed_edge_verts)]
+        # new_mixed_edge_verts.sort()
+        # new_mixed_edge_pair_num = vert_pair_to_edge_pair[tuple(new_mixed_edge_verts)]
+
+        new_branch[i] = branch_num_from_large_edge_and_mixed_edge_pair_num(new_large_edge_num, new_mixed_edge_pair_num)
+    return new_branch
+
 def lex_smallest_branched_surface(tri, branch):   
     """
     Finds the lexicographically smallest branched surface among

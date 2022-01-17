@@ -207,6 +207,7 @@ def test():
         # print(sig)
         for loop in found_loops:
             tri, angle = isosig_to_tri_angle(sig)
+            branch = upper_branched_surface(tri, angle) 
             tri_loop = flow_cycle_to_triangle_loop(tri, branch, loop)
             if tri_loop == False:
                 # print('couldnt make loop', loop)
@@ -216,7 +217,7 @@ def test():
                 pass
             else:
                 # print('loop', loop, 'tri_loop', tri_loop) 
-                drill(tri, tri_loop, angle = angle, sig = sig)
+                drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
                 # tri.save('drilled_' + sig + '_' + str(tri_loop) + '.rga')
                 # print(tri.countTetrahedra())
 

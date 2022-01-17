@@ -14,7 +14,7 @@ def check_polynomial_coefficients(p, correct_coeffs):
     assert p == correct_coeffs or n == correct_coeffs
 
 
-def run_tests(num_to_check=1000):
+def run_tests(num_to_check=1000, smaller_num_to_check = 10):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
 
@@ -107,6 +107,21 @@ def run_tests(num_to_check=1000):
             all_isoms = tri.findAllIsomorphisms(tri_original)
             all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
             assert branch_original in all_branches
+
+    import flow_cycles
+    import drill
+    print("testing taut and branched drill")
+    for sig in random.sample(veering_isosigs, smaller_num_to_check):
+        tri, angle = taut.isosig_to_tri_angle(sig)
+        branch = branched_surface.upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
+        found_loops = flow_cycles.flow_cycles(tri, branch)
+        for loop in random.sample(found_loops, min(len(found_loops), 5)):  ## drill along at most 5 loops
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            branch = branched_surface.upper_branched_surface(tri, angle) 
+            tri_loop = flow_cycles.flow_cycle_to_triangle_loop(tri, branch, loop)
+            if tri_loop != False: 
+                if not flow_cycles.tri_loop_is_boundary_parallel(tri_loop, tri):
+                    drill.drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
 
     print("all basic tests passed")
 

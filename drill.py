@@ -6,7 +6,7 @@
 
 import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
-from branched_surface import is_branched
+from branched_surface import is_branched, apply_swaps_to_branched_surface
 from transverse_taut import is_transverse_taut
 
 import snappy ### for diagnostics only
@@ -153,9 +153,6 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
             face = original_tri.triangles()[face_index]
             vert_nums = face_data[1]
 
-            # flow_agrees_with_regina_numbers = (((vert_nums[0] + 2) % 3) == vert_nums[2])
-            # face_cor_agrees_with_regina_numbers = (face_coorientations[face_index] == +1)
-
             face_embed0 = face.embedding(0) 
             face_tet = face_embed0.simplex()
             face_vertices = face_embed0.vertices()
@@ -170,21 +167,6 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         
         # print(sig, loop, angle, is_taut(tri, angle))
         assert is_taut(tri, angle)
-
-        # if not is_taut(tri, angle):
-        #     print(sig, 'our angle', angle, 'is taut', is_taut(tri, angle))
-        #     neighbouring_tets = []
-        #     for i in range(len(loop)):
-        #         face_data = loop[i]
-        #         face_index = face_data[0]
-        #         face = original_tri.triangles()[face_index]
-        #         neighbouring_tets.append( (face.embedding(0).simplex().index(), face.embedding(1).simplex().index()) )
-        #     print(neighbouring_tets)
-        #     tri.save(sig + '_' + str(loop) + '_not_taut.rga')
-        #     assert False
-            
-        
-        # print(sig, loop, angle, is_taut(tri, angle))
         
     if branch != None:
         for i in range(len(loop)):
@@ -201,20 +183,34 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         # assert M.volume() > 1.0 ### 
 
 
-    # ### now orient
-    # swaps = [regina.Perm4()] * original_countTetrahedra ### identity permutations
-    # for i in range(len(loop)):
-    #     if new_lower_tets[i].adjacentGluing(3).sign() == 1:
-    #         swaps.append( reverse_tet_orientation(tri, new_lower_tets[i], 0) )  ### pi_location = 0 is an arbitrary choice
-    #     else:
-    #         swaps.append( regina.Perm4() )
-    #     if new_upper_tets[i].adjacentGluing(3).sign() == 1:
-    #         swaps.append( reverse_tet_orientation(tri, new_upper_tets[i], 0) ) ### pi_location = 0 is an arbitrary choice
-    #     else:
-    #         swaps.append( regina.Perm4() )
+    ### now orient
+    swaps = [regina.Perm4()] * original_countTetrahedra ### identity permutations
+    for i in range(len(loop)):
+        if new_0_tets[i].adjacentGluing(3).sign() == 1:
+            if angle != None:
+                this_tet_angle = angle[original_countTetrahedra + 2*i]
+            else:
+                this_tet_angle = 0 ### pi_location = 0 is an arbitrary choice
+            swaps.append( reverse_tet_orientation(tri, new_0_tets[i], this_tet_angle) )  
+        else:
+            swaps.append( regina.Perm4() )
+        if new_1_tets[i].adjacentGluing(3).sign() == 1:
+            if angle != None:
+                this_tet_angle = angle[original_countTetrahedra + 2*i + 1]
+            else:
+                this_tet_angle = 0 ### pi_location = 0 is an arbitrary choice 
+            swaps.append( reverse_tet_orientation(tri, new_1_tets[i], this_tet_angle) ) 
+        else:
+            swaps.append( regina.Perm4() )
+    assert tri.isOriented()
 
-    
-
+    if angle != None:
+        assert is_taut(tri, angle)
+    if branch != None:
+        # print('loop, branch, swaps', loop, branch, swaps)
+        branch = apply_swaps_to_branched_surface(branch, swaps)
+        # print('loop, branch, swaps', loop, branch, swaps)
+        assert is_branched(tri, branch)
 
 def test():
     # tri, angle = isosig_to_tri_angle('cPcbbbiht_12')
