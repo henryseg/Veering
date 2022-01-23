@@ -2,6 +2,7 @@
 import regina
 from taut import isosig_to_tri_angle, isosig_from_tri_angle
 from taut_pachner import twoThreeMove, threeTwoMove
+from veering import is_veering
 
 class taut_pachner_node():
     def __init__(self, isoSig, tri = None, angle = None, ceiling = 9999, floor = 0):
@@ -115,6 +116,47 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=Non
         print(len(big_dict_of_nodes), len(frontier_isoSigs))
 
     return None
+
+def find_veering_from_drilled(start_isoSig, name=None, search_depth = 100, ceiling = 8, check_property = False, property = None, save_dir = None):
+    #first check if the first one is not veering
+    tri, angle = isosig_to_tri_angle(start_isoSig)
+    if is_veering(tri, angle):
+        print('start_isoSig is veering')
+    else:
+        start_node = taut_pachner_node( start_isoSig, ceiling = ceiling )
+        start_node.came_from = None
+
+        big_dict_of_nodes = {start_isoSig : start_node}
+        frontier_isoSigs = set([start_isoSig])
+        print(len(big_dict_of_nodes), len(frontier_isoSigs))
+        for counter in range(search_depth):
+            if len(frontier_isoSigs) == 0: #we are done...
+                break
+            new_frontier_isoSigs = set([]) 
+            # for each element in the frontier check to see if it appears on the big_list_of_sigs if not we add it to the big list 
+            for cur_isoSig in frontier_isoSigs:
+                current_node = big_dict_of_nodes[cur_isoSig]
+                neighbour_isoSigs = current_node.all_neighbour_isoSigs()
+                for nb_isoSig in neighbour_isoSigs: 
+                    if not nb_isoSig in big_dict_of_nodes:
+                        nb_tri, nb_angle = current_node.neighbour_moves_tri_angles[nb_isoSig]
+                        new_node = taut_pachner_node(nb_isoSig, tri = nb_tri, angle = nb_angle, ceiling = ceiling)
+                        new_node.came_from = cur_isoSig
+                        if counter == search_depth - 1: #last layer
+                            new_node.is_frontier = True
+
+                        new_frontier_isoSigs.add(nb_isoSig)
+                        big_dict_of_nodes[nb_isoSig] = new_node
+
+                        if is_veering(nb_tri, nb_angle):
+                            print_path(nb_isoSig, big_dict_of_nodes)
+                            print('veering:', isosig_from_tri_angle(nb_tri, nb_angle))
+                            break 
+
+            frontier_isoSigs = new_frontier_isoSigs
+            print(len(big_dict_of_nodes), len(frontier_isoSigs))
+
+        return None
 
 def main():
     depth = 100
