@@ -14,7 +14,7 @@ def check_polynomial_coefficients(p, correct_coeffs):
     assert p == correct_coeffs or n == correct_coeffs
 
 
-def run_tests(num_to_check=1000, smaller_num_to_check = 10):
+def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
 

@@ -99,13 +99,14 @@ def isosig_from_tri_angle(tri, angle, return_isom = False):
     smallest_angle_string = "".join([str(num) for num in smallest_angle])
 
     if return_isom:
-        ### regina's implementation of isomorphisms doesn't give group operations, so we cannot write isom2*isom... instead we have to do this:
-        lex_smallest_tri = isom2.apply(isosig_tri)
-        all_isoms = tri.findAllIsomorphisms(lex_smallest_tri)
-        for isom in all_isoms:
-            if isoms_move_tetrahedra_to_same_tetrahedra(isom, isosig_isom): ### uses fact that isom2 doesn't reorder the tetrahedra, only their vertices inside
-                return isosig + "_" + smallest_angle_string, isom
-        assert False ### should never get here
+        return isosig + "_" + smallest_angle_string, isom2 * isosig_isom  ### should work in regina 7
+        # ### regina's implementation of isomorphisms doesn't give group operations, so we cannot write isom2*isom... instead we have to do this:
+        # lex_smallest_tri = isom2.apply(isosig_tri)
+        # all_isoms = tri.findAllIsomorphisms(lex_smallest_tri)
+        # for isom in all_isoms:
+        #     if isoms_move_tetrahedra_to_same_tetrahedra(isom, isosig_isom): ### uses fact that isom2 doesn't reorder the tetrahedra, only their vertices inside
+        #         return isosig + "_" + smallest_angle_string, isom
+        # assert False ### should never get here
     else:
         return isosig + "_" + smallest_angle_string
 

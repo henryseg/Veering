@@ -78,7 +78,7 @@ def edges_to_triangles_matrix(triangulation, angle_structure, cycles, ZH, P, mod
         edge = tet_lower_upper_edges(tet, coorientations)[1]
         if verbose > 0:
             print(("edge_index", edge.index()))
-        embeddings = edge.embeddings()
+        embeddings = list(edge.embeddings())
 
         # find index of tet in the list of embeddings of edge
         for i, embed in enumerate(embeddings):

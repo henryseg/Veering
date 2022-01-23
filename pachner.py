@@ -18,8 +18,8 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
 
     ### possible_branches is a list
     
-    if branch != None:
-        assert has_non_sing_semiflow(tri, branch)  
+    # if branch != None:
+    #     assert has_non_sing_semiflow(tri, branch)  
         ## Joe Christy says [p764, Branched surfaces and attractors I: Dynamic Branched Surfaces] that if the branched surface carries the stable lamination of a pseudo-Anosov flow then it has a non singular semi flow
         ## We hope that we can move to a veering triangulation through such branched surfaces
 
@@ -255,8 +255,8 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
                     candidate = branch[:] + [cand0, cand1, cand2]
                     # print('candidate', candidate)
                     # if is_branched(tri, candidate):
-                    if has_non_sing_semiflow(tri, candidate):
-                        out_branches.append(candidate)
+                    # if has_non_sing_semiflow(tri, candidate):
+                    out_branches.append(candidate)
         # assert len(out) > 0  ### this works if we check is_branched three lines above, but not if we check has_non_sing_semiflow
         if len(out_branches) == 0: ### with has_non_sing_semiflow instead, we might not get any
             return False
@@ -279,8 +279,8 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
 
     ### note if branch != None and this function does not return False, then there is only one possible branch 
 
-    if branch != None:
-        assert has_non_sing_semiflow(tri, branch)
+    # if branch != None:
+    #     assert has_non_sing_semiflow(tri, branch)
 
     edge = tri.edge(edge_num)
     if edge.degree() != 3:
@@ -504,8 +504,8 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
         branch.extend([branch0, branch1])
 
         assert is_branched(tri, branch)
-        if not has_non_sing_semiflow(tri, branch):
-            return False
+        # if not has_non_sing_semiflow(tri, branch):
+        #     return False
 
     output = [tri]
     if angle != None:

@@ -2,16 +2,18 @@
 import regina
 from taut import isosig_to_tri_angle, isosig_from_tri_angle
 from pachner import twoThreeMove, threeTwoMove
-from branched_surface import upper_branched_surface, isosig_from_tri_angle_branch, isosig_to_tri_angle_branch
+from branched_surface import upper_branched_surface, isosig_from_tri_angle_branch, isosig_to_tri_angle_branch, has_non_sing_semiflow
 from veering import is_veering
+from flow_cycles import flow_cycle_to_triangle_loop
+from drill import drill
 
 class pachner_node():
     def __init__(self, isoSig, tri, angle, branch, ceiling = 9999, floor = 0):
         self.isoSig = isoSig
         self.neighbour_moves_up_faces = {}
         self.neighbour_moves_down_edges = {}
-        self.neighbour_moves_up_tri_angle_branches = {}
-        self.neighbour_moves_down_tri_angle_branches = {}
+        self.neighbour_moves_up_tri_angle_branch = {}
+        self.neighbour_moves_down_tri_angle_branch = {}
         self.neighbour_moves_tri_angle_branch = None
         self.tri, self.angle, self.branch = tri, angle, branch
         # self.is_frontier = False #is a node on the boundary of what we have explored
@@ -34,6 +36,7 @@ class pachner_node():
                 angle_copy = angle[:]
                 branch_copy = branch[:]
                 output = twoThreeMove(tri_copy, face_index, angle = angle_copy, branch = branch_copy)
+                # print('2-3', face_index, output)
                 if output != False:
                     tri_new, angle_new, branches_new = output
                     for branch_new in branches_new:
@@ -47,11 +50,12 @@ class pachner_node():
                 angle_copy = angle[:]
                 branch_copy = branch[:]
                 output = threeTwoMove(tri_copy, edge_index, angle = angle_copy, branch = branch_copy)
+                # print('3-2', edge_index, output)
                 if output != False:
                     tri_new, angle_new, branch_new = output
                     sig_new = isosig_from_tri_angle_branch(tri_new, angle_new, branch_new)
                     self.neighbour_moves_down_edges[sig_new] = 'e' + str(edge_index)
-                    self.neighbour_moves_down_tri_angles[sig_new] = (tri_new, angle_new, branch_new)
+                    self.neighbour_moves_down_tri_angle_branch[sig_new] = (tri_new, angle_new, branch_new)
         self.neighbour_moves_tri_angle_branch = {**self.neighbour_moves_up_tri_angle_branch, **self.neighbour_moves_down_tri_angle_branch} ## union of the dictionaries
 
 def print_path(target_isoSig, big_dict_of_nodes):
@@ -80,8 +84,9 @@ def print_path(target_isoSig, big_dict_of_nodes):
                 assert next_node.isoSig in node.neighbour_moves_down_edges
                 print(node.neighbour_moves_down_edges[next_node.isoSig])
 
-def search_Pachner_graph_for_shortest_path(start_isoSig, name=None, search_depth = 3, ceiling = 5, check_property = False, property = None, save_dir = None):
-    tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig) 
+# def search_Pachner_graph_for_shortest_path(start_isoSig, name=None, search_depth = 3, ceiling = 5, check_property = False, property = None, save_dir = None):
+#     tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig) 
+def search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, name=None, search_depth = 3, ceiling = 5, check_property = False, property = None, save_dir = None):
     start_node = pachner_node( start_isoSig, tri, angle, branch, ceiling = ceiling )
     start_node.came_from = None
 
@@ -90,6 +95,7 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, name=None, search_depth
     print(len(big_dict_of_nodes), len(frontier_isoSigs))
     for counter in range(search_depth):
         if len(frontier_isoSigs) == 0: #we are done...
+            print('done')
             break
         new_frontier_isoSigs = set([]) 
         # for each element in the frontier check to see if it appears on the big_list_of_sigs if not we add it to the big list 
@@ -108,7 +114,7 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, name=None, search_depth
                     big_dict_of_nodes[nb_isoSig] = new_node
 
                     if is_veering(nb_tri, nb_angle):
-                        print(isosig_from_tri_angle_branch(nb_tri, nb_angle, nb_branch))
+                        print('veering!', isosig_from_tri_angle_branch(nb_tri, nb_angle, nb_branch))
                         # print_path(nb_isoSig, big_dict_of_nodes)
                         break 
 
@@ -125,17 +131,24 @@ def main():
     print('ceiling', ceiling)
 
 
+    tri, angle = isosig_to_tri_angle('cPcbbbdxm_10') 
+    branch = upper_branched_surface(tri, angle)
+    tl = flow_cycle_to_triangle_loop(tri, branch, [(0, 2)]) 
+    drill(tri, tl, angle = angle, branch = branch) 
+    print('start tri', tri, 'angle', angle, 'branch', branch)
+    # assert has_non_sing_semiflow(tri, branch)
+
     # start veering: cPcbbbdxm_10_dl loop [(0, 2)] tri_loop [(2, 102)]
     # drill: eLMkbbddddhapu_2100_fjel
 
     start_isoSig = 'eLMkbbddddhapu_2100_fjel'  
-    tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig)     ### fails?? 
+    # tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig)     ### fails?? 
     
 
     # target_taut_isoSig = 'gLLPQceeffefiiaellu_012110'  ### drilled
     # start_taut_isoSig = 'gLLPQccdfeffhggaagb_201022'  ### veering
 
-    # graph = search_Pachner_graph_for_shortest_path(start_isoSig,  name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
+    graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
 
 
 

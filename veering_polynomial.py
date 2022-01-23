@@ -63,7 +63,7 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
         edge_colour = edge_colours[edge.index()]
         if verbose > 0:
             print(("edge_colour", edge_colour))
-        embeddings = edge.embeddings()
+        embeddings = list(edge.embeddings())
         tet_coeffs = [ZH(0)] * triangulation.countTetrahedra()
         tet_coeffs[tet.index()] = 1  # bottom tet around the edge gets a 1
         if verbose > 0:
