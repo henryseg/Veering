@@ -24,7 +24,7 @@ class taut_pachner_node():
         return set(self.neighbour_moves_up_faces.keys()) | set(self.neighbour_moves_down_edges.keys())
 
     def getTriang(self):
-        # return regina.NTriangulation(self.isoSig)
+        # return regina.Triangulation3(self.isoSig)
         return isosig_to_tri_angle(self.isoSig)
 
     def generate_neighbour_isoSigs(self, ceiling, floor):
@@ -36,7 +36,7 @@ class taut_pachner_node():
 
         if num_tetrahedra < ceiling:
             for face_index in range(tri.countTriangles()):
-                tri_copy = regina.NTriangulation(tri)
+                tri_copy = regina.Triangulation3(tri)
                 angle_copy = angle[:]
                 output = twoThreeMove(tri_copy, angle_copy, face_index)
                 if output != False:
@@ -46,7 +46,7 @@ class taut_pachner_node():
 
         if num_tetrahedra > floor:
             for edge_index in range(tri.countEdges()):
-                tri_copy = regina.NTriangulation(tri)
+                tri_copy = regina.Triangulation3(tri)
                 angle_copy = angle[:]
                 output = threeTwoMove(tri_copy, angle_copy, edge_index)
                 if output != False:
@@ -122,9 +122,10 @@ def main():
 
     print('depth', depth)
     print('ceiling', ceiling)
-
+    
     target_isoSig = 'gLLPQceeffefiiaellu_012110'  ### drilled
     start_isoSig = 'gLLPQccdfeffhggaagb_201022'  ### veering
+    
     graph = search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
 
 
