@@ -6,7 +6,9 @@
 
 import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
-from branched_surface import is_branched, apply_swaps_to_branched_surface
+from flow_cycles import flow_cycles, flow_cycle_to_triangle_loop, tri_loop_is_boundary_parallel
+from branched_surface import is_branched, upper_branched_surface, apply_swaps_to_branched_surface
+from taut_polytope import is_layered
 from transverse_taut import is_transverse_taut
 
 import snappy ### for diagnostics only
@@ -212,28 +214,23 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         # print('loop, branch, swaps', loop, branch, swaps)
         assert is_branched(tri, branch)
 
-def test():
-    # tri, angle = isosig_to_tri_angle('cPcbbbiht_12')
-    # tri.save('cPcbbbiht_12.rga')
-    # loop = [tet_to_face_data(tri, 0, 3, [2,0,1]), tet_to_face_data(tri, 0, 1, [0,2,3])]
-    # print( loop )
-    # drill(tri, loop)
-    # tri.save('cPcbbbiht_12_drilled_short.rga')
+def test(sig):
+    tri, angle = isosig_to_tri_angle(sig)
+    branch = upper_branched_surface(tri, angle)
+    loops = flow_cycles(tri, branch)
+    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+    
+    for tri_loop in tri_loops:
+        if tri_loop != False: # False means that we go twice through the same edge - not currently implemented
+            tri, angle = isosig_to_tri_angle(sig)
+            if tri_loop_is_boundary_parallel(tri_loop, tri)==False: # if a loop is boundary parallel then we don't drill
+                tri, angle = isosig_to_tri_angle(sig)
+                branch = upper_branched_surface(tri, angle)
+                print ("drilling", sig, "along", tri_loop)
+                drill(tri, tri_loop, angle, branch)
+                print("drilled:", tri.isoSig(), angle, branch)
+                print("is layered:", is_layered(tri, angle))
 
-    # loop = [tet_to_face_data(tri, 0, 3, [0,2,1]), tet_to_face_data(tri, 0, 0, [2,1,3]), tet_to_face_data(tri, 1, 3, [1,2,0]), tet_to_face_data(tri, 1, 1, [2,0,3])]
-    # print( loop )  ### goes through a face twice
-    # drill(tri, loop)
-    # tri.save('cPcbbbiht_12_drilled_upwards.rga') 
 
-    # tri, angle = isosig_to_tri_angle('cPcbbbdxm_10')
-    # loop = [tet_to_face_data(tri, 0, 3, [0,2,1])]
-    # print( loop )
-    # drill(tri, loop)
-    # tri.save('cPcbbbdxm_10_drilled_mobius.rga')
-
-    tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
-    loop = [(6, regina.Perm3(0,1,2)), (2, regina.Perm3(0,1,2))]
-    drill(tri, loop, angle = angle)
-    tri.save('s227_drilled_upwards.rga')
 
 
