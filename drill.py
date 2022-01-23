@@ -221,9 +221,9 @@ def test(sig):
     tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
     
     for tri_loop in tri_loops:
-        if tri_loop != False: # False means that we go twice through the same edge - not currently implemented
+        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
             tri, angle = isosig_to_tri_angle(sig)
-            if tri_loop_is_boundary_parallel(tri_loop, tri)==False: # if a loop is boundary parallel then we don't drill
+            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
                 tri, angle = isosig_to_tri_angle(sig)
                 branch = upper_branched_surface(tri, angle)
                 print ("drilling", sig, "along", tri_loop)
