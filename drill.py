@@ -6,7 +6,6 @@
 
 import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
-from flow_cycles import flow_cycles, flow_cycle_to_triangle_loop, tri_loop_is_boundary_parallel
 from branched_surface import is_branched, upper_branched_surface, apply_swaps_to_branched_surface
 from taut_polytope import is_layered
 from transverse_taut import is_transverse_taut
@@ -178,7 +177,7 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
 
     M = snappy.Manifold(tri)
     if M.volume() < 1.0:
-        print(sig, loop, angle, M.volume())
+        print('not hyperbolic', sig, loop, angle, M.volume())
         assert False
         # print(M.verify_hyperbolicity())  ### very slow
         # print(M.volume())
@@ -210,26 +209,9 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         assert is_taut(tri, angle)
     if branch != None:
         # print('loop, branch, swaps', loop, branch, swaps)
-        branch = apply_swaps_to_branched_surface(branch, swaps)
+        apply_swaps_to_branched_surface(branch, swaps)
         # print('loop, branch, swaps', loop, branch, swaps)
         assert is_branched(tri, branch)
-
-def test(sig):
-    tri, angle = isosig_to_tri_angle(sig)
-    branch = upper_branched_surface(tri, angle)
-    loops = flow_cycles(tri, branch)
-    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
-    
-    for tri_loop in tri_loops:
-        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
-            tri, angle = isosig_to_tri_angle(sig)
-            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
-                tri, angle = isosig_to_tri_angle(sig)
-                branch = upper_branched_surface(tri, angle)
-                print ("drilling", sig, "along", tri_loop)
-                drill(tri, tri_loop, angle, branch)
-                print("drilled:", tri.isoSig(), angle, branch)
-                print("is layered:", is_layered(tri, angle))
 
 
 

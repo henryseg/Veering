@@ -198,7 +198,7 @@ def test():
         tri, angle = isosig_to_tri_angle(sig)
         # tri.save(sig + '.rga')
         branch = upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
-        found_loops = flow_cycles(tri, branch)
+        found_loops = find_flow_cycles(tri, branch)
         # print(len(found_loops))
         # for loop in found_loops:
         #   print(loop)
@@ -219,4 +219,21 @@ def test():
                     # print(tri.countTetrahedra())
 
         
+def test_drillings(sig):
+    tri, angle = isosig_to_tri_angle(sig)
+    branch = upper_branched_surface(tri, angle)
+    loops = find_flow_cycles(tri, branch)
+    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+    
+    for tri_loop in tri_loops:
+        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
+            tri, angle = isosig_to_tri_angle(sig)
+            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
+                tri, angle = isosig_to_tri_angle(sig)
+                branch = upper_branched_surface(tri, angle)
+                print ("drilling", sig, "along", tri_loop)
+                drill(tri, tri_loop, angle, branch)
+                print("drilled:", tri.isoSig(), angle, branch)
+                print("is layered:", is_layered(tri, angle))
+
 

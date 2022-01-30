@@ -68,11 +68,9 @@ def isosig_to_tri_angle(isosig, return_isom = False):
     isosig, angle = data[0], data[1]  ## we don't care if there is extra data in the sig, such as a branched surface
     tri = regina.Triangulation3.fromIsoSig(isosig)
     angle = [int(i) for i in list(angle)]
-    if return_isom:
-        isom = fix_orientations(tri, angle, return_isom = return_isom)  # this does not alter what the angles_string should be
-    else:
-        fix_orientations(tri, angle, return_isom = return_isom)  # this does not alter what the angles_string should be
+    isom = fix_orientations(tri, angle, return_isom = return_isom)  # this does not alter what the angles_string should be
     assert tri.isOriented()
+    assert is_taut(tri, angle)
     if return_isom:
         return tri, angle, isom
     else:
@@ -85,10 +83,10 @@ def isoms_move_tetrahedra_to_same_tetrahedra(isom1, isom2):
             return False
     return True
 
-def isosig_from_tri_angle(tri, angle, return_isom = False):
+def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False):
     """
     Given a triangulation and taut angle structure, generate the taut
-    isosig. If return_isom, give the isom between original triang and 
+    isosig. If return_isom, give the isom from the original triang to 
     the symmetry of the isosig triang with lex smallest angle struct.
     """
     isosig, isosig_isom = tri.isoSigDetail()  # isom is the mapping from the original triangulation to the isosig triangulation
@@ -98,17 +96,27 @@ def isosig_from_tri_angle(tri, angle, return_isom = False):
     smallest_angle, isom2 = lex_smallest_angle_structure(isosig_tri, angle, return_isom = True)
     smallest_angle_string = "".join([str(num) for num in smallest_angle])
 
+    out = isosig + "_" + smallest_angle_string
+    if return_isom or return_Regina_tri:
+        out = [out]
     if return_isom:
-        return isosig + "_" + smallest_angle_string, isom2 * isosig_isom  ### should work in regina 7
-        # ### regina's implementation of isomorphisms doesn't give group operations, so we cannot write isom2*isom... instead we have to do this:
-        # lex_smallest_tri = isom2.apply(isosig_tri)
-        # all_isoms = tri.findAllIsomorphisms(lex_smallest_tri)
-        # for isom in all_isoms:
-        #     if isoms_move_tetrahedra_to_same_tetrahedra(isom, isosig_isom): ### uses fact that isom2 doesn't reorder the tetrahedra, only their vertices inside
-        #         return isosig + "_" + smallest_angle_string, isom
-        # assert False ### should never get here
-    else:
-        return isosig + "_" + smallest_angle_string
+        out.append(isom2 * isosig_isom)   ### should work in regina 7
+    if return_Regina_tri:
+        out.append(isosig_tri)
+
+    return out
+    
+    # if return_isom:
+    #     return isosig + "_" + smallest_angle_string, isom2 * isosig_isom  ### should work in regina 7
+    #     # ### regina's implementation of isomorphisms doesn't give group operations, so we cannot write isom2*isom... instead we have to do this:
+    #     # lex_smallest_tri = isom2.apply(isosig_tri)
+    #     # all_isoms = tri.findAllIsomorphisms(lex_smallest_tri)
+    #     # for isom in all_isoms:
+    #     #     if isoms_move_tetrahedra_to_same_tetrahedra(isom, isosig_isom): ### uses fact that isom2 doesn't reorder the tetrahedra, only their vertices inside
+    #     #         return isosig + "_" + smallest_angle_string, isom
+    #     # assert False ### should never get here
+    # else:
+    #     return isosig + "_" + smallest_angle_string
 
 
 # checking tautness
@@ -152,10 +160,12 @@ def lex_smallest_angle_structure(tri, angle, return_isom = False):
     symmetries of the one we have.
     """
     all_isoms = tri.findAllIsomorphisms(tri)
+    # print('num isoms', len(all_isoms))
     all_angles = []
     for isom in all_isoms:
         all_angles.append( (apply_isom_to_angle_struct_list(angle, isom), isom) )
     all_angles.sort(key = lambda pair: pair[0])
+    # print('all angles', all_angles)
     if return_isom:
         return all_angles[0]
     else:
@@ -260,7 +270,7 @@ def fix_orientations(tri, angle, return_isom = False):
             swaps.append( regina.Perm4() ) ## identity
 
 
-    if return_isom:  ### Regina doesn't seem to let us build the isom directly from perms in python
+    if return_isom:  ### Regina 6 didn't let us build the isom directly from perms in python. Regina 7 does, using facetPerm, could make this more efficient
         all_isoms = orig_tri.findAllIsomorphisms(tri) ### we will be order two, so we dont care which way this goes
         for isom in all_isoms:
             if not moves_tetrahedra(isom):

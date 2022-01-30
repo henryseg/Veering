@@ -115,6 +115,10 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, nam
 
                     if is_veering(nb_tri, nb_angle):
                         print('veering!', isosig_from_tri_angle_branch(nb_tri, nb_angle, nb_branch))
+                        upper_branch = upper_branched_surface(nb_tri, nb_angle, return_lower = False)
+                        lower_branch = upper_branched_surface(nb_tri, nb_angle, return_lower = True)
+                        print('upper:', isosig_from_tri_angle_branch(nb_tri, nb_angle, upper_branch))
+                        print('lower:', isosig_from_tri_angle_branch(nb_tri, nb_angle, lower_branch))
                         # print_path(nb_isoSig, big_dict_of_nodes)
                         break 
 
@@ -125,7 +129,7 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, nam
 
 def main():
     depth = 100
-    ceiling = 8
+    ceiling = 6
 
     print('depth', depth)
     print('ceiling', ceiling)
@@ -135,14 +139,15 @@ def main():
     branch = upper_branched_surface(tri, angle)
     tl = flow_cycle_to_triangle_loop(tri, branch, [(0, 2)]) 
     drill(tri, tl, angle = angle, branch = branch) 
-    print('start tri', tri, 'angle', angle, 'branch', branch)
+    print('angle', angle, 'branch', branch)
     # assert has_non_sing_semiflow(tri, branch)
 
     # start veering: cPcbbbdxm_10_dl loop [(0, 2)] tri_loop [(2, 102)]
-    # drill: eLMkbbddddhapu_2100_fjel
+    # drill: eLMkbbddddhapu_2100_fjek
 
-    start_isoSig = 'eLMkbbddddhapu_2100_fjel'  
-    # tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig)     ### fails?? 
+    start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
+    assert start_isoSig == 'eLMkbbddddhapu_2100_fjek'  
+    tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig)     ### fails?? 
     
 
     # target_taut_isoSig = 'gLLPQceeffefiiaellu_012110'  ### drilled

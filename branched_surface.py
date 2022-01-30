@@ -33,8 +33,9 @@ def isosig_from_tri_angle_branch(tri, angle, branch):
     Given a triangulation and taut angle structure and a branched surface, generate the taut branched
     isosig.
     """
-    taut_isoSig, isom = isosig_from_tri_angle(tri, angle, return_isom = True)
+    taut_isoSig, isom, regina_tri = isosig_from_tri_angle(tri, angle, return_isom = True, return_Regina_tri = True)
     branch = apply_isom_to_branched_surface(branch, isom)
+    assert is_branched(regina_tri, branch)
     branch_sig = "".join([string.ascii_lowercase[b] for b in branch])
     return taut_isoSig + '_' + branch_sig
     
@@ -118,12 +119,11 @@ def apply_isom_to_branched_surface(branch, isom):
         new_branch[mapped_tet_index] = branch_num_from_large_edge_and_mixed_edge_pair_num(new_large_edge_num, new_mixed_edge_pair_num)
     return new_branch
 
-def apply_swaps_to_branched_surface(branch, swaps): ### workaround since regina doesnt currently support constructing our own isomorphisms
+def apply_swaps_to_branched_surface(branch, swaps): ### workaround since regina 6 didnt support constructing our own isomorphisms (could fix in regina 7)
     """
     Given a branched surface and a list of Perm4s, one for each tetrahedron,
-    return the branched surface relative to the new triangulation.
+    apply the permutations to the branched surface
     """
-    new_branch = [None] * len(branch)
     for i in range(len(branch)):
         tetPerm = swaps[i]
         large_edge_num, mixed_edge_pair_num = branch_num_to_large_edge_and_mixed_edge_pair_num(branch[i])
@@ -137,8 +137,8 @@ def apply_swaps_to_branched_surface(branch, swaps): ### workaround since regina 
         # new_mixed_edge_verts.sort()
         # new_mixed_edge_pair_num = vert_pair_to_edge_pair[tuple(new_mixed_edge_verts)]
 
-        new_branch[i] = branch_num_from_large_edge_and_mixed_edge_pair_num(new_large_edge_num, new_mixed_edge_pair_num)
-    return new_branch
+        branch[i] = branch_num_from_large_edge_and_mixed_edge_pair_num(new_large_edge_num, new_mixed_edge_pair_num)
+    # return new_branch
 
 def lex_smallest_branched_surface(tri, branch):   
     """

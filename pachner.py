@@ -254,9 +254,9 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
                 for cand2 in candidate_branches[2]:
                     candidate = branch[:] + [cand0, cand1, cand2]
                     # print('candidate', candidate)
-                    # if is_branched(tri, candidate):
+                    if is_branched(tri, candidate):
                     # if has_non_sing_semiflow(tri, candidate):
-                    out_branches.append(candidate)
+                        out_branches.append(candidate)
         # assert len(out) > 0  ### this works if we check is_branched three lines above, but not if we check has_non_sing_semiflow
         if len(out_branches) == 0: ### with has_non_sing_semiflow instead, we might not get any
             return False
