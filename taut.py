@@ -105,7 +105,7 @@ def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = F
         out.append(isosig_tri)
 
     return out
-    
+
     # if return_isom:
     #     return isosig + "_" + smallest_angle_string, isom2 * isosig_isom  ### should work in regina 7
     #     # ### regina's implementation of isomorphisms doesn't give group operations, so we cannot write isom2*isom... instead we have to do this:
@@ -269,14 +269,21 @@ def fix_orientations(tri, angle, return_isom = False):
         else:
             swaps.append( regina.Perm4() ) ## identity
 
+    if return_isom:  
+        out_isom = regina.Isomorphism3.identity(len(swaps))
+        for i, p in enumerate(swaps):
+            out_isom.setFacetPerm(i, p)
+        return out_isom
 
-    if return_isom:  ### Regina 6 didn't let us build the isom directly from perms in python. Regina 7 does, using facetPerm, could make this more efficient
-        all_isoms = orig_tri.findAllIsomorphisms(tri) ### we will be order two, so we dont care which way this goes
-        for isom in all_isoms:
-            if not moves_tetrahedra(isom):
-                for i in range(tri.countTetrahedra()):
-                    assert swaps[i] == isom.facetPerm(i)
-                return isom
+        ### Regina 6 didn't let us build the isom directly from perms in python. Regina 7 does, using setFacetPerm
+        ### old:
+        # all_isoms = orig_tri.findAllIsomorphisms(tri) ### we will be order two, so we dont care which way this goes
+        # for isom in all_isoms:
+        #     if not moves_tetrahedra(isom):
+        #         for i in range(tri.countTetrahedra()):
+        #             assert swaps[i] == isom.facetPerm(i)
+        #             assert isom == out_isom
+        #         return isom
         assert False ## should never get here
 
 
