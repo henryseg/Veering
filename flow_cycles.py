@@ -10,6 +10,7 @@ from branched_surface import upper_branched_surface, branch_num_to_large_edge_an
 from transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
 from taut import isosig_to_tri_angle, edge_num_to_vert_pair
 from drill import drill
+from taut_polytope import is_layered
 
 from file_io import parse_data_file
 
@@ -74,7 +75,7 @@ def make_list_of_tet_with_this_edge_large(tri, branch):
         out[large_edge_index] = i
     return out
 
-def flow_cycles(tri, branch):
+def find_flow_cycles(tri, branch):
     """Given a branched surface dual to a triangulation, find all simple flow cycles in the upper flow graph"""
     tet_with_this_edge_large = make_list_of_tet_with_this_edge_large(tri, branch)
     found_loops = []

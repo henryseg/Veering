@@ -113,7 +113,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     for sig in random.sample(veering_isosigs, smaller_num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         branch = branched_surface.upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
-        found_loops = flow_cycles.flow_cycles(tri, branch)
+        found_loops = flow_cycles.find_flow_cycles(tri, branch)
         for loop in random.sample(found_loops, min(len(found_loops), 5)):  ## drill along at most 5 loops
             tri, angle = taut.isosig_to_tri_angle(sig)
             branch = branched_surface.upper_branched_surface(tri, angle) 
