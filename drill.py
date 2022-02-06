@@ -6,7 +6,7 @@
 
 import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
-from branched_surface import is_branched, upper_branched_surface, apply_swaps_to_branched_surface
+from branched_surface import is_branched, upper_branched_surface, apply_swaps_to_branched_surface, has_non_sing_semiflow
 from transverse_taut import is_transverse_taut
 
 import snappy ### for diagnostics only
@@ -211,6 +211,11 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         apply_swaps_to_branched_surface(branch, swaps)
         # print('loop, branch, swaps', loop, branch, swaps)
         assert is_branched(tri, branch)
+        assert has_non_sing_semiflow(tri, branch)
 
+    ### return the vertex of the triangulation corresponding to the drilled cusp
+    drilled_cusp = new_0_tets[0].vertex(swaps[new_0_tets[0].index()][3]) 
+    assert drilled_cusp.degree() == len(new_0_tets) + len(new_1_tets)
+    return drilled_cusp
 
 

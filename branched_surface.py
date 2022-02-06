@@ -203,7 +203,7 @@ def is_branched(tri, branch):
             return False
     return True
 
-def has_non_sing_semiflow(tri, branch):
+def has_non_sing_semiflow_old(tri, branch):  ### seems to be slow
     if not is_branched(tri, branch):
         return False
     for edge in tri.edges():
@@ -220,6 +220,18 @@ def has_non_sing_semiflow(tri, branch):
         if mixed_count != 2:
             return False
     return True
+
+def has_non_sing_semiflow(tri, branch): ### the check is essentially the same as for a taut structure...
+    if not is_branched(tri, branch):
+        return False
+    totals = [0] * tri.countEdges()
+    for i, tet in enumerate(tri.tetrahedra()):
+        _, mixed_edge_pair = branch_num_to_large_edge_and_mixed_edge_pair_num(branch[i])
+        mixed_edge_nums = [mixed_edge_pair, 5 - mixed_edge_pair]
+        for e in mixed_edge_nums:
+            totals[tet.edge(e).index()] += 1
+    # print(totals)
+    return all(total == 2 for total in totals)
 
 def all_branched_surfaces(tri):
     ### warning, this will be exponentially slow for not tiny triangulations

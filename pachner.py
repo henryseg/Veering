@@ -10,16 +10,17 @@ from branched_surface import large_edge_of_face, determine_possible_branch_given
 from branched_surface import all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface
 from branched_surface import has_non_sing_semiflow
 
-def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, return_edge = False):
+def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, return_edge = False, return_vertex_perm = False):
     """Apply a 2-3 move to a triangulation with a taut structure and/or branched surface, if possible. 
     If perform = False, returns if the move is possible.
     If perform = True, modifies tri, returns (tri, angle, possible_branches) for the performed move
-    If return_edge, tells you the index of the newly created edge in the triangulation"""
+    If return_edge, tells you the index of the newly created edge in the triangulation.
+    If return_vertex_perm, tells you how the vertices of the old triangulation correspond to the vertices of the new."""
 
     ### possible_branches is a list
     
     # if branch != None:
-    #     assert has_non_sing_semiflow(tri, branch)  
+    #     assert has_non_sing_semiflow(tri, branch)    ### we are checking this on the output of pachner moves so we don't need to check it here
         ## Joe Christy says [p764, Branched surfaces and attractors I: Dynamic Branched Surfaces] that if the branched surface carries the stable lamination of a pseudo-Anosov flow then it has a non singular semi flow
         ## We hope that we can move to a veering triangulation through such branched surfaces
 
@@ -64,6 +65,15 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
     tri2 = regina.Triangulation3(tri)  ## make a copy
     tri2.pachner(tri2.triangle(face_num))
 
+    if return_vertex_perm:
+        vertex_representatives = []
+        for c in tri.vertices():
+            embed = c.embedding(0)
+            vertex_representatives.append((embed.simplex(), embed.face())) ### pair (tet, vert_num_of_that_tet)
+        ### for testing:
+        vertex_degrees = [v.degree() for v in tri.vertices()]
+
+
     ### We have to implement twoThreeMove ourselves. e.g. we do a 2-3 move to canonical fig 8 knot complement triangulation. 
     ### All of the original tetrahedra are removed. I don't see any way to carry the angle structure through without knowing
     ### exactly how Ben's implementation works.
@@ -103,7 +113,7 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
 
     ### write verticesi[j] as vij
 
-    ###                  tet0                                    new_tet0
+    ###                  tet0                                    new_tets[0]
     ###                _________                                 _________
     ###              ,'\       /`.                             ,'\`.   ,'/`.
     ###            ,'   \ v03 /   `.                         ,'   \ `0' /   `. 
@@ -118,7 +128,7 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
     ###         \   `. /       \ ,'   /                   \   `. /   |   \ ,'   /
     ###          \    `---------'    /                     \    * 3  |  2 *    /
     ###           \    \       /    /                       \    \   |   /    /
-    ###            \    \ v10 /    /               new_tet1  \    \  |  /    /  new_tet2
+    ###            \    \ v10 /    /            new_tets[1]  \    \  |  /    /  new_tets[2]
     ###             \    \   /    /                           \    \ | /    /  
     ###              \    \ /    /                             \    \|/    /
     ###               \    *    /                               \    *    /
@@ -134,16 +144,6 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
 
     # these should be even in order to preserve orientability.
     # exactly one of vertices[0] and vertices[1] is even, but it seems to depend on the face.
-
-    # perms = [[regina.Perm4( vertices[0][3], vertices[0][0], vertices[0][1], vertices[0][2] ),   ### opposite v00
-    #           regina.Perm4( vertices[0][3], vertices[0][1], vertices[0][2], vertices[0][0] ),   ### opposite v01
-    #           regina.Perm4( vertices[0][3], vertices[0][2], vertices[0][0], vertices[0][1] )    ### opposite v02
-    #           ],  
-    #          [regina.Perm4( vertices[1][0], vertices[1][3], vertices[1][1], vertices[1][2] ),   ### opposite v10
-    #           regina.Perm4( vertices[1][1], vertices[1][3], vertices[1][2], vertices[1][0] ),   ### opposite v11
-    #           regina.Perm4( vertices[1][2], vertices[1][3], vertices[1][0], vertices[1][1] )    ### opposite v12
-    #           ]
-    #         ]
 
     perms = [[vertices[0] * regina.Perm4( 3,0,1,2 ),   ### opposite v00
               vertices[0] * regina.Perm4( 3,1,2,0 ),   ### opposite v01
@@ -174,6 +174,32 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
                     gluings[i_other][j_other] = None ### only do a self gluing from one side 
                     gluing[0] = new_tets[j_other]
                     gluing[1] = perms[i_other][j_other].inverse() * gluing[1] * perms[i][j] 
+
+    if return_vertex_perm:
+        new_vertex_representatives = []
+        for (tet, vert_num) in vertex_representatives:
+            if tet == tet0:
+                triangle_vert_num = vertices[0].inverse()[vert_num]
+                if triangle_vert_num == 3:
+                    if flip:
+                        new_vertex_representatives.append((new_tets[0], 1))
+                    else:
+                        new_vertex_representatives.append((new_tets[0], 0))
+                else:
+                    new_vertex_representatives.append((new_tets[(triangle_vert_num + 1) % 3], 3))
+            elif tet == tet1:
+                triangle_vert_num = vertices[1].inverse()[vert_num]
+                if triangle_vert_num == 3:
+                    if flip:
+                        new_vertex_representatives.append((new_tets[0], 0))
+                    else:
+                        new_vertex_representatives.append((new_tets[0], 1))
+                else:
+                    new_vertex_representatives.append((new_tets[(triangle_vert_num + 1) % 3], 3))
+            else:
+                new_vertex_representatives.append((tet, vert_num)) ### not changed by the move
+        ### for testing:
+        polar_cusp_indices = [ tet0.vertex( vertices[0][3] ).index(), tet1.vertex( vertices[1][3] ).index() ]
 
     ### unglue two tetrahedra
     tet0.isolate()
@@ -254,12 +280,26 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
                 for cand2 in candidate_branches[2]:
                     candidate = branch[:] + [cand0, cand1, cand2]
                     # print('candidate', candidate)
-                    if is_branched(tri, candidate):
-                    # if has_non_sing_semiflow(tri, candidate):
+                    # if is_branched(tri, candidate):
+                    if has_non_sing_semiflow(tri, candidate):
                         out_branches.append(candidate)
         # assert len(out) > 0  ### this works if we check is_branched three lines above, but not if we check has_non_sing_semiflow
         if len(out_branches) == 0: ### with has_non_sing_semiflow instead, we might not get any
             return False
+
+    if return_vertex_perm:
+        vertex_permutation = []
+        for (tet, vert_num) in new_vertex_representatives:
+            vertex_permutation.append(tet.vertex(vert_num).index())
+        ### note that Regina's permutations can have up to 16 entries, lets just use lists for this
+        ### for testing:
+        new_vertex_degrees = [v.degree() for v in tri.vertices()]
+        new_vertex_degrees_pulled_back = [new_vertex_degrees[vertex_permutation[i]] for i in range(len(vertex_degrees))]
+        for i in polar_cusp_indices:
+            vertex_degrees[i] += 2
+        assert vertex_degrees == new_vertex_degrees_pulled_back
+        # print(new_vertex_degrees_pulled_back)
+
 
     output = [tri]
     if angle != None:
@@ -268,6 +308,8 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
         output.append(out_branches)      
     if return_edge:
         output.append(new_tets[0].edge(0).index())
+    if return_vertex_perm:
+        output.append(vertex_permutation)
     return output
    
 def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, return_triangle = False):
@@ -280,7 +322,7 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
     ### note if branch != None and this function does not return False, then there is only one possible branch 
 
     # if branch != None:
-    #     assert has_non_sing_semiflow(tri, branch)
+    #     assert has_non_sing_semiflow(tri, branch)   ### we are checking this on the output of pachner moves so we don't need to check it here
 
     edge = tri.edge(edge_num)
     if edge.degree() != 3:
@@ -504,8 +546,8 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
         branch.extend([branch0, branch1])
 
         assert is_branched(tri, branch)
-        # if not has_non_sing_semiflow(tri, branch):
-        #     return False
+        if not has_non_sing_semiflow(tri, branch):
+            return False
 
     output = [tri]
     if angle != None:
@@ -528,31 +570,31 @@ def test(num_to_check = 1000):
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         face_num = random.randrange(tri.countTriangles())
-        result = twoThreeMove(tri, face_num, angle = angle, return_edge = True)  
-        if result != False: 
-            tri2, angle2, edge_num = result
-            tri3, angle3 = threeTwoMove(tri2, edge_num, angle = angle2)
-            assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
+        result = twoThreeMove(tri, face_num, angle = angle, return_edge = True, return_vertex_perm = True)  
+        # if result != False: 
+        #     tri2, angle2, edge_num = result
+        #     tri3, angle3 = threeTwoMove(tri2, edge_num, angle = angle2)
+        #     assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
 
-    for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
-        tri_original = regina.Triangulation3(tri) #copy
-        branch = branched_surface.upper_branched_surface(tri, angle, return_lower = random.choice([True, False]))
+    # for sig in random.sample(veering_isosigs, num_to_check):
+    #     tri, angle = taut.isosig_to_tri_angle(sig)
+    #     tri_original = regina.Triangulation3(tri) #copy
+    #     branch = branched_surface.upper_branched_surface(tri, angle, return_lower = random.choice([True, False]))
         
-        ### test branch isosig round trip
-        sig_with_branch = branched_surface.isosig_from_tri_angle_branch(tri, angle, branch)
-        tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
-        assert branch == branch2
+    #     ### test branch isosig round trip
+    #     sig_with_branch = branched_surface.isosig_from_tri_angle_branch(tri, angle, branch)
+    #     tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
+    #     assert branch == branch2
 
-        branch_original = branch[:] #copy
-        face_num = random.randrange(tri.countTriangles())
-        out = twoThreeMove(tri, face_num, branch = branch, return_edge = True)
-        if out != False:
-            tri, possible_branches, edge_num = out
-            tri, branch = threeTwoMove(tri, edge_num, branch = possible_branches[0])
-            all_isoms = tri.findAllIsomorphisms(tri_original)
-            all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
-            assert branch_original in all_branches
+    #     branch_original = branch[:] #copy
+    #     face_num = random.randrange(tri.countTriangles())
+    #     out = twoThreeMove(tri, face_num, branch = branch, return_edge = True)
+    #     if out != False:
+    #         tri, possible_branches, edge_num = out
+    #         tri, branch = threeTwoMove(tri, edge_num, branch = possible_branches[0])
+    #         all_isoms = tri.findAllIsomorphisms(tri_original)
+    #         all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
+    #         assert branch_original in all_branches
 
 
 
