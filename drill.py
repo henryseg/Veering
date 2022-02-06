@@ -7,9 +7,6 @@
 import regina
 from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
 from branched_surface import is_branched, upper_branched_surface, apply_swaps_to_branched_surface
-from flow_cycles import find_flow_cycles, flow_cycle_to_triangle_loop, tri_loop_is_boundary_parallel
-from branched_surface import has_non_sing_semiflow
-from taut_polytope import is_layered
 from transverse_taut import is_transverse_taut
 
 import snappy ### for diagnostics only
@@ -215,48 +212,5 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
         # print('loop, branch, swaps', loop, branch, swaps)
         assert is_branched(tri, branch)
 
-def test_layered_parents(sig, quiet = False):
-    
-    
-    tri, angle = isosig_to_tri_angle(sig)
-    branch = upper_branched_surface(tri, angle)
-    loops = find_flow_cycles(tri, branch)
-    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
-    
-    no_of_layered_parents = 0 # drillings through some simple cycles is not implemented so might get 0 even if there is a simple cycle which gives a layered parent
-    for tri_loop in tri_loops:
-        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
-            tri, angle = isosig_to_tri_angle(sig)
-            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
-                tri, angle = isosig_to_tri_angle(sig)
-                branch = upper_branched_surface(tri, angle)
-                if quiet == False:
-                    print ("drilling", sig, "along", tri_loop)
-                drill(tri, tri_loop, angle, branch)
-                if quiet == False:
-                    print("drilled:", tri.isoSig(), angle, branch)
-                    print("is layered:", is_layered(tri, angle))
-                if is_layered(tri, angle):
-                    no_of_layered_parents = no_of_layered_parents + 1
-    if no_of_layered_parents == 0:
-        print (sig, "does not have a layered parent")
-
-        
-def test_semiflow_on_drillings(sig):
-    
-    tri, angle = isosig_to_tri_angle(sig)
-    branch = upper_branched_surface(tri, angle)
-    loops = find_flow_cycles(tri, branch)
-    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
-    
-    for tri_loop in tri_loops:
-        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
-            tri, angle = isosig_to_tri_angle(sig)
-            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
-                tri, angle = isosig_to_tri_angle(sig)
-                branch = upper_branched_surface(tri, angle)
-                drill(tri, tri_loop, angle, branch)
-                assert has_non_sing_semiflow(tri, branch)
-                # print (tri.isoSig(), branch, "has nonsing semiflow")
 
 

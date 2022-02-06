@@ -109,7 +109,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
     import flow_cycles
     import drill
-    print("testing taut and branched drill")
+    print("testing taut and branched drill + semiflows on drillings")
     for sig in random.sample(veering_isosigs, smaller_num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         branch = branched_surface.upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
@@ -121,6 +121,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             if tri_loop != False: 
                 if not flow_cycles.tri_loop_is_boundary_parallel(tri_loop, tri):
                     drill.drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
+                    assert branched_surface.has_non_sing_semiflow(tri, branch)
 
     print("all basic tests passed")
 
