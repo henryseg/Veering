@@ -21,6 +21,9 @@ import snappy ### for diagnostics only
 
 
 def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for diagnostics
+    """
+    Returns the new cusp formed by drilling
+    """
     if angle != None:
         face_coorientations = is_transverse_taut(tri, angle, return_type = "face_coorientations")
         assert face_coorientations != False
@@ -216,6 +219,6 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
     ### return the vertex of the triangulation corresponding to the drilled cusp
     drilled_cusp = new_0_tets[0].vertex(swaps[new_0_tets[0].index()][3]) 
     assert drilled_cusp.degree() == len(new_0_tets) + len(new_1_tets)
-    return drilled_cusp
+    return drilled_cusp.index()
 
 

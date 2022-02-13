@@ -295,6 +295,11 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
         ### for testing:
         new_vertex_degrees = [v.degree() for v in tri.vertices()]
         new_vertex_degrees_pulled_back = [new_vertex_degrees[vertex_permutation[i]] for i in range(len(vertex_degrees))]
+
+        # print(vertex_permutation)
+        # if vertex_permutation != list(range(len(new_vertex_representatives))):
+        #     print('2-3 permuted vertices', vertex_permutation, new_vertex_degrees, new_vertex_degrees_pulled_back, vertex_degrees)
+
         for i in polar_cusp_indices:
             vertex_degrees[i] += 2
         assert vertex_degrees == new_vertex_degrees_pulled_back
@@ -312,10 +317,11 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
         output.append(vertex_permutation)
     return output
    
-def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, return_triangle = False):
+def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, return_triangle = False, return_vertex_perm = False):
     """Apply a 3-2 move to a triangulation with a taut structure and/or branched surface, if possible. 
     If perform = False, returns if the move is possible.
-    modifies tri, returns (tri, angle, branch) for the performed move"""
+    modifies tri, returns (tri, angle, branch) for the performed move.
+    If return_vertex_perm, tells you how the vertices of the old triangulation correspond to the vertices of the new."""
 
     ### perform = True isn't yet implemented for branch
 
@@ -359,6 +365,14 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
     ### check we do the same as regina... 
     tri2 = regina.Triangulation3(tri)  ## make a copy
     tri2.pachner(tri2.edge(edge_num))
+
+    if return_vertex_perm:
+        vertex_representatives = []
+        for c in tri.vertices():
+            embed = c.embedding(0)
+            vertex_representatives.append((embed.simplex(), embed.face())) ### pair (tet, vert_num_of_that_tet)
+        ### for testing:
+        vertex_degrees = [v.degree() for v in tri.vertices()]
 
     ## record the tetrahedra and gluings adjacent to the tets 
 
@@ -461,6 +475,25 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
                     gluing[0] = new_tets[j_other]  ### j refers to the vertex on the same 3 side
                     gluing[1] = perms[i_other][j_other].inverse() * gluing[1] * perms[i][j] 
 
+    if return_vertex_perm:
+        new_vertex_representatives = []
+        for (tet, vert_num) in vertex_representatives:
+            if tet in tets:
+                which_tet = tets.index(tet)
+                vert_num = vertices[which_tet].inverse()[vert_num]
+                if vert_num == 0:
+                    new_vertex_representatives.append((new_tets[1], 3))
+                elif vert_num == 1:
+                    new_vertex_representatives.append((new_tets[0], 3))
+                elif vert_num == 2:
+                    new_vertex_representatives.append((new_tets[0], (which_tet + 1) % 3 ))
+                elif vert_num == 3:
+                    new_vertex_representatives.append((new_tets[0], (which_tet - 1) % 3 ))
+            else:
+                new_vertex_representatives.append((tet, vert_num)) ### not changed by the move
+        # ### for testing:
+        polar_cusp_indices = [ tets[0].vertex( vertices[0][0] ).index(), tets[0].vertex( vertices[0][1] ).index() ]
+
     ### unglue three tetrahedra
     for tet in tets:
         tet.isolate()
@@ -549,6 +582,23 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
         if not has_non_sing_semiflow(tri, branch):
             return False
 
+    if return_vertex_perm:
+        vertex_permutation = []
+        for (tet, vert_num) in new_vertex_representatives:
+            vertex_permutation.append(tet.vertex(vert_num).index())
+        ### note that Regina's permutations can have up to 16 entries, lets just use lists for this
+        ### for testing:
+        new_vertex_degrees = [v.degree() for v in tri.vertices()]
+        new_vertex_degrees_pulled_back = [new_vertex_degrees[vertex_permutation[i]] for i in range(len(vertex_degrees))]
+        #if new_vertex_degrees != new_vertex_degrees_pulled_back:
+        # print(vertex_permutation)
+        # if vertex_permutation != list(range(len(new_vertex_representatives))):
+        #     print('3-2 permuted vertices', vertex_permutation, new_vertex_degrees, new_vertex_degrees_pulled_back, vertex_degrees)
+        for i in polar_cusp_indices:
+            vertex_degrees[i] -= 2
+        assert vertex_degrees == new_vertex_degrees_pulled_back
+        # print(new_vertex_degrees_pulled_back)
+
     output = [tri]
     if angle != None:
         output.append(angle)
@@ -556,6 +606,8 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
         output.append(branch)      
     if return_triangle:
         output.append(new_tets[0].triangle(3).index())
+    if return_vertex_perm:
+        output.append(vertex_permutation)
     return output
 
 import random
@@ -567,14 +619,24 @@ def test(num_to_check = 1000):
 
     veering_isosigs = parse_data_file("Data/veering_census.txt")
 
-    for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
-        face_num = random.randrange(tri.countTriangles())
+    # for sig in veering_isosigs[:2000]:  ### random.sample(veering_isosigs, num_to_check):
+    #     tri, angle = taut.isosig_to_tri_angle(sig)
+    #     face_num = random.randrange(tri.countTriangles())
+    #     result = twoThreeMove(tri, face_num, angle = angle, return_edge = True, return_vertex_perm = True)  
+    #     if result != False: 
+    #         tri2, angle2, edge_num, vertex_perm2 = result
+    #         tri3, angle3, vertex_perm3 = threeTwoMove(tri2, edge_num, angle = angle2, return_vertex_perm = True)
+    #         assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
+
+    sig = 'gLLPQceeffefiiaellu_012110'
+    tri, angle = taut.isosig_to_tri_angle(sig)
+    for face_num in range(tri.countTriangles()):
         result = twoThreeMove(tri, face_num, angle = angle, return_edge = True, return_vertex_perm = True)  
-        # if result != False: 
-        #     tri2, angle2, edge_num = result
-        #     tri3, angle3 = threeTwoMove(tri2, edge_num, angle = angle2)
-        #     assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
+        if result != False: 
+            tri2, angle2, edge_num, vertex_perm2 = result
+            tri3, angle3, vertex_perm3 = threeTwoMove(tri2, edge_num, angle = angle2, return_vertex_perm = True)
+            assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
+
 
     # for sig in random.sample(veering_isosigs, num_to_check):
     #     tri, angle = taut.isosig_to_tri_angle(sig)
