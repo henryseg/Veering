@@ -10,12 +10,13 @@ from branched_surface import large_edge_of_face, determine_possible_branch_given
 from branched_surface import all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface
 from branched_surface import has_non_sing_semiflow
 
-def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, return_edge = False, return_vertex_perm = False):
+def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, return_edge = False, return_vertex_perm = False, return_edge_consequences = False):
     """Apply a 2-3 move to a triangulation with a taut structure and/or branched surface, if possible. 
     If perform = False, returns if the move is possible.
     If perform = True, modifies tri, returns (tri, angle, possible_branches) for the performed move
     If return_edge, tells you the index of the newly created edge in the triangulation.
-    If return_vertex_perm, tells you how the vertices of the old triangulation correspond to the vertices of the new."""
+    If return_vertex_perm, tells you how the vertices of the old triangulation correspond to the vertices of the new.
+    If return_edge_consequences, tells you what happened to the edges: edge_consequences[e.index()] gives you the new index."""
 
     ### possible_branches is a list
     
@@ -73,6 +74,12 @@ def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, ret
         ### for testing:
         vertex_degrees = [v.degree() for v in tri.vertices()]
 
+    if return_edge_consequences:
+        edge_representatives = []
+        for e in tri.edges():
+            embed = e.embedding(0)
+            ### HERE
+            ##edge_representatives.append((embed.simplex(), embed.face())) ### pair (tet, vert_num_of_that_tet)
 
     ### We have to implement twoThreeMove ourselves. e.g. we do a 2-3 move to canonical fig 8 knot complement triangulation. 
     ### All of the original tetrahedra are removed. I don't see any way to carry the angle structure through without knowing
@@ -321,7 +328,8 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
     """Apply a 3-2 move to a triangulation with a taut structure and/or branched surface, if possible. 
     If perform = False, returns if the move is possible.
     modifies tri, returns (tri, angle, branch) for the performed move.
-    If return_vertex_perm, tells you how the vertices of the old triangulation correspond to the vertices of the new."""
+    If return_vertex_perm, tells you how the vertices of the old triangulation correspond to the vertices of the new.
+    If return_edge_consequences, tells you what happened to the edges: if an edge e survived then edge_consequences[e.index()] gives you the new index, if not then it returns None."""
 
     ### perform = True isn't yet implemented for branch
 
