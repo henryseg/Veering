@@ -221,4 +221,13 @@ def drill(tri, loop, angle = None, branch = None, sig = None): # sig just for di
     assert drilled_cusp.degree() == len(new_0_tets) + len(new_1_tets)
     return drilled_cusp.index()
 
+def has_essential_torus(tri):
+    """Check if the triangulation has an essential torus"""
+    surfs = regina.NormalSurfaces(tri, regina.NS_STANDARD)
+    for i in range(surfs.size()):
+        surf = surfs.surface(i)
+        if surf.eulerChar() == 0 and not surf.isVertexLinking():
+            return True
+    return False
+
 
