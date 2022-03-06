@@ -13,7 +13,11 @@ def mob_tsfm_from_tets(init_verts_pos, final_verts_pos):
     return M
 
 def get_tet_above(vt, tet_num, verts_pos):
-    """given a veering triang with shapes, and a tet with its vert posns, go up from the tet once, and return the upper tet and its vert posns"""
+    """
+    given a veering triang with shapes, and a tet with its vert posns,
+    go up from the tet once, and return the upper tet and its vert
+    posns
+    """
     coorientations = vt.coorientations
     tet_shapes = vt.tet_shapes
 
@@ -44,7 +48,10 @@ def get_tet_above(vt, tet_num, verts_pos):
             return (current_tet.index(), verts_pos)
 
 def loxodromic_from_tet(vt, init_tet_num, init_verts_pos = None):
-    """given a veering triang with shapes, and a tet, go up from the tet until you find it again, return the Mob tsfm"""
+    """
+    given a veering triang with shapes, and a tet, go up from the tet
+    until you find it again, return the Mob tsfm
+    """
     current_tet_num = init_tet_num
     if init_verts_pos == None:
         init_verts_pos = [CP1((1,0)), CP1((0,1)), CP1((1,1)), CP1((vt.tet_shapes[tet_num],1))]
@@ -55,7 +62,10 @@ def loxodromic_from_tet(vt, init_tet_num, init_verts_pos = None):
             return mob_tsfm_from_tets(init_verts_pos, current_verts_pos)
 
 def loxodromic_from_flag(vt, tet_num, face_vert, edge_vert, init_verts_pos = None):
-    """given a veering triang with shapes and a flag in a tet, walk around it until we can call the other function"""
+    """
+    given a veering triang with shapes and a flag in a tet, walk
+    around it until we can call the other function
+    """
     coorientations = vt.coorientations
     tet_shapes = vt.tet_shapes
     if init_verts_pos == None:
@@ -74,12 +84,3 @@ def loxodromic_from_flag(vt, tet_num, face_vert, edge_vert, init_verts_pos = Non
         current_tet = next_tet
 
     return loxodromic_from_tet(vt, current_tet.index(), init_verts_pos = verts_pos)
-
-
-
-
-
-
-
-
-
