@@ -6,29 +6,29 @@ import random
 
 from file_io import parse_data_file, read_from_pickle
 
+
 def check_polynomial_coefficients(p, correct_coeffs):
     p = p.coefficients()
     p.sort()
     n = [-c for c in p]
     n.reverse()
-    assert p == correct_coeffs or n == correct_coeffs
+    return (p == correct_coeffs) or (n == correct_coeffs)
 
-
+    
 def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
-    veering_isosigs = parse_data_file("Data/veering_census.txt")
-
     import taut
+    veering_isosigs = parse_data_file("Data/veering_census.txt")
     print("testing is_taut")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
-        assert taut.is_taut(tri, angle)
+        assert taut.is_taut(tri, angle), sig
 
     print("testing isosig round trip")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         recovered_sig = taut.isosig_from_tri_angle(tri, angle)
-        assert sig == recovered_sig
+        assert sig == recovered_sig, sig
         # we only test this round trip - the other round trip does not
         # make sense because tri->isosig is many to one.
 
@@ -36,19 +36,19 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     print("testing is_transverse_taut")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
-        assert transverse_taut.is_transverse_taut(tri, angle)
+        assert transverse_taut.is_transverse_taut(tri, angle), sig
 
-    print("testing not is_transverse_taut")
     non_transverse_taut_isosigs = parse_data_file("Data/veering_non_transverse_taut_examples.txt")
+    print("testing not is_transverse_taut")
     for sig in non_transverse_taut_isosigs:
         tri, angle = taut.isosig_to_tri_angle(sig)
-        assert not transverse_taut.is_transverse_taut(tri, angle)
+        assert not transverse_taut.is_transverse_taut(tri, angle), sig
 
     import veering
     print("testing is_veering")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
-        assert veering.is_veering(tri, angle)
+        assert veering.is_veering(tri, angle), sig
 
     # tri, angle = taut.isosig_to_tri_angle("cPcbbbdxm_10")
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
@@ -60,7 +60,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         tri, angle = taut.isosig_to_tri_angle(sig)
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
-            assert veering.is_veering(tri_s, angle_s)
+            assert veering.is_veering(tri_s, angle_s), sig
             
     import veering_fan_excision
     print("testing veering_fan_excision")
@@ -71,7 +71,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         tet_types = veering.is_veering(tri, angle, return_type = "tet_types")
         if tet_types.count("toggle") == 2:
             excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
-            assert excised_tri.isIsomorphicTo(m003) != None or excised_tri.isIsomorphicTo(m004) != None
+            assert ( excised_tri.isIsomorphicTo(m003) != None or
+                     excised_tri.isIsomorphicTo(m004) != None ), sig
 
     import pachner
     print("testing pachner with taut structure")
@@ -82,7 +83,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         if result != False: 
             tri2, angle2, edge_num = result
             tri3, angle3 = pachner.threeTwoMove(tri2, edge_num, angle = angle2)
-            assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3)
+            assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3), sig
 
     import branched_surface
     import regina
@@ -95,7 +96,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         ### test branch isosig round trip
         sig_with_branch = branched_surface.isosig_from_tri_angle_branch(tri, angle, branch)
         tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
-        assert branch == branch2, angle == angle2
+        assert (branch == branch2) and (angle == angle2), sig
 
         branch_original = branch[:] #copy
         face_num = random.randrange(tri.countTriangles())
@@ -105,7 +106,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             tri, branch = pachner.threeTwoMove(tri, edge_num, branch = possible_branches[0])
             all_isoms = tri.findAllIsomorphisms(tri_original)
             all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
-            assert branch_original in all_branches
+            assert branch_original in all_branches, sig
 
     import flow_cycles
     import drill
@@ -121,7 +122,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             if tri_loop != False: 
                 if not flow_cycles.tri_loop_is_boundary_parallel(tri_loop, tri):
                     drill.drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
-                    assert branched_surface.has_non_sing_semiflow(tri, branch)
+                    assert branched_surface.has_non_sing_semiflow(tri, branch), sig
 
     print("all basic tests passed")
 
@@ -134,32 +135,31 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         snappy_working = False
 
     if snappy_working:        
-        census = snappy.OrientableCuspedCensus()
-        for i in range(3):
+        print("testing algebraic intersection")
+        census = snappy.OrientableCuspedCensus() # not a set or list, so can't use random.sample
+        for i in range(10):
             M = random.choice(census)
             n = M.num_cusps()
-            print("testing algebraic intersection", M.name()) # random testing, so print the name. 
             peripheral_curves = M.gluing_equations()[-2*n:]
             for i in range(2*n):
                 for j in range(i, 2*n):
                     alg_int = snappy_util.algebraic_intersection(peripheral_curves[i], peripheral_curves[j])
                     if i % 2 == 0 and j == i + 1:
-                        assert alg_int == 1
+                        assert alg_int == 1, M.name()
                     else:
-                        assert alg_int == 0
+                        assert alg_int == 0, M.name()
                        
     if snappy_working:
         import veering_drill_midsurface_bdy
-        for i in range(3):
-            sig = random.choice(veering_isosigs[:3000])
-            print("testing veering drilling and filling", sig) # random testing, so print the name. 
+        print("testing veering drilling and filling")
+        for sig in random.sample(veering_isosigs[:3000], num_to_check):
             T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
             M = snappy.Manifold(T.snapPea())
             M.set_peripheral_curves("shortest")
             L = snappy_util.get_slopes_from_peripherals(M, per)
             M.dehn_fill(L)
             N = snappy.Manifold(sig.split("_")[0])
-            assert M.is_isometric_to(N)
+            assert M.is_isometric_to(N), sig
 
     if snappy_working:
         print("all tests depending on snappy passed")
@@ -282,70 +282,75 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         import taut_polytope
         print("testing is_layered")
         for sig in veering_isosigs[:17]:
-            assert taut_polytope.is_layered(sig)
+            assert taut_polytope.is_layered(sig), sig
         for sig in veering_isosigs[17:21]:
-            assert not taut_polytope.is_layered(sig)
+            assert not taut_polytope.is_layered(sig), sig
+
+    if sage_working:
+        import fibered
+        print("testing is_fibered")
+        mflds = parse_data_file("Data/mflds_which_fiber.txt")
+        mflds = [line.split("\t")[0:2] for line in mflds]
+        for (name, kind) in random.sample(mflds, num_to_check):        
+            assert fibered.is_fibered(name) == (kind == "fibered"), name
 
     if sage_working:
         import veering_polynomial
         import taut_polynomial
+        print("testing veering poly")
         for sig in veering_polys:
-            print("testing veering poly", sig)
             p = veering_polynomial.veering_polynomial(sig)
-            check_polynomial_coefficients(p, veering_polys[sig])
+            assert check_polynomial_coefficients(p, veering_polys[sig]), sig
             ### Nov 2021: sage 9.4 changed how smith normal form works, which changed our polynomials
             ### to equivalent but not equal polynomials. To avoid this kind of change breaking things
             ### in the future, we changed to comparing the list of coefficients.
             # assert p.__repr__() == veering_polys[sig]
+        print("testing taut poly")
         for sig in taut_polys:
-            print("testing taut poly", sig)
             p = taut_polynomial.taut_polynomial_via_tree(sig)
-            check_polynomial_coefficients(p, taut_polys[sig])
+            assert check_polynomial_coefficients(p, taut_polys[sig]), sig
         #     assert p.__repr__() == taut_polys[sig]
-        for i in range(3):
-            sig = random.choice(veering_isosigs[:3000])
-            print("testing divide", sig)
+        print("testing divide")
+        for sig in random.sample(veering_isosigs[:3000], num_to_check):
             p = veering_polynomial.veering_polynomial(sig)
             q = taut_polynomial.taut_polynomial_via_tree(sig)
             if q == 0:
-                assert p == 0
+                assert p == 0, sig
             else:
-                assert q.divides(p)
+                assert q.divides(p), sig
 
     if sage_working:
-        for i in range(3):
-            sig = random.choice(veering_isosigs[:3000])
-            print("testing alex", sig)
+        print("testing alex")
+        for sig in random.sample(veering_isosigs[:3000], num_to_check):        
             snap_sig = sig.split("_")[0]
             M = snappy.Manifold(snap_sig)
             if M.homology().betti_number() == 1:
-                assert taut_polynomial.taut_polynomial_via_tree(sig, mode = "alexander") == M.alexander_polynomial()
+                assert taut_polynomial.taut_polynomial_via_tree(sig, mode = "alexander") == M.alexander_polynomial(), sig
 
     if sage_working:
         # would be nice to automate this - need to fetch the angle
         # structure say via z_charge.py...
+        print("testing is_torus_bundle")
         for sig in torus_bundles: 
-            print("testing torus bundle", sig)
-            assert taut_polytope.is_torus_bundle(sig)
+            assert taut_polytope.is_torus_bundle(sig), sig
 
     if sage_working:
         # ditto
+        print("testing is_layered")
         for sig in torus_bundles:
-            print("testing layered", sig)
-            assert taut_polytope.is_layered(sig)
+            assert taut_polytope.is_layered(sig), sig
+        print("testing measured")
         for sig in measured:
-            print("testing measured", sig)
-            assert taut_polytope.LMN_tri_angle(sig) == "M"
+            assert taut_polytope.LMN_tri_angle(sig) == "M", sig
+        print("testing empty")
         for sig in empties:
-            print("testing empty", sig)
-            assert taut_polytope.LMN_tri_angle(sig) == "N"
+            assert taut_polytope.LMN_tri_angle(sig) == "N", sig
 
     if sage_working:  # warning - this takes random amounts of time!
-        for i in range(3):
-            sig = random.choice(veering_isosigs[:3000])
-            print("testing hom dim", sig)
+        print("testing hom dim")
+        for sig in random.sample(veering_isosigs[:3000], 3): # magic number
             # dimension = zero if and only if nothing is carried.
-            assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N")
+            assert (taut_polytope.taut_cone_homological_dim(sig) == 0) == (taut_polytope.LMN_tri_angle(sig) == "N"), sig
 
     if sage_working:      
 
@@ -394,46 +399,45 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
     if sage_working:
         import taut_carried     
+        print("testing boundary cycles")
         for sig, surface in boundary_cycles:
-            print("testing boundary cycles", sig)
             surface_list = list(surface)
             cycles = taut_carried.boundary_cycles_from_surface(sig, surface_list)
             cycles = tuple(tuple(cycle) for cycle in cycles)
-            assert cycles.__repr__() == boundary_cycles[(sig, surface)]
+            assert cycles.__repr__() == boundary_cycles[(sig, surface)], sig
 
     if sage_working:
+        print("testing taut with cycles")
         for sig, cycles in taut_polys_with_cycles:
-            print("testing taut with cycles", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in)
-            check_polynomial_coefficients(p, taut_polys_with_cycles[(sig, cycles)])
+            assert check_polynomial_coefficients(p, taut_polys_with_cycles[(sig, cycles)]), sig
             # assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
+        print("testing taut with images")
         for sig, cycles in taut_polys_image:
-            print("testing taut with images", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_image(sig, cycles_in)
-            check_polynomial_coefficients(p, taut_polys_image[(sig, cycles)])
+            assert check_polynomial_coefficients(p, taut_polys_image[(sig, cycles)]), sig
             # assert p.__repr__() == taut_polys_image[(sig, cycles)]
 
     if sage_working:
+        print("testing alex with cycles")
         for sig, cycles in alex_polys_with_cycles:
-            print("testing alex with cycles", sig)
             cycles_in = [list(cycle) for cycle in cycles]
             p = taut_polynomial.taut_polynomial_via_tree(sig, cycles_in, mode = "alexander")
-            check_polynomial_coefficients(p, alex_polys_with_cycles[(sig, cycles)])
+            assert check_polynomial_coefficients(p, alex_polys_with_cycles[(sig, cycles)]), sig
             # assert p.__repr__() == alex_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
         import edge_orientability
         import taut_euler_class
-        for i in range(3):
-            sig = random.choice(veering_isosigs[:3000])
-            print("testing euler and edge orientability", sig)
+        print("testing euler and edge orientability")
+        for sig in random.sample(veering_isosigs[:3000], 3):
             # Theorem: If (tri, angle) is edge orientable then e = 0.
             assert not ( edge_orientability.is_edge_orientable(sig) and
-                         (taut_euler_class.order_of_euler_class_wrapper(sig) == 2) )
+                         (taut_euler_class.order_of_euler_class_wrapper(sig) == 2) ), sig
 
     if sage_working:
         # Theorem: If (tri, angle) is edge orientable then taut poly = alex poly.
@@ -442,15 +446,14 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         pass
             
     if sage_working:
-        for i in range(3):
-            sig = random.choice(veering_isosigs[:3000])
-            print("testing exotics", sig)
+        print("testing exotics")
+        for sig in random.sample(veering_isosigs[:3000], 3):
             tri, angle = taut.isosig_to_tri_angle(sig)
             T = veering.veering_triangulation(tri, angle)
             is_eo = T.is_edge_orientable()
             for angle in T.exotic_angles():
-                assert taut_polytope.taut_cone_homological_dim(tri, angle) == 0
-                assert is_eo == transverse_taut.is_transverse_taut(tri, angle)
+                assert taut_polytope.taut_cone_homological_dim(tri, angle) == 0, sig
+                assert is_eo == transverse_taut.is_transverse_taut(tri, angle), sig
 
     ### test for drill_midsurface_bdy: drill then fill, check you get the same manifold
 
@@ -467,10 +470,10 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
         sig_starts = ["b+-LR", "b++LR"]
 
+        print("testing lattice for punc torus bundle")
         for i in range(3):
             for sig_start in sig_starts:
                 sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
-                print("testing lattice for punc torus bundle", sig)
                 M = snappy.Manifold(sig)
                 tri = regina.Triangulation3(M)
                 t, A = z_charge.sol_and_kernel(M)
@@ -479,7 +482,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
                 AA = IntegerLattice(A)
                 BB = IntegerLattice(B)
-                assert AA == BB.saturation()
+                assert AA == BB.saturation(), sig
 
                 dim = 3*M.num_tetrahedra()
                 V = VectorSpace(ZZ2, dim)
@@ -487,16 +490,16 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
                 BB = V.subspace(B)
                 CM = Matrix(ZZ2, C)
                 CC = CM.right_kernel()
-                assert AA.intersection(CC) == BB 
+                assert AA.intersection(CC) == BB , sig
                 ## so l-t defms are the part of the kernel that doesn't flip over
 
     if sage_working:
+        print("testing charges for punc torus bundle")
         for i in range(3):
             for sig_start in sig_starts:
                 sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
-                print("testing charges for punc torus bundle", sig)
                 M = snappy.Manifold(sig)
-                assert z_charge.can_deal_with_reduced_angles(M)
+                assert z_charge.can_deal_with_reduced_angles(M), sig
             
     if sage_working:
         print("all tests depending on sage passed")
