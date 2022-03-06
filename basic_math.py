@@ -5,7 +5,9 @@
 from numbers import Number
 from cmath import sqrt
 
+
 # helper functions for printing
+
 
 def intify(a):
     if a.imag == 0:
@@ -16,16 +18,20 @@ def intify(a):
 
 
 def num_print(a):
-    x = intify(a.real); y = intify(a.imag)
+    x = intify(a.real)
+    y = intify(a.imag)
     if y == 0: 
         return str(x)
     if x == 0: 
         return str(y) + 'i'
-    if y < 0: return str(x) + ' - ' + str(abs(y)) + 'i'
-    else: return str(x) + ' + ' + str(y) + 'i'
+    if y < 0:
+        return str(x) + ' - ' + str(abs(y)) + 'i'
+    else:
+        return str(x) + ' + ' + str(y) + 'i'
 
 
 # permutations
+
 
 def sign(perm):
     copy = perm[:]
@@ -40,6 +46,7 @@ def sign(perm):
 
 
 # linear algebra
+
 
 class vector(tuple):
 
@@ -144,7 +151,9 @@ class matrix(tuple):
             return self * z
 
     def fixed_points(self, epsilon = 0.000001):
-        """return attracting fixed point then repelling"""
+        """
+        return attracting fixed point then repelling
+        """
         # (a b)  (z)  =  (Lz)
         # (c d)  (1)     ( L)  
 
@@ -168,7 +177,9 @@ class matrix(tuple):
         assert abs(Ls[0]) < 1 - epsilon and 1 + epsilon < abs(Ls[1])
         return [CP1((z,1)) for z in out]
 
+
 #   projective geometry   
+
 
 class CP1(tuple):
 
