@@ -14,7 +14,7 @@ from transverse_taut import is_transverse_taut
 def get_many_sigs(snappy_name, tries):
     """
     Given a snappy name (isosig, etc), tries to find many sigs 
-    for the same manifold.
+    for the manifold.
     """
     M = snappy.Manifold(snappy_name)
     sigs = []
@@ -40,6 +40,6 @@ def is_fibered(snappy_name, tries = 1000, with_data = False):
             if is_transverse_taut(T, angle) and is_layered(T, angle):
                 if with_data:
                     return (True, T.isoSig(), angle)
-                else:
-                    return True
+                return True
+
     return False
