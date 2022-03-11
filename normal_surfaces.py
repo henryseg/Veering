@@ -6,6 +6,7 @@ from file_io import parse_data_file
 from taut import isosig_to_tri_angle
 import regina
 
+
 def count_quads(surf):
     count = 0
     for i in range(surf.triangulation().countTetrahedra()):
@@ -38,10 +39,8 @@ def analyze_sig(sig):
                 print(surf)
                 
 
-
 def main(num_to_check = 10):
     lines = parse_data_file('Data/veering_census.txt')
     for line in lines[:num_to_check]:
         sig = line.strip()
         analyze_sig(sig)
-        
