@@ -127,6 +127,8 @@ def get_top_and_bottom_nums(tet_vert_coors, tet_num):
     b0, b1 = bottom_vert_nums
     return [(t0,t1), (b0,b1)]
 
+### This should be "taut_symmetry_group"
+
 @liberal
 def symmetry_group_size(tri, angle):
     isoms = tri.findAllIsomorphisms(tri)

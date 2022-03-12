@@ -6,7 +6,6 @@
 
 # TODO - Gurobi?
 
-
 import regina
 import snappy
 
@@ -164,7 +163,7 @@ def fully_carried_solution(N):
 @liberal
 def is_layered(tri, angle):
     """
-    Given a tri, angle, decide if it is layered.
+    Given a tri, angle decide if it is layered.
     """
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
@@ -344,7 +343,7 @@ def taut_rays(tri, angle):
 # the function
 
 # Factor this - produce the image in H_1 with basis the non-tree edges
-# and then take dimension.  This is better, because we get a thurston face
+# and then take dimension.  This is better, because we get a Thurston face
 # in the "correct" basis - that is the basis where we computed the
 # taut polynomial.  This allows us to correctly compare Newton polytopes. 
 
