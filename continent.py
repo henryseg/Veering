@@ -11,6 +11,8 @@ class vertex:
         self.pos = pos
         self.ladderpole_ancestors = set() ## which ladderpole edges did you come from
         self.continent.vertices.append(self)
+        self.coastal_index = None
+        self.circle_pos = None
     
     def is_ladderpole_descendant(self):
         return len(self.ladderpole_ancestors) != 0
@@ -22,7 +24,9 @@ class vertex:
         assert False
 
     def __repr__(self):
-        if not self.pos.is_infinity():
+        if self.pos == None:
+            return str(coastal_index)
+        elif not self.pos.is_infinity():
             return str(self.pos.complex())
         else:
             return "inf"
@@ -314,7 +318,8 @@ class continent:
         for v in self.tet_face.verts_pos:
             vertex(self, v)  ## creates and adds to the list of vertices
         self.infinity = self.vertices[self.tet_face.face]
-        assert self.infinity.pos.is_infinity()
+        if self.infinity.pos != None:
+            assert self.infinity.pos.is_infinity() 
         self.coast = None
         self.max_length = None
 
@@ -512,6 +517,7 @@ class continent:
         self.update_coast()  ## we don't update this as we build
 
     def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
+        self.first_non_buried_index = 0
         while self.num_tetrahedra < max_num_tetrahedra:  
             tri = self.triangles[self.first_non_buried_index]  
             self.bury(tri)
@@ -871,18 +877,21 @@ class continent:
         tet_vert_posns[face_b] = vert_b.pos
         tet_vert_posns[face_c] = vert_c.pos
 
-        ### next: permute the triangle verts in CP1 into tet order. Then plug through tet_ordering so we can develop
-        tet_shape = self.vt.tet_shapes[tet.index()]
-        # print tet_shape
-        tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
-        pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape)
+        if self.vt.tet_shapes != None:
+            ### next: permute the triangle verts in CP1 into tet order. Then plug through tet_ordering so we can develop
+            tet_shape = self.vt.tet_shapes[tet.index()]
+            # print tet_shape
+            tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
+            pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape)
         
-        # ancestors = [ a for a in vert_a.ladderpole_ancestors if a in vert_b.ladderpole_ancestors ]
-        ancestors = vert_a.ladderpole_ancestors.intersection(vert_b.ladderpole_ancestors)
+            # ancestors = [ a for a in vert_a.ladderpole_ancestors if a in vert_b.ladderpole_ancestors ]
+            ancestors = vert_a.ladderpole_ancestors.intersection(vert_b.ladderpole_ancestors)
 
-        vert_t = vertex( self, pos)
+            vert_t = vertex( self, pos)
 
-        vert_t.ladderpole_ancestors = ancestors
+            vert_t.ladderpole_ancestors = ancestors
+        else:
+            vert_t = vertex( self, None)
 
         if self.desired_vertices != []:
             if self.infinity in triangle.vertices:

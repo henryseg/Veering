@@ -1,11 +1,12 @@
 
 import regina
+from file_io import parse_data_file
 from taut import isosig_to_tri_angle, isosig_from_tri_angle
 from pachner import twoThreeMove, threeTwoMove
 from branched_surface import upper_branched_surface, isosig_from_tri_angle_branch, isosig_to_tri_angle_branch, has_non_sing_semiflow
 from veering import is_veering
 from flow_cycles import flow_cycle_to_triangle_loop, find_flow_cycles, tri_loop_is_boundary_parallel
-from drill import drill
+from drill import drill, has_essential_torus
 
 class pachner_node():
     def __init__(self, isoSig, tri, angle, branch, drilled_cusp_index = None, ceiling = 9999, floor = 0):
@@ -111,7 +112,7 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, nam
     # print(len(big_dict_of_nodes), len(frontier_isoSigs))
     for counter in range(search_depth):
         if len(frontier_isoSigs) == 0: #we are done...
-            print('done')
+            # print('done')
             break
         new_frontier_isoSigs = set([]) 
         # for each element in the frontier check to see if it appears on the big_list_of_sigs if not we add it to the big list 
@@ -141,58 +142,87 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, nam
                         return None 
 
         frontier_isoSigs = new_frontier_isoSigs
-        print(len(big_dict_of_nodes), len(frontier_isoSigs))
+        # print(len(big_dict_of_nodes), len(frontier_isoSigs))
 
     print('did not find veering')
     return None
 
 def main():
     depth = 100
-    ceiling = 10
+    # ceiling = 10
+    extra_ceiling = 5  ### above how many tetrahedra we start with
+    # print('depth', depth)
+    # print('ceiling', ceiling)
 
-    print('depth', depth)
-    print('ceiling', ceiling)
+    # # sig = 'cPcbbbdxm_10'
+    # # sig = 'dLQacccjsnk_200'
+    # # sig = 'dLQbccchhfo_122'
+    # sig = 'eLAkbccddhhsqs_1220'
+    # tri, angle = isosig_to_tri_angle(sig) 
+    # branch = upper_branched_surface(tri, angle)
+    # # tl = flow_cycle_to_triangle_loop(tri, branch, [(0, 2)]) 
+    # # drilled_cusp_index = drill(tri, tl, angle = angle, branch = branch) 
+    # # print('angle', angle, 'branch', branch, 'drilled_cusp_index', drilled_cusp_index)
+    # # # assert has_non_sing_semiflow(tri, branch)
 
-    # sig = 'cPcbbbdxm_10'
-    # sig = 'dLQacccjsnk_200'
-    sig = 'dLQbccchhfo_122'
-    tri, angle = isosig_to_tri_angle(sig) 
-    branch = upper_branched_surface(tri, angle)
-    # tl = flow_cycle_to_triangle_loop(tri, branch, [(0, 2)]) 
-    # drilled_cusp_index = drill(tri, tl, angle = angle, branch = branch) 
-    # print('angle', angle, 'branch', branch, 'drilled_cusp_index', drilled_cusp_index)
-    # # assert has_non_sing_semiflow(tri, branch)
+    # # # start veering: cPcbbbdxm_10_dl loop [(0, 2)] tri_loop [(2, 102)]
+    # # # drill: eLMkbbddddhapu_2100_fjek
 
-    # # start veering: cPcbbbdxm_10_dl loop [(0, 2)] tri_loop [(2, 102)]
-    # # drill: eLMkbbddddhapu_2100_fjek
-
-    # start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
-    # assert start_isoSig == 'eLMkbbddddhapu_2100_fjek'  
-    # tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig)     ### fails?? 
+    # # start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
+    # # assert start_isoSig == 'eLMkbbddddhapu_2100_fjek'  
+    # # tri, angle, branch = isosig_to_tri_angle_branch(start_isoSig)     ### fails?? 
     
 
-    # graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
+    # # graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
 
 
-    loops = find_flow_cycles(tri, branch)
-    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+    # loops = find_flow_cycles(tri, branch)
+    # tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
     
-    for tri_loop in tri_loops:
-        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
-            tri, angle = isosig_to_tri_angle(sig)
-            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
-                branch = upper_branched_surface(tri, angle)
-                drilled_cusp_index = drill(tri, tri_loop, angle = angle, branch = branch)
-                start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
-                print(start_isoSig, 'angle', angle, 'branch', branch, 'drilled_cusp_index', drilled_cusp_index)
-                graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
+    # for i, tri_loop in enumerate(tri_loops):
+    #     if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
+    #         tri, angle = isosig_to_tri_angle(sig)
+    #         if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
+    #             branch = upper_branched_surface(tri, angle)
+    #             drilled_cusp_index = drill(tri, tri_loop, angle = angle, branch = branch)
+    #             print('loop', loops[i], 'tri_loop', tri_loop, 'has_essential_torus', has_essential_torus(tri))
+    #             # start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
+    #             # print(start_isoSig, 'angle', angle, 'branch', branch, 'drilled_cusp_index', drilled_cusp_index)
+    #             # graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
 
 
+    sigs = parse_data_file('Data/veering_census.txt')
 
+    for j, sig in enumerate(sigs[5:10]):
+        if j%100 == 0:
+            print(j)
+        tri, angle = isosig_to_tri_angle(sig)
+        branch = upper_branched_surface(tri, angle)
+        loops = find_flow_cycles(tri, branch)
+        tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+            
+        for i, tri_loop in enumerate(tri_loops):
+            if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
+                tri, angle = isosig_to_tri_angle(sig)
+                if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
+                    branch = upper_branched_surface(tri, angle)
+                    drilled_cusp_index = drill(tri, tri_loop, angle = angle, branch = branch)
+                    if has_essential_torus(tri):
+                        print('sig', sig, 'has_essential_torus', has_essential_torus(tri), 'loop', loops[i], 'tri_loop', tri_loop)
+                    else:
+                        print('sig', sig, 'has_essential_torus', has_essential_torus(tri), 'loop', loops[i], 'tri_loop', tri_loop)
+                        ceiling = tri.countTetrahedra() + extra_ceiling
+                        print('ceiling', ceiling)
+                        start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
+                        print(start_isoSig, 'angle', angle, 'branch', branch, 'drilled_cusp_index', drilled_cusp_index)
+                        graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
 
+                    # start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
+                    # print(start_isoSig, 'angle', angle, 'branch', branch, 'drilled_cusp_index', drilled_cusp_index)
+                    # graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
 
-
-
+    ## drilling fLLQcbeddeehhbghh_01110 along loop [(0, 2), (3, 1), (2, 3)] has essential torus - where is the mobius strip?
+    ## we got through the first five manifolds and found veering for all simple drillings without essential tori.
 
 
 
