@@ -193,7 +193,7 @@ def main():
 
     sigs = parse_data_file('Data/veering_census.txt')
 
-    for j, sig in enumerate(sigs[5:10]):
+    for j, sig in enumerate(sigs[:5]):
         if j%100 == 0:
             print(j)
         tri, angle = isosig_to_tri_angle(sig)
