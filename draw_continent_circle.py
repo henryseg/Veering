@@ -154,8 +154,9 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
 
 
 def main():
-    veering_isosig = 'cPcbbbiht_12'
-    draw_continent_circle(veering_isosig, max_num_tetrahedra = 40, 
+    # veering_isosig = 'cPcbbbiht_12'
+    veering_isosig = 'dLQacccjsnk_200'
+    draw_continent_circle(veering_isosig, max_num_tetrahedra = 20, 
         draw_upper_landscape = True, draw_lower_landscape = False, 
         draw_upper_green = True, draw_lower_purple = False)
 
