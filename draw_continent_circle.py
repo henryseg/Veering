@@ -98,6 +98,10 @@ def make_arc(a, b, return_midpt = False):
 
 def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_landscape = True, draw_lower_landscape = False, draw_upper_green = True, draw_lower_purple = False, draw_train_tracks = False, draw_foliation = True):
     global_scale_up = 10.0
+    edge_thickness = 0.01
+    track_thickness = 0.02
+    leaf_thickness = 0.03
+
     scl = pyx.trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
@@ -141,7 +145,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
             u, v = e.vertices
             p = make_arc(u.circle_pos, v.circle_pos)
             p = p.transformed(scl)
-            canv.stroke(p, [pyx.style.linewidth(0.01), col])
+            canv.stroke(p, [pyx.style.linewidth(edge_thickness), pyx.style.linecap.round, col])
         for tri in boundary_tris[i]:
             center = incenter(tri.vertices[0].circle_pos, tri.vertices[1].circle_pos, tri.vertices[2].circle_pos)
             # canv.fill(pyx.path.circle(global_scale_up*center[0], global_scale_up*center[1], 0.1)) ### text has bottom left corner here
@@ -149,8 +153,6 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
 
 
     ### train tracks...
-    track_thickness = 0.02
-    leaf_thickness = 0.03
 
     if draw_lower_purple:
         if draw_train_tracks:
@@ -166,7 +168,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
                     if (is_reds[i] == is_reds[(i+1)%3]) or (not is_reds[i] and is_reds[(i+1)%3]):
                         p = make_arc(midpts[i], midpts[(i+1)%3])
                         p = p.transformed(scl)
-                        canv.stroke(p, [pyx.style.linewidth(track_thickness), purple])    
+                        canv.stroke(p, [pyx.style.linewidth(track_thickness), pyx.style.linecap.round, purple])    
         if draw_foliation:   
             for edge in con.lower_landscape_edges:
                 leaf_end_edges = []
@@ -192,7 +194,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
                         leaf_ends.append(midpt)
                     p = make_arc(leaf_ends[0], leaf_ends[1])
                     p = p.transformed(scl)
-                    canv.stroke(p, [pyx.style.linewidth(leaf_thickness), purple])
+                    canv.stroke(p, [pyx.style.linewidth(leaf_thickness), pyx.style.linecap.round, purple])
 
     if draw_upper_green:
         if draw_train_tracks:
@@ -208,7 +210,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
                     if (is_reds[i] == is_reds[(i+1)%3]) or (is_reds[i] and not is_reds[(i+1)%3]):
                         p = make_arc(midpts[i], midpts[(i+1)%3])
                         p = p.transformed(scl)
-                        canv.stroke(p, [pyx.style.linewidth(track_thickness), green])
+                        canv.stroke(p, [pyx.style.linewidth(track_thickness), pyx.style.linecap.round, green])
         if draw_foliation:
             for edge in con.upper_landscape_edges:
                 leaf_end_edges = []
@@ -234,7 +236,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
                         leaf_ends.append(midpt)
                     p = make_arc(leaf_ends[0], leaf_ends[1])
                     p = p.transformed(scl)
-                    canv.stroke(p, [pyx.style.linewidth(leaf_thickness), green])
+                    canv.stroke(p, [pyx.style.linewidth(leaf_thickness), pyx.style.linecap.round, green])
 
     output_filename = 'Images/CircleContinent/' + veering_isosig + '.pdf'
     canv.writePDFfile(output_filename)
