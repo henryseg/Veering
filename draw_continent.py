@@ -564,7 +564,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, 
             lower_colours = {True: pyx.color.rgb(0.5,0.3,0), False: pyx.color.rgb(0,0.3,0.5)}
             upper_colours = {True: pyx.color.rgb(0.9,0.3,0), False: pyx.color.rgb(0,0.3,0.9)}
 
-            landscape_edges = con.boundary_landscape_edges()
+            landscape_edges = [con.lower_landscape_edges, con.upper_landscape_edges]
 
             colours = [lower_colours, upper_colours]
             for i in range(2):

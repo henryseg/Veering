@@ -42,6 +42,7 @@ class landscape_edge:
             v.edges.append(self)
         self.continent.edges.append(self)
         self.is_red = is_red
+        self.boundary_triangles = [] ### updated in update_boundary. If this edge is on boundary of the continent then there will be two triangles in here.
         # try:
         #     assert self.length() > 0.0001
         # except:
@@ -70,6 +71,24 @@ class landscape_edge:
         intersection = set(self.vertices) & set(other.vertices) 
         assert len(intersection) == 1
         return intersection.pop()
+
+    def is_coastal(self):
+        return self.boundary_triangles[0].is_upper != self.boundary_triangles[1].is_upper
+
+    def is_watershed(self):
+        if self.is_coastal():
+            return False
+        else:
+            return (self.boundary_triangles[0].downriver() != self.boundary_triangles[1]) and (self.boundary_triangles[1].downriver() != self.boundary_triangles[0]) 
+                   ### fall if one of these is equal, sink if both are equal
+    
+    def is_coastal_sink(self, upper = True):  ### have to say if we are interested in the upper or lower landscape
+        if not self.is_coastal():
+            return False
+        else:
+            for tri in self.boundary_triangles:
+                if tri.is_upper == upper: ### we are looking at the correct triangle
+                    return tri.edges[tri.downriver_index()] == self
 
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
@@ -289,7 +308,7 @@ class continent_tetrahedron:
     def __init__(self, continent, tet_index):
         self.continent = continent
         self.index = tet_index ## in the quotient manifold
-        self.upper_triangles = []
+        self.upper_triangles = [] 
         self.lower_triangles = []
         self.continent.tetrahedra.append(self)
 
@@ -304,7 +323,7 @@ class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
         self.vt = vt
-        self.triangles = []
+        self.triangles = [] 
         self.first_non_buried_index = None
         self.num_tetrahedra = 1
 
@@ -322,6 +341,11 @@ class continent:
             assert self.infinity.pos.is_infinity() 
         self.coast = None
         self.max_length = None
+
+        self.upper_landscape_triangles = set([]) ### updates in update_boundary
+        self.lower_landscape_triangles = set([]) 
+        self.upper_landscape_edges = set([])
+        self.lower_landscape_edges = set([])
 
         ###   c---R----b
         ###   |`d    ,'|     faces a, b on bottom, c, d on top
@@ -455,10 +479,6 @@ class continent:
     def sanity_check(self):
         for tri in self.triangles:
             tri.check_against_neighbours()
-
-    def bury(self, triangle):
-        while not triangle.is_buried:
-            self.silt(triangle)
             
     def flow(self, triangle, return_all = False):
         """returns the triangle all the way downriver, and whether it is coastal"""
@@ -488,9 +508,76 @@ class continent:
             self.coastal_fill(downriver_triangle)
         else:
             self.in_fill(downriver_triangle)
-        self.num_tetrahedra += 1
         # self.sanity_check()
 
+    def bury(self, triangle):
+        while not triangle.is_buried:
+            self.silt(triangle)
+  
+    def update_boundary(self):
+        """Installs coastal vertices in anticlockwise order as viewed from above
+           Also for all boundary edges tells them neighbouring faces"""  
+
+        self.upper_landscape_triangles = set([])
+        self.lower_landscape_triangles = set([])
+        for tri in self.triangles:
+            if not tri.is_buried:
+                if tri.is_upper:
+                    self.upper_landscape_triangles.add(tri)
+                else:
+                    self.lower_landscape_triangles.add(tri)
+
+        self.upper_landscape_edges = set([])
+        self.lower_landscape_edges = set([])
+        for e in self.edges:
+            e.boundary_triangles = []
+
+        for tri in self.upper_landscape_triangles:
+            for e in tri.edges:
+                e.boundary_triangles.append(tri)
+                self.upper_landscape_edges.add(e)
+        for tri in self.lower_landscape_triangles:
+            for e in tri.edges:
+                e.boundary_triangles.append(tri)
+                self.lower_landscape_edges.add(e)
+
+        self.coast = []
+        for tri in self.triangles:
+            if not tri.is_buried:
+                break  ## found an initial unburied tri 
+        vert_index = 0  
+        initial_vert = tri.vertices[vert_index]
+        vert = initial_vert   
+        while self.coast == [] or vert != initial_vert:
+            if tri.neighbours[(vert_index - 1) % 3].is_upper != tri.is_upper: ## we are coastal
+                vert_index = (vert_index + 1) % 3   
+                vert = tri.vertices[vert_index]
+                self.coast.append(vert)
+            else: # walk to the next triangle
+                tri = tri.neighbours[(vert_index - 1) % 3]  
+                vert_index = tri.vertices.index(vert) 
+
+        ##  i+1
+        ##   *-------* i  
+        ##    \     /
+        ##     \   / 
+        ##      \ /
+        ##       * i-1 
+
+        ## now rotate to put infinity first
+        inf_vert_index = self.coast.index( self.infinity )
+        self.coast = self.coast[inf_vert_index:] + self.coast[:inf_vert_index]
+
+    def make_convex(self):
+        ### new triangles are added to the end of the list so this is safe.
+        ### new sinks created by in-fills have new triangles that point at them, so we get everything.
+        for tri in self.triangles:
+            if not tri.is_buried:
+                downriver_triangle, is_coastal = self.flow(tri)
+                if not is_coastal:
+                    self.in_fill(downriver_triangle)
+        self.update_boundary()
+                        
     def build_fundamental_domain_old(self, max_num_tetrahedra = 50000):
         self.first_non_buried_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
@@ -500,7 +587,7 @@ class continent:
             while self.triangles[self.first_non_buried_index].is_buried:
             # while self.triangles[first_non_buried_index].is_buried or self.triangles[first_non_buried_index].is_upper:
                 self.first_non_buried_index += 1
-        self.update_coast()  ## we don't update this as we build
+        self.update_boundary()  ## we don't update this as we build
 
     ### old version builds lots of things we dont care about, this is much faster.
     def build_fundamental_domain(self, max_num_tetrahedra = 50000):
@@ -514,7 +601,7 @@ class continent:
             while self.triangles[self.first_non_buried_index].is_buried:
             # while self.triangles[first_non_buried_index].is_buried or self.triangles[first_non_buried_index].is_upper:
                 self.first_non_buried_index += 1
-        self.update_coast()  ## we don't update this as we build
+        self.update_boundary()  ## we don't update this as we build
 
     def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
         self.first_non_buried_index = 0
@@ -524,12 +611,12 @@ class continent:
             self.first_non_buried_index += 1
             while self.triangles[self.first_non_buried_index].is_buried:
                 self.first_non_buried_index += 1
-        self.update_coast()  ## we don't update this as we build
+        self.update_boundary()  ## we don't update this as we build
 
     def build_on_coast(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
         # print(('max_length', max_length))
-        self.update_coast()
+        self.update_boundary()
 
         ## now build
 
@@ -545,7 +632,7 @@ class continent:
         # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
         # print(('hit max tetrahedra', hit_max_tetrahedra))
-        self.update_coast()
+        self.update_boundary()
         # print(('num_long_edges_direct_count', self.count_long_edges()))
         # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
@@ -567,7 +654,7 @@ class continent:
         # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
         # print(('hit max tetrahedra', hit_max_tetrahedra))
-        self.update_coast()
+        self.update_boundary()
         # print(('num_long_edges_direct_count', self.count_long_edges()))
         # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
@@ -604,7 +691,7 @@ class continent:
         # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
         # print(('hit max tetrahedra', hit_max_tetrahedra))
-        self.update_coast()
+        self.update_boundary()
         # print(('num_long_edges_direct_count', self.count_long_edges()))
         # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
@@ -612,7 +699,7 @@ class continent:
     # def build_loxodromics(self, max_length = 0.1, max_num_tetrahedra = 50000):
     #     self.max_length = max_length
     #     print 'max_length', max_length
-    #     self.update_coast()
+    #     self.update_boundary()
 
     #     ## now build
 
@@ -625,14 +712,14 @@ class continent:
     #         while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried:
     #             self.first_non_buried_index += 1
     #     print 'num_tetrahedra', self.num_tetrahedra
-    #     self.update_coast()
+    #     self.update_boundary()
     #     print 'num_long_edges_direct_count', self.count_long_edges()
     #     print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
 
     def build_long_and_mid(self, max_length = 0.1, max_num_tetrahedra = 50000):  
         self.max_length = max_length
         # print(('max_length', max_length))
-        self.update_coast()
+        self.update_boundary()
 
         ## now build
 
@@ -661,7 +748,7 @@ class continent:
         # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
         # print(('hit max tetrahedra', hit_max_tetrahedra))
-        self.update_coast()
+        self.update_boundary()
         # print(('num_long_edges_direct_count', self.count_long_edges()))
         # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
@@ -789,6 +876,7 @@ class continent:
 
         triangle.is_buried = True
         neighbour.is_buried = True
+        self.num_tetrahedra += 1
 
     def coastal_fill(self, triangle):
         # print 'coastal fill ' + str(self.triangles.index(triangle)) + ' triang ind ' + str(triangle.index) 
@@ -951,36 +1039,7 @@ class continent:
         neighbour_australian.update_contacts(triangle, triangle_c)
 
         triangle.is_buried = True
-  
-    def update_coast(self):
-        """Returns vertices in anticlockwise order as viewed from above"""  
-        out = []
-        for tri in self.triangles:
-            if not tri.is_buried:
-                break  ## found an initial unburied tri 
-        vert_index = 0  
-        initial_vert = tri.vertices[vert_index]
-        vert = initial_vert   
-        while out == [] or vert != initial_vert:
-            if tri.neighbours[(vert_index - 1) % 3].is_upper != tri.is_upper: ## we are coastal
-                vert_index = (vert_index + 1) % 3   
-                vert = tri.vertices[vert_index]
-                out.append(vert)
-            else: # walk to the next triangle
-                tri = tri.neighbours[(vert_index - 1) % 3]  
-                vert_index = tri.vertices.index(vert) 
-
-        ##  i+1
-        ##   *-------* i  
-        ##    \     /
-        ##     \   / 
-        ##      \ /
-        ##       * i-1 
-
-        ## now rotate to put infinity first
-        inf_vert_index = out.index( self.infinity )
-        out = out[inf_vert_index:] + out[:inf_vert_index]
-        self.coast = out
+        self.num_tetrahedra += 1
 
     def mark_ladderpole_descendants(self, ladderpole_descendant_segments):
         for i, v in enumerate(self.coast):
@@ -1199,21 +1258,6 @@ class continent:
         #     out.append(clean_divider)
 
         return dividers
-
-
-    def boundary_landscape_edges(self):
-        upper_landscape_edges = set([])
-        lower_landscape_edges = set([])
-        for tri in self.triangles:
-            if not tri.is_buried:
-                if tri.is_upper:
-                    for e in tri.edges:
-                        upper_landscape_edges.add(e)
-                else:
-                    for e in tri.edges:
-                        lower_landscape_edges.add(e)
-        return (lower_landscape_edges, upper_landscape_edges) ### we want to draw lower first then upper
-
 
 if __name__ == '__main__':
 
