@@ -1,6 +1,6 @@
 
 import pyx ### vector graphics 
-from math import pi, cos, sin, acos, tan, atan2
+from math import pi, cos, sin, acos, tan, atan2, sqrt
 from taut import isosig_to_tri_angle
 from veering import veering_triangulation
 from continent import continent
@@ -11,25 +11,33 @@ def make_line(a, b):
     p.append( pyx.path.lineto(b[0], b[1]) )
     return p
 
+def arc_center_rad(a, b):
+    A = complex(a[0], a[1])
+    B = complex(b[0], b[1])
+    C = B - A
+    D = B * (a[0]*a[0] + a[1]*a[1])
+    E = A * (b[0]*b[0] + b[1]*b[1])
+    det = 4*(a[0]*b[1] - a[1]*b[0])
+    center = (2.0/det) * complex(C.imag + D.imag - E.imag, -C.real - D.real + E.real)
+    r = abs(A - center)
+    return center, r
+
 def make_arc(a, b, return_midpt = False):
     det = 4*(a[0]*b[1] - a[1]*b[0])
     if abs(det) < 0.0001: 
         if not return_midpt:
             return make_line(a, b)
         else:
-            return (make_line(a, b), (0.0,0.0))
+            return ( make_line(a, b), (0.5*(a[0]+b[0]), 0.5*(a[1]+b[1])) )
     else:
         # theta = 0.5 * acos( a[0]*b[0] + a[1]*b[1] )
         # r = tan(theta)
         # p = pyx.path.path( pyx.path.moveto(a[0], a[1]) )
         # p.append( pyx.path.arct(0.0,0.0,b[0], b[1], r))
 
+        center, r = arc_center_rad(a, b)
         A = complex(a[0], a[1])
         B = complex(b[0], b[1])
-        C = B - A
-        D = B * (a[0]*a[0] + a[1]*a[1])
-        E = A * (b[0]*b[0] + b[1]*b[1])
-        center = (2.0/det) * complex(C.imag + D.imag - E.imag, -C.real - D.real + E.real)
         A2 = A - center
         B2 = B - center
         r = abs(A2)
@@ -101,13 +109,23 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
             u, v = e.vertices
             p = make_arc(u.circle_pos, v.circle_pos)
             p = p.transformed(scl)
-            canv.stroke(p, [pyx.style.linewidth(0.001), col])
+            canv.stroke(p, [pyx.style.linewidth(0.01), col])
         for tri in boundary_tris[i]:
+            # midpts = []
+            # # circles = []
+            # for e in tri.edges:
+            #     u, v = e.vertices
+            #     p, midpt = make_arc(u.circle_pos, v.circle_pos, return_midpt = True)
+            #     midpts.append(midpt)
+                # circles.append(arc_center_rad(u.circle_pos, v.circle_pos))
+            # center = ( (1.0/3.0)*(midpts[0][0] + midpts[1][0] + midpts[2][0]), (1.0/3.0)*(midpts[0][1] + midpts[1][1] + midpts[2][1]) )
+            
+            ### hack
             midpts = []
-            for e in tri.edges:
-                u, v = e.vertices
-                p, midpt = make_arc(u.circle_pos, v.circle_pos, return_midpt = True)
-                midpts.append(midpt)
+            for i in range(3):
+                _, midpta = make_arc(tri.vertices[(i+1)%3].circle_pos, tri.vertices[(i+2)%3].circle_pos, return_midpt = True)
+                _, midptb = make_arc(tri.vertices[i].circle_pos, midpta, return_midpt = True)
+                midpts.append(midptb)
             center = ( (1.0/3.0)*(midpts[0][0] + midpts[1][0] + midpts[2][0]), (1.0/3.0)*(midpts[0][1] + midpts[1][1] + midpts[2][1]) )
             canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+str(tri.index)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero, pyx.text.size(0)])
 
@@ -127,7 +145,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
                 if (is_reds[i] == is_reds[(i+1)%3]) or (not is_reds[i] and is_reds[(i+1)%3]):
                     p = make_arc(midpts[i], midpts[(i+1)%3])
                     p = p.transformed(scl)
-                    canv.stroke(p, [pyx.style.linewidth(0.004), purple])       
+                    canv.stroke(p, [pyx.style.linewidth(0.04), purple])       
     if draw_upper_green:
         for tri in upper_tris:
             midpts = []
@@ -141,7 +159,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
                 if (is_reds[i] == is_reds[(i+1)%3]) or (is_reds[i] and not is_reds[(i+1)%3]):
                     p = make_arc(midpts[i], midpts[(i+1)%3])
                     p = p.transformed(scl)
-                    canv.stroke(p, [pyx.style.linewidth(0.004), green])
+                    canv.stroke(p, [pyx.style.linewidth(0.04), green])
 
 
     #     midpts.append(midpt)
@@ -156,7 +174,7 @@ def draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, draw_upper_la
 def main():
     # veering_isosig = 'cPcbbbiht_12'
     veering_isosig = 'dLQacccjsnk_200'
-    draw_continent_circle(veering_isosig, max_num_tetrahedra = 20, 
+    draw_continent_circle(veering_isosig, max_num_tetrahedra = 50, 
         draw_upper_landscape = True, draw_lower_landscape = False, 
         draw_upper_green = True, draw_lower_purple = False)
 
