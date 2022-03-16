@@ -18,6 +18,7 @@ from taut_homology import (edge_equation_matrix_taut, group_ring,
                            normalise_poly)
 from taut_polynomial import tet_lower_upper_edges
 from veering import is_veering
+from basic_math import sign
 
 verbose = 0
 
@@ -29,12 +30,8 @@ def has_red_lower_edge(tetrahedron, coorientations, edge_colours):
 
 
 @liberal
-def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lower"):
-    coorientations = is_transverse_taut(triangulation, angle_structure, return_type = "tet_vert_coorientations")
-    if mode == "upper":
-        coorientations = [[-x for x in coor] for coor in coorientations]
-    if verbose > 0:
-        print(("coorientations", coorientations))
+def edges_to_tetrahedra_matrix(triangulation, angle_structure, coorientations, normalisation, ZH, P):
+
     edge_colours = is_veering(triangulation, angle_structure, return_type = "veering_colours")
     if verbose > 0:
         print(("edge_colours", edge_colours))
@@ -103,22 +100,44 @@ def edges_to_tetrahedra_matrix(triangulation, angle_structure, ZH, P, mode = "lo
                 print(("current tet_coeffs", tet_coeffs))
 
         ET_matrix.append(tet_coeffs)        
-    # print("Here is the uncleared ET matrix")
-    # print(ET_matrix)
         
+    if normalisation == True:    
     # convert and return
-    return matrix_laurent_to_poly(ET_matrix, ZH, P)
+        return matrix_laurent_to_poly(ET_matrix, ZH, P)
+    else: 
+        return Matrix(ET_matrix)
 
+def permutation_tet_top_diagonal(tri, angle, coorientations):
+    # for the lower veering polynomial we identify a tetrahedron with its top diagonal (we always compute the lower - the upper is computed by switching coorientations)
+    # to compute the unnormalised veering polynomial not only up to a sign, we need to find the parity of the permutation tet_index -> top_edge_index
+    perm = []
+    for tet in tri.tetrahedra():
+        top_edge = tet_lower_upper_edges(tet, coorientations)[1]
+        index_of_top = top_edge.index()
+        perm.append(index_of_top)
+    return perm
+        
 
 @liberal
-def veering_polynomial(tri, angle, alpha = True, mode = "lower"):
+def veering_polynomial(tri, angle, alpha = True, normalisation = True, mode = "lower"):
     # set up
     ZH = group_ring(tri, angle, [], alpha = alpha)
     P = ZH.polynomial_ring()
     if verbose > 0:
         print(("angle", angle))
-
-    ET = edges_to_tetrahedra_matrix(tri, angle, ZH, P, mode)
-    return normalise_poly(ET.determinant(), ZH, P)
+           
+    coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    
+    if mode == "upper":
+        coorientations = [[-x for x in coor] for coor in coorientations]
+    
+    ET = edges_to_tetrahedra_matrix(tri, angle, coorientations, normalisation, ZH, P)
+    #print(ET)
+    if normalisation == True:
+        return normalise_poly(ET.determinant(), ZH, P)
+    else:
+        perm = permutation_tet_top_diagonal(tri, angle, coorientations)
+        #print(perm, "sign", sign(perm))
+        return sign(perm)*ET.determinant()
 
 
