@@ -5,7 +5,7 @@ from taut import isosig_to_tri_angle, isosig_from_tri_angle
 from pachner import twoThreeMove, threeTwoMove
 from branched_surface import upper_branched_surface, isosig_from_tri_angle_branch, isosig_to_tri_angle_branch, has_non_sing_semiflow
 from veering import is_veering
-from flow_cycles import flow_cycle_to_triangle_loop, find_flow_cycles, tri_loop_is_boundary_parallel
+from flow_cycles import flow_cycle_to_triangle_loop, find_flow_cycles, tri_loop_is_boundary_parallel, find_tri_loops
 from drill import drill, has_essential_torus
 
 class pachner_node():
@@ -146,6 +146,30 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, nam
 
     print('did not find veering')
     return None
+
+def find_veering_after_drilling(tri, angle, tri_loop, extra_ceiling = 4, depth = 100):
+    branch = upper_branched_surface(tri, angle)
+    
+    if tri_loop_is_boundary_parallel(tri_loop, tri): # if a loop is boundary parallel then we don't drill
+        print('loop is boundary parallel')
+    else:
+        drilled_cusp_index = drill(tri, tri_loop, angle = angle, branch = branch)
+        if has_essential_torus(tri):
+            print('sig', tri.isoSig(), 'has_essential_torus')
+        else:
+            ceiling = tri.countTetrahedra() + extra_ceiling
+            print('ceiling', ceiling)
+            start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
+            print(start_isoSig, 'angle', angle, 'branch', branch, 'drilled_cusp_index', drilled_cusp_index)
+            graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
+            
+def try_all_drillings(sig):
+    tri_loops = find_tri_loops(sig)
+    for tri_loop in tri_loops:
+        if tri_loop!= False:
+            tri, angle = isosig_to_tri_angle(sig)
+            print(sig, tri_loop)
+            find_veering_after_drilling(tri, angle, tri_loop)
 
 def main():
     depth = 100
