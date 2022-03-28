@@ -124,14 +124,15 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         # p = path.path(path.moveto(vert_pos.real, vert_pos.imag), path.lineto(vert_pos2.real, vert_pos2.imag))
         # canv.stroke(p, [deco.curvedtext("$"+str(con.vertices.index(v))+"$")])
 
-    lower_colours = {True: color.rgb(0.5,0.3,0), False: color.rgb(0,0.3,0.5)}
-    upper_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
+    # lower_colours = {True: color.rgb(0.5,0.3,0), False: color.rgb(0,0.3,0.5)}
+    # upper_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
+    edge_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
     green = color.rgb(0.0,0.5,0.0)
     purple = color.rgb(0.5,0.0,0.5)
 
     landscape_edges = [con.lower_landscape_edges, con.upper_landscape_edges]
 
-    colours = [lower_colours, upper_colours]
+    # colours = [lower_colours, upper_colours]
 
     upper_tris = con.upper_landscape_triangles
     lower_tris = con.lower_landscape_triangles
@@ -171,15 +172,18 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         to_do.append(1)
     for i in to_do:
         for e in landscape_edges[i]:
-            col = colours[i][e.is_red]
+            col = edge_colours[e.is_red]
+            transp = []
+            if i == 0:
+                transp = [color.transparency(0.75)]
             u, v = e.vertices
             p = make_arc(u.circle_pos, v.circle_pos)
             p = p.transformed(scl)
-            canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
+            canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col] + transp)
         for tri in boundary_tris[i]:
             center = incenter(tri.vertices[0].circle_pos, tri.vertices[1].circle_pos, tri.vertices[2].circle_pos)
             # canv.fill(path.circle(global_scale_up*center[0], global_scale_up*center[1], 0.1)) 
-            canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+str(tri.index)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle])
+            canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+str(tri.index)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle] + transp)
 
 
     ### train tracks...
@@ -427,7 +431,7 @@ def main():
     # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
     # name = veering_isosig + '_' + str(max_num_tetrahedra)
     # draw_continent_circle(con, name = name,
-    #     draw_upper_landscape = True, draw_lower_landscape = False, 
+    #     draw_upper_landscape = True, draw_lower_landscape = True, 
     #     draw_upper_green = True, draw_lower_purple = True,
     #     draw_train_tracks = False, draw_foliation = True,
     #     foliation_style_old = False,
