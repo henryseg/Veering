@@ -174,6 +174,12 @@ def tri_loop_is_boundary_parallel(tri_loop, tri):
             return False
     return True
 
+def find_tri_loops(sig):
+    tri, angle = isosig_to_tri_angle(sig)
+    branch = upper_branched_surface(tri, angle)
+    loops = find_flow_cycles(tri, branch)
+    return [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+
 def test():
     # sig = 'cPcbbbiht_12'
     # sig = 'dLQacccjsnk_200'
