@@ -346,6 +346,7 @@ class continent:
         self.lower_landscape_triangles = set([]) 
         self.upper_landscape_edges = set([])
         self.lower_landscape_edges = set([])
+        self.coastal_edges = []
 
         ###   c---R----b
         ###   |`d    ,'|     faces a, b on bottom, c, d on top
@@ -468,6 +469,8 @@ class continent:
                 if v != self.infinity:
                     self.check_vertex_desired(v) 
 
+        # self.update_boundary()
+
     def check_vertex_desired(self, v, epsilon = 0.001):
         v_in_C = v.pos.complex()
         for w in self.desired_vertices:
@@ -505,14 +508,20 @@ class continent:
         """flow downriver from this triangle until we hit either a sink, or the coast, add one tetrahedron there"""
         downriver_triangle, is_coastal = self.flow(triangle)
         if is_coastal:
-            self.coastal_fill(downriver_triangle)
+            new_tet = self.coastal_fill(downriver_triangle)
         else:
-            self.in_fill(downriver_triangle)
+            new_tet = self.in_fill(downriver_triangle)
         # self.sanity_check()
+        return new_tet
 
     def bury(self, triangle):
         while not triangle.is_buried:
-            self.silt(triangle)
+            new_tet = self.silt(triangle)
+        if triangle.is_upper:
+            assert triangle in new_tet.lower_triangles
+        else:
+            assert triangle in new_tet.upper_triangles
+        return new_tet ### return the last added tetrahedron
   
     def update_boundary(self):
         """Installs coastal vertices in anticlockwise order as viewed from above
@@ -529,6 +538,7 @@ class continent:
 
         self.upper_landscape_edges = set([])
         self.lower_landscape_edges = set([])
+
         for e in self.edges:
             e.boundary_triangles = []
 
@@ -567,6 +577,18 @@ class continent:
         ## now rotate to put infinity first
         inf_vert_index = self.coast.index( self.infinity )
         self.coast = self.coast[inf_vert_index:] + self.coast[:inf_vert_index]
+
+        ## update coastal_edges
+        self.coastal_edges = []
+        for i in range(len(self.coast)):
+            u = self.coast[i]
+            v = self.coast[(i+1)%len(self.coast)]
+            for e in u.edges:
+                if v in e.vertices:
+                    e.vertices = [u, v]
+                    self.coastal_edges.append(e)
+                    break
+
 
     def make_convex(self):
         ### new triangles are added to the end of the list so this is safe.
@@ -877,6 +899,7 @@ class continent:
         triangle.is_buried = True
         neighbour.is_buried = True
         self.num_tetrahedra += 1
+        return con_tet ### pass back the tetrahedron we added
 
     def coastal_fill(self, triangle):
         # print 'coastal fill ' + str(self.triangles.index(triangle)) + ' triang ind ' + str(triangle.index) 
@@ -1040,6 +1063,7 @@ class continent:
 
         triangle.is_buried = True
         self.num_tetrahedra += 1
+        return con_tet ### pass back the tetrahedron we added
 
     def mark_ladderpole_descendants(self, ladderpole_descendant_segments):
         for i, v in enumerate(self.coast):

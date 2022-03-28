@@ -812,7 +812,7 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
         assert len(veering_structures) > 0
         if len(veering_structures) > 1:
             print('warning, not drawing all veering structures!')
-        angle_structure = veering_structures[0]
+        angle = veering_structures[0]
         print('angle structure:', str(angle))
 
     veering_colours = veering.is_veering(triangulation, angle, return_type = 'veering_colours')
