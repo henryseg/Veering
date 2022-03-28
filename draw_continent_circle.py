@@ -7,6 +7,9 @@ from veering import veering_triangulation
 from continent import continent
 from boundary_triangulation import tet_face
 
+def unitize(a):
+    return a/abs(a)
+
 def to_complex(a):
     return complex(a[0], a[1])
 
@@ -95,8 +98,11 @@ def make_arc(a, b, return_midpt = False):
             midpt = center + r * direction
             return (p, midpt)
 
-def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lower_landscape = False, draw_upper_green = True, draw_lower_purple = False, draw_train_tracks = False, draw_foliation = True, shade_triangles = False):
-    foliation_style_thick = True
+def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lower_landscape = False, 
+    draw_upper_green = True, draw_lower_purple = False, draw_train_tracks = False, 
+    draw_foliation = True, foliation_style_old = False, foliation_style_split = False, 
+    foliation_style_cusp_leaves = True, shade_triangles = False):
+    
     global_scale_up = 10.0
     edge_thickness = 0.01
     track_thickness = 0.02
@@ -214,7 +220,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                             leaf_end_edges.append(last_edge)
                 if len(leaf_end_edges) == 2:
                     purple_leaves.append(leaf_end_edges)
-                    if not foliation_style_thick:
+                    if foliation_style_old:
                         leaf_ends = []
                         for e in leaf_end_edges:
                             endpts = e.vertices
@@ -258,7 +264,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                             leaf_end_edges.append(last_edge)
                 if len(leaf_end_edges) == 2:
                     green_leaves.append(leaf_end_edges)
-                    if not foliation_style_thick:
+                    if foliation_style_old:
                         leaf_ends = []
                         for e in leaf_end_edges:
                             endpts = e.vertices
@@ -268,7 +274,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                         p = p.transformed(scl)
                         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
     
-    if draw_foliation and foliation_style_thick:
+    if draw_foliation and (foliation_style_split or foliation_style_cusp_leaves):
         for e in con.coastal_edges:
             e.purple_ends = []
             e.green_ends = []
@@ -286,31 +292,74 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                 e.ends = e.green_ends + e.purple_ends
             else:
                 e.ends = e.purple_ends + e.green_ends
-        for e1, e2 in purple_leaves:
-            u1, v1 = e1.vertices
-            u1, v1 = u1.circle_pos, v1.circle_pos
-            t1 = float(e1.ends.index(e2) + 1)/float(len(e1.ends) + 1)
-            p1 = (1-t1) * u1 + t1 * v1
-            u2, v2 = e2.vertices
-            u2, v2 = u2.circle_pos, v2.circle_pos
-            t2 = float(e2.ends.index(e1) + 1)/float(len(e2.ends) + 1)
-            p2 = (1-t2) * u2 + t2 * v2
-            p = make_arc(p1, p2)
-            p = p.transformed(scl)
-            canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-        for e1, e2 in green_leaves:
-            u1, v1 = e1.vertices
-            u1, v1 = u1.circle_pos, v1.circle_pos
-            t1 = float(e1.ends.index(e2) + 1)/float(len(e1.ends) + 1)
-            p1 = (1-t1) * u1 + t1 * v1
-            u2, v2 = e2.vertices
-            u2, v2 = u2.circle_pos, v2.circle_pos
-            t2 = float(e2.ends.index(e1) + 1)/float(len(e2.ends) + 1)
-            p2 = (1-t2) * u2 + t2 * v2
-            p = make_arc(p1, p2)
-            p = p.transformed(scl)
-            canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
-            
+        if foliation_style_split:
+            for e1, e2 in purple_leaves:
+                u1, v1 = e1.vertices
+                u1, v1 = u1.circle_pos, v1.circle_pos
+                t1 = float(e1.ends.index(e2) + 1)/float(len(e1.ends) + 1)
+                p1 = unitize((1-t1) * u1 + t1 * v1)
+                u2, v2 = e2.vertices
+                u2, v2 = u2.circle_pos, v2.circle_pos
+                t2 = float(e2.ends.index(e1) + 1)/float(len(e2.ends) + 1)
+                p2 = unitize((1-t2) * u2 + t2 * v2)
+                p = make_arc(p1, p2)
+                p = p.transformed(scl)
+                canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+            for e1, e2 in green_leaves:
+                u1, v1 = e1.vertices
+                u1, v1 = u1.circle_pos, v1.circle_pos
+                t1 = float(e1.ends.index(e2) + 1)/float(len(e1.ends) + 1)
+                p1 = unitize((1-t1) * u1 + t1 * v1)
+                u2, v2 = e2.vertices
+                u2, v2 = u2.circle_pos, v2.circle_pos
+                t2 = float(e2.ends.index(e1) + 1)/float(len(e2.ends) + 1)
+                p2 = unitize((1-t2) * u2 + t2 * v2)
+                p = make_arc(p1, p2)
+                p = p.transformed(scl)
+                canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+        if foliation_style_cusp_leaves:
+            for i, c in enumerate(con.coast):
+                purple_thorn_ends = []
+                e = con.coastal_edges[i]
+                e1 = e.purple_ends[0]
+                while True:
+                    index = e1.purple_ends.index(e)
+                    if index == len(e1.purple_ends) - 1:
+                        break
+                    else:
+                        t1 = float(e1.ends.index(e) + 1.5)/float(len(e1.ends) + 1)
+                        u1, v1 = e1.vertices
+                        u1, v1 = u1.circle_pos, v1.circle_pos
+                        purple_thorn_ends.append( unitize((1-t1) * u1 + t1 * v1) )
+
+                        e, e1 = e1, e1.purple_ends[index + 1]
+
+                for thorn_end in purple_thorn_ends:
+                    p = make_arc(c.circle_pos, thorn_end)
+                    p = p.transformed(scl)
+                    canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+            for i, c in enumerate(con.coast):
+                green_thorn_ends = []
+                e = con.coastal_edges[i]
+                e1 = e.green_ends[0]
+                while True:
+                    index = e1.green_ends.index(e)
+                    if index == len(e1.green_ends) - 1:
+                        break
+                    else:
+                        t1 = float(e1.ends.index(e) + 1.5)/float(len(e1.ends) + 1)
+                        u1, v1 = e1.vertices
+                        u1, v1 = u1.circle_pos, v1.circle_pos
+                        green_thorn_ends.append( unitize((1-t1) * u1 + t1 * v1) )
+
+                        e, e1 = e1, e1.green_ends[index + 1]
+
+                for thorn_end in green_thorn_ends:
+                    p = make_arc(c.circle_pos, thorn_end)
+                    p = p.transformed(scl)
+                    canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+
+
     output_filename = 'Images/CircleContinent/' + name + '.pdf'
     canv.writePDFfile(output_filename)
 
@@ -373,25 +422,29 @@ def make_continent_drill(veering_isosig, dual_cycle, num_steps):
 
 def main():
     # veering_isosig = 'cPcbbbiht_12'
-    veering_isosig = 'dLQacccjsnk_200'
-    max_num_tetrahedra = 50
-    con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    name = veering_isosig + '_' + str(max_num_tetrahedra)
-    draw_continent_circle(con, name = name,
-        draw_upper_landscape = True, draw_lower_landscape = False, 
-        draw_upper_green = True, draw_lower_purple = True,
-        draw_train_tracks = False, draw_foliation = True)
-
     # veering_isosig = 'dLQacccjsnk_200'
-    # dual_cycle = [4,5]
-    # # for num_steps in range(11):
-    # num_steps = 7
-    # con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
-    # name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps)
+    # max_num_tetrahedra = 50
+    # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
+    # name = veering_isosig + '_' + str(max_num_tetrahedra)
     # draw_continent_circle(con, name = name,
-    #     draw_upper_landscape = True, draw_lower_landscape = True, 
+    #     draw_upper_landscape = True, draw_lower_landscape = False, 
     #     draw_upper_green = True, draw_lower_purple = True,
-    #     draw_train_tracks = False, draw_foliation = True, shade_triangles = True)
+    #     draw_train_tracks = False, draw_foliation = True,
+    #     foliation_style_old = False,
+    #     foliation_style_split = False, foliation_style_cusp_leaves = True)
+
+    veering_isosig = 'dLQacccjsnk_200'
+    dual_cycle = [4,5]
+    for num_steps in range(20):
+    # num_steps = 7
+        con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
+        name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
+        draw_continent_circle(con, name = name,
+            draw_upper_landscape = True, draw_lower_landscape = True, 
+            draw_upper_green = True, draw_lower_purple = True,
+            draw_train_tracks = False, draw_foliation = True, foliation_style_old = False,
+            foliation_style_split = False, foliation_style_cusp_leaves = True,
+            shade_triangles = True)
 
 
 
