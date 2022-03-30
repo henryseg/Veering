@@ -98,12 +98,9 @@ def make_arc(a, b, return_midpt = False):
             midpt = center + r * direction
             return (p, midpt)
 
-def end_pos(e2, e1, plus_half = False):
+def end_pos(e2, e1, offset = 0.0):
     ### position of end e2 in edge e1
-    if plus_half:
-        t = float(e1.ends.index(e2) + 1.5)/float(len(e1.ends) + 1)
-    else:
-        t = float(e1.ends.index(e2) + 1)/float(len(e1.ends) + 1)
+    t = float(e1.ends.index(e2) + 1 + offset)/float(len(e1.ends) + 1)
     u1, v1 = e1.vertices
     u1, v1 = u1.circle_pos, v1.circle_pos     
     return unitize((1-t) * u1 + t * v1)
@@ -330,7 +327,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                     if index == len(e1.purple_ends) - 1:
                         break
                     else:
-                        purple_thorn_ends.append( end_pos(e, e1, plus_half = True) )
+                        purple_thorn_ends.append( end_pos(e, e1, offset = 0.5) )
                         e, e1 = e1, e1.purple_ends[index + 1]
                 if foliation_style_cusp_leaves:
                     for thorn_end in purple_thorn_ends:
@@ -340,8 +337,8 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                 if foliation_style_boundary_leaves:
                     e_before = con.coastal_edges[(i-1)%len(con.coast)]
                     e_after = con.coastal_edges[i]
-                    first_pos = end_pos(e_after.purple_ends[0], e_after)
-                    last_pos = end_pos(e_before.purple_ends[-1], e_before)
+                    first_pos = end_pos(e_after.purple_ends[0], e_after, offset = -0.25)
+                    last_pos = end_pos(e_before.purple_ends[-1], e_before, offset = 0.25)
                     purple_thorn_ends = [first_pos] + purple_thorn_ends + [last_pos]
                     arcs = []
                     for i in range(len(purple_thorn_ends) - 1):
@@ -359,7 +356,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                     if index == len(e1.green_ends) - 1:
                         break
                     else:
-                        green_thorn_ends.append( end_pos(e, e1, plus_half = True) )
+                        green_thorn_ends.append( end_pos(e, e1, offset = 0.5) )
                         e, e1 = e1, e1.green_ends[index + 1]
                 if foliation_style_cusp_leaves:
                     for thorn_end in green_thorn_ends:
@@ -369,8 +366,8 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                 if foliation_style_boundary_leaves:
                     e_before = con.coastal_edges[(i-1)%len(con.coast)]
                     e_after = con.coastal_edges[i]
-                    first_pos = end_pos(e_after.green_ends[0], e_after)
-                    last_pos = end_pos(e_before.green_ends[-1], e_before)
+                    first_pos = end_pos(e_after.green_ends[0], e_after, offset = -0.25)
+                    last_pos = end_pos(e_before.green_ends[-1], e_before, offset = 0.25)
                     green_thorn_ends = [first_pos] + green_thorn_ends + [last_pos]
                     arcs = []
                     for i in range(len(green_thorn_ends) - 1):
@@ -445,13 +442,13 @@ def main():
     veering_isosig = 'dLQacccjsnk_200'
     max_num_tetrahedra = 50
     con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    name = veering_isosig + '_' + str(max_num_tetrahedra) + '_b'
+    name = veering_isosig + '_' + str(max_num_tetrahedra) + '_boundary_leaves'
     draw_continent_circle(con, name = name,
-        draw_upper_landscape = True, draw_lower_landscape = True, 
+        draw_upper_landscape = False, draw_lower_landscape = False, 
         draw_upper_green = True, draw_lower_purple = True,
         draw_train_tracks = False, draw_foliation = True,
         foliation_style_old = False, foliation_style_split = False, 
-        foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False)
+        foliation_style_cusp_leaves = False, foliation_style_boundary_leaves = True)
 
     # veering_isosig = 'dLQacccjsnk_200'
     # dual_cycle = [4,5]
