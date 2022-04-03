@@ -318,6 +318,16 @@ class continent_tetrahedron:
     def lower_edge(self):
         return self.lower_triangles[0].shared_edge(self.lower_triangles[1])
 
+    def edges(self):
+        out = self.upper_triangles[0].edges[:] ### copy of list
+        out.remove(self.upper_edge())
+        return out + self.upper_triangles[1].edges + [self.lower_edge()]
+
+    def vertices(self):
+        out = set([])
+        for tri in self.upper_triangles:
+            out = out.union(set(tri.vertices))
+        return out
 
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):

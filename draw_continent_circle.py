@@ -4,7 +4,7 @@ from pyx import path, trafo, canvas, style, text, color, deco
 from math import pi, cos, sin, acos, tan, atan2, sqrt
 from taut import isosig_to_tri_angle
 from veering import veering_triangulation
-from continent import continent
+from continent import continent, continent_tetrahedron
 from boundary_triangulation import tet_face
 
 def unitize(a):
@@ -109,12 +109,15 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
     draw_upper_green = True, draw_lower_purple = False, draw_train_tracks = False, 
     draw_foliation = True, foliation_style_old = False, foliation_style_split = False, 
     foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = True,
-    shade_triangles = False):
+    shade_triangles = False, draw_fund_domain = False, draw_fund_domain_edges = False):
     
     global_scale_up = 10.0
-    edge_thickness = 0.01
+    edge_thickness = 0.02
     track_thickness = 0.02
     leaf_thickness = 0.03
+    edge_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
+    green = color.rgb(0.0,0.5,0.0)
+    purple = color.rgb(0.5,0.0,0.5)
 
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
@@ -132,11 +135,42 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         # p = path.path(path.moveto(vert_pos.real, vert_pos.imag), path.lineto(vert_pos2.real, vert_pos2.imag))
         # canv.stroke(p, [deco.curvedtext("$"+str(con.vertices.index(v))+"$")])
 
+    ### highlight vertices of tetrahedra in a fundamental domain
+    if draw_fund_domain:
+        ### find first lift of each downstairs tetrahedron in the continent
+        num_tet = con.vt.tri.countTetrahedra()
+        fund_dom_tets = list(range(num_tet))
+        number_to_find = num_tet
+        for con_tet in con.tetrahedra:
+            if con_tet.index in fund_dom_tets:
+                fund_dom_tets[con_tet.index] = con_tet  ### replace index with the continent tetrahedron
+                number_to_find -= 1
+            if number_to_find == 0:
+                break
+        if number_to_find > 0: ## should have found the whole continent
+            print('did not find all of the downstairs tetrahedra!')
+        for v in con.coast:
+            v.fund_dom_tet_nums = []
+        for con_tet in fund_dom_tets:
+            if type(con_tet) == continent_tetrahedron:  ### could be an integer if we didnt find this tet
+                for v in con_tet.vertices():
+                    v.fund_dom_tet_nums.append(con_tet.index)
+                if draw_fund_domain_edges:
+                    for e in con_tet.edges():
+                        col = edge_colours[e.is_red]
+                        u, v = e.vertices
+                        p = make_arc(u.circle_pos, v.circle_pos)
+                        p = p.transformed(scl)
+                        canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
+
+        for v in [v for v in con.coast if v.fund_dom_tet_nums != []]:
+            vert_pos = v.circle_pos * 1.03 * global_scale_up
+            canv.text(vert_pos.real, vert_pos.imag, "$"+str(v.fund_dom_tet_nums)+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
+
+
     # lower_colours = {True: color.rgb(0.5,0.3,0), False: color.rgb(0,0.3,0.5)}
     # upper_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
-    edge_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
-    green = color.rgb(0.0,0.5,0.0)
-    purple = color.rgb(0.5,0.0,0.5)
+
 
     landscape_edges = [con.lower_landscape_edges, con.upper_landscape_edges]
 
@@ -147,7 +181,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
     boundary_tris = [lower_tris, upper_tris]
 
     if shade_triangles:
-        u,v,w = con.lowest_triangle.vertices
+        u,v,w = con.triangle_path[0].vertices
         p = make_arc(u.circle_pos, v.circle_pos)
         q = make_arc(v.circle_pos, w.circle_pos)
         r = make_arc(w.circle_pos, u.circle_pos)
@@ -155,7 +189,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         p.append(r[1])  ### remove extraneous moveto commands
         p = p.transformed(scl)
         canv.stroke(p, [deco.filled([color.transparency(0.8)]), style.linewidth(0)])
-        u,v,w = con.highest_triangle.vertices
+        u,v,w = con.triangle_path[-1].vertices
         p = make_arc(u.circle_pos, v.circle_pos)
         q = make_arc(v.circle_pos, w.circle_pos)
         r = make_arc(w.circle_pos, u.circle_pos)
@@ -192,6 +226,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
             center = incenter(tri.vertices[0].circle_pos, tri.vertices[1].circle_pos, tri.vertices[2].circle_pos)
             # canv.fill(path.circle(global_scale_up*center[0], global_scale_up*center[1], 0.1)) 
             canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+str(tri.index)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle] + transp)
+
 
 
     ### train tracks...
@@ -412,56 +447,76 @@ def make_continent_drill(veering_isosig, dual_cycle, num_steps):
         if not triangle.is_upper and triangle.index == dual_cycle[0]:
             lowest_triangle = triangle
         if triangle.is_upper and triangle.index == dual_cycle[1]:
-            next_triangle = triangle
-    next_triangles = []
-    path_index = 1
-    for i in range(num_steps):
-        last_added_tet = con.bury(next_triangle)
+            highest_triangle = triangle
+    triangle_path = [lowest_triangle, highest_triangle]
+    lowest_path_index = 0
+    highest_path_index = 1
+    # for i in range(num_steps):
+    #     last_added_tet = con.bury(highest_triangle)
 
-        ### find next_triangle
-        next_triangle = None
-        for triangle in last_added_tet.upper_triangles:
-            if triangle.index == dual_cycle[(path_index + 1) % len(dual_cycle)]:
-                next_triangle = triangle
-                break
-        assert next_triangle != None
-        next_triangles.append(next_triangle)
-        path_index = path_index + 1
+    #     ### find next_triangle
+    #     highest_triangle = None
+    #     for triangle in last_added_tet.upper_triangles:
+    #         if triangle.index == dual_cycle[(path_index + 1) % len(dual_cycle)]:
+    #             highest_triangle = triangle
+    #             break
+    #     assert highest_triangle != None
+    #     triangle_path.append(highest_triangle)
+    #     path_index = path_index + 1
+
+    #     con.make_convex() ### could this take us further up dual_cycle?
+
+    for i in range(num_steps):
+        if i%2 == 0:
+            last_added_tet = con.bury(triangle_path[-1]) ## go up
+            for triangle in last_added_tet.upper_triangles:
+                if triangle.index == dual_cycle[(highest_path_index + 1) % len(dual_cycle)]:
+                    triangle_path.append(triangle)
+                    break
+            highest_path_index = highest_path_index + 1
+        else:
+            last_added_tet = con.bury(triangle_path[0]) ## go down
+            for triangle in last_added_tet.lower_triangles:
+                if triangle.index == dual_cycle[(lowest_path_index - 1) % len(dual_cycle)]:
+                    triangle_path.insert(0, triangle)
+                    break
+            lowest_path_index = lowest_path_index - 1
 
         con.make_convex() ### could this take us further up dual_cycle?
 
     con.update_boundary()
-    con.lowest_triangle = lowest_triangle
-    con.triangle_path = next_triangles
-    con.highest_triangle = next_triangle
+    con.triangle_path = triangle_path
     return con
 
 
 def main():
     # veering_isosig = 'cPcbbbiht_12'
     veering_isosig = 'dLQacccjsnk_200'
-    max_num_tetrahedra = 50
-    con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    name = veering_isosig + '_' + str(max_num_tetrahedra) + '_boundary_leaves'
-    draw_continent_circle(con, name = name,
-        draw_upper_landscape = False, draw_lower_landscape = False, 
-        draw_upper_green = True, draw_lower_purple = True,
-        draw_train_tracks = False, draw_foliation = True,
-        foliation_style_old = False, foliation_style_split = False, 
-        foliation_style_cusp_leaves = False, foliation_style_boundary_leaves = True)
+    # max_num_tetrahedra = 50
+    # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
+    # name = veering_isosig + '_' + str(max_num_tetrahedra) + '_cusp_leaves'
+    # draw_continent_circle(con, name = name,
+    #     draw_upper_landscape = False, draw_lower_landscape = False, 
+    #     draw_upper_green = True, draw_lower_purple = True,
+    #     draw_train_tracks = False, draw_foliation = True,
+    #     foliation_style_old = False, foliation_style_split = False, 
+    #     foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
+    #     draw_fund_domain = True)
 
-    # veering_isosig = 'dLQacccjsnk_200'
-    # dual_cycle = [4,5]
-    # for num_steps in range(20):
-    # # num_steps = 7
-    #     con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
-    #     name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
-    #     draw_continent_circle(con, name = name,
-    #         draw_upper_landscape = True, draw_lower_landscape = True, 
-    #         draw_upper_green = True, draw_lower_purple = True,
-    #         draw_train_tracks = False, draw_foliation = True, foliation_style_old = False,
-    #         foliation_style_split = False, foliation_style_cusp_leaves = True,
-    #         shade_triangles = True)
+    veering_isosig = 'dLQacccjsnk_200'
+    dual_cycle = [4,5]
+    for num_steps in range(20):
+    # num_steps = 7
+        con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
+        name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
+        draw_continent_circle(con, name = name,
+            draw_upper_landscape = False, draw_lower_landscape = False, 
+            draw_upper_green = True, draw_lower_purple = True,
+            draw_train_tracks = False, draw_foliation = True, 
+            foliation_style_old = False, foliation_style_split = False, 
+            foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
+            shade_triangles = True, draw_fund_domain = True,
+            draw_fund_domain_edges = True)
 
 
 
