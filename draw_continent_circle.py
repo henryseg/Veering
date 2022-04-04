@@ -503,8 +503,23 @@ def main():
     #     foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
     #     draw_fund_domain = True)
 
-    veering_isosig = 'dLQacccjsnk_200'
-    dual_cycle = [4,5]
+#    veering_isosig = 'dLQacccjsnk_200'
+#    dual_cycle = [4,5]
+#    for num_steps in range(20):
+#    # num_steps = 7
+#        con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
+#        name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
+#        draw_continent_circle(con, name = name,
+#            draw_upper_landscape = False, draw_lower_landscape = False, 
+#            draw_upper_green = True, draw_lower_purple = True,
+#            draw_train_tracks = False, draw_foliation = True, 
+#            foliation_style_old = False, foliation_style_split = False, 
+#            foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
+#            shade_triangles = True, draw_fund_domain = True,
+#            draw_fund_domain_edges = True)
+        
+    veering_isosig = 'cPcbbbdxm_10' # example where after drilling we get an edge between the new cusp and itself
+    dual_cycle = [1,2]
     for num_steps in range(20):
     # num_steps = 7
         con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
