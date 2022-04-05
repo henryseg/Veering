@@ -938,15 +938,16 @@ def number_of_boundary_symmetries(veering_isosig):
         out.append(T.draw_symmetries(draw=False))
     return out
 
-if __name__ == "__main__":
 
+
+def main():
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
     args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     ### for standard ladder picture, set 'draw_triangles_near_poles' = False. Set True for CT pictures
 
     # num_to_draw = 87 ## up to 6 tet
     # # num_to_draw = 5699 ## up to 12 tet  
-    # args['style'] = 'ladders'
+    args['style'] = 'ladders'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
     # args['style'] = 'geometric'
     # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
@@ -973,15 +974,18 @@ if __name__ == "__main__":
     # name = 'iLLLAQccdffgfhhhqgdatgqdm_21012210'
     # name = 'gLvQQadfedefjaaajkk_200211'
 
-    name = 'gLPLQbcdfeffhrraarw_120011'
+    # name = 'gLPLQbcdfeffhrraarw_120011'
+    name = 'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200'
 
     # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
     # args['style'] = 'geometric'
     # args['tet_shapes'] = shapes_data[name]
     # # args['tet_shapes'] = None
 
-    # draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_ladders.pdf', args = args) 
+    draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_ladders.pdf', args = args) 
 
-    B = generate_boundary_triangulation(name)
-    print(B.ladder_counts())
+    # B = generate_boundary_triangulation(name)
+    # print(B.ladder_counts())
 
+if __name__ == "__main__":
+    main()
