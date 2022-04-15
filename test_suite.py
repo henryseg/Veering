@@ -500,7 +500,48 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
                 sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
                 M = snappy.Manifold(sig)
                 assert z_charge.can_deal_with_reduced_angles(M), sig
-            
+    
+    if sage_working:
+        import carried_surface
+        import mutation
+        print("testing building carried surfaces and mutations")
+        sigs_weights = [
+            ['iLLLPQccdgefhhghqrqqssvof_02221000',  (0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0)], 
+            ['jLLAvQQcedehihiihiinasmkutn_011220000', (2, 0, 1, 0, 0, 0, 1, 2, 0, 2, 0, 2, 1, 0, 0, 0, 1, 0)],
+            ['jLLAvQQcedehihiihiinasmkutn_011220000', (0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0)],
+            ['jLLLMPQcdgfhfhiiihshassspiq_122201101', (0, 0, 4, 0, 4, 1, 0, 2, 2, 0, 1, 0, 0, 4, 0, 4, 0, 0)]
+        ]
+        strata = [
+            ((1, 2), [2, 2]), 
+            ((2, 4), [5, 5, 1, 1]),
+            ((0, 3), [2, 0, 0]),
+            ((6, 1), [22])
+        ]
+        orders_of_veering_symmetry_groups = [4, 2, 2, 2]
+        
+        for i in range(len(sigs_weights)):
+            tri, angle = taut.isosig_to_tri_angle(sigs_weights[i][0])
+            weights = sigs_weights[i][1]
+            surface, edge_colours = carried_surface.build_surface(tri, angle, weights, return_edge_colours = True)
+            assert strata[i] == carried_surface.stratum_from_weights_surface(weights, surface)
+            veering_isoms = carried_surface.veering_symmetry_group(surface, edge_colours)
+            assert len(veering_isoms) == orders_of_veering_symmetry_groups[i]
+            isom = veering_isoms[1]
+            mutation.mutate(tri, angle, weights, isom, quiet = True)
+            if i == 0:
+                assert tri.isoSig() == 'ivLLQQccfhfeghghwadiwadrv'
+                #print('svof to wadrv passed')
+            elif i == 1:
+                assert tri.isoSig() == 'jvLLAQQdfghhfgiiijttmtltrcr'
+                #print('smkutn to tltrcr passed')
+            elif i == 2:
+                assert tri.isoSig() == 'jLLMvQQcedehhiiihiikiwnmtxk'
+                #print('smkutn to mtxk passed')
+            elif i == 3:
+                assert tri.isoSig() == 'jLLALMQcecdhggiiihqrwqwrafo'
+                #print('spiq to rafo passed')
+                
+                        
     if sage_working:
         print("all tests depending on sage passed")
 
