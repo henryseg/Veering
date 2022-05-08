@@ -2,7 +2,8 @@
 import pyx ### vector graphics 
 from pyx import path, trafo, canvas, style, text, color, deco
 from math import pi, cos, sin, acos, tan, atan2, sqrt
-from taut import isosig_to_tri_angle
+from taut import isosig_to_tri_angle, edge_num_to_vert_pair, vert_pair_to_edge_num
+from transverse_taut import edge_side_face_collections, get_tet_above_edge, get_tet_top_vert_nums
 from veering import veering_triangulation
 from continent import continent, continent_tetrahedron
 from boundary_triangulation import tet_face
@@ -105,11 +106,58 @@ def end_pos(e2, e1, offset = 0.0):
     u1, v1 = u1.circle_pos, v1.circle_pos     
     return unitize((1-t) * u1 + t * v1)
 
+def end_pos2(thorn_end):
+    ### position of ind along edge
+    edge, ind = thorn_end
+    t = float(ind + 1)/float(len(edge.ends) + 1)
+    u1, v1 = edge.vertices
+    u1, v1 = u1.circle_pos, v1.circle_pos     
+    return unitize((1-t) * u1 + t * v1)
+
+def are_anticlockwise(a, b, c): ### given indices in this order, are they anticlockwise on the circle?
+    return (b - a)*(c - b)*(a - c) < 0  ### either one or two are negative
+
+def are_linking(a1, a2, b1, b2): ### given indices on a circle, do the a's link the b's?
+    return (a1 - b1)*(a1 - b2)*(a2 - b1)*(a2 - b2) < 0 ### same as the sign of the cross-ratio
+
+def get_tet_purple_rectangle_sides(tet, actually_do_green = False):
+    ### a side is a pair (v, thorn_end), where v is the cusp and thorn_end is (coastal_arc, index_on_that_arc)
+    out = []
+    a, b = tet.upper_edge().vertices
+    c, d = tet.lower_edge().vertices
+    if actually_do_green:
+        a, b, c, d = c, d, a, b
+    for v in [a, b]:
+        if not actually_do_green:
+            thorn_ends = v.green_thorn_ends
+            opposite_thorn_ends = v.purple_thorn_ends
+        else:
+            thorn_ends = v.purple_thorn_ends
+            opposite_thorn_ends = v.green_thorn_ends
+        for thorn_end in thorn_ends:
+            if are_linking(v.coastal_index, thorn_end[0].coastal_index + 0.5, c.coastal_index, d.coastal_index):
+                ### we found the cusp leaf that goes through the tetrahedron
+                thorn_end_pos = end_pos2(thorn_end)
+
+                for i, opposite_thorn_end in enumerate(opposite_thorn_ends):
+                    if are_anticlockwise(v.coastal_index, opposite_thorn_end[0].coastal_index + 0.5, opposite_thorn_ends[0][0].coastal_index + 0.5):
+                        if i == 0:
+                            opposite_colour_side = [ (v, opposite_thorn_ends[0]) ]
+                        else:
+                            opposite_colour_side = [ (v, opposite_thorn_ends[i-1]), (v, opposite_thorn_ends[i]) ]
+                    else:
+                        opposite_colour_side = [ (v, opposite_thorn_ends[-1]) ]
+
+                    out.append(opposite_colour_side)
+                break
+    return out
+
 def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lower_landscape = False, 
     draw_upper_green = True, draw_lower_purple = False, draw_train_tracks = False, 
     draw_foliation = True, foliation_style_old = False, foliation_style_split = False, 
     foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = True,
-    shade_triangles = False, draw_fund_domain = False, draw_fund_domain_edges = False):
+    shade_triangles = False, draw_fund_domain = False, draw_fund_domain_edges = False,
+    draw_tetrahedron_rectangles = []):
     
     global_scale_up = 10.0
     edge_thickness = 0.02
@@ -231,8 +279,8 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
 
     ### train tracks...
 
-    purple_leaves = []
-    green_leaves = []
+    purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
+    green_train_routes = []
     if draw_lower_purple:
         if draw_train_tracks:
             for tri in lower_tris:
@@ -266,7 +314,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                             last_edge = last_tri.edges[last_tri.downriver_index()]
                             leaf_end_edges.append(last_edge)
                 if len(leaf_end_edges) == 2:
-                    purple_leaves.append(leaf_end_edges)
+                    purple_train_routes.append(leaf_end_edges)
                     if foliation_style_old:
                         leaf_ends = []
                         for e in leaf_end_edges:
@@ -310,7 +358,7 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                             last_edge = last_tri.edges[last_tri.downriver_index()]
                             leaf_end_edges.append(last_edge)
                 if len(leaf_end_edges) == 2:
-                    green_leaves.append(leaf_end_edges)
+                    green_train_routes.append(leaf_end_edges)
                     if foliation_style_old:
                         leaf_ends = []
                         for e in leaf_end_edges:
@@ -325,10 +373,10 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         for e in con.coastal_edges:
             e.purple_ends = []
             e.green_ends = []
-        for e1, e2 in purple_leaves:
+        for e1, e2 in purple_train_routes:
             e1.purple_ends.append(e2)
             e2.purple_ends.append(e1)
-        for e1, e2 in green_leaves:
+        for e1, e2 in green_train_routes:
             e1.green_ends.append(e2)
             e2.green_ends.append(e1)
         for i, e in enumerate(con.coastal_edges):
@@ -340,13 +388,13 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
             else:
                 e.ends = e.purple_ends + e.green_ends
         if foliation_style_split:
-            for e1, e2 in purple_leaves:
+            for e1, e2 in purple_train_routes:
                 p1 = end_pos(e2, e1)
                 p2 = end_pos(e1, e2)
                 p = make_arc(p1, p2)
                 p = p.transformed(scl)
                 canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-            for e1, e2 in green_leaves:
+            for e1, e2 in green_train_routes:
                 p1 = end_pos(e2, e1)
                 p2 = end_pos(e1, e2)
                 p = make_arc(p1, p2)
@@ -354,7 +402,8 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                 canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
         if foliation_style_cusp_leaves or foliation_style_boundary_leaves:
             for i, c in enumerate(con.coast):
-                purple_thorn_ends = []
+                c.purple_thorn_end_positions = [] ### complex numbers
+                c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
                 e = con.coastal_edges[i]
                 e1 = e.purple_ends[0]
                 while True:
@@ -362,28 +411,33 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                     if index == len(e1.purple_ends) - 1:
                         break
                     else:
-                        purple_thorn_ends.append( end_pos(e, e1, offset = 0.5) )
+                        c.purple_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
+                        c.purple_thorn_ends.append( (e1, e1.ends.index(e)) )
                         e, e1 = e1, e1.purple_ends[index + 1]
-                if foliation_style_cusp_leaves:
-                    for thorn_end in purple_thorn_ends:
-                        p = make_arc(c.circle_pos, thorn_end)
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+
                 if foliation_style_boundary_leaves:
                     e_before = con.coastal_edges[(i-1)%len(con.coast)]
                     e_after = con.coastal_edges[i]
                     first_pos = end_pos(e_after.purple_ends[0], e_after, offset = -0.25)
                     last_pos = end_pos(e_before.purple_ends[-1], e_before, offset = 0.25)
-                    purple_thorn_ends = [first_pos] + purple_thorn_ends + [last_pos]
+                    c.purple_thorn_end_positions = [first_pos] + c.purple_thorn_end_positions + [last_pos]
                     arcs = []
-                    for i in range(len(purple_thorn_ends) - 1):
-                        arcs.append(make_arc(purple_thorn_ends[i], purple_thorn_ends[i+1]))
+                    for i in range(len(c.purple_thorn_end_positions) - 1):
+                        arcs.append(make_arc(c.purple_thorn_end_positions[i], c.purple_thorn_end_positions[i+1]))
                     for p in arcs:
                         p = p.transformed(scl)
                         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
 
+                if foliation_style_cusp_leaves:
+                    for thorn_end in c.purple_thorn_ends:
+                        thorn_end_pos = end_pos2(thorn_end)
+                        p = make_arc(c.circle_pos, thorn_end_pos)
+                        p = p.transformed(scl)
+                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+                
             for i, c in enumerate(con.coast):
-                green_thorn_ends = []
+                c.green_thorn_end_positions = [] ### complex numbers
+                c.green_thorn_ends = [] ### [coastal arc, position along that arc]
                 e = con.coastal_edges[i]
                 e1 = e.green_ends[0]
                 while True:
@@ -391,26 +445,74 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                     if index == len(e1.green_ends) - 1:
                         break
                     else:
-                        green_thorn_ends.append( end_pos(e, e1, offset = 0.5) )
+                        c.green_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
+                        c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
                         e, e1 = e1, e1.green_ends[index + 1]
-                if foliation_style_cusp_leaves:
-                    for thorn_end in green_thorn_ends:
-                        p = make_arc(c.circle_pos, thorn_end)
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
                 if foliation_style_boundary_leaves:
                     e_before = con.coastal_edges[(i-1)%len(con.coast)]
                     e_after = con.coastal_edges[i]
                     first_pos = end_pos(e_after.green_ends[0], e_after, offset = -0.25)
                     last_pos = end_pos(e_before.green_ends[-1], e_before, offset = 0.25)
-                    green_thorn_ends = [first_pos] + green_thorn_ends + [last_pos]
+                    c.green_thorn_end_positions = [first_pos] + green_thorn_end_positions + [last_pos]
                     arcs = []
-                    for i in range(len(green_thorn_ends) - 1):
-                        arcs.append(make_arc(green_thorn_ends[i], green_thorn_ends[i+1]))
+                    for i in range(len(c.green_thorn_end_positions) - 1):
+                        arcs.append(make_arc(c.green_thorn_end_positions[i], c.green_thorn_end_positions[i+1]))
                     for p in arcs:
                         p = p.transformed(scl)
                         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
 
+                if foliation_style_cusp_leaves:
+                    for thorn_end in c.green_thorn_ends:
+                        thorn_end_pos = end_pos2(thorn_end)
+                        p = make_arc(c.circle_pos, thorn_end_pos)
+                        p = p.transformed(scl)
+                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+
+            for tet in draw_tetrahedron_rectangles:
+                # a, b = tet.upper_edge().vertices
+                # c, d = tet.lower_edge().vertices
+                # for green_thorn_end in a.green_thorn_ends: ### add 0.5 because it is between two cusps. 
+                #     if are_linking(a.coastal_index, green_thorn_end[0].coastal_index + 0.5, c.coastal_index, d.coastal_index):
+                #         ### we found the cusp leaf that goes through the tetrahedron
+                #         thorn_end_pos = end_pos2(green_thorn_end)
+                #         p = make_arc(a.circle_pos, thorn_end_pos)
+                #         p = p.transformed(scl)
+                #         canv.stroke(p, [style.linewidth(3*leaf_thickness), style.linecap.round, green])
+                #         # if a.purple_thorn_ends[0]
+                #         # right_cusp_leaf, left_cusp_leaf = None, None
+                #         # if are_anticlockwise(a.coastal_index, a.purple_thorn_ends[0], thorn_end): # there is a purple leaf on this side of the green one
+                #         for i, purple_end in enumerate(a.purple_thorn_ends):
+                #             if are_anticlockwise(a.coastal_index, green_thorn_end[0].coastal_index + 0.5, a.purple_thorn_ends[0][0].coastal_index + 0.5):
+                #                 if i == 0:
+                #                     purple_side = [ a.purple_thorn_ends[0] ]
+                #                 else:
+                #                     purple_side = [ a.purple_thorn_ends[i-1], a.purple_thorn_ends[i] ]
+                #             else:
+                #                 purple_side = [ a.purple_thorn_ends[-1] ]
+                #             for purple_thorn_end in purple_side:
+                #                 thorn_end_pos = end_pos2(purple_thorn_end)
+                #                 p = make_arc(a.circle_pos, thorn_end_pos)
+                #                 p = p.transformed(scl)
+                #                 canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, purple])
+                #         break
+                purple_sides = get_tet_purple_rectangle_sides(tet, actually_do_green = False)
+                green_sides = get_tet_purple_rectangle_sides(tet, actually_do_green = True)
+                for side in purple_sides:
+                    for cusp_leaf in side:
+                        v, thorn_end = cusp_leaf
+                        thorn_end_pos = end_pos2(thorn_end)
+                        p = make_arc(v.circle_pos, thorn_end_pos)
+                        p = p.transformed(scl)
+                        canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, purple])
+                for side in green_sides:
+                    for cusp_leaf in side:
+                        v, thorn_end = cusp_leaf
+                        thorn_end_pos = end_pos2(thorn_end)
+                        p = make_arc(v.circle_pos, thorn_end_pos)
+                        p = p.transformed(scl)
+                        canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, green])
+
+                
 
     output_filename = 'Images/CircleContinent/' + name + '.pdf'
     canv.writePDFfile(output_filename)
@@ -425,7 +527,7 @@ def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     print(len(con.triangles), len(con.vertices), len(con.tetrahedra))
     return con
 
-def make_continent_drill(veering_isosig, dual_cycle, num_steps):
+def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
     ### initial tetrahedron is above face 0 of the dual cycle
@@ -488,10 +590,124 @@ def make_continent_drill(veering_isosig, dual_cycle, num_steps):
     con.triangle_path = triangle_path
     return con
 
+def flow_edge_in_continent(con_tet, edge_num):
+    tet_vertices = con_tet.ordered_vertices()
+    vert_pair = edge_num_to_vert_pair[edge_num]
+    vertex_pair = [tet_vertices[i] for i in vert_pair]
+    upper_tris = con_tet.upper_triangles
+    edge_candidates = set(upper_tris[0].edges).union(set(upper_tris[1].edges))
+    edge = None
+    for e in edge_candidates:
+        if set(e.vertices) == set(vertex_pair): 
+            edge = e
+            break
+    assert edge != None
+    return edge
+
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
+    tri, angle = isosig_to_tri_angle(veering_isosig)
+    vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
+    ### format for loops: it is a list of tuples, 
+    ### each tuple is (tet_index, edge_index within this tet that we exit through)
+    tet_0 = flow_cycle[0][0]
+    face_0 = 0 ### only used for initial numbering of vertices of the continent, so who cares
+    initial_tet_face = tet_face(vt, tet_0, face_0, verts_pos = [None, None, None, None])
+    con = continent( vt, initial_tet_face)
+
+    side_face_collections, side_tet_collections = edge_side_face_collections(vt.tri, vt.angle, tet_vert_coorientations = vt.coorientations, return_tets = True, order_bottom_to_top = False)
+
+    ### identify the next edge in the cycle 
+
+    init_tetrahedron = con.tetrahedra[0]
+    init_edge = flow_edge_in_continent(init_tetrahedron, flow_cycle[0][1])
+
+    flow_tetrahedra = [init_tetrahedron]
+    flow_edges = [init_edge]
+    ### both in the continent
+
+    upwards_flow_index = 0
+    downwards_flow_index = 0
+    for i in range(num_steps):
+        # print(i)
+        if i%2 == 0: ### go up
+            edge = flow_edges[-1]
+            last_tet = None
+            while True:
+                con.update_boundary()  
+                upper_boundary_triangles = [t for t in edge.boundary_triangles if t.is_upper] 
+                if len(upper_boundary_triangles) == 0:
+                    break ## out of while loop
+                last_tet = con.bury(upper_boundary_triangles[0])
+            assert last_tet != None
+            upwards_flow_index = (upwards_flow_index + 1) % len(flow_cycle)
+            assert last_tet.index == flow_cycle[upwards_flow_index][0]
+            flow_tetrahedra.append(last_tet)
+            flow_edges.append(flow_edge_in_continent(last_tet, flow_cycle[upwards_flow_index][1]))
+            con.make_convex() ### could this take us further up dual_cycle? We don't think so
+        else: ### go down
+            tet = flow_tetrahedra[0]
+            edge = tet.lower_edge()
+            flow_edges = [edge] + flow_edges
+            ### now build the continent to get new_lowest_tet
+            manifold_edge = tri.edge(edge.index)
+            downwards_flow_index = (downwards_flow_index - 1) % len(flow_cycle)
+            ### is the flow cycle vertical through the tetrahedron? 
+            tet_below = get_tet_above_edge(vt.tri, vt.angle, manifold_edge, tet_vert_coorientations = vt.coorientations, get_tet_below_edge = True)
+            tet_below_num = tet_below.index()
+            top_vert_nums = get_tet_top_vert_nums(vt.coorientations, tet_below_num)
+            top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]
+
+            if (tet_below_num, top_edge_num) == flow_cycle[downwards_flow_index]: ### flow cycle went straight up
+                while True:
+                    con.update_boundary()  
+                    lower_boundary_triangles = [t for t in edge.boundary_triangles if t.is_lower] 
+                    if len(lower_boundary_triangles) == 0:
+                        break ## out of while loop
+                    last_tet = con.bury(lower_boundary_triangles[0])
+            else:
+                ### find which side of the edge our tet is in
+                side_tet_collections = side_tet_collections[edge.index] ## index in the manifold
+                side_face_collections = side_face_collections[edge.index]
+                downward_path = None
+                flow_step = flow_cycle[downwards_flow_index]
+                for i, side_tet_collection in enumerate(side_tet_collections):
+                    if flow_step in side_tet_collection:
+                        downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
+                        downward_path_faces = side_face_collections[i][:side_tet_collection.index(flow_step) + 1]
+                assert downward_path != None
+                for j, (tet_num, edge_num) in enumerate(downward_path):
+                    con.update_boundary()  
+                    lower_boundary_triangles = [t for t in edge.boundary_triangles if t.is_lower and t.index == downward_path_faces[j][0]] 
+                    assert len(lower_boundary_triangles) == 1
+                    last_tet = con.bury(lower_boundary_triangles[0])
+            assert last_tet != None
+            flow_tetrahedra = [last_tet] + flow_tetrahedra
+            con.make_convex() ### could this take us further down dual_cycle? We don't think so
+
+    con.update_boundary()
+    return con, flow_tetrahedra, flow_edges
 
 def main():
+    veering_isosig = 'cPcbbbdxm_10' 
+    flow_cycle = [(0, 2)]
+    # for num_steps in range(10):
+    num_steps = 4
+    con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
+    print(len(flow_tetrahedra))
+    name = veering_isosig + '_' + str(flow_cycle) + '_' + str(num_steps) + '_cusp_leaves'
+    draw_continent_circle(con, name = name,
+        draw_upper_landscape = False, draw_lower_landscape = False, 
+        draw_upper_green = True, draw_lower_purple = True,
+        draw_train_tracks = False, draw_foliation = True, 
+        foliation_style_old = False, foliation_style_split = False, 
+        foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
+        shade_triangles = False, draw_fund_domain = True,
+        draw_fund_domain_edges = True, draw_tetrahedron_rectangles = [flow_tetrahedra[0], flow_tetrahedra[-1]])
+
+
+
     # veering_isosig = 'cPcbbbiht_12'
-    veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'dLQacccjsnk_200'
     # max_num_tetrahedra = 50
     # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
     # name = veering_isosig + '_' + str(max_num_tetrahedra) + '_cusp_leaves'
@@ -518,20 +734,20 @@ def main():
 #            shade_triangles = True, draw_fund_domain = True,
 #            draw_fund_domain_edges = True)
         
-    veering_isosig = 'cPcbbbdxm_10' # example where after drilling we get an edge between the new cusp and itself
-    dual_cycle = [1,2]
-    for num_steps in range(20):
-    # num_steps = 7
-        con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
-        name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
-        draw_continent_circle(con, name = name,
-            draw_upper_landscape = False, draw_lower_landscape = False, 
-            draw_upper_green = True, draw_lower_purple = True,
-            draw_train_tracks = False, draw_foliation = True, 
-            foliation_style_old = False, foliation_style_split = False, 
-            foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
-            shade_triangles = True, draw_fund_domain = True,
-            draw_fund_domain_edges = True)
+    # veering_isosig = 'cPcbbbdxm_10' # example where after drilling we get an edge between the new cusp and itself
+    # dual_cycle = [1,2]
+    # for num_steps in range(20):
+    # # num_steps = 7
+    #     con = make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps)
+    #     name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
+    #     draw_continent_circle(con, name = name,
+    #         draw_upper_landscape = False, draw_lower_landscape = False, 
+    #         draw_upper_green = True, draw_lower_purple = True,
+    #         draw_train_tracks = False, draw_foliation = True, 
+    #         foliation_style_old = False, foliation_style_split = False, 
+    #         foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
+    #         shade_triangles = True, draw_fund_domain = True,
+    #         draw_fund_domain_edges = True)
 
 
 

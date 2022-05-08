@@ -5,7 +5,7 @@
 # functions for working with transverse taut ideal triangulations.
 
 import regina # needed inside of imported files
-from taut import liberal, is_taut, apply_isom_to_angle_struct_list, vert_pair_to_edge_num
+from taut import liberal, is_taut, apply_isom_to_angle_struct_list, vert_pair_to_edge_num, there_is_a_pi_here
 
 
 vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]  
@@ -141,18 +141,79 @@ def symmetry_group_size(tri, angle):
                     count += 1
     return count
 
-def get_tet_above_edge(tri, angle, edge, tet_vert_coorientations = None):
+def get_tet_above_edge(tri, angle, edge, tet_vert_coorientations = None, get_tet_below_edge = False):
     """
-    Find the tetrahedron above an edge
+    Find the tetrahedron above (or below) an edge
     """
     if tet_vert_coorientations == None:
         tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
     embeddings = edge.embeddings()
     for embed in embeddings:
         tet = embed.tetrahedron()
-        _, bottom_edge = get_tet_top_and_bottom_edges(tet_vert_coorientations, tet)
-        if bottom_edge == edge:
-            return tet
+        top_edge, bottom_edge = get_tet_top_and_bottom_edges(tet_vert_coorientations, tet)
+        if get_tet_below_edge: 
+            if top_edge == edge:
+                return tet
+        else:
+            if bottom_edge == edge:
+                return tet
 
+def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientations = None, return_tets = False, order_bottom_to_top = True):
+    """
+    For each edge e, find the two collections of (face numbers, edge_index in that face corresponding to e)
+    or also (tet numbers, edge index in that tet corresponding to e)
+    on either side of the pis, ordered from bottom to top if we have coorientations
+    """
+
+    out_triangles = []
+    out_tets = []
+    for edge_num in range(triangulation.countEdges()):
+        edge = triangulation.edge(edge_num)
+        embeddings = edge.embeddings()
+
+        triangle_num_sets = [[],[],[]]
+        tet_num_sets = [[],[],[]]
+        which_set_to_add_to = 0
+        for embed in embeddings:
+            tet = embed.tetrahedron()
+            vert_perm = embed.vertices()
+            trailing_vert_num, leading_vert_num = vert_perm[2], vert_perm[3]
+            # as we walk around the edge, leading is in front of us, trailing is behind us
+            # FIX - the following link is broken. 
+            # see http://regina.sourceforge.net/engine-docs/classregina_1_1NTetrahedron.html#a54d99721b2ab2a0a0a72b6216b436440
+            f = tet.triangle(leading_vert_num)  ### this is the face behind the tetrahedron as we walk around
+            fmapping = tet.faceMapping(2, leading_vert_num)
+            index_of_opposite_vert_in_f = fmapping.inverse()[trailing_vert_num]
+            assert f.edge(index_of_opposite_vert_in_f) == edge
+            triangle_num_sets[which_set_to_add_to].append((f.index(), index_of_opposite_vert_in_f))
+            if there_is_a_pi_here(angle_struct, embed):
+                which_set_to_add_to += 1
+            else:
+                tet_num_sets[which_set_to_add_to].append((tet.index(), embed.face())) ### embed.face is the edge number of the tet corresponding to the edge
+        triangle_num_sets = [triangle_num_sets[2] + triangle_num_sets[0], triangle_num_sets[1]]
+        tet_num_sets = [tet_num_sets[2] + tet_num_sets[0], triangle_num_sets[1]]
+        ## we wrap around, have to combine the two lists on the side we started and ended on
+
+        triangle_num_sets[1].reverse() ## flip one so they are going the same way.
+        tet_num_sets[1].reverse()
+        ## Now if we have coorientations, make them both go up
+        if tet_vert_coorientations == None: ### try to install them
+            tet_vert_coorientations = is_transverse_taut(triangulation, angle_struct, return_type = "tet_vert_coorientations")
+        if tet_vert_coorientations != False:
+            embed = embeddings[0]
+            tet = embed.tetrahedron()
+            vert_perm = embed.vertices()
+            leading_vert_num = vert_perm[3]
+            if (tet_vert_coorientations[tet.index()][leading_vert_num] == +1) != (not order_bottom_to_top): 
+            ### then coorientation points out of this tetrahedron through this face,
+            ### which is behind the tetrahedron as we walk around
+            ### so we are the wrong way round (if we are ordering from bottom to top)
+                triangle_num_sets[0].reverse()
+                triangle_num_sets[1].reverse()
+        out_triangles.append(triangle_num_sets)
+    if not return_tets:
+        return out_triangles
+    else:
+        return out_triangles, out_tets
 
             
