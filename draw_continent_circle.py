@@ -615,7 +615,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
     con = continent( vt, initial_tet_face)
 
     side_face_collections, side_tet_collections = edge_side_face_collections(vt.tri, vt.angle, tet_vert_coorientations = vt.coorientations, return_tets = True, order_bottom_to_top = False)
-
+    # print('sfc', side_face_collections)
+    # print('stc', side_tet_collections)
     ### identify the next edge in the cycle 
 
     init_tetrahedron = con.tetrahedra[0]
@@ -666,18 +667,19 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
                     last_tet = con.bury(lower_boundary_triangles[0])
             else:
                 ### find which side of the edge our tet is in
-                side_tet_collections = side_tet_collections[edge.index] ## index in the manifold
-                side_face_collections = side_face_collections[edge.index]
+                # print('edge index', edge.index)
+                side_tet_collections_at_edge = side_tet_collections[edge.index] ## index in the manifold
+                side_face_collections_at_edge = side_face_collections[edge.index]
                 downward_path = None
                 flow_step = flow_cycle[downwards_flow_index]
-                for i, side_tet_collection in enumerate(side_tet_collections):
+                for i, side_tet_collection in enumerate(side_tet_collections_at_edge):
                     if flow_step in side_tet_collection:
                         downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
-                        downward_path_faces = side_face_collections[i][:side_tet_collection.index(flow_step) + 1]
+                        downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
                 assert downward_path != None
                 for j, (tet_num, edge_num) in enumerate(downward_path):
                     con.update_boundary()  
-                    lower_boundary_triangles = [t for t in edge.boundary_triangles if t.is_lower and t.index == downward_path_faces[j][0]] 
+                    lower_boundary_triangles = [t for t in edge.boundary_triangles if not t.is_upper and t.index == downward_path_faces[j][0]] 
                     assert len(lower_boundary_triangles) == 1
                     last_tet = con.bury(lower_boundary_triangles[0])
             assert last_tet != None

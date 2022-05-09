@@ -210,7 +210,10 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
             ### so we are the wrong way round (if we are ordering from bottom to top)
                 triangle_num_sets[0].reverse()
                 triangle_num_sets[1].reverse()
+                tet_num_sets[0].reverse()
+                tet_num_sets[1].reverse()
         out_triangles.append(triangle_num_sets)
+        out_tets.append(tet_num_sets)
     if not return_tets:
         return out_triangles
     else:
