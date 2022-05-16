@@ -25,7 +25,7 @@ class vertex:
 
     def __repr__(self):
         if self.pos == None:
-            return str(coastal_index)
+            return str(self.coastal_index)
         elif not self.pos.is_infinity():
             return str(self.pos.complex())
         else:
@@ -40,6 +40,7 @@ class landscape_edge:
         self.vertices = vertices
         for v in self.vertices:
             v.edges.append(self)
+        self.other_end = {self.vertices[0]:self.vertices[1], self.vertices[1]:self.vertices[0]}
         self.continent.edges.append(self)
         self.index = edge_index
         self.is_red = is_red
@@ -627,6 +628,10 @@ class continent:
         ## now rotate to put infinity first
         inf_vert_index = self.coast.index( self.infinity )
         self.coast = self.coast[inf_vert_index:] + self.coast[:inf_vert_index]
+
+        ## install vertex coastal indices
+        for i,v in enumerate(self.coast):
+            v.coastal_index = i
 
         ## update coastal_edges
         self.coastal_edges = []
