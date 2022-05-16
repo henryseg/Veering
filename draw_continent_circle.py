@@ -228,19 +228,23 @@ def tet_rectangle_sides(tet, v):
     
     for thorn_end in thorn_ends:
         thorn_end_location = thorn_end[0].coastal_index + 0.5
-        print('v age', tet.continent.vertices.index(v))
-        print(v.coastal_index, thorn_end_location, c.coastal_index, d.coastal_index)
+        # print(v.coastal_index, thorn_end_location, c.coastal_index, d.coastal_index)
         if are_linking(v.coastal_index, thorn_end_location, c.coastal_index, d.coastal_index):
             ### we found the cusp leaf that goes through the tetrahedron
             if len(other_colour_thorn_ends) == 0:
+                # print('nn')
                 return [ None, None ]
             for i, other_colour_thorn_end in enumerate(other_colour_thorn_ends):
-                if are_anticlockwise(v.coastal_index, thorn_end_location, other_colour_thorn_ends[0][0].coastal_index + 0.5):
+                # print('i', i, v.coastal_index, thorn_end_location, other_colour_thorn_end[0].coastal_index + 0.5, are_anticlockwise(v.coastal_index, thorn_end_location, other_colour_thorn_ends[0][0].coastal_index + 0.5))
+                if are_anticlockwise(v.coastal_index, thorn_end_location, other_colour_thorn_end[0].coastal_index + 0.5):
                     if i == 0:  ### 0th other colour thorn is after thorn_end
+                        # print('ns')
                         return [ None, (v, other_colour_thorn_ends[0]) ]
                     else:
+                        # print('ss')
                         return [ (v, other_colour_thorn_ends[i-1]), (v, other_colour_thorn_ends[i]) ]
             ### didn't find an other colour thorn after thorn_end
+            # print('sn')
             return [ (v, other_colour_thorn_ends[-1]), None ]
 
 def tet_purple_rectangle_sides(tet, actually_do_green = False):
@@ -756,14 +760,14 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     k = 0
     for tet in tetrahedra_to_complete:
         for v in tet.vertices():
-            print('tet vert age', con.vertices.index(v))
+            # print('tet vert age', con.vertices.index(v))
             con.update_boundary()
             install_thorn_ends(con)
             sides = tet_rectangle_sides(tet, v)
-            for i in range(2):
-                while sides[i] == None:
-                    print('i, k', i, k)
-                    e = con.coastal_edges[(v.coastal_index - i)%len(con.coast)] 
+            for direction in range(2):
+                while sides[direction] == None:
+                    # print('direction, k', direction, k)
+                    e = con.coastal_edges[(v.coastal_index - direction)%len(con.coast)] 
                     triangles = e.boundary_triangles  ### grow around this edge
                     if triangles[0].is_upper != (k % 2 == 0): ### xor, alternate which one we add to
                         con.bury(triangles[0])
@@ -774,7 +778,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
                     install_thorn_ends(con)
                     sides = tet_rectangle_sides(tet, v)
                     k += 1
-                    if k > 5:
+                    if k > 50:
                         print('bail')
                         return None
 
@@ -812,11 +816,11 @@ def main():
     num_steps = 5
     con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
     fund_dom_tets = get_fund_domain_tetrahedra(con)
-    complete_tetrahedron_rectangles(con, fund_dom_tets[:1])
+    complete_tetrahedron_rectangles(con, fund_dom_tets)
     print(len(flow_tetrahedra))
     name = veering_isosig + '_' + str(flow_cycle) + '_' + str(num_steps) + '_cusp_leaves'
     # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
-    tets_to_draw = [fund_dom_tets[0]]
+    tets_to_draw = fund_dom_tets
     draw_continent_circle(con, name = name,
         draw_upper_landscape = False, draw_lower_landscape = False, 
         draw_upper_green = True, draw_lower_purple = True,
