@@ -54,7 +54,8 @@ class landscape_edge:
 
     def __repr__(self):
         u, v = self.vertices
-        return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
+        # return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
+        return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v)] )
 
     def length(self):
         u, v = self.vertices

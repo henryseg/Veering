@@ -44,6 +44,39 @@ def reflect_arc(a, b, c):
     R_in = dot(cp, cp)
     return ( cp * r * r / (R_in) ) + center
 
+def sign(x):
+    if x<0: return -1
+    else: return 1
+
+def circle_circle_isects(c1, r1, c2, r2): #worked out in some mathematica notebook "circle_circle_intersect.nb", you'll never find it again
+    """intersection points of two circles"""
+    c2 = c2 - c1
+    x2, y2 = c2.real, c2.imag
+    foox = sqrt(-(y2**2)*(-(r1-r2)**2 + x2**2 + y2**2)*(-(r1+r2)**2 + x2**2 + y2**2) )
+    fooy = sign(y2)*sqrt(-(-(r1-r2)**2 + x2**2 + y2**2)*(-(r1+r2)**2 + x2**2 + y2**2) )
+
+    u1 = (x2*(r1**2 - r2**2 + x2**2 + y2**2) - foox)/(2*(x2**2 + y2**2))
+    u2 = (x2*(r1**2 - r2**2 + x2**2 + y2**2) + foox)/(2*(x2**2 + y2**2))
+    v1 = (y2*(r1**2 - r2**2 + x2**2 + y2**2) + x2*fooy)/(2*(x2**2 + y2**2))
+    v2 = (y2*(r1**2 - r2**2 + x2**2 + y2**2) - x2*fooy)/(2*(x2**2 + y2**2))
+    w1 = complex(u1,v1) + c1
+    w2 = complex(u2,v2) + c1
+    return w1, w2
+
+def geodesic_isect(a1, b1, a2, b2):
+    """find intersection point between arcs in the Poincare disk from a1 to b1 and from a2 to b2"""
+    c1, r1 = arc_center_rad(a1, b1)
+    c2, r2 = arc_center_rad(a2, b2)
+    if r1 + r2 < abs(c1 - c2):
+        return None
+    else:
+        w1, w2 = circle_circle_isects(c1, r1, c2, r2)
+        if abs(w1) < 1.0:
+            return w1
+        else:
+            assert abs(w2) < 1.0
+            return w2
+
 def incenter(a, b, c):
     det_ab = (a.real*b.imag - a.imag*b.real)
     if abs(det_ab) < 0.0001: 
@@ -367,8 +400,6 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
             # canv.fill(path.circle(global_scale_up*center[0], global_scale_up*center[1], 0.1)) 
             canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+str(tri.index)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle] + transp)
 
-
-
     ### train tracks...
 
     purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
@@ -561,24 +592,46 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
 
             for tet in draw_tetrahedron_rectangles:
-                purple_sides = tet_purple_rectangle_sides(tet, actually_do_green = False)
-                green_sides = tet_purple_rectangle_sides(tet, actually_do_green = True)
-                for side in purple_sides:
-                    for cusp_leaf in side: 
-                        if cusp_leaf != None:
-                            v, thorn_end = cusp_leaf
-                            thorn_end_pos = end_pos2(thorn_end)
-                            p = make_arc(v.circle_pos, thorn_end_pos)
+                a, c = tet.upper_edge().vertices
+                b, d = tet.lower_edge().vertices
+                if not are_anticlockwise(a.coastal_index, b.coastal_index, c.coastal_index):
+                    b, d = d, b   ### now a, b, c, d are anticlockwise
+                # print(con.vertices.index(a), con.vertices.index(b), con.vertices.index(c), con.vertices.index(d))
+                all_sides_discrete = [tet_rectangle_sides(tet, v) for v in [a,b,c,d]]
+                all_sides_geometry = []
+                for vertex_sides_discrete in all_sides_discrete:
+                    vertex_sides_geometry = []
+                    for side_discrete in vertex_sides_discrete:
+                        a, b = side_discrete
+                        if side_discrete != None:
+                            v, thorn_end = side_discrete
+                            # print(thorn_end)
+                            # print((v.circle_pos, end_pos2(thorn_end)))
+                            vertex_sides_geometry.append( (v.circle_pos, end_pos2(thorn_end)) )
+                        else:
+                            vertex_sides_geometry.append( None )
+                    all_sides_geometry.append(vertex_sides_geometry)
+                for i in range(4):
+                    if all_sides_geometry[i][0] != None and all_sides_geometry[(i+1)%4][1] != None:
+                        v1, t1 = all_sides_geometry[i][0]
+                        v2, t2 = all_sides_geometry[(i+1)%4][1]
+                        intersection = geodesic_isect(v1, t1, v2, t2)
+                        assert intersection != None
+                        all_sides_geometry[i][0] = (v1, intersection)
+                        all_sides_geometry[(i+1)%4][1] = (v2, intersection)
+
+                for i, vertex_sides_geometry in enumerate(all_sides_geometry):
+                    if i%2 == 0:
+                        col = purple
+                    else:
+                        col = green
+                    for side_geometry in vertex_sides_geometry: 
+                        if side_geometry != None:
+                            # print(side_geometry)
+                            v_pos, t_pos = side_geometry 
+                            p = make_arc(v_pos, t_pos)
                             p = p.transformed(scl)
-                            canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, purple])
-                for side in green_sides:
-                    for cusp_leaf in side:
-                        if cusp_leaf != None:
-                            v, thorn_end = cusp_leaf
-                            thorn_end_pos = end_pos2(thorn_end)
-                            p = make_arc(v.circle_pos, thorn_end_pos)
-                            p = p.transformed(scl)
-                            canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, green])
+                            canv.stroke(p, [style.linewidth(3*leaf_thickness), style.linecap.round, col])
 
     output_filename = 'Images/CircleContinent/' + name + '.pdf'
     canv.writePDFfile(output_filename)
