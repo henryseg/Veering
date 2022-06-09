@@ -1,5 +1,5 @@
 from file_io import parse_data_file, read_from_pickle
-from taut import isosig_to_tri_angle, vert_pair_to_edge_num
+from taut import isosig_to_tri_angle
 from veering import veering_triangulation
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
 from basic_math import sign
@@ -25,7 +25,7 @@ class vertex:
 
     def __repr__(self):
         if self.pos == None:
-            return str(self.coastal_index)
+            return str(coastal_index)
         elif not self.pos.is_infinity():
             return str(self.pos.complex())
         else:
@@ -35,17 +35,14 @@ class vertex:
         return self.__repr__()
 
 class landscape_edge:
-    def __init__(self, continent, vertices, edge_index, is_red): 
+    def __init__(self, continent, vertices, is_red): ## could add: is_red, edge_index
         self.continent = continent
         self.vertices = vertices
         for v in self.vertices:
             v.edges.append(self)
-        self.other_end = {self.vertices[0]:self.vertices[1], self.vertices[1]:self.vertices[0]}
         self.continent.edges.append(self)
-        self.index = edge_index
         self.is_red = is_red
         self.boundary_triangles = [] ### updated in update_boundary. If this edge is on boundary of the continent then there will be two triangles in here.
-        self.coastal_index = None
         # try:
         #     assert self.length() > 0.0001
         # except:
@@ -54,8 +51,7 @@ class landscape_edge:
 
     def __repr__(self):
         u, v = self.vertices
-        # return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
-        return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v)] )
+        return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
 
     def length(self):
         u, v = self.vertices
@@ -333,37 +329,6 @@ class continent_tetrahedron:
             out = out.union(set(tri.vertices))
         return out
 
-    def ordered_faces(self):
-        out = []
-        for i in range(4):
-            face_index = self.continent.vt.tri.tetrahedron(self.index).triangle(i).index()
-            if self.continent.vt.coorientations[self.index][i] == +1: ## is upper triangle
-                for triangle in self.upper_triangles:
-                    if triangle.index == face_index:
-                        out.append(triangle)
-                        break
-            else:
-                for triangle in self.lower_triangles:
-                    if triangle.index == face_index:
-                        out.append(triangle)
-                        break
-        assert len(out) == 4
-        return out
-
-    def ordered_vertices(self):
-        out = []
-        tet_faces = self.ordered_faces()
-        tet_vertices = self.vertices()
-        for i in range(4):
-            face_vertices = tet_faces[i].vertices
-            diff = tet_vertices - set(face_vertices)
-            assert len(diff) == 1
-            vert = diff.pop()
-            out.append(vert)
-        return out
-        
-
-
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
@@ -471,19 +436,12 @@ class continent:
         ###   |,'    c.| 
         ###   a----R---d 
 
-        edge_ab_index = tet.face(1,vert_pair_to_edge_num[(face_a, face_b)]).index()  ### face_a is the same as the vert number in the tet
-        edge_ac_index = tet.face(1,vert_pair_to_edge_num[(face_a, face_c)]).index()
-        edge_ad_index = tet.face(1,vert_pair_to_edge_num[(face_a, face_d)]).index()
-        edge_bc_index = tet.face(1,vert_pair_to_edge_num[(face_b, face_c)]).index()
-        edge_bd_index = tet.face(1,vert_pair_to_edge_num[(face_b, face_d)]).index()
-        edge_cd_index = tet.face(1,vert_pair_to_edge_num[(face_c, face_d)]).index()
-
-        edge_ab = landscape_edge(self, [vert_a, vert_b], edge_ab_index, upper_edge_colour == "red")
-        edge_ac = landscape_edge(self, [vert_a, vert_c], edge_ac_index, False)
-        edge_ad = landscape_edge(self, [vert_a, vert_d], edge_ad_index, True)
-        edge_bc = landscape_edge(self, [vert_b, vert_c], edge_bc_index, True)
-        edge_bd = landscape_edge(self, [vert_b, vert_d], edge_bd_index, False)
-        edge_cd = landscape_edge(self, [vert_c, vert_d], edge_cd_index, lower_edge_colour == "red")
+        edge_ab = landscape_edge(self, [vert_a, vert_b], upper_edge_colour == "red")
+        edge_ac = landscape_edge(self, [vert_a, vert_c], False)
+        edge_ad = landscape_edge(self, [vert_a, vert_d], True)
+        edge_bc = landscape_edge(self, [vert_b, vert_c], True)
+        edge_bd = landscape_edge(self, [vert_b, vert_d], False)
+        edge_cd = landscape_edge(self, [vert_c, vert_d], lower_edge_colour == "red")
 
         if ab_is_red: ## the triangles a and b, not the edge
             triangle_a.edges = [edge_bd, edge_bc, edge_cd]
@@ -630,10 +588,6 @@ class continent:
         inf_vert_index = self.coast.index( self.infinity )
         self.coast = self.coast[inf_vert_index:] + self.coast[:inf_vert_index]
 
-        ## install vertex coastal indices
-        for i,v in enumerate(self.coast):
-            v.coastal_index = i
-
         ## update coastal_edges
         self.coastal_edges = []
         for i in range(len(self.coast)):
@@ -642,7 +596,6 @@ class continent:
             for e in u.edges:
                 if v in e.vertices:
                     e.vertices = [u, v]
-                    e.coastal_index = i
                     self.coastal_edges.append(e)
                     break
 
@@ -916,8 +869,7 @@ class continent:
         
         ## now for the edges
 
-        edge_tn_index = tet.face(1, vert_pair_to_edge_num[(face_t, face_n)]).index()
-        edge_tn = landscape_edge(self, [vert_t, vert_n], edge_tn_index, far_edge_colour == "red") ## never coastal
+        edge_tn = landscape_edge(self, [vert_t, vert_n], far_edge_colour == "red") ## never coastal
 
         if triangle.is_red == triangle.is_upper:
             edge_bn, edge_na, edge_ab = triangle.edges 
@@ -1080,13 +1032,9 @@ class continent:
 
         ### now for the edges
 
-        edge_at_index = tet.face(1, vert_pair_to_edge_num[(face_a, face_t)]).index()
-        edge_bt_index = tet.face(1, vert_pair_to_edge_num[(face_b, face_t)]).index()
-        edge_ct_index = tet.face(1, vert_pair_to_edge_num[(face_c, face_t)]).index()
-
-        edge_at = landscape_edge(self, [vert_a, vert_t], edge_at_index, not triangle.is_upper) ## coastal
-        edge_bt = landscape_edge(self, [vert_b, vert_t], edge_bt_index, triangle.is_upper) ## coastal
-        edge_ct = landscape_edge(self, [vert_c, vert_t], edge_ct_index, far_edge_colour == "red") ## never coastal
+        edge_at = landscape_edge(self, [vert_a, vert_t], not triangle.is_upper) ## coastal
+        edge_bt = landscape_edge(self, [vert_b, vert_t], triangle.is_upper) ## coastal
+        edge_ct = landscape_edge(self, [vert_c, vert_t], far_edge_colour == "red") ## never coastal
 
         if triangle.is_red == triangle.is_upper:
             edge_bc, edge_ca, edge_ab = triangle.edges 

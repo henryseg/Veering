@@ -9,7 +9,9 @@
 
 
 import regina 
-from transverse_taut import is_transverse_taut, edge_side_face_collections
+from taut import liberal
+from transverse_taut import is_transverse_taut
+from taut_homology import edge_side_face_collections
 from veering import is_veering
 
 def where_faces_are_uppermost(tri, angle, tet_vert_coorientations = None):
@@ -113,7 +115,7 @@ def appears_twice_on_the_same_side(tri, angle, face_index, edge_index, tet_vert_
         
     return side0[0][0] == side0[-1][0] and side0[-1][0] == face_index or side1[0][0] == side1[-1][0] and side1[-1][0] == face_index
     
-
+@liberal
 def build_surface(tri, angle, weights, tet_vert_coorientations = None, return_edge_colours = False): 
     
     if tet_vert_coorientations == None:
