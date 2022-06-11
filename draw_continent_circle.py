@@ -832,7 +832,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
                     sides = tet_rectangle_sides(tet, v)
                     k += 1
                     if k > 50:
-                        assert False, 'could not find side of tet rect'
+                        print('bail')
                         return None
 
 def get_fund_domain_tetrahedra(con):
@@ -866,17 +866,14 @@ def main():
     # flow_cycle = [(1, 0), (2, 5)]
 
     # for num_steps in range(10):
-    num_steps = 10
+    num_steps = 5
     con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
     fund_dom_tets = get_fund_domain_tetrahedra(con)
-    # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
-    # tets_to_draw = fund_dom_tets
-    tets_to_draw = fund_dom_tets + [flow_tetrahedra[0], flow_tetrahedra[-1]]
-    complete_tetrahedron_rectangles(con, tets_to_draw)
+    complete_tetrahedron_rectangles(con, fund_dom_tets)
     print(len(flow_tetrahedra))
-
     name = veering_isosig + '_' + str(flow_cycle) + '_' + str(num_steps) + '_cusp_leaves'
-
+    # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
+    tets_to_draw = fund_dom_tets
     draw_continent_circle(con, name = name,
         draw_upper_landscape = False, draw_lower_landscape = False, 
         draw_upper_green = True, draw_lower_purple = True,
