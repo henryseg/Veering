@@ -9,8 +9,6 @@ from taut import isosig_to_tri_angle, isosig_from_tri_angle, is_taut
 from transverse_taut import is_transverse_taut
 from veering import is_veering
 from taut_polynomial import tet_lower_upper_edges
-from taut_polytope import is_layered
-from edge_orientability import is_edge_orientable
 from carried_surface import build_surface, triangle_is_red, veering_symmetry_group, stratum
 
 def top_bottom_embeddings_of_faces(tri, angle, tet_vert_coorientations = None):
@@ -300,11 +298,8 @@ def mutate(tri, angle, weights, isom, tet_vert_coorientations = None, quiet = Fa
         print('mutant isosig:', tri.isoSig())
         print('taut:', is_taut(tri, angle))
         if is_taut(tri, angle):
-            print('taut isosig:', isosig_from_tri_angle(tri, angle))
-            print('transverse taut:', is_transverse_taut(tri, angle))
-            print('veering:', is_veering(tri, angle))
-            print('layered:', is_layered(tri, angle))
-            print('edge-orientable:', is_edge_orientable(tri, angle))
+            print('transverse taut:', is_transverse_taut(tri,angle))
+            print('veering:', is_veering(tri,angle))
         else:
             edge_num = tri.countEdges()
             print('Got', edge_num, 'edges out of', tri.countTetrahedra())
