@@ -191,7 +191,7 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
             else:
                 tet_num_sets[which_set_to_add_to].append((tet.index(), embed.face())) ### embed.face is the edge number of the tet corresponding to the edge
         triangle_num_sets = [triangle_num_sets[2] + triangle_num_sets[0], triangle_num_sets[1]]
-        tet_num_sets = [tet_num_sets[2] + tet_num_sets[0], triangle_num_sets[1]]
+        tet_num_sets = [tet_num_sets[2] + tet_num_sets[0], tet_num_sets[1]]
         ## we wrap around, have to combine the two lists on the side we started and ended on
 
         triangle_num_sets[1].reverse() ## flip one so they are going the same way.
@@ -219,4 +219,4 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
     else:
         return out_triangles, out_tets
 
-            
+
