@@ -710,7 +710,7 @@ def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
     return con
 
 def flow_edge_in_continent(con_tet, edge_num):
-    tet_vertices = con_tet.ordered_vertices()
+    tet_vertices = con_tet.vertices
     vert_pair = edge_num_to_vert_pair[edge_num]
     vertex_pair = [tet_vertices[i] for i in vert_pair]
     upper_tris = con_tet.upper_triangles
@@ -821,7 +821,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""
     k = 0
     for tet in tetrahedra_to_complete:
-        for v in tet.vertices():
+        for v in tet.vertices:
             # print('tet vert age', con.vertices.index(v))
             con.update_boundary()
             install_thorn_ends(con)
@@ -864,7 +864,7 @@ def update_fund_dom_tet_nums(con, fund_dom_tets):
         v.fund_dom_tet_nums = []
     for con_tet in fund_dom_tets:
         if type(con_tet) == continent_tetrahedron:  ### could be an integer if we didnt find this tet
-            for v in con_tet.vertices():
+            for v in con_tet.vertices:
                 v.fund_dom_tet_nums.append(con_tet.index)
 
 def main():
@@ -875,14 +875,14 @@ def main():
     # flow_cycle = [(1, 0), (2, 5)]
 
     # for num_steps in range(10):
-    num_steps = 5
+    num_steps = 4
     con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
     fund_dom_tets = get_fund_domain_tetrahedra(con)
     complete_tetrahedron_rectangles(con, fund_dom_tets)
     print(len(flow_tetrahedra))
     name = veering_isosig + '_' + str(flow_cycle) + '_' + str(num_steps) + '_cusp_leaves'
     # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
-    tets_to_draw = fund_dom_tets
+    tets_to_draw = fund_dom_tets[0:]
     draw_continent_circle(con, name = name,
         draw_upper_landscape = False, draw_lower_landscape = False, 
         draw_upper_green = True, draw_lower_purple = True,
