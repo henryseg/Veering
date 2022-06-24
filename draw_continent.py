@@ -7,6 +7,7 @@ from taut import isosig_to_tri_angle
 from veering import veering_triangulation
 from continent import continent
 from boundary_triangulation import boundary_triangulation, tet_face
+from snappy_util import shapes
 
 
 # def pre_draw_transformation( z, ladder_holonomy ):
@@ -65,6 +66,7 @@ def special_vertex_in_and_out(divider_list, v, v_inds):
 def lightning_curve_from_dividers(dividers, a, b, special_vertices = [], spiky = True):
     #### give it only upper dividers, or only lower dividers
     #### result is oriented not in terms of order of a and b, but in order of the dividers
+    print(len(dividers))
     curve = []
     for divider_list in dividers:
         ### check if both s and e are endpoints of this divider list
@@ -150,6 +152,7 @@ def lightning_curve_from_dividers(dividers, a, b, special_vertices = [], spiky =
                 if len(e_inds) % 2 == 0:
                     lightning_curve = lightning_curve[:-1]
                 return lightning_curve
+    assert False, 'no correct divider list?'
 
 ### function to get lightning curve to the left or right of a ladderpole edge. look for tet_faces you need near the edge. Calculate any needed offsets then and there.
 
@@ -182,6 +185,7 @@ def lightning_curve_for_ladder_unit(dividers, lu, offset):
     T = lu.ladder.torus_triangulation
     ladder_parity = T.ladder_list.index(lu.ladder) % 2
     lightning_curve = lightning_curve_from_dividers(dividers[ladder_parity], s, e, special_vertices = [], spiky = False)  ### no need for extra ladderpole vertices - there are none between these two
+    print('len lightning_curve', len(lightning_curve))
     lightning_curve = [c + offset for c in lightning_curve]
     return lightning_curve
     # lightning_curve_scaled = [ T.drawing_scale * (c + offset) for c in lightning_curve ]
@@ -449,6 +453,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, 
                         else:
                             s, e = lu.con_verts[lu.right_vertices[0]], lu.con_verts[lu.right_vertices[1]]
                         CT_ladderpole = con.segment_between(s, e)
+                        print(lu, T)
                         curves = lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T)
                         if CT_ladderpole[0] != e:
                             CT_ladderpole.reverse()
@@ -758,10 +763,12 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
     else:
         to_draw = veering_isosigs_list
 
-    shapes_data = read_from_pickle('Data/veering_shapes.pkl')
+    # shapes_data = read_from_pickle('Data/veering_shapes.pkl')
     for veering_isosig in to_draw:
         print(veering_isosig)
-        tet_shapes = shapes_data[veering_isosig]
+        # tet_shapes = shapes_data[veering_isosig]
+        tri, angle = isosig_to_tri_angle(veering_sig)
+        tet_shapes = shapes(tri)
         filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
         try:
             draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
@@ -770,14 +777,16 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
 
 def draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, output_dirname, jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = 0.2, draw_args = None):
     build_type = 'build_long_and_mid'
-    shapes_data = read_from_pickle('Data/shapes_jig_no_symm.pkl')
+    # shapes_data = read_from_pickle('Data/shapes_jig_no_symm.pkl')
 
     data_for_cohom_fracs = {}
     for i, veering_isosig in enumerate(veering_isosigs_list):
         # print(veering_isosig)
         if i%25 == 0:
             print(i)
-        tet_shapes = shapes_data[veering_isosig]
+        # tet_shapes = shapes_data[veering_isosig]
+        tri, angle = isosig_to_tri_angle(veering_sig)
+        tet_shapes = shapes(tri)
         # print 'tet_shapes', tet_shapes
 
         filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
@@ -797,7 +806,7 @@ def draw_jigsaw_from_veering_isosigs_file(veering_isosigs_filename, output_dirna
         to_draw = veering_isosigs_list
     draw_jigsaw_from_veering_isosigs_list(to_draw, output_dirname, jigsaw_data_out_filename = jigsaw_data_out_filename, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, draw_args = draw_args)
 
-if __name__ == '__main__':
+def main():
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.002, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'only_draw_ladderpoles': False, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': False, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
@@ -808,17 +817,20 @@ if __name__ == '__main__':
     # max_num_tetrahedra = 100000
     # max_num_tetrahedra = 400000
     max_num_tetrahedra = 2000000
+    # max_num_tetrahedra = 30000000
     # max_length = 0.4
     # max_length = 0.3
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
-    max_length = 0.1
+    # max_length = 0.1
+    max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
     # max_length = 0.05
     # max_length = 0.02
     # max_length = 0.01
+    # max_length = 0.005
 
     draw_args['ct_lw'] = 0.2 * max_length 
 
@@ -834,6 +846,7 @@ if __name__ == '__main__':
     # veering_isosig = 'eLMkbcddddedde_2100'
     # veering_isosig = 'eLAkaccddjsnak_2001'
     # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
+    veering_isosig = 'fLLQcbecdeehhnkei_12001'
     # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
@@ -847,7 +860,7 @@ if __name__ == '__main__':
     # veering_isosig = 'mLvLLMMQQcehfhjlklkjlktilbbjumhtfai_011220220111'
     # veering_isosig = 'mLLvLQLQQbeffjglhlkjklxxxjsfqjhhoqo_102210101022'
     
-    veering_isosig ='kLLLAPPkcdgfehhjijjhfhaqiphffj_2010222001'
+    # veering_isosig ='kLLLAPPkcdgfehhjijjhfhaqiphffj_2010222001'
     # veering_isosig = 'jLLLLQQbegfhihihihhqakkkkoo_120011211'
     # veering_isosig = 'dLQbccchhsj_122'
 
@@ -857,32 +870,46 @@ if __name__ == '__main__':
 
     # shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
     # shapes_data = read_from_pickle('Data/veering_shapes.pkl')
-    shapes_data = read_from_pickle('Data/shapes_jig_no_symm.pkl')
-    tet_shapes = shapes_data[veering_isosig]
+    # shapes_data = read_from_pickle('Data/shapes_jig_no_symm.pkl')
+    # tet_shapes = shapes_data[veering_isosig]
+    tri, angle = isosig_to_tri_angle(veering_isosig)
+    tet_shapes = shapes(tri)
     # # print tet_shapes
-    # filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
-    filename = 'Images/Jigsaw/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
+    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
+    # filename = 'Images/Jigsaw/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
     # # # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     # # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = True, draw_landscapes = False, draw_box_for_cohom_frac = True, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     # # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = False, draw_lightning_curve = True, draw_landscapes = True, draw_box_for_cohom_frac = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type, more = more )
-    
-    draw_args['draw_CT_curve'] = False
-    draw_args['draw_lightning_curve'] = True
+   
+    ### for jigsaws: 
+    # draw_args['draw_CT_curve'] = False
+    # draw_args['draw_lightning_curve'] = True
+    # draw_args['draw_jordan_curve'] = False
+    # draw_args['draw_dividers'] = True
+    # draw_args['draw_landscapes'] = False
+    # draw_args['draw_box_for_cohom_frac'] = False
+    # draw_args['draw_alignment_dots'] = False
+    # draw_args['draw_desired_vertices'] = False
+    # draw_args['expand_fund_dom'] = True
+
+
+    draw_args['draw_CT_curve'] = True
+    draw_args['draw_lightning_curve'] = False
     draw_args['draw_jordan_curve'] = False
-    draw_args['draw_dividers'] = True
+    draw_args['draw_dividers'] = False
     draw_args['draw_landscapes'] = False
     draw_args['draw_box_for_cohom_frac'] = False
     draw_args['draw_alignment_dots'] = False
     draw_args['draw_desired_vertices'] = False
-    draw_args['expand_fund_dom'] = True
+    draw_args['expand_fund_dom'] = False
 
     draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
 
 
     ## draw many:
-    start_num = 500
-    end_num = 502
+    # start_num = 500
+    # end_num = 502
     # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Jordan_curve', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, interval_to_draw = (start_num, end_num), draw_args = draw_args, build_type = build_type)
     
     ### jigsaws

@@ -868,11 +868,11 @@ def update_fund_dom_tet_nums(con, fund_dom_tets):
                 v.fund_dom_tet_nums.append(con_tet.index)
 
 def main():
-    veering_isosig = 'cPcbbbdxm_10' 
-    flow_cycle = [(0, 2)]
+    # veering_isosig = 'cPcbbbdxm_10' 
+    # flow_cycle = [(0, 2)]
 
-    # veering_isosig = 'eLAkaccddjsnak_2001'
-    # flow_cycle = [(1, 0), (2, 5)]
+    veering_isosig = 'eLAkaccddjsnak_2001'
+    flow_cycle = [(1, 0), (2, 5)]
 
     # for num_steps in range(10):
     num_steps = 4

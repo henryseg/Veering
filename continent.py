@@ -325,6 +325,7 @@ class continent_tetrahedron:
     def __init__(self, continent, tet_index):
         self.continent = continent
         self.index = tet_index ## in the quotient manifold
+        self.coorientations = continent.vt.coorientations[tet_index]
         self.upper_triangles = []  ### this gets set when we set this tet as lower_tet for some triangle. No particular meaning to the order of this list.
         self.lower_triangles = []
         self.continent.tetrahedra.append(self)

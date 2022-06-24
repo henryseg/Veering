@@ -23,6 +23,10 @@ def tet_norm(z):
         return 1/(1 - z)
     
 
+def shapes(tri):
+    N = snappy.Manifold(tri)
+    return [complex(shape['rect']) for shape in N.tetrahedra_shapes()]
+
 # From a given collection of isosigs, build the snappy shapes and put
 # them in a pickled dictionary.
 
@@ -34,8 +38,7 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
 
         tri, angle = isosig_to_tri_angle(sig)
 
-        N = snappy.Manifold(tri)
-        N_shapes = [complex(shape['rect']) for shape in N.tetrahedra_shapes()]
+        N_shapes = shapes(tri)
         # N = snappy.ManifoldHP(tri) 
         # N_shapes = [shape['rect'] for shape in N.tetrahedra_shapes()]
         
