@@ -130,15 +130,20 @@ def get_top_and_bottom_nums(tet_vert_coors, tet_num):
 ### This should be "taut_symmetry_group"
 
 @liberal
-def symmetry_group_size(tri, angle):
+def symmetry_group_size(tri, angle, return_isoms = False):
     isoms = tri.findAllIsomorphisms(tri)
     count = 0
+    taut_isoms = []
     for isom in isoms:
         if isom.facePerm(0).sign() == 1:  ## fixes orientation of the triangulation
             if angle == apply_isom_to_angle_struct_list(angle, isom):  ## fixes taut angle structure
                 coorientations = is_transverse_taut(tri, angle, return_type = 'tet_vert_coorientations')
                 if coorientations[0][0] == coorientations[isom.tetImage(0)][isom.facetPerm(0)[0]]:  ## fixes transverse structure
                     count += 1
+                    if return_isoms:
+                        taut_isoms.append(isom)
+    if return_isoms:
+        return taut_isoms
     return count
 
 def get_tet_above_edge(tri, angle, edge, tet_vert_coorientations = None, get_tet_below_edge = False):
