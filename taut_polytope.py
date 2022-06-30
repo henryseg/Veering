@@ -477,11 +477,10 @@ def depth(tri, angle):
     while True:
         rays = taut_rays_matrix(N)
         if len(rays) == 0:
-            if depth != 0: print("Have you ever really looked at your hands?", depth)
-            return None
+            return None  # should be (Infinite, depth)
         u = sum(rays)
         N, e = cut_down_matrix(N, u)
         if N == None:
-            return depth + e
+            return depth + e  # should be (Finite, depth + e)
         depth = depth + 1
         
