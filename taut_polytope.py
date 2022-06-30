@@ -25,8 +25,9 @@ from fundamental_domain import non_tree_edge_cycles
 
 # Examining edge/face matrices
 
-# Sage cannot treat the variables of a MILP as a vector, so we have to
-# do things ourselves.  Boo.
+
+# Sage cannot treat the variables of a MILP as a vector, so we do it
+# ourselves.
 def dot_prod(u, v):
     try:
         dim = len(u)
@@ -40,6 +41,7 @@ def extract_solution(q, v):
     return [q.get_values(v[i]) for i in range(dim)]
 
 
+# unused?
 def get_polytope(N):
     """
     Compute the (normalised) polytope cut out by N.
@@ -54,7 +56,8 @@ def get_polytope(N):
     return q.polyhedron()
 
 
-def farkas_solution(N):  # never use this
+# never use this
+def farkas_solution(N):
     """
     Look for an edge vector u so that all entries of u*N are positive,
     minimizing the sum of the entries of u*N.  If one exists, returns
@@ -244,8 +247,6 @@ def LMN_tri_angle(tri, angle):
     return out
 
 
-
-
 @liberal
 def analyze_deeply(tri, angle):
     N = edge_equation_matrix_taut(tri, angle)
@@ -275,10 +276,13 @@ def analyze_deeply(tri, angle):
         print((alex, hyper))
     return None
 
+
 # Code to compute the dimension of the taut cone as projected into
 # homology.
 
+
 # (co)homology
+
 
 def matrix_transpose(M):
     return list(map(lambda *row: list(row), *M))
@@ -324,6 +328,7 @@ def first_coboundary(triangulation):
 
 # extracting the taut cone
 
+
 def taut_rays_matrix(N):
     # get the extreme rays of the taut cone - note that the returned
     # vectors are non-negative because they "point up"
@@ -339,6 +344,7 @@ def taut_rays_matrix(N):
     # all of the entries are integers, represented in QQ, so we clean them.
     return [vector(ZZ(a) for a in ray) for ray in rays]
 
+
 @liberal
 def taut_rays(tri, angle):
     # get the extreme rays of the taut cone - note that the returned
@@ -347,60 +353,14 @@ def taut_rays(tri, angle):
     N = Matrix(N)
     return taut_rays_matrix(N)
 
-def cut_down_matrix(N, u):
-    """
-    Given N, an edge/face incidence matrix, and u, the sum of the
-    extremal rays, return the matrix N' where we (a) delete all face
-    columns (for all non-zero entries in u) and (b) delete all edge
-    rows (for all non-zero entries in the to-be-deleted face columns).
 
-    The matrix N' is the edge/face incidence matrix for the taut
-    triangulation after cutting along the surface given by u (and note
-    that we delete product regions).
-    """
-#    print(N, u)
-    num_edges = N.dimensions()[0]
-    num_faces = N.dimensions()[1]
-    cols_to_kill = [i for i in range(num_faces) if u[i] > 0]
-    rows_to_kill = [j for j in range(num_edges) if any([  N[j][i] != 0 for i in cols_to_kill  ]) ]
-#    print(cols_to_kill, rows_to_kill)
-    M = [N[j] for j in range(num_edges) if j not in rows_to_kill]
-    M = Matrix(M)
-    if M.dimensions() == (0, 0):
-        return M, 1 # fix
-    M = M.transpose()
-    L = [M[i] for i in range(num_faces) if i not in cols_to_kill]
-    L = Matrix(L)
-    L = L.transpose()
-    return L, 0 # fix
-
-@liberal
-def depth(tri, angle):
-    """
-    Given a transverse taut triangulation compute the depth of the
-    horizontal branched surface B.  If B is layered, we return zero.
-    If B carries nothing we return none.
-    """
-    N = edge_equation_matrix_taut(tri, angle)
-    N = Matrix(N)
-    depth = 0
-    while True:
-        rays = taut_rays_matrix(N)
-        if len(rays) == 0:
-            if depth != 0: print("Have you ever really looked at your hands?", depth)
-            return None
-        u = sum(rays)
-        N, e = cut_down_matrix(N, u)
-        if N.dimensions() == (0, 0):
-            return depth
-        depth = depth + 1
-        
 # the function
 
 # Factor this - produce the image in H_1 with basis the non-tree edges
 # and then take dimension.  This is better, because we get a Thurston face
 # in the "correct" basis - that is the basis where we computed the
 # taut polynomial.  This allows us to correctly compare Newton polytopes.
+
 
 @liberal
 def taut_cone_homological_dim(tri, angle):
@@ -423,6 +383,7 @@ def taut_cone_homological_dim(tri, angle):
     Anns = Cobs.kernel()
     return Rays.intersection(Anns).dimension()
 
+
 @liberal
 def projection_to_homology(tri,angle):
     non_tree_as_cycles = non_tree_edge_cycles(tri, angle)
@@ -434,6 +395,7 @@ def projection_to_homology(tri,angle):
     P = P.delete_rows(range(0, dimU-rank))
     A = P*Q
     return A
+
 
 @liberal
 def cone_in_homology(tri, angle):
@@ -465,3 +427,61 @@ def analyse_many_angles(tri):
                 dict_of_dimensions[dim] = set(angle_str)
             else:
                 dict_of_dimensions[dim].add(angle_str)
+
+
+# coumputing the depth
+
+
+def cut_down_matrix(N, u):
+    """
+    Given N, an edge/face incidence matrix, and u, the sum of the
+    extremal rays, return the matrix N' where we (a) delete all face
+    columns (for all non-zero entries in u) and (b) delete all edge
+    rows (for all non-zero entries in the to-be-deleted face columns).
+
+    The matrix N' is the edge/face incidence matrix for the taut
+    triangulation after cutting along the surface given by u (and note
+    that we delete product regions).
+    """
+#    print(N, u)
+    num_edges = N.dimensions()[0]
+    num_faces = N.dimensions()[1]
+    cols_to_kill = [ i for i in range(num_faces) if u[i] > 0 ]
+    rows_to_kill = [ j for j in range(num_edges) if any([  N[j][i] != 0 for i in cols_to_kill  ]) ]
+
+    if len(cols_to_kill) == num_faces: # layered so
+        return None, 0
+
+    if len(rows_to_kill) == num_edges: # not layered, but no edges left after cutting so
+        return None, 1
+
+    M = [N[j] for j in range(num_edges) if j not in rows_to_kill]
+    M = Matrix(M)
+    M = M.transpose()
+    Np = [M[i] for i in range(num_faces) if i not in cols_to_kill]
+    Np = Matrix(Np)
+    Np = Np.transpose()
+    return Np, 0
+
+
+@liberal
+def depth(tri, angle):
+    """
+    Given a transverse taut triangulation compute the depth of the
+    horizontal branched surface B.  If B is layered, we return zero.
+    If B carries nothing we return none.
+    """
+    N = edge_equation_matrix_taut(tri, angle)
+    N = Matrix(N)
+    depth = 0
+    while True:
+        rays = taut_rays_matrix(N)
+        if len(rays) == 0:
+            if depth != 0: print("Have you ever really looked at your hands?", depth)
+            return None
+        u = sum(rays)
+        N, e = cut_down_matrix(N, u)
+        if N == None:
+            return depth + e
+        depth = depth + 1
+        
