@@ -235,13 +235,15 @@ def LMN_tri_angle(tri, angle):
     non_triv, non_triv_sol = non_trivial_solution(N)
     full, full_sol = fully_carried_solution(N)
     if full:
-        out = "L"
+        out = "L"  # depth zero
     elif non_triv:
-        out = "M"
+        out = "M"  # Better to return the depth...
     else:
         assert farkas
-        out = "N"
+        out = "N"  # depth infinity 
     return out
+
+
 
 
 @liberal
@@ -322,12 +324,9 @@ def first_coboundary(triangulation):
 
 # extracting the taut cone
 
-@liberal
-def taut_rays(tri, angle):
+def taut_rays_matrix(N):
     # get the extreme rays of the taut cone - note that the returned
     # vectors are non-negative because they "point up"
-    N = edge_equation_matrix_taut(tri, angle)
-    N = Matrix(N)
     dim = N.dimensions()[1]
     elem_ieqs = [[0] + list(elem_vector(i, dim)) for i in range(dim)]
     N_rows = [v.list() for v in N.rows()]
@@ -340,12 +339,68 @@ def taut_rays(tri, angle):
     # all of the entries are integers, represented in QQ, so we clean them.
     return [vector(ZZ(a) for a in ray) for ray in rays]
 
+@liberal
+def taut_rays(tri, angle):
+    # get the extreme rays of the taut cone - note that the returned
+    # vectors are non-negative because they "point up"
+    N = edge_equation_matrix_taut(tri, angle)
+    N = Matrix(N)
+    return taut_rays_matrix(N)
+
+def cut_down_matrix(N, u):
+    """
+    Given N, an edge/face incidence matrix, and u, the sum of the
+    extremal rays, return the matrix N' where we (a) delete all face
+    columns (for all non-zero entries in u) and (b) delete all edge
+    rows (for all non-zero entries in the to-be-deleted face columns).
+
+    The matrix N' is the edge/face incidence matrix for the taut
+    triangulation after cutting along the surface given by u (and note
+    that we delete product regions).
+    """
+#    print(N, u)
+    num_edges = N.dimensions()[0]
+    num_faces = N.dimensions()[1]
+    cols_to_kill = [i for i in range(num_faces) if u[i] > 0]
+    rows_to_kill = [j for j in range(num_edges) if any([  N[j][i] != 0 for i in cols_to_kill  ]) ]
+#    print(cols_to_kill, rows_to_kill)
+    M = [N[j] for j in range(num_edges) if j not in rows_to_kill]
+    M = Matrix(M)
+    if M.dimensions() == (0, 0):
+        return M, 1 # fix
+    M = M.transpose()
+    L = [M[i] for i in range(num_faces) if i not in cols_to_kill]
+    L = Matrix(L)
+    L = L.transpose()
+    return L, 0 # fix
+
+@liberal
+def depth(tri, angle):
+    """
+    Given a transverse taut triangulation compute the depth of the
+    horizontal branched surface B.  If B is layered, we return zero.
+    If B carries nothing we return none.
+    """
+    N = edge_equation_matrix_taut(tri, angle)
+    N = Matrix(N)
+    depth = 0
+    while True:
+        rays = taut_rays_matrix(N)
+        if len(rays) == 0:
+            if depth != 0: print("Have you ever really looked at your hands?", depth)
+            return None
+        u = sum(rays)
+        N, e = cut_down_matrix(N, u)
+        if N.dimensions() == (0, 0):
+            return depth
+        depth = depth + 1
+        
 # the function
 
 # Factor this - produce the image in H_1 with basis the non-tree edges
 # and then take dimension.  This is better, because we get a Thurston face
 # in the "correct" basis - that is the basis where we computed the
-# taut polynomial.  This allows us to correctly compare Newton polytopes. 
+# taut polynomial.  This allows us to correctly compare Newton polytopes.
 
 @liberal
 def taut_cone_homological_dim(tri, angle):
@@ -410,5 +465,3 @@ def analyse_many_angles(tri):
                 dict_of_dimensions[dim] = set(angle_str)
             else:
                 dict_of_dimensions[dim].add(angle_str)
-
-
