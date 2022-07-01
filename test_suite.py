@@ -459,7 +459,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         print("testing depth")
         for sig in random.sample(veering_isosigs[:3000], 3):
             is_finite, depth = taut_polytope.depth(sig)
-            LMN = LMN_tri_angle(sig)
+            LMN = taut_polytope.LMN_tri_angle(sig)
             assert ((LMN == "L" and is_finite and depth == 0) or
                     (LMN == "M" and depth > 0) or
                     (LMN == "N" and (not is_finite) and depth == 0)), sig

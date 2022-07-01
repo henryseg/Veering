@@ -27,7 +27,8 @@ def get_many_sigs(snappy_name, tries):
 def is_fibered(snappy_name, tries = 1000, with_data = False):
     """
     Given an snappy_name, tries to find a layered transverse taut
-    triangulation for the manifold via random search.
+    triangulation for the manifold via random search.  Thus an answer
+    of "False" is not rigorous.
     """
     sigs = get_many_sigs(snappy_name, tries)
     for sig in sigs:
