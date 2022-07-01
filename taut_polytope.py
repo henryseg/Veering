@@ -240,7 +240,7 @@ def LMN_tri_angle(tri, angle):
     if full:
         out = "L"  # depth zero
     elif non_triv:
-        out = "M"  # Better to return the depth...
+        out = "M"  # who knows!
     else:
         assert farkas
         out = "N"  # depth infinity 
@@ -441,9 +441,12 @@ def cut_down_matrix(N, u):
 
     The matrix N' is the edge/face incidence matrix for the taut
     triangulation after cutting along the surface given by u (and note
-    that we delete product regions).
+    that we delete product regions).  If N' is empty, then there are
+    two possibilities: either there are no internal faces left, or
+    there are.  If there are none, then we are done.  If there are
+    some, then we have to cut one more time, but there is no matrix
+    left - so we return the "error" as a second argument.
     """
-#    print(N, u)
     num_edges = N.dimensions()[0]
     num_faces = N.dimensions()[1]
     cols_to_kill = [ i for i in range(num_faces) if u[i] > 0 ]
@@ -468,19 +471,22 @@ def cut_down_matrix(N, u):
 def depth(tri, angle):
     """
     Given a transverse taut triangulation compute the depth of the
-    horizontal branched surface B.  If B is layered, we return zero.
-    If B carries nothing we return none.
+    horizontal branched surface B.  If the depth is finite we return
+    (True, depth).  If the depth is not defined then we return (False,
+    cuts).  Here cuts is the number of times we must cut before
+    getting to a sutured manifold equipped with a veering
+    triangulation (possibly with boundary) that carries nothing.
     """
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
-    depth = 0
+    cuts = 0
     while True:
         rays = taut_rays_matrix(N)
         if len(rays) == 0:
-            return None  # should be (Infinite, depth)
+            return (False, cuts)
         u = sum(rays)
         N, e = cut_down_matrix(N, u)
         if N == None:
-            return depth + e  # should be (Finite, depth + e)
-        depth = depth + 1
+            return (True, cuts + e)
+        cuts = cuts + 1
         

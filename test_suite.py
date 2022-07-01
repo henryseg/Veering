@@ -98,7 +98,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
         assert (branch == branch2) and (angle == angle2), sig
 
-        branch_original = branch[:] #copy
+        branch_original = branch[:]  # copy
         face_num = random.randrange(tri.countTriangles())
         out = pachner.twoThreeMove(tri, face_num, branch = branch, return_edge = True)
         if out != False:
@@ -113,9 +113,9 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     print("testing taut and branched drill + semiflows on drillings")
     for sig in random.sample(veering_isosigs, smaller_num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
-        branch = branched_surface.upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
+        branch = branched_surface.upper_branched_surface(tri, angle)  # also checks for veering and transverse taut
         found_loops = flow_cycles.find_flow_cycles(tri, branch)
-        for loop in random.sample(found_loops, min(len(found_loops), 5)):  ## drill along at most 5 loops
+        for loop in random.sample(found_loops, min(len(found_loops), 5)):  # drill along at most 5 loops
             tri, angle = taut.isosig_to_tri_angle(sig)
             branch = branched_surface.upper_branched_surface(tri, angle) 
             tri_loop = flow_cycles.flow_cycle_to_triangle_loop(tri, branch, loop)
@@ -454,7 +454,16 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             for angle in T.exotic_angles():
                 assert taut_polytope.taut_cone_homological_dim(tri, angle) == 0, sig
                 assert is_eo == transverse_taut.is_transverse_taut(tri, angle), sig
-
+        
+    if sage_working:
+        print("testing depth")
+        for sig in random.sample(veering_isosigs[:3000], 3):
+            is_finite, depth = taut_polytope.depth(sig)
+            LMN = LMN_tri_angle(sig)
+            assert ((LMN == "L" and is_finite and depth == 0) or
+                    (LMN == "M" and depth > 0) or
+                    (LMN == "N" and (not is_finite) and depth == 0)), sig
+                   
     ### test for drill_midsurface_bdy: drill then fill, check you get the same manifold
 
     if sage_working:
@@ -540,8 +549,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             elif i == 3:
                 assert tri.isoSig() == 'jLLALMQcecdhggiiihqrwqwrafo'
                 #print('spiq to rafo passed')
+
                 
-                        
     if sage_working:
         print("all tests depending on sage passed")
 
