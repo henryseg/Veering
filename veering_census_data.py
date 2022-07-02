@@ -14,6 +14,7 @@ from veering import is_veering
 from transverse_taut import is_transverse_taut, symmetry_group_size
 from edge_orientability import is_edge_orientable
 from boundary_triangulation import generate_boundary_triangulation
+from taut_polytope import depth as tp_depth
 
 def compute_census_data(filename_in, filename_out, functions, verbose = 0):
 	### each function takes in data about the triangulation, returns a string
@@ -37,6 +38,7 @@ def compute_census_data(filename_in, filename_out, functions, verbose = 0):
 
 		if verbose > 0 and i % 1000 ==0:
 			print(i, line_out)
+			write_data_file(out, filename_out)
 	write_data_file(out, filename_out)
 
 def veering_isosig(triang_data):
@@ -81,7 +83,19 @@ def ladder_counts(triang_data):
 	counts = str(b.ladder_counts())
 	return counts.replace(' ','')
 
-def LMN_from_old_data(triang_data): ## layered vs measurable vs non-measurable
+def depth(triang_data):
+	is_finite, cuts = tp_depth(triang_data['sig'])
+	if is_finite:
+		out = "F"
+	else:
+		out = "N"
+	out = out + str(cuts)
+	return out
+
+# def LMN_from_old_data(triang_data): ## layered vs measurable vs non-measurable
+# 	return triang_data['old_data'][1]
+
+def depth_from_old_data(triang_data):
 	return triang_data['old_data'][1]
 
 def num_cusps_from_old_data(triang_data):
@@ -111,7 +125,7 @@ def homology_from_old_data(triang_data):
 def other_names_from_old_data(triang_data):
 	return triang_data['old_data'][10]
 
-functions_list = [veering_isosig, LMN_from_old_data, num_cusps_from_old_data, is_geometric_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, ladder_counts_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
+functions_list = [veering_isosig, depth_from_old_data, num_cusps_from_old_data, is_geometric_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, ladder_counts_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
 
 def recompute():
 	compute_census_data('Data/veering_census_with_data.txt', 'Data/veering_census_with_more_data.txt', functions_list, verbose = 1)

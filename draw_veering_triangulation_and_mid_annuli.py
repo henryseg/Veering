@@ -875,7 +875,7 @@ def calculate_orientable_mid_surfaces_from_veering_isosigs_file(veering_isosigs_
         file_out.write(line + '\n')
     file_out.close()
 
-if __name__ == '__main__':
+def main():
     # draw_triangulations_from_veering_isosigs_file('Veering_census/veering_census_up_to_12.txt', '../Veering_mid-annuli', '../Veering_tetrahedra')
 
     # calculate_well_framed_from_veering_isosigs_file('Veering_census/veering_census.txt', 'veering_census_with_well_framed.txt')
@@ -909,11 +909,12 @@ if __name__ == '__main__':
     #         'oLvLAvwQQQccfghkmnkjklnmmnhialaatiqqqffff_20102220210100',
     #         'oLvLAwzPQQccfghhilkjnmmnmnhialgoiqqffffff_20102220200011']
 
-    flat_toggles = ['qLLvAvAMQLQkbeehklmnjnnppopooxxxahahxxxaxqxxxq_2111200221111100',
-                    'qLLvAvPMQLQkbeehlkmnjnnpoopopxxxaaxxxxxaxaxxax_2111200221111100',
-                    'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200']
-    for sig in flat_toggles:
-        draw_triangulation_from_veering_isosig(sig)
+    # flat_toggles = ['qLLvAvAMQLQkbeehklmnjnnppopooxxxahahxxxaxqxxxq_2111200221111100',
+    #                 'qLLvAvPMQLQkbeehlkmnjnnpoopopxxxaaxxxxxaxaxxax_2111200221111100',
+    #                 'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200']
+    # for sig in flat_toggles:
+    #     draw_triangulation_from_veering_isosig(sig)
+
 
     # draw_triangulation_from_veering_isosig('mvvLPQwQQfghffjikllklkaaaaaaaaaaaaa_102021111100')
 
