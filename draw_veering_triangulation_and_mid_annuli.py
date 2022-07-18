@@ -895,6 +895,8 @@ def main():
     # draw_triangulation_from_veering_isosig('iLLLQPcbeefeghhhhhhqhqxxa_21112001')
     # draw_triangulation_from_veering_isosig('iLLLQPcbeefeghhhhhhqhqxxa_01110221')
 
+    # draw_triangulation_from_veering_isosig('qLAMzMzMzMLkbcbdefghijklmnppphhwhhhhhhhhhhhnkw_2112121212121211')
+
     # draw_triangulations_from_veering_isosigs_file('Gadgets/double_gadget_veering_isosigs.txt', 'Gadgets/Veering_mid-annuli', 'Gadgets/Veering_tetrahedra' )
 
     # draw_triangulations_from_veering_isosigs_file('iLLLQPcbeefeghhhhhhqhqxxa_veer_isosigs.txt', 'iLLLQPcbeefeghhhhhhqhqxxa_mid-annuli', 'iLLLQPcbeefeghhhhhhqhqxxa_veering_tetrahedra' )
@@ -926,10 +928,9 @@ def main():
     # # for sig in census[:20]:
     # #     draw_triangulation_from_veering_isosig(sig)
 
-    # # vol_inc = parse_data_file('Data/volume_rise.txt')
-    # # for line in vol_inc:
-    # #     sig, tet_num = line.split(" ")
-    # #     draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/Volume_rise/' + sig + '_tet_' + tet_num +'_mid-annuli.pdf')
+    only_toggles = parse_data_file('Data/only_toggles.txt')
+    for sig in only_toggles:
+        draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/only_toggles/' + sig +'_mid-annuli.pdf')
 
     # data = parse_data_file('Data/low_volume_stacks.txt')
     # for line in data:

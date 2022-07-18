@@ -136,9 +136,10 @@ def explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 4):
     return out
 
 
-if __name__ == "__main__":
-    tri, angle = isosig_to_tri_angle("cPcbbbdxm_10")
+def main():
+    # tri, angle = isosig_to_tri_angle("cPcbbbdxm_10")
+    tri, angle = isosig_to_tri_angle("gLAMPbbcdeffdhwqqqj_210202")
 
-    out = explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 6)
+    out = explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 7)
     for sig in out:
         print(sig)
