@@ -271,8 +271,3 @@ def taut_polynomial_via_interpolate(tri, angle, cycles = [], alpha = True):
     # derivatives, back compute, and win.
     # This might also work in the multivariable case.
     return None
-
-
-
-            
-    
