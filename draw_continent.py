@@ -816,21 +816,22 @@ def main():
     # max_num_tetrahedra = 50000
     # max_num_tetrahedra = 100000
     # max_num_tetrahedra = 400000
-    max_num_tetrahedra = 2000000
-    # max_num_tetrahedra = 30000000
+    # max_num_tetrahedra = 2000000
+    max_num_tetrahedra = 50000000
     # max_length = 0.4
     # max_length = 0.3
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
     # max_length = 0.1
-    max_length = 0.09
+    # max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
     # max_length = 0.05
     # max_length = 0.02
+    # max_length = 0.015
     # max_length = 0.01
-    # max_length = 0.005
+    max_length = 0.005
 
     draw_args['ct_lw'] = 0.2 * max_length 
 
@@ -840,13 +841,13 @@ def main():
     # build_type = 'build_explore_prongs'
     build_type = 'build_long_and_mid'
 
-    # veering_isosig = 'cPcbbbiht_12'
+    veering_isosig = 'cPcbbbiht_12'
     # # # # veering_isosig = 'cPcbbbdxm_10'
     # veering_isosig = 'dLQacccjsnk_200'
     # veering_isosig = 'eLMkbcddddedde_2100'
     # veering_isosig = 'eLAkaccddjsnak_2001'
     # veering_isosig = 'gLAMPbbcdeffdhwqqqj_210202'
-    veering_isosig = 'fLLQcbecdeehhnkei_12001'
+    # veering_isosig = 'fLLQcbecdeehhnkei_12001'
     # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # veering_isosig = 'iLLLAQccdffgfhhhqgdatgqdm_21012210' ## no symmetry - helps us spot errors
     # veering_isosig = 'iLLPwQcccdfehghhhggaahhbg_20102211'
@@ -893,15 +894,15 @@ def main():
     # draw_args['expand_fund_dom'] = True
 
 
-    draw_args['draw_CT_curve'] = True
+    draw_args['draw_CT_curve'] = False
     draw_args['draw_lightning_curve'] = False
-    draw_args['draw_jordan_curve'] = False
+    draw_args['draw_jordan_curve'] = True
     draw_args['draw_dividers'] = False
     draw_args['draw_landscapes'] = False
     draw_args['draw_box_for_cohom_frac'] = False
     draw_args['draw_alignment_dots'] = False
     draw_args['draw_desired_vertices'] = False
-    draw_args['expand_fund_dom'] = False
+    draw_args['expand_fund_dom'] = True  ### needed for jordan curve?
 
     draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
