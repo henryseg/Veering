@@ -4,8 +4,7 @@
 
 import random
 
-from file_io import parse_data_file, read_from_pickle
-
+from .file_io import parse_data_file, read_from_pickle
 
 def check_polynomial_coefficients(p, correct_coeffs):
     p = p.coefficients()
@@ -17,8 +16,8 @@ def check_polynomial_coefficients(p, correct_coeffs):
     
 def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
-    import taut
-    veering_isosigs = parse_data_file("Data/veering_census.txt")
+    from . import taut
+    veering_isosigs = parse_data_file("veering_census.txt")
     print("testing is_taut")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -32,19 +31,24 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         # we only test this round trip - the other round trip does not
         # make sense because tri->isosig is many to one.
 
-    import transverse_taut
+    from . import transverse_taut
     print("testing is_transverse_taut")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert transverse_taut.is_transverse_taut(tri, angle), sig
 
-    non_transverse_taut_isosigs = parse_data_file("Data/veering_non_transverse_taut_examples.txt")
-    print("testing not is_transverse_taut")
-    for sig in non_transverse_taut_isosigs:
-        tri, angle = taut.isosig_to_tri_angle(sig)
-        assert not transverse_taut.is_transverse_taut(tri, angle), sig
+    try:
+        non_transverse_taut_isosigs = parse_data_file("veering_non_transverse_taut_examples.txt")
+    except ValueError:
+        print("ignore is_transverse_taut (no data file)")
+        non_transverse_taut_isosigs = None
+    if non_transverse_taut_isosigs is not None:
+        print("testing not is_transverse_taut")
+        for sig in non_transverse_taut_isosigs:
+            tri, angle = taut.isosig_to_tri_angle(sig)
+            assert not transverse_taut.is_transverse_taut(tri, angle), sig
 
-    import veering
+    from . import veering
     print("testing is_veering")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -54,7 +58,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
     # # tests to see that it makes only veering triangulations as it goes
 
-    import veering_dehn_surgery
+    from . import veering_dehn_surgery
     print("testing veering_dehn_surgery")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -62,7 +66,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering.is_veering(tri_s, angle_s), sig
             
-    import veering_fan_excision
+    from . import veering_fan_excision
     print("testing veering_fan_excision")
     m003, _ = taut.isosig_to_tri_angle('cPcbbbdxm_10')
     m004, _ = taut.isosig_to_tri_angle('cPcbbbiht_12')
@@ -74,7 +78,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             assert ( excised_tri.isIsomorphicTo(m003) != None or
                      excised_tri.isIsomorphicTo(m004) != None ), sig
 
-    import pachner
+    from . import pachner
     print("testing pachner with taut structure")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -85,7 +89,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             tri3, angle3 = pachner.threeTwoMove(tri2, edge_num, angle = angle2)
             assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3), sig
 
-    import branched_surface
+    from . import branched_surface
     import regina
     print("testing branched_surface and pachner with branched surface")
     for sig in random.sample(veering_isosigs, num_to_check):
@@ -108,8 +112,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
             assert branch_original in all_branches, sig
 
-    import flow_cycles
-    import drill
+    from . import flow_cycles
+    from . import drill
     print("testing taut and branched drill + semiflows on drillings")
     for sig in random.sample(veering_isosigs, smaller_num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -128,7 +132,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
     try:
         import snappy
-        import snappy_util
+        from . import snappy_util
         snappy_working = True
     except:
         print("failed to import from snappy?")
@@ -150,7 +154,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
                         assert alg_int == 0, M.name()
                        
     if snappy_working:
-        import veering_drill_midsurface_bdy
+        from . import veering_drill_midsurface_bdy
         print("testing veering drilling and filling")
         for sig in random.sample(veering_isosigs[:3000], num_to_check):
             T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
@@ -279,7 +283,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         sage_working = False
 
     if sage_working:
-        import taut_polytope
+        from . import taut_polytope
         print("testing is_layered")
         for sig in veering_isosigs[:17]:
             assert taut_polytope.is_layered(sig), sig
@@ -287,16 +291,21 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             assert not taut_polytope.is_layered(sig), sig
 
     if sage_working:
-        import fibered
-        print("testing is_fibered")
-        mflds = parse_data_file("Data/mflds_which_fiber.txt")
-        mflds = [line.split("\t")[0:2] for line in mflds]
-        for (name, kind) in random.sample(mflds, num_to_check):        
-            assert fibered.is_fibered(name) == (kind == "fibered"), name
+        from . import fibered
+        try:
+            mflds = parse_data_file("mflds_which_fiber.txt")
+        except ValueError:
+            print("ignore is_fibered (no data file)")
+            mflds = None
+        if mflds is not None:
+            print("testing is_fibered")
+            mflds = [line.split("\t")[0:2] for line in mflds]
+            for (name, kind) in random.sample(mflds, num_to_check):        
+                assert fibered.is_fibered(name) == (kind == "fibered"), name
 
     if sage_working:
-        import veering_polynomial
-        import taut_polynomial
+        from . import veering_polynomial
+        from . import taut_polynomial
         print("testing veering poly")
         for sig in veering_polys:
             p = veering_polynomial.veering_polynomial(sig)
@@ -398,7 +407,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         # }
 
     if sage_working:
-        import taut_carried     
+        from . import taut_carried     
         print("testing boundary cycles")
         for sig, surface in boundary_cycles:
             surface_list = list(surface)
@@ -431,8 +440,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             # assert p.__repr__() == alex_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
-        import edge_orientability
-        import taut_euler_class
+        from . import edge_orientability
+        from . import taut_euler_class
         print("testing euler and edge orientability")
         for sig in random.sample(veering_isosigs[:3000], 3):
             # Theorem: If (tri, angle) is edge orientable then e = 0.
@@ -467,13 +476,13 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     ### test for drill_midsurface_bdy: drill then fill, check you get the same manifold
 
     if sage_working:
+        import regina
         from sage.combinat.words.word_generators import words
         from sage.modules.free_module_integer import IntegerLattice
         from sage.modules.free_module import VectorSpace
         from sage.matrix.constructor import Matrix
-        import z_charge
-        import z2_taut
-        import regina
+        from . import z_charge
+        from . import z2_taut
 
         ZZ2 = ZZ.quotient(ZZ(2))
 
@@ -511,8 +520,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
                 assert z_charge.can_deal_with_reduced_angles(M), sig
     
     if sage_working:
-        import carried_surface
-        import mutation
+        from . import carried_surface
+        from . import mutation
         print("testing building carried surfaces and mutations")
         sigs_weights = [
             ['iLLLPQccdgefhhghqrqqssvof_02221000',  (0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0)], 

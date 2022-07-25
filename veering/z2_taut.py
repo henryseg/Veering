@@ -6,8 +6,9 @@
 
 import regina
 from copy import deepcopy
-from taut import liberal, edge_pair_to_edge_numbers, vert_pair_to_edge_pair
-from fundamental_domain import non_tree_edge_loops
+
+from .taut import liberal, edge_pair_to_edge_numbers, vert_pair_to_edge_pair
+from .fundamental_domain import non_tree_edge_loops
 
 # check Z2 tautness
 

@@ -4,8 +4,8 @@
 
 # Computation of loops in pi_1(M) by building a fundamental domain realised as a spanning tree in the dual 1 skeleton.
 
-from taut import liberal
-from transverse_taut import is_transverse_taut
+from .taut import liberal
+from .transverse_taut import is_transverse_taut
 
 verbose = 0
 
@@ -170,7 +170,7 @@ def non_tree_edge_cycles(tri, angle):
     return cycles
 
 if __name__ == '__main__':
-    from taut import isosig_to_tri_angle
+    from .taut import isosig_to_tri_angle
     tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
     loops = non_tree_edge_loops(tri, include_tetrahedra = True)
     for (faces,tets) in loops:

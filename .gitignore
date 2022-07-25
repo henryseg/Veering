@@ -4,3 +4,5 @@
 Images/**
 Output/**
 Data/veering_shapes.pkl
+veering.egg-info/
+dist/

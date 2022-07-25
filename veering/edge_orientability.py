@@ -1,7 +1,8 @@
 import regina
-from transverse_taut import is_transverse_taut, get_tet_top_vert_nums
-from veering import is_veering
-from taut import liberal, vert_pair_to_edge_num
+
+from .transverse_taut import is_transverse_taut, get_tet_top_vert_nums
+from .veering import is_veering
+from .taut import liberal, vert_pair_to_edge_num
 
 def regina_edge_orientation_agrees(tet, vert_pair):
     """

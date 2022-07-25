@@ -6,8 +6,9 @@
 # transverse taut triangulation.
 
 import regina # needed inside of imported files
-from taut import liberal
-from transverse_taut import is_transverse_taut, convert_tetrahedron_coorientations_to_faces, edge_side_face_collections
+
+from .taut import liberal
+from .transverse_taut import is_transverse_taut, convert_tetrahedron_coorientations_to_faces, edge_side_face_collections
 
 @liberal
 def boundary_cycles_from_surface(tri, angle, surface, tet_vert_coorientations = None):

@@ -7,8 +7,8 @@
 
 import snappy
 
-from file_io import output_to_pickle
-from taut import isosig_to_tri_angle
+from .file_io import output_to_pickle
+from .taut import isosig_to_tri_angle
 
 
 # Shapes

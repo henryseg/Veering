@@ -5,11 +5,21 @@ import pickle
 
 def parse_data_file(filename):
     """Parse a file into lines."""
-    data_file = open(filename, 'r') # read mode
-    out = []
-    for line in data_file:
-        data_line = line.split('\n')[0] # remove '\n' from the end of each line, if it is there
-        out.append(data_line)
+    from pathlib import Path
+
+    # 1. try relative path
+    data_file = Path(filename)
+    if not data_file.exists():
+        # 2. try data path in the installation folder
+        data_file = Path(__file__).parent / "data" / filename
+        if not data_file.exists():
+            # 3. try extra_data path in the installation folder
+            data_file = Path(__file__).parent / "extra_data" / filename
+            if not data_file.exists():
+                raise ValueError('no data file {}'.format(filename))
+
+    data_file = data_file.open()
+    out = [line.strip() for line in data_file.readlines()]
     data_file.close()
     return out
 

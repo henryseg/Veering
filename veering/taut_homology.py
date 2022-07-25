@@ -12,8 +12,8 @@ from sage.modules.free_module_element import vector
 from sage.matrix.constructor import Matrix
 from sage.rings.polynomial.laurent_polynomial_ring import LaurentPolynomialRing
 
-from fundamental_domain import spanning_dual_tree
-from transverse_taut import is_transverse_taut, edge_side_face_collections
+from .fundamental_domain import spanning_dual_tree
+from .transverse_taut import is_transverse_taut, edge_side_face_collections
 
 verbose = 0
 

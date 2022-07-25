@@ -5,10 +5,14 @@
 # Pachner moves that respect taut and branched structures
 
 import regina
-from taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair, is_taut, there_is_a_pi_here
-from branched_surface import large_edge_of_face, determine_possible_branch_given_two_faces, determine_possible_branch_given_three_faces, is_branched
-from branched_surface import all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface
-from branched_surface import has_non_sing_semiflow
+import random
+
+from .file_io import parse_data_file
+from . import taut
+from .taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair, is_taut, there_is_a_pi_here
+from .branched_surface import (large_edge_of_face, determine_possible_branch_given_two_faces, determine_possible_branch_given_three_faces, is_branched,
+                              all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface, has_non_sing_semiflow)
+
 
 def twoThreeMove(tri, face_num, angle = None, branch = None, perform = True, return_edge = False, return_vertex_perm = False, return_edge_consequences = False):
     """Apply a 2-3 move to a triangulation with a taut structure and/or branched surface, if possible. 
@@ -617,11 +621,6 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
     if return_vertex_perm:
         output.append(vertex_permutation)
     return output
-
-import random
-from file_io import parse_data_file
-import taut
-import branched_surface
 
 def test(num_to_check = 1000):
 

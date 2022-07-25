@@ -3,9 +3,10 @@
 #
 
 import regina #needed inside of imported files
-from transverse_taut import get_top_and_bottom_nums
-from taut import liberal, isosig_to_tri_angle
-from veering import veering_triangulation
+
+from .transverse_taut import get_top_and_bottom_nums
+from .taut import liberal, isosig_to_tri_angle
+from .veering import veering_triangulation
 
 @liberal
 def fan_stacks(tri, angle):
@@ -154,10 +155,10 @@ if __name__ == '__main__':
 
     # print fan_stacks(sig)
 
-    import veering
-    import transverse_taut
-    import taut
-    from file_io import parse_data_file
+    from . import veering
+    from . import transverse_taut
+    from . import taut
+    from .file_io import parse_data_file
     census = parse_data_file('Data/veering_census.txt')
 
     for sig in census[:200]:
@@ -166,6 +167,4 @@ if __name__ == '__main__':
         assert veering.is_veering(tri, angle)
         assert transverse_taut.is_transverse_taut(tri, angle)
         # print sig, fan_stacks(sig)
-
-
 

@@ -17,10 +17,10 @@ from sage.modules.free_module_element import vector
 from sage.geometry.cone import Cone
 from sage.rings.integer_ring import ZZ
 
-from taut import liberal
-from transverse_taut import is_transverse_taut
-from taut_homology import edge_equation_matrix_taut, elem_vector, faces_in_smith, rank_of_quotient
-from fundamental_domain import non_tree_edge_cycles
+from .taut import liberal
+from .transverse_taut import is_transverse_taut
+from .taut_homology import edge_equation_matrix_taut, elem_vector, faces_in_smith, rank_of_quotient
+from .fundamental_domain import non_tree_edge_cycles
 
 
 # Examining edge/face matrices

@@ -4,13 +4,13 @@
 
 # Code for working with branched surfaces.
 
-from taut import isosig_to_tri_angle, isosig_from_tri_angle, edge_number_to_edge_pair, edge_num_to_vert_pair
-from taut import vert_pair_to_edge_num, unsorted_vert_pair_to_edge_pair, edge_pair_to_edge_numbers
 from itertools import product
 import string
 
-from veering import is_veering
-from transverse_taut import is_transverse_taut
+from .taut import (isosig_to_tri_angle, isosig_from_tri_angle, edge_number_to_edge_pair, edge_num_to_vert_pair,
+                   vert_pair_to_edge_num, unsorted_vert_pair_to_edge_pair, edge_pair_to_edge_numbers)
+from .veering import is_veering
+from .transverse_taut import is_transverse_taut
 
 def isosig_to_tri_angle_branch(isosig):
     """

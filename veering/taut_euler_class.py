@@ -2,15 +2,14 @@
 # taut_euler_class.py
 #
 
-
-from file_io import parse_data_file, write_data_file
-from taut import liberal, isosig_to_tri_angle
-from transverse_taut import is_transverse_taut
-
 from sage.matrix.constructor import Matrix
 from sage.modules.free_module_element import vector
 from sage.arith.misc import gcd
 from sage.arith.functions import lcm
+
+from .file_io import parse_data_file, write_data_file
+from .taut import liberal, isosig_to_tri_angle
+from .transverse_taut import is_transverse_taut
 
 
 #

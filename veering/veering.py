@@ -5,8 +5,9 @@
 # Check if a taut triangulation is veering
 
 import regina #needed inside of imported files
-from transverse_taut import is_transverse_taut, get_tet_top_and_bottom_edges
-from taut import liberal, is_taut, vert_pair_to_edge_num, edge_num_to_vert_pair
+
+from .transverse_taut import is_transverse_taut, get_tet_top_and_bottom_edges
+from .taut import liberal, is_taut, vert_pair_to_edge_num, edge_num_to_vert_pair
 
 def tet_type(triangulation, tet_num, veering_colours):
     num_L = [ veering_colours[triangulation.tetrahedron(tet_num).edge(i).index()] for i in range(6) ].count("blue")
@@ -139,5 +140,5 @@ class veering_triangulation():
     ### imported methods
 
     def is_edge_orientable(self, return_type = "boolean"):
-        from edge_orientability import is_edge_orientable as is_eo
+        from .edge_orientability import is_edge_orientable as is_eo
         return is_eo(self.tri, self.angle, return_type = return_type)

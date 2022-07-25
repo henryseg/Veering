@@ -5,11 +5,12 @@
 ### Given a triangulation and a loop of triangles, drill along that loop
 
 import regina
-from taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
-from branched_surface import is_branched, upper_branched_surface, apply_swaps_to_branched_surface, has_non_sing_semiflow
-from transverse_taut import is_transverse_taut
-
 import snappy ### for diagnostics only
+
+from .taut import isosig_to_tri_angle, reverse_tet_orientation, is_taut
+from .branched_surface import is_branched, upper_branched_surface, apply_swaps_to_branched_surface, has_non_sing_semiflow
+from .transverse_taut import is_transverse_taut
+
 
 ### anatomy of a loop of triangles:
 ###

@@ -12,10 +12,10 @@ from sage.arith.misc import gcd
 from sage.rings.rational_field import QQ
 from sage.matrix.constructor import Matrix
 
-from taut import liberal, vert_pair_to_edge_num
-from transverse_taut import is_transverse_taut
-from fundamental_domain import spanning_dual_tree
-from taut_homology import (edge_equation_matrix_taut, group_ring,
+from .taut import liberal, vert_pair_to_edge_num
+from .transverse_taut import is_transverse_taut
+from .fundamental_domain import spanning_dual_tree
+from .taut_homology import (edge_equation_matrix_taut, group_ring,
                            faces_in_laurent, matrix_laurent_to_poly,
                            normalise_poly, epimorphism_in_laurent)
 

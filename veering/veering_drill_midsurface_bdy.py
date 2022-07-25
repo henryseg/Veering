@@ -7,9 +7,10 @@
 ### see the file drill_fans_and_toggles_along_bdyS.3dm
 
 import regina #needed inside of imported files
-from transverse_taut import is_transverse_taut, get_top_and_bottom_nums
-from taut import liberal, is_taut, unsorted_vert_pair_to_edge_pair
-from veering import is_veering, veering_triangulation
+
+from .transverse_taut import is_transverse_taut, get_top_and_bottom_nums
+from .taut import liberal, is_taut, unsorted_vert_pair_to_edge_pair
+from .veering import is_veering, veering_triangulation
 
 @liberal
 def drill_midsurface_bdy(tri, angle):

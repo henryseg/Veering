@@ -9,9 +9,10 @@
 
 
 import regina 
-from transverse_taut import is_transverse_taut, edge_side_face_collections
-from taut import liberal
-from veering import is_veering
+
+from .transverse_taut import is_transverse_taut, edge_side_face_collections
+from .taut import liberal
+from .veering import is_veering
 
 def where_faces_are_uppermost(tri, angle, tet_vert_coorientations = None):
     """

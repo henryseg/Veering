@@ -5,9 +5,9 @@
 import regina
 import snappy
 
-from taut import taut_regina_angle_struct_to_taut_struct
-from taut_polytope import is_layered
-from transverse_taut import is_transverse_taut
+from .taut import taut_regina_angle_struct_to_taut_struct
+from .taut_polytope import is_layered
+from .transverse_taut import is_transverse_taut
 
 # Best effort attempt to detect fibered manifolds
 
