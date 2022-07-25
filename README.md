@@ -7,6 +7,14 @@ We thank Nathan Dunfield for many helpful comments (and for some code).
 
 ### Installation
 
+
+To install Veering inside Sage via the command line type:
+
+    sage -pip install git+https://github.com/henryseg/Veering
+
+If you wish to install in Python, replace `sage -pip` by `pip`
+in the above command.
+
 Essentially all of the veering code relies on regina; some of it
 relies on snappy and some on SageMath. Other parts rely on the 
 Python vector graphics package pyx. Installation instructions for 
@@ -16,34 +24,21 @@ https://doc.sagemath.org/html/en/installation/ \
 https://snappy.math.uic.edu/installing.html \
 https://github.com/3-manifolds/regina_wheels
 
-To install Veering via the command line type:
+### Testing
 
-    git clone https://github.com/henryseg/Veering
+For a sanity check do, run in a sage console:
 
-### Download and testing
-
-After cloning or downloading the veering code, move into the new
-directory (called 'Veering' if cloned) and run the test suite. The
-exact command depends on the location of your regina install(s). From
-the command line:
-
-    python test_suite.py
-    regina-python test_suite.py
-    sage -python test_suite.py
-
-or inside of sage:
-
-    sage: from test_suite import run_tests
+    sage: from veering.test_suite import run_tests
     sage: run_tests()
 
 ### Usage
 
-As an example, start a sage session in the directory and type:
+As an example, start a sage sessiond and type:
 
-    sage: from file_io import parse_data_file
-    sage: veering_isosigs = parse_data_file('Data/veering_census.txt')
+    sage: from veering.file_io import parse_data_file
+    sage: veering_isosigs = parse_data_file('veering_census.txt')
 
-The list veering_isosigs now contains all taut isomorphism signatures
+The list `veering_isosigs` now contains all taut isomorphism signatures
 for the veering triangulations with at most 16 tetrahedra. These are
 ordered lexicographically.
 
@@ -56,19 +51,19 @@ underscore is the isomorphism signature for the triangulation; the
 string after the underscore records the positions of the edges with
 dihedral angle pi in each tetrahedron.
 
-    sage: import taut_polytope
+    sage: from veering import taut_polytope
     sage: taut_polytope.is_layered(sig)
     True
 
 This taut structure is layered; we deduce that the figure eight knot
 is a fibered knot.
 
-    sage: import taut_polynomial
+    sage: from veering import taut_polynomial
     sage: taut_polynomial.taut_polynomial_via_tree(sig)
     a^2 - 3*a + 1
     sage: taut_polynomial.taut_polynomial_via_tree(sig, mode = 'alexander')
     a^2 - 3*a + 1
-    sage: import veering_polynomial
+    sage: from veering import veering_polynomial
     sage: veering_polynomial.veering_polynomial(sig)
     a^3 - 4*a^2 + 4*a - 1
     
@@ -78,12 +73,12 @@ equal to the Alexander polynomial of the underlying manifold; this is
 not true in general.
 
     sage: sig = veering_isosigs[257]
-    sage: import taut_polytope
+    sage: from veering import taut_polytope
     sage: taut_polytope.cone_in_homology(sig)
     [N(1, -1), N(1, 1)]
     
 The cone of homology classes carried by the veering triangulation 
-veering_isosigs[257] is spanned by the rays passing through (1,-1) and
+`veering_isosigs[257]` is spanned by the rays passing through (1,-1) and
 (1,1). Landry, Minsky and Taylor proved that, if nonempty, this cone is
 equal to a cone on a (not necessarily top-dimensional) face of the Thurston 
 norm ball. The chosen basis on H^1 is dual to the basis of H_1 used to 
