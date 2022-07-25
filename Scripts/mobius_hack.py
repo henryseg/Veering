@@ -17,13 +17,15 @@ from basic_math import matrix
 # M.eigenvalues() gives
 
 e = -1/4*I*sqrt(3) - 1/4*sqrt(6*I*sqrt(3) - 10) - 3/4                                                                
-f = -1/4*I*sqrt(3) + 1/4*sqrt(6*I*sqrt(3) - 10) - 3/4
+# f = -1/4*I*sqrt(3) + 1/4*sqrt(6*I*sqrt(3) - 10) - 3/4
 
 e = e.n()
-f = f.n()
+# f = f.n()
 
-le = log(e)
-lf = log(f)
+le = complex(log(e))
+# lf = complex(log(f))
+lf = -le
+print('foo')
 
 # Diagonalise using
 # var("p, q, r, s")                                                                                                    
@@ -37,19 +39,20 @@ lf = log(f)
 
 p = -1/52*(sqrt(3) + 7*I)*sqrt(6*I*sqrt(3) - 10)                                                                     
 q = 1/104*((15*I*sqrt(3) - 1)*sqrt(6*I*sqrt(3) - 10) - 52)                                                           
-r = 1                                                                                                                
+r = 1                                                                                                        
 s = 1/8*(sqrt(3) - I)*sqrt(6*I*sqrt(3) - 10) - 1/8*(8*sqrt(3) + 4*I)
 
-p = p.n()
-q = q.n()
-r = r.n()
-s = s.n()
+p = complex(p.n())
+q = complex(q.n())
+#r = r.n()
+r = complex(r)
+s = complex(s.n())
 
 C = matrix((p, q, r, s))
 
 def many_matrices(n): 
     matrices = [] 
     for k in range(n+1): 
-        D = matrix((exp(k*le/n).n(), 0, 0, exp(k*lf/n).n()))
+        D = matrix((exp(k*le/n), 0, 0, exp(k*lf/n)))
         matrices.append(C.inverse()*D*C) 
     return matrices 
