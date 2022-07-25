@@ -1,5 +1,5 @@
 import sys
-sys.path.append('Scripts')
+sys.path.append('../veering')
 from importlib import reload
 
 import pyx ### vector graphics 
@@ -642,6 +642,13 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                     path_C = [ v.pos.complex() for v in path ]
                     scaled_path_C = [ my_scale * c for c in path_C]
                     draw_path(my_canv, scaled_path_C, draw_options)  
+
+                    bounding_indices = []
+                    for k, c in enumerate(path_C):
+                        if abs(c - complex(cmath.sqrt(3)/2, 0)) < 0.00001 or abs(c - complex(cmath.sqrt(3)*2/3, 0)) < 0.00001:
+                            bounding_indices.append(k)
+                    assert bounding_indices == 2
+                    path_C = path_C[bounding_indices[0]:bounding_indices[1] + 1]
                     path2_C = [mat(CP1((c, 1))).complex() for c in path_C]
                     scaled_path2_C = [ my_scale * c for c in path2_C ]
                     draw_path(my_canv, scaled_path2_C, draw_options)  
