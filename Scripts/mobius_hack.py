@@ -40,13 +40,16 @@ q = 1/104*((15*I*sqrt(3) - 1)*sqrt(6*I*sqrt(3) - 10) - 52)
 r = 1                                                                                                                
 s = 1/8*(sqrt(3) - I)*sqrt(6*I*sqrt(3) - 10) - 1/8*(8*sqrt(3) + 4*I)
 
+p = p.n()
+q = q.n()
+r = r.n()
+s = s.n()
+
 C = matrix((p, q, r, s))
-C = C.n()
 
 def many_matrices(n): 
     matrices = [] 
-    for k in range(n): 
-        D = matrix((exp(k*le/n), 0, 0, exp(k*lf/n)))
-        D = D.n() 
+    for k in range(n+1): 
+        D = matrix((exp(k*le/n).n(), 0, 0, exp(k*lf/n).n()))
         matrices.append(C.inverse()*D*C) 
     return matrices 
