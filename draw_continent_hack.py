@@ -19,7 +19,8 @@ import mobius_hack
 reload(mobius_hack)
 from mobius_hack import many_matrices
 
-
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
 
 # def pre_draw_transformation( z, ladder_holonomy ):
     # return z/ladder_holonomy
@@ -620,12 +621,31 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
 
             # mob_tsfm = move_in_PSL(top, bottom, right, indigo, cyan, bottom)
 
-            mats = many_matrices(2)
-            my_scale = 28
+            mats = many_matrices(20)
+            my_scale = 40
+            thick_line_scale = 36
+            thin_line_scale = 12
+
+
+            draw_options = [pyx.style.linewidth(thin_line_scale * ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
+
 
             for n, mat in enumerate(mats):
                 my_canv = pyx.canvas.canvas()
                 my_canv.stroke(pyx.path.rect(my_scale*(-2 + math.sqrt(3)/2), my_scale*(-9/8), my_scale*4, my_scale*9/4))  # lower left corner coords, width, height
+
+                ladderpole_vertices = ladderpoles_vertices[1]
+                for i in range(len(ladderpole_vertices) - 1):  # fenceposts
+                    path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
+                    for v in path[:-1]:
+                        assert v.is_ladderpole_descendant()
+                    path_C = [ v.pos.complex() for v in path ]
+                    scaled_path_C = [ my_scale * c for c in path_C]
+                    draw_path(my_canv, scaled_path_C, draw_options)  
+                    path2_C = [mat(CP1((c, 1))).complex() for c in path_C]
+                    scaled_path2_C = [ my_scale * c for c in path2_C ]
+                    draw_path(my_canv, scaled_path2_C, draw_options)  
+
 
                 # k = 0
                 for k, L in enumerate(T.ladder_list):
@@ -640,17 +660,19 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                                 if len(bounding_indices) == 2:
                                     crv = crv[bounding_indices[0]:bounding_indices[1] + 1]
                                     lightning_curve_scaled = [ my_scale * c for c in crv ]
-                                    draw_path(my_canv, lightning_curve_scaled, [pyx.style.linewidth(my_scale*ct_lw), pyx.style.linejoin.round, lightning_colours[j]])
-                                    crv2 = [CP1((c, 1)) for c in crv]
-                                    crv2 = [mat(c) for c in crv2]
-                                    crv2 = [c.complex() for c in crv2]
+                                    draw_path(my_canv, lightning_curve_scaled, [pyx.style.linewidth(thick_line_scale*ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)])
+                                    crv2 = [mat(CP1((c, 1))).complex() for c in crv]
                                     lightning_curve2_scaled = [ my_scale * c for c in crv2 ]
-                                    draw_path(my_canv, lightning_curve2_scaled, [pyx.style.linewidth(my_scale*ct_lw), pyx.style.linejoin.round, lightning_colours[j]])
+                                    draw_path(my_canv, lightning_curve2_scaled, [pyx.style.linewidth(thick_line_scale*ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)])
                 
-                mat_filename = output_filename[:-4] + str(n) + '.pdf'
-                mat_filename_svg = output_filename[:-4] + str(n) + '.svg'
-                my_canv.writePDFfile(mat_filename)
+
+                mat_filename_pdf = 'Images/Cannon-Thurston/PDF/' + output_filename[:-4] + str(n) + '.pdf'
+                mat_filename_svg = 'Images/Cannon-Thurston/SVG/' + output_filename[:-4] + str(n) + '.svg'
+                mat_filename_png = 'Images/Cannon-Thurston/PNG/' + output_filename[:-4] + str(n) + '.png'
+                my_canv.writePDFfile(mat_filename_pdf)
                 my_canv.writeSVGfile(mat_filename_svg)
+                drawing = svg2rlg(mat_filename_svg) 
+                renderPM.drawToFile(drawing, mat_filename_png, fmt='PNG', dpi=72, bg=0x000000)  
 
 
                     # non_inf_verts = [0,1,2,3]
@@ -873,11 +895,11 @@ def main():
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
-    max_length = 0.1
+    # max_length = 0.1
     # max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
-    # max_length = 0.05
+    max_length = 0.04
     # max_length = 0.02
     # max_length = 0.015
     # max_length = 0.01
@@ -926,7 +948,7 @@ def main():
     tri, angle = isosig_to_tri_angle(veering_isosig)
     tet_shapes = shapes(tri)
     # # print tet_shapes
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
+    filename = veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
     # filename = 'Images/Jigsaw/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
     # # # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = False, draw_landscapes = False, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     # # draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, draw_CT_curve = True, draw_lightning_curve = True, draw_landscapes = False, draw_box_for_cohom_frac = True, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
