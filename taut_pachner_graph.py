@@ -157,19 +157,3 @@ def find_veering_from_drilled(start_isoSig, name=None, search_depth = 100, ceili
             print(len(big_dict_of_nodes), len(frontier_isoSigs))
 
         return None
-
-def main():
-    depth = 100
-    ceiling = 8
-
-    print('depth', depth)
-    print('ceiling', ceiling)
-    
-    target_isoSig = 'gLLPQceeffefiiaellu_012110'  ### drilled
-    start_isoSig = 'gLLPQccdfeffhggaagb_201022'  ### veering
-    
-    graph = search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
-
-
-
-

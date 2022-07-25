@@ -134,12 +134,3 @@ def explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 4):
                 frontier.extend( [(tri_s, angle_s, face_num) for face_num in get_mobius_strip_indices(tri_s)] )
     out.sort()
     return out
-
-
-def main():
-    # tri, angle = isosig_to_tri_angle("cPcbbbdxm_10")
-    tri, angle = isosig_to_tri_angle("gLAMPbbcdeffdhwqqqj_210202")
-
-    out = explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 7)
-    for sig in out:
-        print(sig)

@@ -37,10 +37,3 @@ def analyze_sig(sig):
             print(sig)
             for surf in two_quad_type_surfs:
                 print(surf)
-                
-
-def main(num_to_check = 10):
-    lines = parse_data_file('Data/veering_census.txt')
-    for line in lines[:num_to_check]:
-        sig = line.strip()
-        analyze_sig(sig)

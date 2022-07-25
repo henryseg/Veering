@@ -392,25 +392,6 @@ def threeTwoMove(tri, angle, edge_num, perform = True, return_triangle = False):
     else:
         return (tri, angle, new_tets[0].triangle(3).index())    
 
-def main():
-    tri, angle = isosig_to_tri_angle('jLLAvQQbcdeihhiihtsfxedxhdt_201021201')
-    # tri, angle = isosig_to_tri_angle('cPcbbbiht_12')
-    for i in range(tri.countTriangles()):
-        print('triangle_num', i)
-        tri2 = regina.Triangulation3(tri)
-        angle2 = angle[:]
-        tri3, angle3, edge_num = twoThreeMove(tri2, angle2, i, return_edge = True) 
-
-        print('angle3', angle3, 'edge_num', edge_num)
-        threeTwoMove(tri3, angle3, edge_num)
-
-        # for e_ind in range(tri3.countEdges()):
-        #     if threeTwoMove(tri3, angle3, e_ind, perform = False):
-        #         print('could do 3-2 on e_ind', e_ind)
-        #         tri4, angle4 = threeTwoMove(tri3, angle3, e_ind)
-        #         break
-
-
     ### Extra ASCII art:
 
     ###                _________                                 _________

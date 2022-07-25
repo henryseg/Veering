@@ -430,35 +430,6 @@ def threeTwoMove(tri, branch, edge_num, return_triangle = False):
     else:
         return (tri, branch, new_tets[0].triangle(3).index())    
 
-
-def main():
-    # for i in range(4): 
-    #     print(i)
-    #     # tri, angle = isosig_to_tri_angle('cPcbbbiht_12') 
-    # sigs = ['dLQacccjsnk_200', 'dLQbccchhfo_122','dLQbccchhsj_122']
-    # for sig in sigs:
-    #     print(sig)
-    #     tri, angle = isosig_to_tri_angle(sig)   
-    #     for branch in all_branched_surfaces(tri):
-    #         print(lex_smallest_branched_surface(tri, branch))
-
-    sig = 'dLQacccjsnk_200'
-    for i in range(6):
-        # print(i)
-        tri, angle = isosig_to_tri_angle(sig)  
-        tri_original = regina.Triangulation3(tri) #copy
-
-        out = twoThreeMove(tri, [4,11,0], i, return_edge = True)
-        if out != False:
-            tri, possible_branches, edge_num = out
-            # print('possible_branches', possible_branches)
-            # print('all branches', all_branched_surfaces(tri)) 
-            tri, branch = threeTwoMove(tri, possible_branches[0], edge_num)
-            all_isoms = tri.findAllIsomorphisms(tri_original)
-            all_branches = [apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
-            assert [4,11,0] in all_branches
-
-
 def go_deeper(tri, branch):
     for i in range(tri.countTriangles()):
         tri_copy = regina.Triangulation3(tri) #copy

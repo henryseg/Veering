@@ -140,21 +140,3 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, start_tri, start_angle,
         print(len(big_dict_of_nodes), len(frontier_isoSigs))
 
     return None
-
-def main():
-    depth = 100
-    ceiling = 8
-
-    print('depth', depth)
-    print('ceiling', ceiling)
-
-    target_isoSig = 'gLLPQceeffefiiaellu_012110'  ### drilled
-    start_isoSig = 'gLLPQccdfeffhggaagb_201022'  ### veering
-    tri, angle = isosig_to_tri_angle(start_isoSig)
-    branch = upper_branched_surface(tri, angle)
-    start_isoSig = isosig_from_tri_angle_branch(tri, angle, branch)
-    graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, target_isoSig, name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
-
-
-
-
