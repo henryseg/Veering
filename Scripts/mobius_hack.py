@@ -3,6 +3,7 @@
 #
 
 from sage.symbolic.all import I
+from sage.symbolic.constants import pi
 from sage.functions.other import sqrt
 from sage.functions.log import log
 from sage.functions.log import exp
@@ -22,10 +23,10 @@ e = -1/4*I*sqrt(3) - 1/4*sqrt(6*I*sqrt(3) - 10) - 3/4
 e = e.n()
 # f = f.n()
 
-le = complex(log(e))
+le = complex(log(e) + pi*I) # some branch issue???
+print('+pi')  
 # lf = complex(log(f))
 lf = -le
-print('foo')
 
 # Diagonalise using
 # var("p, q, r, s")                                                                                                    

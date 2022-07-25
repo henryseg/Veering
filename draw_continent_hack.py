@@ -4,6 +4,7 @@ from importlib import reload
 
 import pyx ### vector graphics 
 import cmath
+import math
 
 from file_io import parse_data_file, read_from_pickle, output_to_pickle
 from taut import isosig_to_tri_angle
@@ -619,9 +620,12 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
 
             # mob_tsfm = move_in_PSL(top, bottom, right, indigo, cyan, bottom)
 
-            mats = many_matrices(10)
+            mats = many_matrices(2)
+            my_scale = 28
+
             for n, mat in enumerate(mats):
                 my_canv = pyx.canvas.canvas()
+                my_canv.stroke(pyx.path.rect(my_scale*(-2 + math.sqrt(3)/2), my_scale*(-9/8), my_scale*4, my_scale*9/4))  # lower left corner coords, width, height
 
                 # k = 0
                 for k, L in enumerate(T.ladder_list):
@@ -635,16 +639,18 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                                         bounding_indices.append(k)
                                 if len(bounding_indices) == 2:
                                     crv = crv[bounding_indices[0]:bounding_indices[1] + 1]
-                                    lightning_curve_scaled = [ T.drawing_scale * c for c in crv ]
-                                    draw_path(T.canv, lightning_curve_scaled, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[j]])
+                                    lightning_curve_scaled = [ my_scale * c for c in crv ]
+                                    draw_path(my_canv, lightning_curve_scaled, [pyx.style.linewidth(my_scale*ct_lw), pyx.style.linejoin.round, lightning_colours[j]])
                                     crv2 = [CP1((c, 1)) for c in crv]
                                     crv2 = [mat(c) for c in crv2]
                                     crv2 = [c.complex() for c in crv2]
-                                    lightning_curve2_scaled = [ T.drawing_scale * c for c in crv2 ]
-                                    draw_path(my_canv, lightning_curve2_scaled, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[j]])
+                                    lightning_curve2_scaled = [ my_scale * c for c in crv2 ]
+                                    draw_path(my_canv, lightning_curve2_scaled, [pyx.style.linewidth(my_scale*ct_lw), pyx.style.linejoin.round, lightning_colours[j]])
                 
                 mat_filename = output_filename[:-4] + str(n) + '.pdf'
+                mat_filename_svg = output_filename[:-4] + str(n) + '.svg'
                 my_canv.writePDFfile(mat_filename)
+                my_canv.writeSVGfile(mat_filename_svg)
 
 
                     # non_inf_verts = [0,1,2,3]
