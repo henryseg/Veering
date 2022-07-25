@@ -17,15 +17,15 @@ from basic_math import matrix
 
 # M.eigenvalues() gives
 
-e = -1/4*I*sqrt(3) - 1/4*sqrt(6*I*sqrt(3) - 10) - 3/4                                                                
+e = -1/4*I*sqrt(3) - 1/4*sqrt(6*I*sqrt(3) - 10) - 3/4
 # f = -1/4*I*sqrt(3) + 1/4*sqrt(6*I*sqrt(3) - 10) - 3/4
 
 e = e.n()
 # f = f.n()
 
-le = complex(log(e) + pi*I) # some branch issue???
-print('+pi')  
-# lf = complex(log(f))
+# Due to the branch of the logarithm, and because e^2 = e/f is the
+# stretch factor, we need to fix the argument.
+le = complex(log(e) + pi*I)
 lf = -le
 
 # Diagonalise using
@@ -38,14 +38,13 @@ lf = -le
 #         r == 1]
 # solve(eqns, p, q, r, s) 
 
-p = -1/52*(sqrt(3) + 7*I)*sqrt(6*I*sqrt(3) - 10)                                                                     
-q = 1/104*((15*I*sqrt(3) - 1)*sqrt(6*I*sqrt(3) - 10) - 52)                                                           
-r = 1                                                                                                        
+p = -1/52*(sqrt(3) + 7*I)*sqrt(6*I*sqrt(3) - 10)
+q = 1/104*((15*I*sqrt(3) - 1)*sqrt(6*I*sqrt(3) - 10) - 52)
+r = 1
 s = 1/8*(sqrt(3) - I)*sqrt(6*I*sqrt(3) - 10) - 1/8*(8*sqrt(3) + 4*I)
 
 p = complex(p.n())
 q = complex(q.n())
-#r = r.n()
 r = complex(r)
 s = complex(s.n())
 
@@ -57,3 +56,8 @@ def many_matrices(n):
         D = matrix((exp(k*le/n), 0, 0, exp(k*lf/n)))
         matrices.append(C.inverse()*D*C) 
     return matrices 
+
+# More generally, this should be "path of matrices" and take as
+# arguments the matrix M and the integer n.  Then we do all of the
+# work (eigenvalues, diagonalisation, etc, inside of the function.
+# I'll fix this if we ever need it.
