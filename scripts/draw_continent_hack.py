@@ -636,12 +636,12 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                     scaled_path_C = [ my_scale * c for c in path_C]
                     draw_path(my_canv, scaled_path_C, draw_options)  
 
-                    bounding_indices = []
-                    for k, c in enumerate(path_C):
-                        if abs(c - complex(cmath.sqrt(3)/2, 0)) < 0.00001 or abs(c - complex(cmath.sqrt(3)*2/3, 0)) < 0.00001:
-                            bounding_indices.append(k)
-                    assert bounding_indices == 2
-                    path_C = path_C[bounding_indices[0]:bounding_indices[1] + 1]
+                    # bounding_indices = []
+                    # for k, c in enumerate(path_C):
+                    #     if abs(c - complex(cmath.sqrt(3)/2, 0)) < 0.00001 or abs(c - complex(cmath.sqrt(3)*2/3, 0)) < 0.00001:
+                    #         bounding_indices.append(k)
+                    # assert bounding_indices == 2
+                    # path_C = path_C[bounding_indices[0]:bounding_indices[1] + 1]
                     path2_C = [mat(CP1((c, 1))).complex() for c in path_C]
                     scaled_path2_C = [ my_scale * c for c in path2_C ]
                     draw_path(my_canv, scaled_path2_C, draw_options)  
@@ -895,11 +895,11 @@ def main():
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
-    # max_length = 0.1
+    max_length = 0.1
     # max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
-    max_length = 0.04
+    # max_length = 0.04
     # max_length = 0.02
     # max_length = 0.015
     # max_length = 0.01
