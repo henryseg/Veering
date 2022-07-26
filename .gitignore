@@ -1,8 +1,8 @@
 .DS_Store
 *.pyc
 *.pdf
-Images/**
-Output/**
+scripts/Images/**
+scripts/Output/**
 Data/veering_shapes.pkl
 veering.egg-info/
 dist/
