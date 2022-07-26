@@ -123,8 +123,17 @@ class matrix(tuple):
         D = self.det()
         return self * intify(sqrt(D)**(-1))
 
-    def inverse(self):
+    def eigenvalues(self):
+        T = self.trace()
         D = self.det()
+        e = (T + sqrt(T^2 - 4*D)) / 2
+        f = (T - sqrt(T^2 - 4*D)) / 2
+        return (e, f)
+        
+    def inverse(self, epsilon = 0.000001):
+        D = self.det()
+        if abd(D) < epsilon:
+            raise ZeroDivisionError
         a, b, c, d = self
         # [a b]*[ d -b] = [D 0]
         # [c d] [-c  a]   [0 D]. 
@@ -244,9 +253,3 @@ def inf_zero_one_to(p, q, r):
 
 def move_in_PSL(a, b, c, p, q, r):
     return inf_zero_one_to(p, q, r) * inf_zero_one_to(a, b, c).inverse()
-
-
-if __name__ == '__main__':
-    print((sign([0,1,2,3])))
-    print((sign([0,2,1,3])))
-    print((sign([0,1,2,2])))
