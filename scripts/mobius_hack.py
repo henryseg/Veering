@@ -8,7 +8,7 @@ from sage.functions.other import sqrt
 from sage.functions.log import log
 from sage.functions.log import exp
 
-from basic_math import matrix
+from veering.basic_math import matrix
 
 # M is the original matrix.
 

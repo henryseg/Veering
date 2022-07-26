@@ -1,5 +1,5 @@
 #
-# veering.py
+# veering_check.py
 #
 
 # Check if a taut triangulation is veering

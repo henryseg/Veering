@@ -1,22 +1,15 @@
-import sys
-sys.path.append('../veering')
-from importlib import reload
-
 import pyx ### vector graphics 
 import cmath
 import math
 
-from file_io import parse_data_file, read_from_pickle, output_to_pickle
-from taut import isosig_to_tri_angle
-from veering import veering_triangulation
+from veering.file_io import parse_data_file, read_from_pickle, output_to_pickle
+from veering.basic_math import CP1, move_in_PSL
+from veering.snappy_util import shapes
+from veering.taut import isosig_to_tri_angle
+from veering.veering import veering_triangulation
+
 from continent import continent
 from boundary_triangulation import boundary_triangulation, tet_face
-from snappy_util import shapes
-
-from basic_math import CP1, move_in_PSL
-
-import mobius_hack
-reload(mobius_hack)
 from mobius_hack import many_matrices
 
 from svglib.svglib import svg2rlg
