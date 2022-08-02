@@ -1,8 +1,9 @@
 #
-# veering_check.py
+# veering_tri.py  # renamed to prevent name collisions
 #
 
-# Check if a taut triangulation is veering
+# Provides a checker for taut isosigs and a veering_triangulations class. 
+
 
 import regina #needed inside of imported files
 
