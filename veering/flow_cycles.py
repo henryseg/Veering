@@ -197,7 +197,7 @@ def test():
 # eLPkbcdddhrrcv_1200
     # sig = 'gLLAQbecdfffhhnkqnc_120012'
 
-    sigs = parse_data_file('Data/veering_census.txt')
+    sigs = parse_data_file('veering_census.txt')
 
     for j, sig in enumerate(sigs[:5]):
         if j%100 == 0:

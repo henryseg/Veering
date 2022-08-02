@@ -624,7 +624,7 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
 
 def test(num_to_check = 1000):
 
-    veering_isosigs = parse_data_file("Data/veering_census.txt")
+    veering_isosigs = parse_data_file("veering_census.txt")
 
     # for sig in veering_isosigs[:2000]:  ### random.sample(veering_isosigs, num_to_check):
     #     tri, angle = taut.isosig_to_tri_angle(sig)

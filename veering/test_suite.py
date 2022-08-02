@@ -202,7 +202,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     #     "draw_labels": True,
     # }
 
-    # shapes_data = read_from_pickle("Data/veering_shapes_up_to_ten_tetrahedra.pkl")
+    # shapes_data = read_from_pickle("veering_shapes_up_to_ten_tetrahedra.pkl")
 
     # if pyx_working:
     #     for sig in ladders_style_sigs:

@@ -4,7 +4,9 @@
 import pickle
 
 def parse_data_file(filename):
-    """Parse a file into lines."""
+    """
+    Parse a file into lines.
+    """
     from pathlib import Path
 
     # 1. try relative path
@@ -34,10 +36,10 @@ def write_data_file(data, filename):
     data_file.close()
     return None
 
-def read_from_pickle(filename):                                                                                                     
-    f = open(filename, 'rb')                                                                                                          
-    data = pickle.load(f)                                                                                                           
-    f.close()                                                                                                                        
+def read_from_pickle(filename):                           
+    f = open(filename, 'rb')
+    data = pickle.load(f)
+    f.close()
     return data
 
 def output_to_pickle(out, filename):
