@@ -14,15 +14,15 @@ def boundary_triangulation_script():
     # num_to_draw = 87 ## up to 6 tet
     # # num_to_draw = 5699 ## up to 12 tet  
     args['style'] = 'ladders'
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
+    # draw_triangulations_from_veering_isosigs_file('veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
     # args['style'] = 'geometric'
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
+    # draw_triangulations_from_veering_isosigs_file('veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
 
 
     # args = {'draw_boundary_triangulation':False, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     # args['style'] = 'geometric'
     # num_to_draw = 1000
-    # draw_triangulations_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
+    # draw_triangulations_from_veering_isosigs_file('veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
 
 
     # name = 'cPcbbbdxm_10'
@@ -43,7 +43,7 @@ def boundary_triangulation_script():
     # name = 'gLPLQbcdfeffhrraarw_120011'
     name = 'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200'
 
-    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
+    # shapes_data = read_from_pickle('veering_shapes_up_to_ten_tetrahedra.pkl')
     # args['style'] = 'geometric'
     # args['tet_shapes'] = shapes_data[name]
     # # args['tet_shapes'] = None
@@ -83,9 +83,9 @@ def branched_pachner_script():
 
 def dilatation_script(report = 50):
     from dilatations import *
-    data = parse_data_file("Data/veering_census_with_data.txt")
-    out_filename = "Data/betti_one_dilatations_tree.txt"
-    # out_filename = "Data/betti_one_dilatations_tree_and_smith.txt"
+    data = parse_data_file("veering_census_with_data.txt")
+    out_filename = "betti_one_dilatations_tree.txt"
+    # out_filename = "betti_one_dilatations_tree_and_smith.txt"
     out = [] 
     for i, line in enumerate(data): 
         line = line.split(" ") 
@@ -162,9 +162,9 @@ def draw_continent_script():
     # veering_isosig = 'mvLALPMPQecfggjgikllklccaxxvcfaqdmo_100001122100'
     # veering_isosig = 'nLLLLzAPQkbefgjkjimlllmmxxqhxqubxtivwb_1022101110220'
 
-    # shapes_data = read_from_pickle('Data/veering_shapes_up_to_twelve_tetrahedra.pkl')
-    # shapes_data = read_from_pickle('Data/veering_shapes.pkl')
-    # shapes_data = read_from_pickle('Data/shapes_jig_no_symm.pkl')
+    # shapes_data = read_from_pickle('veering_shapes_up_to_twelve_tetrahedra.pkl')
+    # shapes_data = read_from_pickle('veering_shapes.pkl')
+    # shapes_data = read_from_pickle('shapes_jig_no_symm.pkl')
     # tet_shapes = shapes_data[veering_isosig]
     tri, angle = isosig_to_tri_angle(veering_isosig)
     tet_shapes = shapes(tri)
@@ -204,11 +204,11 @@ def draw_continent_script():
     ## draw many:
     # start_num = 500
     # end_num = 502
-    # draw_cannon_thurston_from_veering_isosigs_file('Data/veering_census.txt', 'Images/Jordan_curve', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, interval_to_draw = (start_num, end_num), draw_args = draw_args, build_type = build_type)
+    # draw_cannon_thurston_from_veering_isosigs_file('veering_census.txt', 'Images/Jordan_curve', max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, interval_to_draw = (start_num, end_num), draw_args = draw_args, build_type = build_type)
     
     ### jigsaws
 
-    # draw_jigsaw_from_veering_isosigs_file('Data/sigs_for_jigs_no_symm.txt', 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data_no_symm.pkl", max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, draw_args = draw_args, interval_to_draw = (start_num, end_num))  # all up through n's is 876. The 281th has trouble developing
+    # draw_jigsaw_from_veering_isosigs_file('sigs_for_jigs_no_symm.txt', 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data_no_symm.pkl", max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, draw_args = draw_args, interval_to_draw = (start_num, end_num))  # all up through n's is 876. The 281th has trouble developing
 
     # veering_isosigs_list = ['kLLLAPPkcdgfehhjijjhfhaqiphffj_2010222001', 'mvLALLMQQecfgjkkjiljllccaxvvwkfekix_100001122112', 'mvLALPMPQecfggjgikllklccaxxvcfaqdmo_100001122100']
     # draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = max_length, draw_args = draw_args)
@@ -334,16 +334,16 @@ def draw_veering_triangulation_and_mid_annuli_script():
     # draw_triangulation_from_veering_isosig('cPcbbbiht_12')
 
     # from file_io import parse_data_file
-    # # census = parse_data_file('Data/veering_census.txt')
+    # # census = parse_data_file('veering_census.txt')
 
     # # for sig in census[:20]:
     # #     draw_triangulation_from_veering_isosig(sig)
 
-    only_toggles = parse_data_file('Data/only_toggles.txt')
+    only_toggles = parse_data_file('only_toggles.txt')
     for sig in only_toggles:
         draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/only_toggles/' + sig +'_mid-annuli.pdf')
 
-    # data = parse_data_file('Data/low_volume_stacks.txt')
+    # data = parse_data_file('low_volume_stacks.txt')
     # for line in data:
     #     split_data = line.split(" ")
     #     sig, vol = split_data[:2]
@@ -352,7 +352,7 @@ def draw_veering_triangulation_and_mid_annuli_script():
 
 def normal_surfaces_script(num_to_check = 10):
     from normal_surfaces import *
-    lines = parse_data_file('Data/veering_census.txt')
+    lines = parse_data_file('veering_census.txt')
     for line in lines[:num_to_check]:
         sig = line.strip()
         analyze_sig(sig)
@@ -402,7 +402,7 @@ def pachner_graph_script():
     #             # graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch,  name=None, search_depth = depth, ceiling = ceiling, drilled_cusp_index = drilled_cusp_index, check_property = False, property = None, save_dir = None)
 
 
-    sigs = parse_data_file('Data/veering_census.txt')
+    sigs = parse_data_file('veering_census.txt')
 
     for j, sig in enumerate(sigs[:5]):
         if j%100 == 0:
