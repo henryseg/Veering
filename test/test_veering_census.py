@@ -42,7 +42,3 @@ def test_fan_excision(veering_sample):
             excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
             assert ( excised_tri.isIsomorphicTo(m003) != None or
                      excised_tri.isIsomorphicTo(m004) != None )
-
-
-
-
