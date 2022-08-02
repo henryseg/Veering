@@ -6,7 +6,7 @@ import regina #needed inside of imported files
 
 from .transverse_taut import get_top_and_bottom_nums
 from .taut import liberal, isosig_to_tri_angle
-from .veering import veering_triangulation
+from .veering_tri import veering_triangulation
 
 @liberal
 def fan_stacks(tri, angle):

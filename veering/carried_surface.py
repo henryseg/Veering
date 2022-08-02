@@ -12,11 +12,12 @@ import regina
 
 from .transverse_taut import is_transverse_taut, edge_side_face_collections
 from .taut import liberal
-from .veering import is_veering
+from .veering_tri import is_veering
 
 def where_faces_are_uppermost(tri, angle, tet_vert_coorientations = None):
     """
-    returns a list whose ith elements is the index of the edge where the ith face is uppermost
+    returns a list whose ith elements is the index of the edge where
+    the ith face is uppermost
     """
     if tet_vert_coorientations == None:
         tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")

@@ -6,7 +6,7 @@
 
 import regina
 
-from .veering import is_veering
+from .veering_tri import is_veering
 from .branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num, isosig_from_tri_angle_branch, has_non_sing_semiflow
 from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
 from .taut import isosig_to_tri_angle, edge_num_to_vert_pair

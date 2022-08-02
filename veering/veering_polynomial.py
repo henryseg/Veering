@@ -17,7 +17,7 @@ from .taut_homology import (edge_equation_matrix_taut, group_ring,
                            faces_in_laurent, matrix_laurent_to_poly,
                            normalise_poly)
 from .taut_polynomial import tet_lower_upper_edges
-from .veering import is_veering
+from .veering_tri import is_veering
 from .basic_math import sign
 
 verbose = 0

@@ -4,7 +4,7 @@
 
 import regina
 
-from .veering import is_veering
+from .veering_tri import is_veering
 from .taut import is_taut, isosig_from_tri_angle, isosig_to_tri_angle, vert_pair_to_edge_num
 
 

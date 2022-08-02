@@ -21,7 +21,7 @@ from snappy.snap import t3mlite as t3m
 
 from .taut import is_taut, charge_to_angle, angle_to_charge, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair
 from .taut_polytope import dot_prod, extract_solution, is_layered
-from .veering import is_veering
+from .veering_tri import is_veering
 from .z2_taut import is_trivial_in_cohomology
 
 ZZ2 = ZZ.quotient(ZZ(2))

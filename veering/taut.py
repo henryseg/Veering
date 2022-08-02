@@ -23,7 +23,7 @@ from functools import wraps
 def liberal(func):
     @wraps(func)
     def liberal_wrapper(*args, **kwargs):
-        if type(args[0]) is str:
+        if type(args[0]) is str:  # wrapping a function
             sig = args[0]
             if "_" in sig:
                 tri, angle = isosig_to_tri_angle(sig)
@@ -31,6 +31,7 @@ def liberal(func):
             else:
                 tri = regina.Triangulation3.fromIsoSig(sig)
                 args = (tri,) + args[1:]
+#        elif type(args[1]) is str:  # wrapping a class
         return func(*args, **kwargs)
 
     return liberal_wrapper

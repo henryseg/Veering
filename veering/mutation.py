@@ -8,7 +8,7 @@ import regina
 
 from .taut import isosig_to_tri_angle, isosig_from_tri_angle, is_taut
 from .transverse_taut import is_transverse_taut
-from .veering import is_veering
+from .veering_tri import is_veering
 from .taut_polynomial import tet_lower_upper_edges
 from .taut_polytope import is_layered
 from .edge_orientability import is_edge_orientable
