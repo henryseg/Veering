@@ -21,7 +21,7 @@ def test_is_transverse_taut(veering_sample):
         assert transverse_taut.is_transverse_taut(tri, angle)
 
 def test_is_veering(veering_sample):
-    from veering import veering_tro
+    from veering import veering_tri
     for tri, angle in veering_sample:
         assert veering_tri.is_veering(tri, angle)
 
