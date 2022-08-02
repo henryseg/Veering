@@ -1,12 +1,14 @@
 
 import regina
+
 from file_io import parse_data_file
-from taut import isosig_to_tri_angle, isosig_from_tri_angle
-from pachner import twoThreeMove, threeTwoMove
-from branched_surface import upper_branched_surface, isosig_from_tri_angle_branch, isosig_to_tri_angle_branch, has_non_sing_semiflow
-from veering import is_veering
-from flow_cycles import flow_cycle_to_triangle_loop, find_flow_cycles, tri_loop_is_boundary_parallel, find_tri_loops
-from drill import drill, has_essential_torus
+
+from veering.taut import isosig_to_tri_angle, isosig_from_tri_angle
+from veering.pachner import twoThreeMove, threeTwoMove
+from veering.branched_surface import upper_branched_surface, isosig_from_tri_angle_branch, isosig_to_tri_angle_branch, has_non_sing_semiflow
+from veering.veering_tri import is_veering
+from veering.flow_cycles import flow_cycle_to_triangle_loop, find_flow_cycles, tri_loop_is_boundary_parallel, find_tri_loops
+from veering.drill import drill, has_essential_torus
 
 class pachner_node():
     def __init__(self, isoSig, tri, angle, branch, drilled_cusp_index = None, ceiling = 9999, floor = 0):

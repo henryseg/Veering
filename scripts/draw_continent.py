@@ -2,13 +2,13 @@
 import pyx ### vector graphics 
 import cmath
 
-from file_io import parse_data_file, read_from_pickle, output_to_pickle
-from taut import isosig_to_tri_angle
-from veering import veering_triangulation
+from veering.file_io import parse_data_file, read_from_pickle, output_to_pickle
+from veering.taut import isosig_to_tri_angle
+from veering.veering_tri import veering_triangulation
+from veering.snappy_util import shapes
+
 from continent import continent
 from boundary_triangulation import boundary_triangulation, tet_face
-from snappy_util import shapes
-
 
 # def pre_draw_transformation( z, ladder_holonomy ):
     # return z/ladder_holonomy

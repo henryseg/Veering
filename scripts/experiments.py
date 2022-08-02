@@ -2,6 +2,13 @@
 # experiments.py
 #
 
+import snappy
+
+from veering.snappy_util import tet_norm, get_slopes_from_peripherals
+from veering.taut import isosig_to_tri_angle
+from veering.veering_tri import veering_triangulation
+from veering.veering_drill_midsurface_bdy import drill_midsurface_bdy
+
 def get_sub_shapes(census):
 
     sub_tog_tb = []
@@ -10,8 +17,8 @@ def get_sub_shapes(census):
     sub_fan_sides = []
 
     for sig in census:
-        tri, angle = taut.isosig_to_tri_angle(sig)
-        vt = veering.veering_triangulation(tri, angle)
+        tri, angle = isosig_to_tri_angle(sig)
+        vt = veering_triangulation(tri, angle)
         tet_types = vt.tet_types
         # num_tog = tet_types.count("toggle") 
 
@@ -26,10 +33,10 @@ def get_sub_shapes(census):
             subtet_indices.append(range(subtet_start_index, subtet_start_index + num_to_add))
             subtet_start_index = subtet_start_index + num_to_add
 
-        T, _ = veering_drill_midsurface_bdy.drill_midsurface_bdy(tri, angle)
+        T, _ = drill_midsurface_bdy(tri, angle)
         M = snappy.Manifold(T)
         new_tet_shapes = M.tetrahedra_shapes("rect")
-        new_tet_shapes = [snappy_util.tet_norm(z) for z in new_tet_shapes]
+        new_tet_shapes = [tet_norm(z) for z in new_tet_shapes]
         for z in new_tet_shapes:
             if z.imag() > 1:
                 print z, sig
@@ -63,12 +70,12 @@ def get_merid_lengths(census, report = 100):
     for k, sig in enumerate(census):
         if (k % report) == 0:
             print k, sig
-        tri, angle = taut.isosig_to_tri_angle(sig)
-        T, merids = veering_drill_midsurface_bdy.drill_midsurface_bdy(tri, angle)
+        tri, angle = isosig_to_tri_angle(sig)
+        T, merids = drill_midsurface_bdy(tri, angle)
         M = snappy.Manifold(T)
         M.set_peripheral_curves("shortest")
         num_cusps = M.num_cusps()
-        curr_slopes = snappy_util.get_slopes_from_peripherals(M, merids)
+        curr_slopes = get_slopes_from_peripherals(M, merids)
         assert len(curr_slopes) == num_cusps
 
         temp_shapes = []

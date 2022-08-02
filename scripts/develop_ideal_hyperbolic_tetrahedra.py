@@ -1,3 +1,7 @@
+#
+# develop_ideal_hyperbolic_tetrahedra.py
+#
+
 from veering.basic_math import matrix, CP1
 
 def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations in a commutative ring"

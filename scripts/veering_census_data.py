@@ -4,17 +4,17 @@
 
 ### Used to create or update the file "veering_census_with_data"
 
-
 import regina
 import snappy
 
-from file_io import parse_data_file, write_data_file
-from taut import isosig_to_tri_angle, apply_isom_to_angle_struct_list
-from veering import is_veering
-from transverse_taut import is_transverse_taut, symmetry_group_size
-from edge_orientability import is_edge_orientable
+from veering.file_io import parse_data_file, write_data_file
+from veering.taut import isosig_to_tri_angle, apply_isom_to_angle_struct_list
+from veering.veering_tri import is_veering
+from veering.transverse_taut import is_transverse_taut, symmetry_group_size
+from veering.edge_orientability import is_edge_orientable
+from veering.taut_polytope import depth as tp_depth
+
 from boundary_triangulation import generate_boundary_triangulation
-from taut_polytope import depth as tp_depth
 
 def compute_census_data(filename_in, filename_out, functions, verbose = 0):
 	### each function takes in data about the triangulation, returns a string

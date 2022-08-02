@@ -1,7 +1,5 @@
 from draw_continent_circle import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles
 
-
-
 def main():
     veering_isosig = 'cPcbbbdxm_10' 
     flow_cycle = [(0, 2)]

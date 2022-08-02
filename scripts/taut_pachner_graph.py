@@ -1,8 +1,9 @@
 
 import regina
-from taut import isosig_to_tri_angle, isosig_from_tri_angle
-from taut_pachner import twoThreeMove, threeTwoMove
-from veering import is_veering
+
+from veering.taut import isosig_to_tri_angle, isosig_from_tri_angle
+from veering.taut_pachner import twoThreeMove, threeTwoMove
+from veering.veering_tri import is_veering
 
 class taut_pachner_node():
     def __init__(self, isoSig, tri = None, angle = None, ceiling = 9999, floor = 0):

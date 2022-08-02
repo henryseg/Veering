@@ -2,8 +2,10 @@
 # loxodromics.py
 #
 
+from veering.basic_math import CP1, move_in_PSL
+
 from develop_ideal_hyperbolic_tetrahedra import develop_verts_pos
-from basic_math import CP1, move_in_PSL
+
 
 def mob_tsfm_from_tets(init_verts_pos, final_verts_pos):
     a,b,c,d = init_verts_pos

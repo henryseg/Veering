@@ -2,9 +2,11 @@
 import pyx ### vector graphics 
 from pyx import path, trafo, canvas, style, text, color, deco
 from math import pi, cos, sin, acos, tan, atan2, sqrt
-from taut import isosig_to_tri_angle, edge_num_to_vert_pair, vert_pair_to_edge_num
-from transverse_taut import edge_side_face_collections, get_tet_above_edge, get_tet_top_vert_nums
-from veering import veering_triangulation
+
+from veering.taut import isosig_to_tri_angle, edge_num_to_vert_pair, vert_pair_to_edge_num
+from veering.transverse_taut import edge_side_face_collections, get_tet_above_edge, get_tet_top_vert_nums
+from veering.veering_tri import veering_triangulation
+
 from continent import continent, continent_tetrahedron
 from boundary_triangulation import tet_face
 

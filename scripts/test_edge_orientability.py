@@ -1,8 +1,8 @@
-from file_io import parse_data_file, read_from_pickle
+from veering.file_io import parse_data_file, read_from_pickle
 
-import taut
-import transverse_taut
-from edge_orientability import is_edge_orientable
+import veering.taut
+import veering.transverse_taut
+from veering.edge_orientability import is_edge_orientable
 
 veering_isosigs = parse_data_file("Data/veering_census.txt")
 

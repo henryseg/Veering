@@ -1,10 +1,9 @@
 from snappy import Manifold
 
+from veering.file_io import parse_data_file
+from veering.taut import isosig_to_tri_angle
+
 from boundary_triangulation import generate_boundary_triangulation
-
-from file_io import parse_data_file
-
-from taut import isosig_to_tri_angle
 
 def draw_ladders_and_geometric_boundary_for_veering_isosig(sig, args = {}):
 	if args == {}:

@@ -2,7 +2,7 @@
 # scripts.py
 #
 
-# Examples of usage for some of the modules
+# Examples of usage for some of the modules - most need cleaning before they will work. 
 
 
 def boundary_triangulation_script():

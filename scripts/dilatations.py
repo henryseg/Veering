@@ -4,11 +4,11 @@
 
 # Goal - compute (normalised) dilatations of (triangulation, fibre) pairs
 
-from file_io import parse_data_file, write_data_file
+from veering.file_io import parse_data_file, write_data_file
 
-from taut import liberal, isosig_to_tri_angle
-from taut_polynomial import taut_polynomial_via_tree, taut_polynomial_via_tree_and_smith
-from taut_polytope import min_carried_neg_euler
+from veering.taut import liberal, isosig_to_tri_angle
+from veering.taut_polynomial import taut_polynomial_via_tree, taut_polynomial_via_tree_and_smith
+from veering.taut_polytope import min_carried_neg_euler
 
 # Let's start with the case of b_1 = 1
 

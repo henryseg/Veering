@@ -1,11 +1,14 @@
 
+import string
 import regina
-from taut import isosig_from_tri_angle, isosig_to_tri_angle
-from branched_surface import isosig_to_tri_angle_branch, isosig_from_tri_angle_branch, upper_branched_surface
-from taut_polytope import is_layered
+
+from veering.taut import isosig_from_tri_angle, isosig_to_tri_angle
+from veering.branched_surface import isosig_to_tri_angle_branch, isosig_from_tri_angle_branch, upper_branched_surface
+from veering.taut_polytope import is_layered
+
 import taut_pachner
 import branched_pachner
-import string
+
 
 class taut_branched_pachner_node():
     def __init__(self, isoSig, tri = None, angle = None, branch = None, ceiling = 9999, floor = 0):

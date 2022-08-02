@@ -1,16 +1,17 @@
 import sys
 import os
 
-import veering
-import transverse_taut
-import veering_detect
-import taut
 import pyx
 import math
 
-from file_io import parse_data_file
-
 from snappy import Manifold
+
+from veering.file_io import parse_data_file
+
+from veering.veering_tri import is_veering
+from veering.transverse_taut import is_transverse_taut
+import veering.veering_detect  # ??? broken
+from veering.taut import isosig_to_tri_angle
 
 # pyx.text.set(mode="latex")
 # pyx.text.preamble(r"\usepackage{times}")
@@ -217,8 +218,8 @@ def find_cut_edges(triangulation, veering_colours, tet_num_below_edge_num, tet_v
     return cut_edges
 
 def get_consistent_tet_vert_posns(triangulation, angle, tet_types, coorientations):
-    veering_colours = veering.is_veering(triangulation, angle, return_type = 'veering_colours')
-    # coorientations = veering.is_transverse_taut(triangulation, angle_structure, return_type = 'tet_vert_coorientations')
+    veering_colours = is_veering(triangulation, angle, return_type = 'veering_colours')
+    # coorientations = is_transverse_taut(triangulation, angle_structure, return_type = 'tet_vert_coorientations')
     tet_vert_posns_below = []  ## positions of the tetrahedron vertices in the top down view. These determine which way round to draw diamonds
     tet_vert_posns_above = []  ## there are two for tracking the upper and lower pairs of triangles on the tetrahedra
     ### but above is talking about triangles in the top half of a zigzag, so the triangles at the bottom of tetrahedra, and vice versa. Confusing, I know...
@@ -808,6 +809,7 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
     """make a picture of the triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
     # print 'drawing:', midannuli_filename
     if angle == None:
+        # ??? broken
         veering_structures = veering_detect.find_veering_structures(triangulation)
         assert len(veering_structures) > 0
         if len(veering_structures) > 1:
@@ -818,7 +820,7 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
     veering_colours = veering.is_veering(triangulation, angle, return_type = 'veering_colours')
     assert veering_colours != False
 
-    coorientations = transverse_taut.is_transverse_taut(triangulation, angle, return_type = 'tet_vert_coorientations')
+    coorientations = is_transverse_taut(triangulation, angle, return_type = 'tet_vert_coorientations')
     if coorientations == False:
         # print 'not transverse taut! Not drawing triangulation' 
         return False
@@ -848,7 +850,7 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
     return has_orientable_mid_surfaces(edges_between_midannuli)
 
 def draw_triangulation_from_veering_isosig(veering_isosig, midannuli_filename = None, tetrahedra_filename = None, draw_stuff = True):
-    tri, angle = taut.isosig_to_tri_angle(veering_isosig)
+    tri, angle = isosig_to_tri_angle(veering_isosig)
     if midannuli_filename == None:
         midannuli_filename = 'Images/Mid-annuli/' + veering_isosig + '_mid-annuli.pdf'
     if tetrahedra_filename == None:

@@ -1,8 +1,10 @@
-import regina
 from copy import deepcopy
-from taut import isosig_from_tri_angle
-from file_io import parse_data_file, write_data_file
-from transverse_taut import is_transverse_taut
+
+import regina
+
+from veering.taut import isosig_from_tri_angle
+from veering.file_io import parse_data_file, write_data_file
+from veering.transverse_taut import is_transverse_taut
 
 def try_add_veering_tet(triangulation, partial_taut_structure, num_pis_at_edges, veering_directions, tet, edgepair, pass_back_structures):
     """try to add the given tet, tet_index to the structure with given edgepair being pi"""

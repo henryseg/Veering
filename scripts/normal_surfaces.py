@@ -2,10 +2,11 @@
 # normal_surfaces.py
 #
 
-from file_io import parse_data_file
-from taut import isosig_to_tri_angle
 import regina
 
+from veering.file_io import parse_data_file
+
+from veering.taut import isosig_to_tri_angle
 
 def count_quads(surf):
     count = 0

@@ -5,10 +5,9 @@
 # Pachner moves that respect branched surfaces (smoothings of the dual spine)
 
 import regina
-from taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair
-from branched_surface import large_edge_of_face, determine_possible_branch_given_two_faces, determine_possible_branch_given_three_faces, is_branched
-from branched_surface import all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface
-from branched_surface import has_non_sing_semiflow
+
+from veering.taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair
+from veering.branched_surface import large_edge_of_face, determine_possible_branch_given_two_faces, determine_possible_branch_given_three_faces, is_branched, all_branched_surfaces, lex_smallest_branched_surface, apply_isom_to_branched_surface, has_non_sing_semiflow
 
 def twoThreeMove(tri, branch, face_num, perform = True, return_edge = False):
     """Apply a 2-3 move to a triangulation with a branched surface, if possible. 

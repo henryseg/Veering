@@ -1,3 +1,7 @@
+#
+# continent.py
+#
+
 from veering.file_io import parse_data_file, read_from_pickle
 from veering.basic_math import sign
 from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num

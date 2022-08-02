@@ -1,4 +1,4 @@
-from file_io import parse_data_file, write_data_file
+from veering.file_io import parse_data_file, write_data_file
 
 lines = parse_data_file('Data/veering_census_with_data.txt')
 

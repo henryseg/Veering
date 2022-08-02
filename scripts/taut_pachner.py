@@ -5,7 +5,8 @@
 # Pachner moves that respect taut structures
 
 import regina
-from taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair, is_taut, there_is_a_pi_here
+
+from veering.taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair, is_taut, there_is_a_pi_here
 
 def twoThreeMove(tri, angle, face_num, perform = True, return_edge = False):
     """Apply a 2-3 move to a taut triangulation, if possible. 
