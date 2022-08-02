@@ -48,11 +48,11 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             tri, angle = taut.isosig_to_tri_angle(sig)
             assert not transverse_taut.is_transverse_taut(tri, angle), sig
 
-    from . import veering
+    from . import veering_tri
     print("testing is_veering")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
-        assert veering.is_veering(tri, angle), sig
+        assert veering_tri.is_veering(tri, angle), sig
 
     # tri, angle = taut.isosig_to_tri_angle("cPcbbbdxm_10")
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
@@ -64,7 +64,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         tri, angle = taut.isosig_to_tri_angle(sig)
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
-            assert veering.is_veering(tri_s, angle_s), sig
+            assert veering_tri.is_veering(tri_s, angle_s), sig
             
     from . import veering_fan_excision
     print("testing veering_fan_excision")
@@ -72,7 +72,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     m004, _ = taut.isosig_to_tri_angle('cPcbbbiht_12')
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
-        tet_types = veering.is_veering(tri, angle, return_type = "tet_types")
+        tet_types = veering_tri.is_veering(tri, angle, return_type = "tet_types")
         if tet_types.count("toggle") == 2:
             excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
             assert ( excised_tri.isIsomorphicTo(m003) != None or
@@ -458,7 +458,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         print("testing exotics")
         for sig in random.sample(veering_isosigs[:3000], 3):
             tri, angle = taut.isosig_to_tri_angle(sig)
-            T = veering.veering_triangulation(tri, angle)
+            T = veering_tri.veering_triangulation(tri, angle)
             is_eo = T.is_edge_orientable()
             for angle in T.exotic_angles():
                 assert taut_polytope.taut_cone_homological_dim(tri, angle) == 0, sig
