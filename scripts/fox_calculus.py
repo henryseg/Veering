@@ -58,7 +58,7 @@ def taut_polynomial_via_fox_calculus(tri, angle):
 	# 	else:
 	# 		new_gens.append(gens[i])
 	print(tree_edges)
-	gens = [F.one() if i in tree_edges else gens[i] for i in range(len(gens))]
+	# gens = [F.one() if i in tree_edges else gens[i] for i in range(len(gens))]
 	relators = []
 	for edge in esfc:
 		rel = F.one()
@@ -76,7 +76,7 @@ def taut_polynomial_via_fox_calculus(tri, angle):
 	G = F/relators
 	print(G)
 
-	loop_twistednesses = []
+	loop_twistednesses = {}
 	oriented_loops, all_signs = non_tree_edge_loops_oriented(tri, angle)
 	for i in range(len(oriented_loops)):
 		loop = oriented_loops[i]
@@ -89,8 +89,16 @@ def taut_polynomial_via_fox_calculus(tri, angle):
 			if is_AB_turn(vt, top_bottom_embeddings, f0, f1, f0d, f1d):
 				# print('isAB', f0, f1)
 				count += 1
-		loop_twistednesses.append(count % 2)
-	loop_twistednesses = [(-1)**n for n in loop_twistednesses]
+		loop_twistednesses[loop[0]] = (-1)**(count % 2) ### first in loop is the non tree edge
+	# print(loop_twistednesses)
+	for i in range(len(gens)):
+		if i not in loop_twistednesses:
+			loop_twistednesses[i] = 1
+	
+	loop_twistednesses = [loop_twistednesses[i] for i in range(len(gens))]
 	print(loop_twistednesses)
+
+
+
 
 
