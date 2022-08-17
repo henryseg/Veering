@@ -297,6 +297,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         except ValueError:
             print("ignore is_fibered (no data file)")
             mflds = None
+        mflds = mflds[58:]  # get rid of the preamble
         if mflds is not None:
             print("testing is_fibered")
             mflds = [line.split("\t")[0:2] for line in mflds]
