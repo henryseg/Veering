@@ -7,47 +7,12 @@
 import regina
 
 from .taut import isosig_to_tri_angle, isosig_from_tri_angle, is_taut
-from .transverse_taut import is_transverse_taut
+from .transverse_taut import is_transverse_taut, top_bottom_embeddings_of_faces
 from .veering_tri import is_veering
 from .taut_polynomial import tet_lower_upper_edges
 from .taut_polytope import is_layered
 from .edge_orientability import is_edge_orientable
 from .carried_surface import build_surface, triangle_is_red, veering_symmetry_group, stratum
-
-def top_bottom_embeddings_of_faces(tri, angle, tet_vert_coorientations = None):
-    """
-    returns two lists: one whose ith entry is the top embedding of face i, another whose ith entry is the bottom embedding of face i
-    (top embedding = embedding as a top face)
-    """
-    
-    if tet_vert_coorientations == None:
-        tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
-    
-    n = tri.countTetrahedra()
-    
-    top_embeddings = [None]*2*n
-    bottom_embeddings = [None]*2*n
-    
-    for face in tri.triangles():
-        embed0 = face.embedding(0)
-        embed1 = face.embedding(1)
-        tet0_index = embed0.simplex().index()
-        tet1_index = embed1.simplex().index()
-        index_of_face_in_tet0 = embed0.vertices()[3]
-        index_of_face_in_tet1 = embed1.vertices()[3]
-        if tet_vert_coorientations[tet0_index][index_of_face_in_tet0] == 1: # coorientation points out of tet0, i.e. tet0 is below f
-            top_embedding = embed0
-            bottom_embedding = embed1
-        else:
-            top_embedding = embed1
-            bottom_embedding = embed0
-        top_embeddings[face.index()] = top_embedding
-        bottom_embeddings[face.index()] = bottom_embedding
-        
-    for i in range(2*n):
-        assert top_embeddings[i] != None and bottom_embeddings[i] != None
-    
-    return top_embeddings, bottom_embeddings
 
 def vertex_correspondence_between_embeds(embed0, embed1):
     vertex00 = embed0.vertices()[0]

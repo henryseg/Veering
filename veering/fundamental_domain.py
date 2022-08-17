@@ -98,7 +98,7 @@ def non_tree_edge_loops_oriented(tri, angle):
     """
     Suppose that T is the (dual) spanning tree.  For every non-tree
     edge e, there is a unique oriented loop in T union e whose
-    orientation agrees with the orientation of e (as given by alpha).
+    orientation agrees with the orientation of e (as given by the transverse taut structure).
     We return this as a list of faces (starting with e) and a list of
     signs (starting with +1).
     """

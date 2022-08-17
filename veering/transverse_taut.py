@@ -128,6 +128,7 @@ def get_top_and_bottom_nums(tet_vert_coors, tet_num):
     b0, b1 = bottom_vert_nums
     return [(t0,t1), (b0,b1)]
 
+
 ### This should be "taut_symmetry_group"
 
 @liberal
@@ -163,6 +164,41 @@ def get_tet_above_edge(tri, angle, edge, tet_vert_coorientations = None, get_tet
         else:
             if bottom_edge == edge:
                 return tet
+
+def top_bottom_embeddings_of_faces(tri, angle, tet_vert_coorientations = None):
+    """
+    returns two lists: one whose ith entry is the top embedding of face i, another whose ith entry is the bottom embedding of face i
+    (top embedding = embedding as a top face)
+    """
+    
+    if tet_vert_coorientations == None:
+        tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    
+    n = tri.countTetrahedra()
+    
+    top_embeddings = [None]*2*n
+    bottom_embeddings = [None]*2*n
+    
+    for face in tri.triangles():
+        embed0 = face.embedding(0)
+        embed1 = face.embedding(1)
+        tet0_index = embed0.simplex().index()
+        tet1_index = embed1.simplex().index()
+        index_of_face_in_tet0 = embed0.vertices()[3]
+        index_of_face_in_tet1 = embed1.vertices()[3]
+        if tet_vert_coorientations[tet0_index][index_of_face_in_tet0] == 1: # coorientation points out of tet0, i.e. tet0 is below f
+            top_embedding = embed0
+            bottom_embedding = embed1
+        else:
+            top_embedding = embed1
+            bottom_embedding = embed0
+        top_embeddings[face.index()] = top_embedding
+        bottom_embeddings[face.index()] = bottom_embedding
+        
+    for i in range(2*n):
+        assert top_embeddings[i] != None and bottom_embeddings[i] != None
+    
+    return top_embeddings, bottom_embeddings
 
 def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientations = None, return_tets = False, order_bottom_to_top = True):
     """

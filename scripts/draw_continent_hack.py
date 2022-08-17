@@ -611,19 +611,27 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
             cyan = CP1((complex(1/2*cmath.sqrt(3), 0), 1))
             indigo = CP1((complex(2/3*cmath.sqrt(3), 0), 1))
             violet = CP1((complex(3/4*cmath.sqrt(3), 1/4), 1))
+            left = CP1((complex(0, 0), 1))
+            green = CP1((complex(1/3*cmath.sqrt(3), 0), 1))
 
-            # mob_tsfm = move_in_PSL(top, bottom, right, indigo, cyan, bottom)
+            ### right hand tile
+            # right_mob_tsfm = move_in_PSL(top, bottom, right, indigo, cyan, bottom)
+            ### left hand tile
+            left_mob_tsfm = move_in_PSL(bottom, top, left, green, cyan, top)
 
-            mats = many_matrices(20)
+            num_mats = 120
+            mats = many_matrices(num_mats) ### returns num_mats + 1 matrices
             my_scale = 40
-            thick_line_scale = 36
+            lightning_line_scale = 36
+            thick_line_scale = 24
             thin_line_scale = 12
 
 
-            draw_options = [pyx.style.linewidth(thin_line_scale * ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
-
-
+            draw_options_spectrum = [pyx.style.linewidth(thin_line_scale * ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
+            draw_options_grey = [pyx.style.linewidth(thin_line_scale * ct_lw), pyx.style.linejoin.round, pyx.color.rgb(0.5,0.5,0.5)] ## this may get overwritten with colour information for the ladder
+            
             for n, mat in enumerate(mats):
+                matinv = mat.inverse()
                 my_canv = pyx.canvas.canvas()
                 my_canv.stroke(pyx.path.rect(my_scale*(-2 + math.sqrt(3)/2), my_scale*(-9/8), my_scale*4, my_scale*9/4))  # lower left corner coords, width, height
 
@@ -634,42 +642,58 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                         assert v.is_ladderpole_descendant()
                     path_C = [ v.pos.complex() for v in path ]
                     scaled_path_C = [ my_scale * c for c in path_C]
-                    draw_path(my_canv, scaled_path_C, draw_options)  
+                    
+                    #### big path
+                    # draw_path(my_canv, scaled_path_C, draw_options_spectrum)
+                    draw_path(my_canv, scaled_path_C, draw_options_grey)  
 
-                    # bounding_indices = []
-                    # for k, c in enumerate(path_C):
-                    #     if abs(c - complex(cmath.sqrt(3)/2, 0)) < 0.00001 or abs(c - complex(cmath.sqrt(3)*2/3, 0)) < 0.00001:
-                    #         bounding_indices.append(k)
-                    # assert bounding_indices == 2
-                    # path_C = path_C[bounding_indices[0]:bounding_indices[1] + 1]
-                    path2_C = [mat(CP1((c, 1))).complex() for c in path_C]
-                    scaled_path2_C = [ my_scale * c for c in path2_C ]
-                    draw_path(my_canv, scaled_path2_C, draw_options)  
+                    #### small path
+                    bounding_indices = []
+                    for k, c in enumerate(path_C):
+                        if abs(c - complex(1/2*cmath.sqrt(3), 0)) < 0.00001 or abs(c - complex(2/3*cmath.sqrt(3), 0)) < 0.00001:
+                            bounding_indices.append(k)
+                            # print('c',c, 'k', k)
+                    assert len(bounding_indices) == 2
+                    cut_path_C = path_C[bounding_indices[0]:bounding_indices[1] + 1]
+                    cut_path2_C = [matinv(CP1((c, 1))).complex() for c in cut_path_C]
+                    scaled_cut_path2_C = [ my_scale * c for c in cut_path2_C ]
+                    t = n/(num_mats + 1)
+                    line_scale = (1-t)*thin_line_scale + t*thick_line_scale
+                    draw_options_white = [pyx.style.linewidth(line_scale * ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)] ## this may get overwritten with colour information for the ladder
+                    draw_path(my_canv, scaled_cut_path2_C, draw_options_white)  
 
 
-                # k = 0
-                for k, L in enumerate(T.ladder_list):
-                    for lu in L.ladder_unit_list:
-                        if k%2 == 0:
-                            curves = lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T)
-                            for j, crv in enumerate(curves):
-                                bounding_indices = []
-                                for k, c in enumerate(crv):
-                                    if abs(c - complex(cmath.sqrt(3)/2, -1/2)) < 0.00001 or abs(c - complex(cmath.sqrt(3)/2, +1/2)) < 0.00001:
-                                        bounding_indices.append(k)
-                                if len(bounding_indices) == 2:
-                                    crv = crv[bounding_indices[0]:bounding_indices[1] + 1]
-                                    lightning_curve_scaled = [ my_scale * c for c in crv ]
-                                    draw_path(my_canv, lightning_curve_scaled, [pyx.style.linewidth(thick_line_scale*ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)])
-                                    crv2 = [mat(CP1((c, 1))).complex() for c in crv]
-                                    lightning_curve2_scaled = [ my_scale * c for c in crv2 ]
-                                    draw_path(my_canv, lightning_curve2_scaled, [pyx.style.linewidth(thick_line_scale*ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)])
-                
+                # for k, L in enumerate(T.ladder_list):
+                #     for lu in L.ladder_unit_list:
+                #         if k%2 == 0:
+                #             curves = lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T)
+                #             for j, crv in enumerate(curves):
+                #                 bounding_indices = []
+                #                 for k, c in enumerate(crv):
+                #                     if abs(c - complex(cmath.sqrt(3)/2, -1/2)) < 0.00001 or abs(c - complex(cmath.sqrt(3)/2, +1/2)) < 0.00001:
+                #                         bounding_indices.append(k)
+                #                 if len(bounding_indices) == 2:
+                #                     crv = crv[bounding_indices[0]:bounding_indices[1] + 1]
+                #                     lightning_curve_scaled = [ my_scale * c for c in crv ]
+                                    
+                #                     ### big lightning
+                #                     draw_path(my_canv, lightning_curve_scaled, [pyx.style.linewidth(lightning_line_scale*ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)])
+                                    
+                #                     ### small lightning right
+                #                     crv2 = [mat(CP1((c, 1))).complex() for c in crv]
+                #                     lightning_curve2_scaled = [ my_scale * c for c in crv2 ]
+                #                     draw_path(my_canv, lightning_curve2_scaled, [pyx.style.linewidth(lightning_line_scale*ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)])
+                                    
+                #                     ### small lightning left
+                #                     crv3 = [left_mob_tsfm(CP1((c, 1))).complex() for c in crv]
+                #                     lightning_curve3_scaled = [ my_scale * c for c in crv3 ]
+                #                     draw_path(my_canv, lightning_curve3_scaled, [pyx.style.linewidth(lightning_line_scale*ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)])
+                                    
 
-                mat_filename_pdf = 'Images/Cannon-Thurston/PDF/' + output_filename[:-4] + str(n) + '.pdf'
-                mat_filename_svg = 'Images/Cannon-Thurston/SVG/' + output_filename[:-4] + str(n) + '.svg'
-                mat_filename_png = 'Images/Cannon-Thurston/PNG/' + output_filename[:-4] + str(n) + '.png'
-                my_canv.writePDFfile(mat_filename_pdf)
+                mat_filename_pdf = 'Images/Cannon-Thurston/PDF/' + output_filename[:-4] + str(n).zfill(3) + '.pdf'
+                mat_filename_svg = 'Images/Cannon-Thurston/SVG/' + output_filename[:-4] + str(n).zfill(3) + '.svg'
+                mat_filename_png = 'Images/Cannon-Thurston/PNG/' + output_filename[:-4] + str(n).zfill(3) + '.png'
+                # my_canv.writePDFfile(mat_filename_pdf)
                 my_canv.writeSVGfile(mat_filename_svg)
                 drawing = svg2rlg(mat_filename_svg) 
                 renderPM.drawToFile(drawing, mat_filename_png, fmt='PNG', dpi=72, bg=0x000000)  
@@ -886,8 +910,8 @@ def main():
     # max_num_tetrahedra = 50000
     # max_num_tetrahedra = 100000
     # max_num_tetrahedra = 400000
-    max_num_tetrahedra = 2000000
-    # max_num_tetrahedra = 50000000
+    # max_num_tetrahedra = 2000000
+    max_num_tetrahedra = 50000000
     # max_length = 0.9
     # max_length = 0.6
     # max_length = 0.4
@@ -895,11 +919,11 @@ def main():
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
-    max_length = 0.1
+    # max_length = 0.1
     # max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
-    # max_length = 0.04
+    max_length = 0.04
     # max_length = 0.02
     # max_length = 0.015
     # max_length = 0.01
