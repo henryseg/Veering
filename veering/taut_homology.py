@@ -18,8 +18,6 @@ from .transverse_taut import is_transverse_taut, edge_side_face_collections
 verbose = 0
 
 
-
-
 def edge_equation_matrix_taut(triangulation, angle_struct):
     """
     For each edge, find the face numbers on either side of the pis,

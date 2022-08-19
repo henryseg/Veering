@@ -1,12 +1,18 @@
+
 #
 #  fox_calculus.py
 #
 
+from sage.arith.misc import gcd
+from sage.groups.free_group import FreeGroup
+
 from veering.taut import liberal, vert_pair_to_edge_num
 from veering.veering_tri import veering_triangulation
 from veering.transverse_taut import edge_side_face_collections, top_bottom_embeddings_of_faces, get_tet_top_vert_nums
-from sage.groups.free_group import FreeGroup
+from veering.taut_homology import group_ring, faces_in_laurent, matrix_laurent_to_poly, normalise_poly
 from veering.fundamental_domain import spanning_dual_tree, non_tree_edge_loops_oriented
+
+
 
 def fundamental_group(tri, angle):
     """Given a transverse taut triangulation returns a SageMath finitely presentation for the fundamental group"""
@@ -14,7 +20,9 @@ def fundamental_group(tri, angle):
     tree_edges = tree[0]
     F = FreeGroup(tri.countTriangles())
     gens = F.gens()
-    
+
+    # gens = [F.one() if i in tree_edges else gens[i] for i in range(len(gens))]
+
     esfc = edge_side_face_collections(tri, angle)
     relators = []
     for edge in esfc:
@@ -32,6 +40,7 @@ def fundamental_group(tri, angle):
         relators.append(gens[f])
     G = F/relators
     return G
+
 
 def is_AB_turn(vt, top_bottom_embeddings, face0, face1, face0_dir, face1_dir):
     """We go through face0 in direction face0_dir (+1 if with the coorientation) 
@@ -65,6 +74,7 @@ def is_AB_turn(vt, top_bottom_embeddings, face0, face1, face0_dir, face1_dir):
     top_colour = vt.get_edge_between_verts_colour(t.index(), top_vert_nums)
     return top_colour == equatorial_colour
 
+
 def loop_twistednesses(tri, angle):
     vt = veering_triangulation(tri, angle)
     top_bottom_embeddings = top_bottom_embeddings_of_faces(tri, angle)
@@ -88,15 +98,23 @@ def loop_twistednesses(tri, angle):
     
     return [twistednesses_dict[i] for i in range(tri.countTriangles())]
 
+
 @liberal
-def taut_polynomial_via_fox_calculus(tri, angle):
-    G = fundamental_group(tri, angle)
+def taut_polynomial_via_fox_calculus(tri, angle, simplified = True):
     lt = loop_twistednesses(tri, angle)
-    print(G)
-    print(lt)
-    
+    ZH = group_ring(tri, angle, [], alpha = True)  # alpha = True is fine because we are in the census where b_1 \leq 4
+    P = ZH.polynomial_ring()
+    fl = faces_in_laurent(tri, angle, [], ZH)
+    flt = [a * x for a, x in zip(fl, lt)]
 
-
-
-
-
+    G = fundamental_group(tri, angle)
+    if simplified:
+        G = G.simplified()
+        indices = [int(str(x)[1:]) for x in G.gens()]
+        flt = [flt[i] for i in indices]
+    M = G.alexander_matrix(flt)
+    N = matrix_laurent_to_poly(M, ZH, P)
+    n = min(N.dimensions())
+    poly = gcd(N.minors(n))
+    poly = normalise_poly(poly, ZH, P)
+    return poly
