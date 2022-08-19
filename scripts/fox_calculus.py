@@ -13,7 +13,6 @@ from veering.taut_homology import group_ring, faces_in_laurent, matrix_laurent_t
 from veering.fundamental_domain import spanning_dual_tree, non_tree_edge_loops_oriented
 
 
-
 def fundamental_group(tri, angle):
     """Given a transverse taut triangulation returns a SageMath finitely presentation for the fundamental group"""
     tree = spanning_dual_tree(tri)
@@ -110,7 +109,7 @@ def taut_polynomial_via_fox_calculus(tri, angle, simplified = True):
     G = fundamental_group(tri, angle)
     if simplified:
         G = G.simplified()
-        indices = [int(str(x)[1:]) for x in G.gens()]
+        indices = [int(str(x)[1:]) for x in G.gens()]  # nominated for hackest hack!
         flt = [flt[i] for i in indices]
     M = G.alexander_matrix(flt)
     N = matrix_laurent_to_poly(M, ZH, P)
