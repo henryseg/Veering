@@ -115,7 +115,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     from . import flow_cycles
     from . import drill
     print("testing taut and branched drill + semiflows on drillings")
-    for sig in random.sample(veering_isosigs, smaller_num_to_check):
+    for sig in random.sample(veering_isosigs, 3): 
         tri, angle = taut.isosig_to_tri_angle(sig)
         branch = branched_surface.upper_branched_surface(tri, angle)  # also checks for veering and transverse taut
         found_loops = flow_cycles.find_flow_cycles(tri, branch)
@@ -308,6 +308,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     if sage_working:
         from . import veering_polynomial
         from . import taut_polynomial
+        from scripts import fox_calculus
+        
         print("testing veering poly")
         for sig in veering_polys:
             p = veering_polynomial.veering_polynomial(sig)
@@ -321,6 +323,16 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert check_polynomial_coefficients(p, taut_polys[sig]), sig
         #     assert p.__repr__() == taut_polys[sig]
+        print("testing taut poly via Fox calculus")
+        for sig in taut_polys:
+            p = fox_calculus.taut_polynomial_via_fox_calculus(sig)
+            assert check_polynomial_coefficients(p, taut_polys[sig]), sig
+        #     assert p.__repr__() == taut_polys[sig]
+        print("testing (taut = taut_fox) for random triangulations")
+        for sig in random.sample(veering_isosigs[500:5000], smaller_num_to_check):        
+            taut1 = taut_polynomial.taut_polynomial_via_tree(sig)
+            taut2 = fox_calculus.taut_polynomial_via_fox_calculus(sig)
+            assert taut1 == taut2
         print("testing divide")
         for sig in random.sample(veering_isosigs[:3000], num_to_check):
             p = veering_polynomial.veering_polynomial(sig)
