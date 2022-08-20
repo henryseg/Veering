@@ -2,11 +2,13 @@ import pyx ### vector graphics
 import cmath
 import math
 
+### Was hacked together to make animations for our video...
+
 from veering.file_io import parse_data_file, read_from_pickle, output_to_pickle
 from veering.basic_math import CP1, move_in_PSL
 from veering.snappy_util import shapes
 from veering.taut import isosig_to_tri_angle
-from veering.veering import veering_triangulation
+from veering.veering_tri import veering_triangulation
 
 from continent import continent
 from boundary_triangulation import boundary_triangulation, tet_face

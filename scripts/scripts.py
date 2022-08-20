@@ -4,9 +4,11 @@
 
 # Examples of usage for some of the modules - most need cleaning before they will work. 
 
+from veering.taut import isosig_to_tri_angle
+from veering.snappy_util import shapes
 
 def boundary_triangulation_script():
-    from boundary_triangulation import *
+    from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
     args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     ### for standard ladder picture, set 'draw_triangles_near_poles' = False. Set True for CT pictures
@@ -54,7 +56,7 @@ def boundary_triangulation_script():
     # print(B.ladder_counts())
 
 def branched_pachner_script():
-    from branched_pachner_script import *
+    from branched_pachner import twoThreeMove, threeTwoMove
     # for i in range(4): 
     #     print(i)
     #     # tri, angle = isosig_to_tri_angle('cPcbbbiht_12') 
@@ -82,7 +84,7 @@ def branched_pachner_script():
             assert [4,11,0] in all_branches
 
 def dilatation_script(report = 50):
-    from dilatations import *
+    from dilatations import dilatation_betti_one
     data = parse_data_file("veering_census_with_data.txt")
     out_filename = "betti_one_dilatations_tree.txt"
     # out_filename = "betti_one_dilatations_tree_and_smith.txt"
@@ -99,7 +101,8 @@ def dilatation_script(report = 50):
     write_data_file(out, out_filename)
 
 def draw_continent_script():
-    from draw_continent import *
+    from draw_continent import draw_continent
+
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.002, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'only_draw_ladderpoles': False, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': False, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
@@ -107,16 +110,16 @@ def draw_continent_script():
     # max_num_tetrahedra = 40
     # max_num_tetrahedra = 5000
     # max_num_tetrahedra = 50000
-    # max_num_tetrahedra = 100000
+    max_num_tetrahedra = 100000
     # max_num_tetrahedra = 400000
     # max_num_tetrahedra = 2000000
-    max_num_tetrahedra = 50000000
+    # max_num_tetrahedra = 50000000
     # max_length = 0.4
     # max_length = 0.3
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
-    # max_length = 0.1
+    max_length = 0.1
     # max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
@@ -124,7 +127,7 @@ def draw_continent_script():
     # max_length = 0.02
     # max_length = 0.015
     # max_length = 0.01
-    max_length = 0.005
+    # max_length = 0.005
 
     draw_args['ct_lw'] = 0.2 * max_length 
 
@@ -215,7 +218,7 @@ def draw_continent_script():
 
 
 def draw_continent_circle_script():
-    from draw_continent_circle import *
+    from draw_continent_circle import draw_continent_circle
     # veering_isosig = 'cPcbbbdxm_10' 
     # flow_cycle = [(0, 2)]
 
@@ -286,7 +289,7 @@ def draw_continent_circle_script():
     #         draw_fund_domain_edges = True)
 
 def draw_veering_triangulation_and_mid_annuli_script():
-    from draw_veering_triangulation_and_mid_annuli import *
+    from draw_veering_triangulation_and_mid_annuli import draw_triangulation_from_veering_isosig
     # draw_triangulations_from_veering_isosigs_file('Veering_census/veering_census_up_to_12.txt', '../Veering_mid-annuli', '../Veering_tetrahedra')
 
     # calculate_well_framed_from_veering_isosigs_file('Veering_census/veering_census.txt', 'veering_census_with_well_framed.txt')
@@ -351,14 +354,14 @@ def draw_veering_triangulation_and_mid_annuli_script():
     #     draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/Low_volume_stacks/' + sig + stack +'_mid-annuli.pdf')
 
 def normal_surfaces_script(num_to_check = 10):
-    from normal_surfaces import *
+    from normal_surfaces import analyze_sig
     lines = parse_data_file('veering_census.txt')
     for line in lines[:num_to_check]:
         sig = line.strip()
         analyze_sig(sig)
 
 def pachner_graph_script():
-    from pachner_graph import *
+    # from pachner_graph import *
     depth = 100
     # ceiling = 10
     extra_ceiling = 5  ### above how many tetrahedra we start with
@@ -436,7 +439,7 @@ def pachner_graph_script():
     ## we got through the first five manifolds and found veering for all simple drillings without essential tori.
 
 def taut_branched_pachner_graph_script():
-    from taut_branched_pachner_graph import *
+    # from taut_branched_pachner_graph import *
     depth = 100
     ceiling = 8
 
@@ -451,7 +454,7 @@ def taut_branched_pachner_graph_script():
     graph = search_Pachner_graph_for_shortest_path(start_isoSig, tri, angle, branch, target_isoSig, name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
 
 def taut_pachner_script():
-    from taut_pachner import *
+    # from taut_pachner import *
     tri, angle = isosig_to_tri_angle('jLLAvQQbcdeihhiihtsfxedxhdt_201021201')
     # tri, angle = isosig_to_tri_angle('cPcbbbiht_12')
     for i in range(tri.countTriangles()):
@@ -470,7 +473,7 @@ def taut_pachner_script():
         #         break
 
 def taut_pachner_graph_script():
-    from taut_pachner_graph import *
+    # from taut_pachner_graph import *
     depth = 100
     ceiling = 8
 
@@ -483,7 +486,7 @@ def taut_pachner_graph_script():
     graph = search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
 
 def test_branched_isosig_script():
-    from test_branched_isosig import *
+    # from test_branched_isosig import *
     # tri, angle = isosig_to_tri_angle("cPcbbbdxm_10")
     tri, angle = isosig_to_tri_angle("gLAMPbbcdeffdhwqqqj_210202")
 

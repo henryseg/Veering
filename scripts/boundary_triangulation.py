@@ -2,7 +2,7 @@
 from veering.file_io import parse_data_file, read_from_pickle
 from veering.basic_math import vector, matrix, CP1
 from veering.taut import isosig_to_tri_angle, liberal
-from veering.veering import veering_triangulation
+from veering.veering_tri import veering_triangulation
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
 from veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston

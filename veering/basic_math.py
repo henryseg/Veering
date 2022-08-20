@@ -132,7 +132,7 @@ class matrix(tuple):
         
     def inverse(self, epsilon = 0.000001):
         D = self.det()
-        if abd(D) < epsilon:
+        if abs(D) < epsilon:
             raise ZeroDivisionError
         a, b, c, d = self
         # [a b]*[ d -b] = [D 0]

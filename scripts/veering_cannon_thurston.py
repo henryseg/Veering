@@ -5,7 +5,7 @@ import pyx ### vector graphics
 
 from veering.file_io import read_from_pickle
 from veering.taut import isosig_to_tri_angle
-from veering.veering import veering_triangulation
+from veering.veering_tri import veering_triangulation
 
 from develop_ideal_hyperbolic_tetrahedra import develop_verts_pos
 

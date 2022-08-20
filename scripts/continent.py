@@ -5,7 +5,7 @@
 from veering.file_io import parse_data_file, read_from_pickle
 from veering.basic_math import sign
 from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num
-from veering.veering import veering_triangulation
+from veering.veering_tri import veering_triangulation
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
 
