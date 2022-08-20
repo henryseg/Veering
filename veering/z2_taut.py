@@ -8,7 +8,8 @@ import regina
 from copy import deepcopy
 
 from .taut import liberal, edge_pair_to_edge_numbers, vert_pair_to_edge_pair
-from .fundamental_domain import non_tree_edge_loops
+from .fundamental_domain import non_tree_face_loops
+
 
 # check Z2 tautness
 
@@ -23,6 +24,7 @@ def is_z2_taut(tri, angle):
     # print totals
     return all(total%2 == 0 for total in totals)
 
+
 def find_z2_taut_structures(tri):
     """try all possibilities of flat tetrahedra, looking for a z2 taut structure on tri"""
 
@@ -31,6 +33,7 @@ def find_z2_taut_structures(tri):
     pass_back_structures = []
     try_build_z2_taut_struct(tri, [], [0]*num_edges, remaining_edge_degrees, pass_back_structures)
     return pass_back_structures
+
 
 def try_build_z2_taut_struct(tri, partial_taut_structure, num_pis_at_edges, remaining_edge_degrees, pass_back_structures):
     """recursive function explores tree of partial taut structures looking for z2 taut. builds taut structure
@@ -46,6 +49,7 @@ def try_build_z2_taut_struct(tri, partial_taut_structure, num_pis_at_edges, rema
     tet = tri.tetrahedron(tet_index)
     for edgepair in range(3):
         try_add_z2_taut_tet(tri, partial_taut_structure, num_pis_at_edges, remaining_edge_degrees, tet, edgepair, pass_back_structures)
+
 
 def try_add_z2_taut_tet(tri, partial_taut_structure, num_pis_at_edges, remaining_edge_degrees, tet, edgepair, pass_back_structures):
     """try to add the given tet, tet_index to the structure with given edgepair being pi"""
@@ -72,11 +76,12 @@ def try_add_z2_taut_tet(tri, partial_taut_structure, num_pis_at_edges, remaining
     #print new_partial_taut_structure, new_num_pis_at_edges, new_veering_directions
     try_build_z2_taut_struct(tri, new_partial_taut_structure, new_num_pis_at_edges, new_remaining_edge_degrees, pass_back_structures)
 
+
 def is_trivial_in_cohomology(tri, angle):
     """Test all loops in this triangulation, do any of them pass an odd number
     of pi's. If so, return False"""
     # print('angle', angle)
-    loops = non_tree_edge_loops(tri, include_tetrahedra = True)
+    loops = non_tree_face_loops(tri, include_tetrahedra = True)
     for (face_inds, tets) in loops:
         # print('face_inds', face_inds)
         n = len(tets)
@@ -99,8 +104,9 @@ def is_trivial_in_cohomology(tri, angle):
             return False
     return True
 
+
 def cohomology_loops(tri):
-    loops = non_tree_edge_loops(tri, include_tetrahedra = True)
+    loops = non_tree_face_loops(tri, include_tetrahedra = True)
     num_tet = tri.countTetrahedra()
     out = []
     for (face_inds, tets) in loops:
@@ -122,9 +128,11 @@ def cohomology_loops(tri):
         out.append(equ)
     return out
 
+
 def find_cohomology_trivial_z2_taut_structures(tri):
     structs = find_z2_taut_structures(tri)
     return [s for s in structs if is_trivial_in_cohomology(tri, s)]
+
 
 def test():
     # t = regina.Triangulation3.fromIsoSig('cPcbbbiht')
@@ -145,6 +153,7 @@ def test():
     print(structs)
     #for s in structs:
     #    print(s)
+
 
 if __name__ == '__main__':
     test()

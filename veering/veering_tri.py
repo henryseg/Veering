@@ -1,14 +1,18 @@
 #
-# veering_tri.py  # renamed to prevent name collisions
+# veering_tri.py
 #
 
-# Provides a checker for taut isosigs and a veering_triangulations class. 
-
+# Provides a checker for veering isosigs and a veering_triangulations
+# class.
 
 import regina #needed inside of imported files
 
-from .transverse_taut import is_transverse_taut, get_tet_top_and_bottom_edges
+from .fundamental_domain import non_tree_face_loops_oriented
 from .taut import liberal, is_taut, vert_pair_to_edge_num, edge_num_to_vert_pair
+from .transverse_taut import (is_transverse_taut, get_tet_top_and_bottom_edges,
+                              top_bottom_embeddings_of_faces, edge_side_face_collections,
+                              get_tet_top_vert_nums)
+
 
 def tet_type(triangulation, tet_num, veering_colours):
     num_L = [ veering_colours[triangulation.tetrahedron(tet_num).edge(i).index()] for i in range(6) ].count("blue")
@@ -20,6 +24,7 @@ def tet_type(triangulation, tet_num, veering_colours):
         return "blue"
     assert False
 
+    
 @liberal
 def is_veering(tri, angle, return_type = "boolean"):
     """
@@ -87,6 +92,7 @@ def is_veering(tri, angle, return_type = "boolean"):
         assert return_type == 'boolean'
         return True
 
+    
 class veering_triangulation():
     """
     Container class for a triangulation with transverse veering
@@ -140,9 +146,77 @@ class veering_triangulation():
                 exotic_lower.append((equator + 1)%3)
         assert is_taut(self.tri, exotic_upper) and is_taut(self.tri, exotic_lower)
         return [exotic_upper, exotic_lower]
-
+    
     ### imported methods
-
+    
     def is_edge_orientable(self, return_type = "boolean"):
         from .edge_orientability import is_edge_orientable as is_eo
         return is_eo(self.tri, self.angle, return_type = return_type)
+
+    def is_AB_turn(vt, face0, face1, face0_dir, face1_dir):
+        """
+        For the "turn" (face0, face1, face0_dir, face1_dir) in the veering
+        triangulation vt, we decide if it is an "anti-branching" (AB) turn
+        as defined at the top of page 16 of arxiv:2008.04836.  In more
+        detail: we travel along face0 in direction face0_dir (+1 if with
+        the coorientation) into a tet t. We then leave through face1 in
+        direction face1_dir.  We return True if this turn is an AB turn:
+        the triangles are adjacent along an equatorial edge of t of the
+        same colour as the top diagonal of the edge.
+        """
+        top, bottom = top_bottom_embeddings_of_faces(vt.tri, vt.angle)
+        if face0_dir == 1:
+            embed0 = bottom[face0]
+        else:
+            embed0 = top[face0]
+        if face1_dir == -1:
+            embed1 = bottom[face1]
+        else:
+            embed1 = top[face1]
+        t0 = embed0.tetrahedron()
+        t1 = embed1.tetrahedron()
+        # print(t0.index(), t1.index())
+        assert(t0 == t1)
+        t = t0
+
+        if face0_dir != face1_dir:
+            return False
+        f0 = embed0.face()
+        f1 = embed1.face()
+        equatorial_nums = [0,1,2,3]
+        equatorial_nums.remove(f0)
+        equatorial_nums.remove(f1)
+        equatorial_colour = vt.get_edge_between_verts_colour(t.index(), equatorial_nums)
+        top_vert_nums = get_tet_top_vert_nums(vt.coorientations, t.index())
+        top_colour = vt.get_edge_between_verts_colour(t.index(), top_vert_nums)
+        return top_colour == equatorial_colour
+
+
+def loop_twistednesses(tri, angle):
+    """
+    Returns the (list of the) images of the face generators under the
+    edge-orientation homomorphism.  For each face of the triangulation
+    we take its canonical loop (using the canonical spanning tree).
+    We then compute the image (either +1 or -1) by counting the parity
+    of number of AB turns along the loop.  We return these as a list.
+    (Note that the homomorphism is trivial on tree faces.)  See
+    Proposition 5.7 of arxiv:2101.12162.
+    """
+    vt = veering_triangulation(tri, angle)
+    twistednesses_dict = {}
+    oriented_loops, all_signs = non_tree_face_loops_oriented(tri, angle)
+    for i in range(len(oriented_loops)):
+        loop = oriented_loops[i]
+        signs = all_signs[i]
+        count = 0
+        for j in range(len(loop)):
+            f0, f1 = loop[j], loop[(j+1)%len(loop)]
+            f0d, f1d = signs[j], signs[(j+1)%len(loop)]
+            if vt.is_AB_turn(f0, f1, f0d, f1d):
+                count += 1
+        twistednesses_dict[loop[0]] = (-1)**(count % 2)  # first in loop is the non-tree face
+    for i in range(tri.countTriangles()):
+        if i not in twistednesses_dict:
+            twistednesses_dict[i] = 1
+    
+    return [twistednesses_dict[i] for i in range(tri.countTriangles())]

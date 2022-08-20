@@ -6,10 +6,12 @@
 
 import regina # needed inside of imported files
 
-from .taut import liberal, is_taut, apply_isom_to_angle_struct_list, vert_pair_to_edge_num, there_is_a_pi_here
+from .taut import (liberal, is_taut, apply_isom_to_angle_struct_list,
+                   vert_pair_to_edge_num, there_is_a_pi_here)
 
 
 vertexSplit = [[0, 1, 2, 3], [0, 2, 1, 3], [0, 3, 1, 2]]  
+
 
 def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direction):
     """
@@ -38,6 +40,7 @@ def add_coors_with_check(triangulation, coorientations, tet_num, edgepair, direc
         if coorientations[tet_num][face] * coorientations[adjtet_num][adjgluing[face]] == 1:
             return False # failed neighbours check
     return True # passed neighbours checks
+
 
 @liberal
 def is_transverse_taut(triangulation, taut_angle_struct, return_type = "boolean"):
@@ -80,6 +83,7 @@ def is_transverse_taut(triangulation, taut_angle_struct, return_type = "boolean"
     else:
         return True
 
+
 def convert_tetrahedron_coorientations_to_faces(triangulation, coorientations):
     """
     returns a list of +-1 for each face. +1 if face numbering
@@ -103,6 +107,7 @@ def convert_tetrahedron_coorientations_to_faces(triangulation, coorientations):
         out.append(does_face_agree_with_coorientation[0])
     return out
 
+
 def get_tet_top_vert_nums(tet_vert_coorientations, tet_num):
     vert_coorientations = tet_vert_coorientations[tet_num]
     top_vert_nums = []
@@ -111,6 +116,7 @@ def get_tet_top_vert_nums(tet_vert_coorientations, tet_num):
             top_vert_nums.append(i)
     assert len(top_vert_nums) == 2
     return top_vert_nums
+
 
 def get_tet_top_and_bottom_edges(tet_vert_coorientations, tet):
     tet_num = tet.index()
@@ -131,6 +137,7 @@ def get_top_and_bottom_nums(tet_vert_coors, tet_num):
 
 ### This should be "taut_symmetry_group"
 
+
 @liberal
 def symmetry_group_size(tri, angle, return_isoms = False):
     isoms = tri.findAllIsomorphisms(tri)
@@ -147,6 +154,7 @@ def symmetry_group_size(tri, angle, return_isoms = False):
     if return_isoms:
         return taut_isoms
     return count
+
 
 def get_tet_above_edge(tri, angle, edge, tet_vert_coorientations = None, get_tet_below_edge = False):
     """
@@ -165,9 +173,11 @@ def get_tet_above_edge(tri, angle, edge, tet_vert_coorientations = None, get_tet
             if bottom_edge == edge:
                 return tet
 
+
 def top_bottom_embeddings_of_faces(tri, angle, tet_vert_coorientations = None):
     """
-    returns two lists: one whose ith entry is the top embedding of face i, another whose ith entry is the bottom embedding of face i
+    returns two lists: one whose ith entry is the top embedding of
+    face i, another whose ith entry is the bottom embedding of face i
     (top embedding = embedding as a top face)
     """
     
@@ -199,6 +209,7 @@ def top_bottom_embeddings_of_faces(tri, angle, tet_vert_coorientations = None):
         assert top_embeddings[i] != None and bottom_embeddings[i] != None
     
     return top_embeddings, bottom_embeddings
+
 
 def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientations = None, return_tets = False, order_bottom_to_top = True):
     """
@@ -260,5 +271,3 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
         return out_triangles
     else:
         return out_triangles, out_tets
-
-

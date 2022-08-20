@@ -2,19 +2,22 @@
 # fundamental_domain.py
 #
 
-# Computation of loops in pi_1(M) by building a fundamental domain realised as a spanning tree in the dual 1 skeleton.
+# Computation of loops in pi_1(M) by building a fundamental domain
+# realised as a spanning tree in the dual 1 skeleton.
+
+from sage.groups.free_group import FreeGroup
 
 from .taut import liberal
-from .transverse_taut import is_transverse_taut
+from .transverse_taut import is_transverse_taut, edge_side_face_collections
 
 verbose = 0
 
 def spanning_dual_tree(triangulation):
     """
-    Returns three lists - (dual) edges in the spanning tree, (dual)
-    edges not in the spanning tree, and the distance of each tet (in
-    the tree) to the root. We use the regina numbering to determine
-    the tree.
+    Returns three lists - tree faces (dual to edges in the spanning
+    tree), non-tree faces (dual to edges not in the spanning tree),
+    and the distance of each tet (in the tree) to the root.  We use
+    the regina numbering to determine the tree.
     """
     explored_tetrahedra = [0]
     distances_to_root = [0] + [None]*(triangulation.countTetrahedra() - 1)
@@ -45,7 +48,7 @@ def spanning_dual_tree(triangulation):
 
 def walk_towards_root(tet, tree_faces, distances_to_root):
     """
-    returns the tet closer to the root, and the face we crossed
+    Returns the tet closer to the root, and the face we crossed.
     """
     my_dist_to_root = distances_to_root[tet.index()]
     assert my_dist_to_root > 0 # if we are at the root, blow up
@@ -56,12 +59,13 @@ def walk_towards_root(tet, tree_faces, distances_to_root):
                 return (neighbour, tet.triangle(i).index())
     assert False
 
-def non_tree_edge_loops(triangulation, include_tetrahedra = False):
+    
+def non_tree_face_loops(triangulation, include_tetrahedra = False):
     """
-    For every non-tree (dual) edge e, find the corresponding loop in T union e, 
-    given as a sequence of face indices, starting with e. If include_tetrahedra, 
-    we also return the interstitial tetrahedra. In incidence order, we 
-    have f0,t0,f1,t1,...
+    For every non-tree face f, find the corresponding loop in T union
+    f, given as a sequence of face indices, starting with f.  If
+    include_tetrahedra, we also return the interstitial tetrahedra.
+    In incidence order, we have f0,t0,f1,t1,...
     """
     tree_faces, non_tree_faces, distances_to_root = spanning_dual_tree(triangulation)
     loops = []
@@ -93,16 +97,17 @@ def non_tree_edge_loops(triangulation, include_tetrahedra = False):
             loops.append(face_loop)
     return loops
 
+
 @liberal
-def non_tree_edge_loops_oriented(tri, angle):
+def non_tree_face_loops_oriented(tri, angle):
     """
     Suppose that T is the (dual) spanning tree.  For every non-tree
-    edge e, there is a unique oriented loop in T union e whose
-    orientation agrees with the orientation of e (as given by the transverse taut structure).
-    We return this as a list of faces (starting with e) and a list of
-    signs (starting with +1).
+    face f, there is a unique oriented loop in T union e_f whose
+    orientation agrees with the orientation of f (as given by the
+    transverse taut structure).  We return this as a list of faces
+    (starting with f) and a list of signs (starting with +1).
     """
-    loops = non_tree_edge_loops(tri)
+    loops = non_tree_face_loops(tri)
     oriented_loops = []
     all_signs = []
     coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
@@ -149,31 +154,84 @@ def non_tree_edge_loops_oriented(tri, angle):
     return (oriented_loops, all_signs)
 
 @liberal
-def non_tree_edge_cycles(tri, angle):
+def non_tree_face_cycles(tri, angle):
     """
-    Returns the (dual) one-cycles associated to the non-tree edges.
+    Returns the one-cycles associated to the non-tree faces.
 
     In other words: Suppose that T is the dual spanning tree.  Then,
-    for every non-tree edge e, we return a vector of length 2*n (num
+    for every non-tree face f, we return a vector of length 2*n (num
     faces) with entries from {-1, 0, +1}, which tells us how the
     transverse orientation (angle) agrees or disagrees with the unique
-    oriented loop in T union e.
+    oriented loop in T union e_f.
     """
+    
     cycles = []
-    oriented_loops, all_signs = non_tree_edge_loops_oriented(tri, angle) 
+    oriented_loops, all_signs = non_tree_face_loops_oriented(tri, angle)
     n = tri.countTetrahedra()
     for loop, signs in zip(oriented_loops, all_signs):
         cycle = [0]*2*n
         for face, sign in zip(loop, signs):
-            cycle[face] = sign 
+            cycle[face] = sign
         cycles.append(cycle)
     return cycles
 
-if __name__ == '__main__':
-    from .taut import isosig_to_tri_angle
-    tri, angle = isosig_to_tri_angle('gLLAQbecdfffhhnkqnc_120012')
-    loops = non_tree_edge_loops(tri, include_tetrahedra = True)
-    for (faces,tets) in loops:
-        print('faces', faces)
-        print('tets', [t.index() for t in tets])
 
+@liberal
+def fundamental_group(tri, angle, simplified = True):
+    """
+    Returns the finite presentation of the fundamental group arising
+    from the canonical spanning tree.
+    
+    Input 
+
+    * "tri" -- a regina triangulation.
+
+    * "angle" -- an veering angle structure
+
+    * "simplified" -- returns the Tietze simpification [Havas, 1994]
+      of the fundamental group.
+
+    Examples:
+
+    sage: sig = "cPcbbbdxm_10"  
+    sage: fundamental_group(sig, False)
+    Finitely presented group < x0, x1, x2, x3 | x1^-1*x0^-1*x1^-1*x3*x2*x3, x2^-1*x1^-1*x2^-1*x0*x3*x0, x0 >
+
+    This is the unsimplified presentation of the fundamental group of
+    the figure-eight sibling.  Note that we are using the liberal
+    decorator here.
+
+    sage: sig = "cPcbbbiht_12"  # figure-eight
+    sage: fundamental_group(sig)
+    Finitely presented group < x1, x2 | x1^-1*x2^-2*x1^-1*x2*x1*x2^-1*x1*x2 >
+    
+    This is the simplified presentation of the fundamental group of
+    the figure-eight knot complement.
+    """
+    
+    tree = spanning_dual_tree(tri)
+    tree_faces = tree[0]
+    F = FreeGroup(tri.countTriangles())
+    # We add all of the faces as generators.  This is useful, for
+    # example, when defining homomorphisms from \pi_1(M).
+    gens = F.gens()
+
+    esfc = edge_side_face_collections(tri, angle)  # can this be done with just the routines in fundamental_domain?
+    relators = []
+    for edge in esfc:  # relations for the edges
+        rel = F.one()
+        left, right = edge
+        left.reverse()
+        for term in left:
+            rel = rel * gens[term[0]].inverse()
+        for term in right:
+            rel = rel * gens[term[0]]
+        relators.append(rel)
+
+    gens = F.gens()
+    for f in tree_faces:  # killing the tree faces
+        relators.append(gens[f])
+    G = F/relators
+    if simplified:
+        G = G.simplified()
+    return G

@@ -132,7 +132,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
 
     try:
         import snappy
-        from . import snappy_util
+        from . import snappy_tools
         snappy_working = True
     except:
         print("failed to import from snappy?")
@@ -147,7 +147,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             peripheral_curves = M.gluing_equations()[-2*n:]
             for i in range(2*n):
                 for j in range(i, 2*n):
-                    alg_int = snappy_util.algebraic_intersection(peripheral_curves[i], peripheral_curves[j])
+                    alg_int = snappy_tools.algebraic_intersection(peripheral_curves[i], peripheral_curves[j])
                     if i % 2 == 0 and j == i + 1:
                         assert alg_int == 1, M.name()
                     else:
@@ -160,7 +160,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
             M = snappy.Manifold(T.snapPea())
             M.set_peripheral_curves("shortest")
-            L = snappy_util.get_slopes_from_peripherals(M, per)
+            L = snappy_tools.get_slopes_from_peripherals(M, per)
             M.dehn_fill(L)
             N = snappy.Manifold(sig.split("_")[0])
             assert M.is_isometric_to(N), sig
@@ -308,7 +308,6 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
     if sage_working:
         from . import veering_polynomial
         from . import taut_polynomial
-        from scripts import fox_calculus
         
         print("testing veering poly")
         for sig in veering_polys:
@@ -325,18 +324,18 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         #     assert p.__repr__() == taut_polys[sig]
         print("testing taut poly via Fox calculus")
         for sig in taut_polys:
-            p = fox_calculus.taut_polynomial_via_fox_calculus(sig)
+            p = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             assert check_polynomial_coefficients(p, taut_polys[sig]), sig
         #     assert p.__repr__() == taut_polys[sig]
         print("testing (taut = taut_fox) for random triangulations")
         for sig in random.sample(veering_isosigs[500:3000], smaller_num_to_check):        
             taut1 = taut_polynomial.taut_polynomial_via_tree(sig)
-            taut2 = fox_calculus.taut_polynomial_via_fox_calculus(sig)
+            taut2 = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             assert taut1 == taut2
         print("testing (fox simplified = fox unsimplified) for random small triangulations")
         for sig in random.sample(veering_isosigs[100:500], 3):        
-            taut2 = fox_calculus.taut_polynomial_via_fox_calculus(sig)
-            taut3 = fox_calculus.taut_polynomial_via_fox_calculus(sig, simplified = False)
+            taut2 = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
+            taut3 = taut_polynomial.taut_polynomial_via_fox_calculus(sig, simplified = False)
             assert taut2 == taut3
         print("testing divide")
         for sig in random.sample(veering_isosigs[:3000], num_to_check):
@@ -581,7 +580,3 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
                 
     if sage_working:
         print("all tests depending on sage passed")
-
-
-if __name__ == "__main__":
-    run_tests()

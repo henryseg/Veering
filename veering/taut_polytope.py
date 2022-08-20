@@ -20,7 +20,7 @@ from sage.rings.integer_ring import ZZ
 from .taut import liberal
 from .transverse_taut import is_transverse_taut
 from .taut_homology import edge_equation_matrix_taut, elem_vector, faces_in_smith, rank_of_quotient
-from .fundamental_domain import non_tree_edge_cycles
+from .fundamental_domain import non_tree_face_cycles
 
 
 # Examining edge/face matrices
@@ -386,7 +386,7 @@ def taut_cone_homological_dim(tri, angle):
 
 @liberal
 def projection_to_homology(tri,angle):
-    non_tree_as_cycles = non_tree_edge_cycles(tri, angle)
+    non_tree_as_cycles = non_tree_face_cycles(tri, angle)
     Q = Matrix(non_tree_as_cycles)
     S, U, V = faces_in_smith(tri,angle,[])
     rank, dimU, dimV = rank_of_quotient(S)

@@ -6,19 +6,17 @@
 # compute the alexander polynomial here, to ensure that we are using
 # the same spanning tree.
 
-import regina
-
 from sage.arith.misc import gcd
 from sage.rings.rational_field import QQ
 from sage.matrix.constructor import Matrix
 
+from .sage_tools import matrix_laurent_to_poly, normalise_poly
 from .taut import liberal, vert_pair_to_edge_num
 from .transverse_taut import is_transverse_taut
-from .fundamental_domain import spanning_dual_tree
+from .fundamental_domain import spanning_dual_tree, fundamental_group
 from .taut_homology import (edge_equation_matrix_taut, group_ring,
-                           faces_in_laurent, matrix_laurent_to_poly,
-                           normalise_poly, epimorphism_in_laurent)
-
+                            faces_in_laurent, epimorphism_in_laurent)
+from .veering_tri import loop_twistednesses
 
 verbose = 0
 
@@ -263,6 +261,57 @@ def taut_polynomial_via_tree_and_smith(tri, angle, cycles = [], alpha = True, mo
 
 
 @liberal
+def taut_polynomial_via_fox_calculus(tri, angle, simplified = True):
+    """
+    Computes the taut polynomial.  Under the hood we are relying on
+    (1) sage's Fox calculus to find the Alexander matrix of the
+    fundamental group and (2) the result that the taut polynomial is
+    the Alexander polynomial twisted by the edge-orientation
+    homomorphism.  See Proposition 5.7 of arxiv:2101.12162.
+    
+    Input 
+
+    * "tri" -- a regina triangulation.
+
+    * "angle" -- an veering angle structure
+
+    * "simplified" -- uses the Tietze simpification [Havas, 1994]
+      of the fundamental group. 
+
+    Examples:
+
+    sage: sig = "cPcbbbdxm_10"
+    sage: taut_polynomial_via_fox_calculus(sig)  
+    a^2 - 3*a + 1
+
+    The above works because of the "liberal" decorator.
+
+    sage: sig = "eLMkbcddddedde_2100"
+    sage: tri, angle = isosig_to_tri_angle(sig)
+    sage: taut_polynomial_via_fox_calculus(tri, angle)
+    a^2*b - a^2 - a*b - b^2 + b
+    """
+    lt = loop_twistednesses(tri, angle)  # images under the edge-orientation homo
+    ZH = group_ring(tri, angle, [], alpha = True)
+    # Note that alpha = True is "ok" here because in the census we
+    # have b_1 \leq 4.
+    P = ZH.polynomial_ring() 
+    fl = faces_in_laurent(tri, angle, [], ZH)  # images in ZZ[H_1/torsion]
+    flt = [a * x for a, x in zip(fl, lt)]  # twisting
+
+    G = fundamental_group(tri, angle, simplified = False)
+    if simplified:
+        G = G.simplified()
+        indices = [int(str(x)[1:]) for x in G.gens()]  # the hackest of hacks
+        flt = [flt[i] for i in indices]
+    M = G.alexander_matrix(flt)
+    N = matrix_laurent_to_poly(M, ZH, P)
+    n = len(G.gens()) - 1
+    poly = gcd(N.minors(n))
+    return normalise_poly(poly, ZH, P)
+
+
+@liberal
 def taut_polynomial_via_interpolate(tri, angle, cycles = [], alpha = True):
     # In the one-variable case: (1) get an upper bound on the
     # degree of the answer (2) plug integers into the matrix and
@@ -271,3 +320,4 @@ def taut_polynomial_via_interpolate(tri, angle, cycles = [], alpha = True):
     # derivatives, back compute, and win.
     # This might also work in the multivariable case.
     return None
+

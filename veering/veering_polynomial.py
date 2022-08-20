@@ -5,24 +5,21 @@
 # compute the lower (and upper) veering polynomials as defined by Sam
 # Taylor et al.
 
-import regina
-
 from sage.arith.misc import gcd
 from sage.rings.rational_field import QQ
 from sage.matrix.constructor import Matrix
 
+from .basic_math import sign
+from .sage_tools import matrix_laurent_to_poly, normalise_poly
 from .taut import liberal
 from .transverse_taut import is_transverse_taut
-from .taut_homology import (edge_equation_matrix_taut, group_ring,
-                           faces_in_laurent, matrix_laurent_to_poly,
-                           normalise_poly)
+from .taut_homology import edge_equation_matrix_taut, group_ring, faces_in_laurent
 from .taut_polynomial import tet_lower_upper_edges
 from .veering_tri import is_veering
-from .basic_math import sign
 
 verbose = 0
 
-# computing the veering veering polynomial
+# computing the veering polynomial
 
 def has_red_lower_edge(tetrahedron, coorientations, edge_colours):
     lower_edge = tet_lower_upper_edges(tetrahedron, coorientations)[0]
