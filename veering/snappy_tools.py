@@ -1,5 +1,5 @@
 #
-# snappy_util.py
+# snappy_tools.py
 # 
 
 # Functions that call upon snappy.
