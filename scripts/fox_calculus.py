@@ -113,7 +113,8 @@ def taut_polynomial_via_fox_calculus(tri, angle, simplified = True):
         flt = [flt[i] for i in indices]
     M = G.alexander_matrix(flt)
     N = matrix_laurent_to_poly(M, ZH, P)
-    n = min(N.dimensions())
+    # n = min(N.dimensions())  # this is probably wrong, but very rarely...
+    n = len(G.gens()) - 1
     poly = gcd(N.minors(n))
     poly = normalise_poly(poly, ZH, P)
     return poly
