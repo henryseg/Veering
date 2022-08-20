@@ -3,6 +3,7 @@
 *.pdf
 scripts/Images/**
 scripts/Output/**
+scripts/junk.txt
 Data/veering_shapes.pkl
 veering.egg-info/
 dist/
