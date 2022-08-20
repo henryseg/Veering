@@ -181,7 +181,7 @@ def taut_polynomial_via_fox_calculus(tri, angle, simplified = True):
     fl = faces_in_laurent(tri, angle, [], ZH)  # images in ZZ[H_1/torsion]
     flt = [a * x for a, x in zip(fl, lt)]  # twisting
 
-    G = fundamental_group(tri, angle)
+    G = fundamental_group(tri, angle, simplified = False)
     if simplified:
         G = G.simplified()
         indices = [int(str(x)[1:]) for x in G.gens()]  # the hackest of hacks
