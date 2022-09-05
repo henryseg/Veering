@@ -4,7 +4,7 @@
 
 import snappy
 
-from veering.snappy_util import tet_norm, get_slopes_from_peripherals
+from veering.snappy_tools import tet_norm, get_slopes_from_peripherals
 from veering.taut import isosig_to_tri_angle
 from veering.veering_tri import veering_triangulation
 from veering.veering_drill_midsurface_bdy import drill_midsurface_bdy

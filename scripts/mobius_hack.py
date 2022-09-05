@@ -61,3 +61,13 @@ def many_matrices(n):
 # arguments the matrix M and the integer n.  Then we do all of the
 # work (eigenvalues, diagonalisation, etc, inside of the function.
 # I'll fix this if we ever need it.
+
+def path_of_matrices(M, N, n, eps):
+    if (N - M).norm() < eps:
+        return [(k/n) * N + (1 - k/n)*M for k in range(n+1)] # start with M, end with N
+    P = M.inverse() * N  
+    tr = P.trace()
+    kind = P.SL_kind(eps) # parabolic or not.
+
+    # suppose that P is parabolic with trace 2.  Then D is [1, 1; 0, 1].  Set C = [a, b; c, d]
+    # we compute 

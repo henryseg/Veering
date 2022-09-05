@@ -4,8 +4,9 @@
 
 # Examples of usage for some of the modules - most need cleaning before they will work. 
 
+from veering.file_io import parse_data_file, write_data_file
 from veering.taut import isosig_to_tri_angle
-from veering.snappy_util import shapes
+from veering.snappy_tools import shapes
 
 def boundary_triangulation_script():
     from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
@@ -83,15 +84,18 @@ def branched_pachner_script():
             all_branches = [apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
             assert [4,11,0] in all_branches
 
-def dilatation_script(report = 50):
+def dilatation_script(report = 100):
     from dilatations import dilatation_betti_one
     data = parse_data_file("veering_census_with_data.txt")
-    out_filename = "betti_one_dilatations_tree.txt"
+    data = data[30500:]
+    out_filename = "betti_one_dilatations_tree_fox_gurobi_test.txt"
+    # out_filename = "betti_one_dilatations_tree_fox_cplex.txt"
     # out_filename = "betti_one_dilatations_tree_and_smith.txt"
     out = [] 
     for i, line in enumerate(data): 
         line = line.split(" ") 
-        sig = line[0] 
+        sig = line[0]
+        print(sig)
         tri, angle = isosig_to_tri_angle(sig) 
         if tri.homology().rank() == 1 and line[1] == "F0": 
             out.append( [sig, str(dilatation_betti_one(tri, angle))] ) 
