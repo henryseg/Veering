@@ -4,7 +4,7 @@
 
 # Analyze manifolds and their taut/veering triangulations.
 
-# TODO - Gurobi?
+# Solvers - GLPK, CPLEX, CVXOPT, Gurobi
 
 import regina
 import snappy
@@ -77,21 +77,27 @@ def farkas_solution(N):
     return out
 
 
-def non_trivial_solution(N, real_bool = True, int_bool = False):
+def non_trivial_solution(N, real_bool = True, int_bool = False,
+                         solver = "GLPK", upper_bound = None):
     """
-    Look for a face vector w with N*w = 0, minimizing the sum of its
-    entries.  If one exists, returns (True, w).
+    Look for a non-negative, non-zero face vector w with N*w = 0.  If
+    one exists, returns (True, w).
     """
     num_faces = N.dimensions()[1]
-    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "Gurobi" )
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "CVXOPT" )
+    # q = MixedIntegerLinearProgram( maximization = False, solver = "CPLEX" )
+    q = MixedIntegerLinearProgram( maximization = False, solver = solver )
     w = q.new_variable ( real = real_bool, integer = int_bool, nonnegative = True )
-    # actually, int has topological meaning here - hilbert versus vertex!
-    # w = q.new_variable ( integer = True, nonnegative = True )
+    # int has topological meaning here - hilbert versus vertex!
     for v in N.rows():
         q.add_constraint( dot_prod(v, w) == 0 )
     S = sum( w[i] for i in range(num_faces) )
     q.add_constraint( S >= 1 )
-    q.set_objective( S )
+    if upper_bound != None:
+        q.add_constraint( upper_bound >= S )
+    # q.set_objective( S )  
+    q.set_objective( None )  # any non-zero solution will do - and this is _much_ faster.
     try:
         q.solve()
         W = extract_solution(q, w)
@@ -111,29 +117,6 @@ def get_non_triv_sol(tri, angle):
     return sol
 
 
-def vertex_solutions(N, real_bool = True, int_bool = False):
-    """
-    Look for a face vector w with N*w = 0, minimizing the sum of its
-    entries.  If one exists, returns (True, w).
-    """
-    num_faces = N.dimensions()[1]
-    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
-    w = q.new_variable ( real = real_bool, integer = int_bool, nonnegative = True )
-    # actually, int has topological meaning here - hilbert versus vertex!
-    # w = q.new_variable ( integer = True, nonnegative = True )
-    for v in N.rows():
-        q.add_constraint( dot_prod(v, w) == 0 )
-    S = sum( w[i] for i in range(num_faces) )
-    q.add_constraint( S >= 1 )
-    q.set_objective( S )
-    try:
-        q.solve()
-        W = extract_solution(q, w)
-        return (True, W)
-    except MIPSolverException:
-        return (False, None)
-
-
 def fully_carried_solution(N):
     """
     Look for a face vector w with N*w = 0 and with all entries
@@ -151,9 +134,9 @@ def fully_carried_solution(N):
         q.add_constraint( dot_prod(v, w) == 0 )
     for i in range(num_faces):
         q.add_constraint( w[i] >= 1 )
-    S = sum( w[i] for i in range(num_faces) ) # Euler char
+    # S = sum( w[i] for i in range(num_faces) ) # Euler char
     # S = q.sum( w[i] for i in range(num_faces) ) # Euler char
-    q.set_objective( S )
+    q.set_objective( None )  # any positive solution will do
     try:
         q.solve()
         W = extract_solution(q, w)
@@ -173,8 +156,6 @@ def is_layered(tri, angle):
     layered, _ = fully_carried_solution(N)
     return layered
 
-
-# This is morally correct, but it is too slow - probably due to the integer programming.
 @liberal
 def min_carried_neg_euler(tri, angle):
     """
@@ -183,7 +164,10 @@ def min_carried_neg_euler(tri, angle):
     """
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
-    _, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
+    # next line is broken... non_triv need not give the min... 
+    exists, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
+#    non_trivial_solution(N, real_bool = True, int_bool = False,
+#                         solver = "GLPK", upper_bound = None):
     if sol == None:
         out = 0.0
     else:
@@ -199,11 +183,10 @@ def carries_torus_or_sphere(tri, angle):
     """
     N = edge_equation_matrix_taut(tri, angle)
     # We must decide if there is a pair of columns which are negatives
-    # of each other.  We could test on quadratically many vectors, or
-    # we could do this:
+    # of each other.  So we use the unique+sort trick.
     N = Matrix(N).transpose() # easier to work with rows
     N = set(tuple(row) for row in N) # make rows unique
-    N = Matrix(N)
+#    N = Matrix(N)
     P = []
     for row in N:
         P.append(row)
@@ -226,7 +209,8 @@ def is_torus_bundle(tri, angle):
             carries_torus_or_sphere(tri, angle))
 
 
-# TODO - check this against the homological dim of the taut cone... and then delete.  :)
+# TODO - check this against the homological dim of the taut
+# cone... and then delete.  :)
 @liberal
 def LMN_tri_angle(tri, angle):
     """
@@ -489,4 +473,3 @@ def depth(tri, angle):
         if N == None:
             return (True, cuts + e)
         cuts = cuts + 1
-        

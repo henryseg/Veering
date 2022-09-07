@@ -16,11 +16,14 @@ from veering.taut_polytope import min_carried_neg_euler
 def dilatation_betti_one(tri, angle, normalised = "True"):
     assert tri.homology().rank() == 1  # rank of H_1 / torsion
     p = taut_polynomial_via_fox_calculus(tri, angle)
+    print(p.span())
     # p = taut_polynomial_via_tree(tri, angle)
     # p = taut_polynomial_via_tree_and_smith(tri, angle)
     R = p.parent()
     a = R('a')
     q = p.polynomial(a)
     dil = max(q.real_roots())
+    # print(dil)
     euler = min_carried_neg_euler(tri, angle)
-    return dil**euler
+    print(euler)
+    # return dil**euler
