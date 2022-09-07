@@ -186,7 +186,7 @@ def carries_torus_or_sphere(tri, angle):
     # of each other.  So we use the unique+sort trick.
     N = Matrix(N).transpose() # easier to work with rows
     N = set(tuple(row) for row in N) # make rows unique
-#    N = Matrix(N)
+    N = Matrix(N)  # make rows vectors
     P = []
     for row in N:
         P.append(row)

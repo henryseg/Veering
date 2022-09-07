@@ -3,6 +3,8 @@
 #
 
 from sage.groups.free_group import FreeGroup
+
+from .taut import liberal
 from .transverse_taut import edge_side_face_collections
 from .fundamental_domain import spanning_dual_tree
 

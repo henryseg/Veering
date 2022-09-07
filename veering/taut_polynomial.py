@@ -13,7 +13,8 @@ from sage.matrix.constructor import Matrix
 from .sage_tools import matrix_laurent_to_poly, normalise_poly
 from .taut import liberal, vert_pair_to_edge_num
 from .transverse_taut import is_transverse_taut
-from .fundamental_domain import spanning_dual_tree, fundamental_group
+from .fundamental_domain import spanning_dual_tree
+from .fundamental_group import fundamental_group
 from .taut_homology import (edge_equation_matrix_taut, group_ring,
                             faces_in_laurent, epimorphism_in_laurent)
 from .veering_tri import loop_twistednesses
