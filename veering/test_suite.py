@@ -89,6 +89,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             tri3, angle3 = pachner.threeTwoMove(tri2, edge_num, angle = angle2)
             assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3), sig
 
+
+
     from . import branched_surface
     import regina
     print("testing branched_surface and pachner with branched surface")
