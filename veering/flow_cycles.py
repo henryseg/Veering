@@ -6,11 +6,9 @@
 
 import regina
 
-from .veering_tri import is_veering
 from .branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num, isosig_from_tri_angle_branch, has_non_sing_semiflow
 from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
 from .taut import isosig_to_tri_angle, edge_num_to_vert_pair
-from .taut_polytope import is_layered
 from .drill import drill
 from .file_io import parse_data_file
 
@@ -179,98 +177,3 @@ def find_tri_loops(sig):
     branch = upper_branched_surface(tri, angle)
     loops = find_flow_cycles(tri, branch)
     return [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
-
-def test():
-    # sig = 'cPcbbbiht_12'
-    # sig = 'dLQacccjsnk_200'
-    # sig = 'dLQbccchhsj_122'
-    # sig = 'eLAkaccddjsnak_2001'
-    # sig = 'eLAkbccddhhsqs_1220'
-    # sig = 'eLMkbcddddedde_2100'
-    # sig = 'eLMkbcdddhhhdu_1221'
-    # sig = 'eLMkbcdddhhhml_1221'
-    # sig = 'eLMkbcdddhhqqa_1220'
-# eLMkbcdddhhqxh_1220
-# eLMkbcdddhxqdu_1200
-# eLMkbcdddhxqlm_1200
-# eLPkaccddjnkaj_2002
-# eLPkbcdddhrrcv_1200
-    # sig = 'gLLAQbecdfffhhnkqnc_120012'
-
-    sigs = parse_data_file('veering_census.txt')
-
-    for j, sig in enumerate(sigs[:5]):
-        if j%100 == 0:
-            print(j)
-        tri, angle = isosig_to_tri_angle(sig)
-        # tri.save(sig + '.rga')
-        branch = upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
-        found_loops = find_flow_cycles(tri, branch)
-        # print(len(found_loops))
-        # for loop in found_loops:
-        #   print(loop)
-
-        # print('found_loops', found_loops)
-        # print(sig)
-        for loop in found_loops:
-            tri, angle = isosig_to_tri_angle(sig)
-            branch = upper_branched_surface(tri, angle) 
-            tri_loop = flow_cycle_to_triangle_loop(tri, branch, loop)
-            if tri_loop != False:
-                if not tri_loop_is_boundary_parallel(tri_loop, tri):
-                    print('sig', isosig_from_tri_angle_branch(tri, angle, branch), 'loop', loop, 'tri_loop', tri_loop) 
-                    drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
-                    print('new angle, branch', angle, branch)
-                    print(isosig_from_tri_angle_branch(tri, angle, branch))
-                    # tri.save('drilled_' + sig + '_' + str(tri_loop) + '.rga')
-                    # print(tri.countTetrahedra())
-
-                    
-def test_layered_parents(sig, quiet = False):
-    
-    
-    tri, angle = isosig_to_tri_angle(sig)
-    branch = upper_branched_surface(tri, angle)
-    loops = find_flow_cycles(tri, branch)
-    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
-    
-    no_of_layered_parents = 0 # drillings through some simple cycles is not implemented so might get 0 even if there is a simple cycle which gives a layered parent
-    for tri_loop in tri_loops:
-        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
-            tri, angle = isosig_to_tri_angle(sig)
-            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
-                tri, angle = isosig_to_tri_angle(sig)
-                branch = upper_branched_surface(tri, angle)
-                if quiet == False:
-                    print ("drilling", sig, "along", tri_loop)
-                drill(tri, tri_loop, angle, branch)
-                if quiet == False:
-                    print("drilled:", tri.isoSig(), angle, branch)
-                    print("is layered:", is_layered(tri, angle))
-                if is_layered(tri, angle):
-                    no_of_layered_parents = no_of_layered_parents + 1
-    if no_of_layered_parents == 0:
-        print (sig, "does not have a layered parent")
-
-        
-def test_semiflow_on_drillings(sig):
-    
-    tri, angle = isosig_to_tri_angle(sig)
-    branch = upper_branched_surface(tri, angle)
-    loops = find_flow_cycles(tri, branch)
-    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
-    
-    for tri_loop in tri_loops:
-        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
-            tri, angle = isosig_to_tri_angle(sig)
-            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
-                tri, angle = isosig_to_tri_angle(sig)
-                branch = upper_branched_surface(tri, angle)
-                drill(tri, tri_loop, angle, branch)
-                assert has_non_sing_semiflow(tri, branch)
-                # print (tri.isoSig(), branch, "has nonsing semiflow")
-        
-
-    
-    
-

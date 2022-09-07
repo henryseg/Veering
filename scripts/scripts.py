@@ -5,8 +5,11 @@
 # Examples of usage for some of the modules - most need cleaning before they will work. 
 
 from veering.file_io import parse_data_file, write_data_file
-from veering.taut import isosig_to_tri_angle
+from veering.taut import liberal, isosig_to_tri_angle
 from veering.snappy_tools import shapes
+from veering.taut_polynomial import taut_polynomial_via_fox_calculus
+from veering.taut_polytope import min_carried_neg_euler
+
 
 def boundary_triangulation_script():
     from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
@@ -87,22 +90,34 @@ def branched_pachner_script():
 def dilatation_script(report = 100):
     from dilatations import dilatation_betti_one
     data = parse_data_file("veering_census_with_data.txt")
-    data = data[30500:]
-    out_filename = "betti_one_dilatations_tree_fox_gurobi_test.txt"
+    data = data[:1000]
+    # out_filename = "betti_one_dilatations_tree_fox_gurobi_test.txt"
     # out_filename = "betti_one_dilatations_tree_fox_cplex.txt"
     # out_filename = "betti_one_dilatations_tree_and_smith.txt"
-    out = [] 
+    # out = [] 
     for i, line in enumerate(data): 
         line = line.split(" ") 
         sig = line[0]
-        print(sig)
+        # print(sig)
         tri, angle = isosig_to_tri_angle(sig) 
         if tri.homology().rank() == 1 and line[1] == "F0": 
-            out.append( [sig, str(dilatation_betti_one(tri, angle))] ) 
-        if i % report == 0: 
-            print(i, len(out)) 
-            write_data_file(out, out_filename)
-    write_data_file(out, out_filename)
+            p = taut_polynomial_via_fox_calculus(tri, angle)
+            span = p.exponents()[0][0] - p.exponents()[-1][0]
+            R = p.parent()
+            a = R('a')
+            q = p.polynomial(a)
+            dil = max(q.real_roots())
+            euler = min_carried_neg_euler(tri, angle)
+            euler = int(euler)
+            if span - euler != 1:
+                print(sig, span, euler)
+
+            # dilatation_betti_one(tri, angle)
+            # out.append( [sig, str(dilatation_betti_one(tri, angle))] ) 
+#        if i % report == 0: 
+#            print(i, len(out)) 
+            # write_data_file(out, out_filename)
+    # write_data_file(out, out_filename)
 
 def draw_continent_script():
     from draw_continent import draw_continent
@@ -489,6 +504,8 @@ def taut_pachner_graph_script():
     
     graph = search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name=None, search_depth = depth, ceiling = ceiling, check_property = False, property = None, save_dir = None)
 
+### Pulled out of flow_cycles.py
+
 def test_branched_isosig_script():
     # from test_branched_isosig import *
     # tri, angle = isosig_to_tri_angle("cPcbbbdxm_10")
@@ -497,3 +514,90 @@ def test_branched_isosig_script():
     out = explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 7)
     for sig in out:
         print(sig)
+
+def test():
+    # sig = 'cPcbbbiht_12'
+    # sig = 'dLQacccjsnk_200'
+    # sig = 'dLQbccchhsj_122'
+    # sig = 'eLAkaccddjsnak_2001'
+    # sig = 'eLAkbccddhhsqs_1220'
+    # sig = 'eLMkbcddddedde_2100'
+    # sig = 'eLMkbcdddhhhdu_1221'
+    # sig = 'eLMkbcdddhhhml_1221'
+    # sig = 'eLMkbcdddhhqqa_1220'
+# eLMkbcdddhhqxh_1220
+# eLMkbcdddhxqdu_1200
+# eLMkbcdddhxqlm_1200
+# eLPkaccddjnkaj_2002
+# eLPkbcdddhrrcv_1200
+    # sig = 'gLLAQbecdfffhhnkqnc_120012'
+
+    sigs = parse_data_file('veering_census.txt')
+
+    for j, sig in enumerate(sigs[:5]):
+        if j%100 == 0:
+            print(j)
+        tri, angle = isosig_to_tri_angle(sig)
+        # tri.save(sig + '.rga')
+        branch = upper_branched_surface(tri, angle) ### also checks for veering and transverse taut
+        found_loops = find_flow_cycles(tri, branch)
+        # print(len(found_loops))
+        # for loop in found_loops:
+        #   print(loop)
+
+        # print('found_loops', found_loops)
+        # print(sig)
+        for loop in found_loops:
+            tri, angle = isosig_to_tri_angle(sig)
+            branch = upper_branched_surface(tri, angle) 
+            tri_loop = flow_cycle_to_triangle_loop(tri, branch, loop)
+            if tri_loop != False:
+                if not tri_loop_is_boundary_parallel(tri_loop, tri):
+                    print('sig', isosig_from_tri_angle_branch(tri, angle, branch), 'loop', loop, 'tri_loop', tri_loop) 
+                    drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
+                    print('new angle, branch', angle, branch)
+                    print(isosig_from_tri_angle_branch(tri, angle, branch))
+                    # tri.save('drilled_' + sig + '_' + str(tri_loop) + '.rga')
+                    # print(tri.countTetrahedra())
+                    
+def test_layered_parents(sig, quiet = False):    
+    tri, angle = isosig_to_tri_angle(sig)
+    branch = upper_branched_surface(tri, angle)
+    loops = find_flow_cycles(tri, branch)
+    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+    
+    no_of_layered_parents = 0 # drillings through some simple cycles is not implemented so might get 0 even if there is a simple cycle which gives a layered parent
+    for tri_loop in tri_loops:
+        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
+            tri, angle = isosig_to_tri_angle(sig)
+            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
+                tri, angle = isosig_to_tri_angle(sig)
+                branch = upper_branched_surface(tri, angle)
+                if quiet == False:
+                    print ("drilling", sig, "along", tri_loop)
+                drill(tri, tri_loop, angle, branch)
+                if quiet == False:
+                    print("drilled:", tri.isoSig(), angle, branch)
+                    print("is layered:", is_layered(tri, angle))
+                if is_layered(tri, angle):
+                    no_of_layered_parents = no_of_layered_parents + 1
+    if no_of_layered_parents == 0:
+        print (sig, "does not have a layered parent")
+
+        
+def test_semiflow_on_drillings(sig):
+    
+    tri, angle = isosig_to_tri_angle(sig)
+    branch = upper_branched_surface(tri, angle)
+    loops = find_flow_cycles(tri, branch)
+    tri_loops = [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+    
+    for tri_loop in tri_loops:
+        if tri_loop != False: # False means that tri_loop goes more than once  along the same triangle - not currently implemented
+            tri, angle = isosig_to_tri_angle(sig)
+            if tri_loop_is_boundary_parallel(tri_loop, tri) == False: # if a loop is boundary parallel then we don't drill
+                tri, angle = isosig_to_tri_angle(sig)
+                branch = upper_branched_surface(tri, angle)
+                drill(tri, tri_loop, angle, branch)
+                assert has_non_sing_semiflow(tri, branch)
+                # print (tri.isoSig(), branch, "has nonsing semiflow")
