@@ -9,13 +9,14 @@
 import regina
 import snappy
 
+from sage.arith.misc import divisors
 from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
 from sage.geometry.polyhedron.constructor import Polyhedron
 from sage.matrix.constructor import Matrix
 from sage.modules.free_module_integer import IntegerLattice
 from sage.modules.free_module_element import vector
-from sage.geometry.cone import Cone
 from sage.rings.integer_ring import ZZ
+from sage.geometry.cone import Cone
 
 from .taut import liberal
 from .transverse_taut import is_transverse_taut
@@ -26,7 +27,7 @@ from .fundamental_domain import non_tree_face_cycles
 # Examining edge/face matrices
 
 
-# Sage cannot treat the variables of a MILP as a vector, so we do it
+# Sage does not treat the variables of a MILP as a vector, so we do it
 # ourselves.
 def dot_prod(u, v):
     try:
@@ -60,8 +61,7 @@ def get_polytope(N):
 def farkas_solution(N):
     """
     Look for an edge vector u so that all entries of u*N are positive,
-    minimizing the sum of the entries of u*N.  If one exists, returns
-    (True, u).
+    minimizing the sum of the entries of u*N.  
     """
     q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" )
     u = q.new_variable( real = True, nonnegative = False )
@@ -70,18 +70,15 @@ def farkas_solution(N):
     q.set_objective( sum( dot_prod(u, v) for v in N.columns() ) )
     try:
         q.solve()
-        U = extract_solution(q, u)
-        out = (True, U)
+        return extract_solution(q, u)
     except MIPSolverException:
-        out = (False, None)
-    return out
+        return None
 
 
 def non_trivial_solution(N, real_bool = True, int_bool = False,
                          solver = "GLPK", upper_bound = None):
     """
-    Look for a non-negative, non-zero face vector w with N*w = 0.  If
-    one exists, returns (True, w).
+    Look for a non-negative, non-zero face vector w with N*w = 0.  
     """
     num_faces = N.dimensions()[1]
     # q = MixedIntegerLinearProgram( maximization = False, solver = "Gurobi" )
@@ -100,28 +97,69 @@ def non_trivial_solution(N, real_bool = True, int_bool = False,
     q.set_objective( None )  # any non-zero solution will do - and this is _much_ faster.
     try:
         q.solve()
-        W = extract_solution(q, w)
-        out = (True, W)
+        return extract_solution(q, w)
     except MIPSolverException:
-        out = (False, None)
-    return out
+        return None
 
 
 @liberal
-def get_non_triv_sol(tri, angle):
+def min_neg_euler_carried(tri, angle, solver = "GLPK"):
+    """
+    Given a tri, angle, find a carried surface with minimal (non-zero)
+    negative euler characteristic among carried surfaces.
+    """
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
-    non_triv, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
-    twiddles = is_transverse_taut(tri, angle, return_type = "face_coorientations")
-    sol = [int(a * b) for a, b in zip(sol, twiddles)]
-    return sol
+    cur_sol = non_trivial_solution(N, real_bool = False, int_bool = True, solver = solver)
+    if cur_sol == None:
+        return None
 
+    # (1) If we know that tri_angle has betti number one, then all
+    # solutions have neg_euler being a multiple of the min, and we
+    # could use that to cheat (by checking the second largest
+    # divisor).
+
+    # (2) Or we could find the components of the surface by brute
+    # force (using Agol-Hass-Thurston is over kill in almost all cases
+    # - if you really need it see the implementation by Culler.)
+
+    # (3) [Anna] Look for an integer point on an extremal ray.
+    # Generating all rays will be too slow.  [Diane] Instead, add the
+    # condition \sum w_i = 1, and add a generic cost function, and use
+    # linear programming. Then we can either (a) use the floats we get
+    # to guess the denominators of the rational numbers (and multiply
+    # by the gcd) or (b) use the zeros of the solution to add
+    # conditions (and then run the int programm) or (c) use the zeros
+    # to kill rows/colms of A, and invert the square matrix that is
+    # left. This last should be implemented someplace?
+    
+    # (4) [Chi Cheuk] Note that in the fibered + b_1 = 1 case we can
+    # just use the Alexander polynomial.
+
+    # However, I want the the code to be a bit more general... I
+    # settled on binary search.  This is almost surely almost as fast
+    # as the divisor trick above.
+
+    # Note that GLPK sometimes takes forever... Gurobi is faster on
+    # the hard examples but sometimes GLPK is faster on the easy ones...
+
+    bot_euler = 1  # zero is trivially an euler char. 
+    top_euler = int(sum(cur_sol)/2)  # the current upper bound
+    while bot_euler < top_euler:
+        try_euler = round((bot_euler + top_euler)/2)  # "round" rounds towards zero
+        new_sol = non_trivial_solution(N, real_bool = False, int_bool = True, solver = solver, upper_bound = try_euler)
+        if new_sol == None:
+            bot_euler = try_euler + 1
+        else:
+            cur_sol = new_sol
+            top_euler = int(sum(cur_sol)/2)
+    return cur_sol
+    
 
 def fully_carried_solution(N):
     """
     Look for a face vector w with N*w = 0 and with all entries
-    positive, minimizing the sum of its entries.  If one exists,
-    returns (True, w).
+    positive, minimizing the sum of its entries.  
     """
     num_faces = N.dimensions()[1]
     # q = MixedIntegerLinearProgram( maximization = False, solver = "Gurobi" ) # Grrr.
@@ -139,11 +177,9 @@ def fully_carried_solution(N):
     q.set_objective( None )  # any positive solution will do
     try:
         q.solve()
-        W = extract_solution(q, w)
-        out = (True, W)
+        return extract_solution(q, w)
     except MIPSolverException:
-        out = (False, None)
-    return out
+        return None
 
 
 @liberal
@@ -153,26 +189,8 @@ def is_layered(tri, angle):
     """
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
-    layered, _ = fully_carried_solution(N)
-    return layered
-
-@liberal
-def min_carried_neg_euler(tri, angle):
-    """
-    Given a tri, angle, find the minimal negative euler characteristic
-    among carried surfaces.  Returns zero if there is none such.
-    """
-    N = edge_equation_matrix_taut(tri, angle)
-    N = Matrix(N)
-    # next line is broken... non_triv need not give the min... 
-    exists, sol = non_trivial_solution(N, real_bool = False, int_bool = True)
-#    non_trivial_solution(N, real_bool = True, int_bool = False,
-#                         solver = "GLPK", upper_bound = None):
-    if sol == None:
-        out = 0.0
-    else:
-        out = sum(sol)/2 # sum counts triangles, so divide
-    return out
+    w = fully_carried_solution(N)
+    return (w != None)
 
 
 @liberal
@@ -218,17 +236,16 @@ def LMN_tri_angle(tri, angle):
     """
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
-    farkas, farkas_sol = farkas_solution(N)
-    non_triv, non_triv_sol = non_trivial_solution(N)
-    full, full_sol = fully_carried_solution(N)
-    if full:
-        out = "L"  # depth zero
-    elif non_triv:
-        out = "M"  # who knows!
+    full_sol = fully_carried_solution(N)
+    non_triv_sol = non_trivial_solution(N)
+    farkas_sol = farkas_solution(N)
+    if full_sol != None:
+        return "L"  # depth zero
+    elif non_triv_sol != None:
+        return "M"  # who knows!
     else:
-        assert farkas
-        out = "N"  # depth infinity 
-    return out
+        assert farkas_sol != None
+        return "N"  # depth infinity 
 
 
 @liberal
@@ -240,8 +257,10 @@ def analyze_deeply(tri, angle):
     # look at it
     alex = alex_is_monic(M)
     hyper = hyper_is_monic(M)
-    non_triv, non_triv_sol = non_trivial_solution(N)
-    full, full_sol = fully_carried_solution(N)
+    non_triv_sol = non_trivial_solution(N)
+    full_sol = fully_carried_solution(N)
+    non_triv = (non_triv_sol != None)
+    full = (full_sol != None)
     try:
         assert non_triv or not full # full => non_triv
         assert alex or not full # full => fibered => alex is monic
@@ -457,8 +476,8 @@ def depth(tri, angle):
     Given a transverse taut triangulation compute the depth of the
     horizontal branched surface B.  If the depth is finite we return
     (True, depth).  If the depth is not defined then we return (False,
-    cuts).  Here cuts is the number of times we must cut before
-    getting to a sutured manifold equipped with a veering
+    cuts).  Here cuts is the number of times we cut before getting to
+    a non-trivial sutured manifold equipped with a veering
     triangulation (possibly with boundary) that carries nothing.
     """
     N = edge_equation_matrix_taut(tri, angle)
