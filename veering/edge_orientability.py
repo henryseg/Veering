@@ -13,18 +13,6 @@ from .taut_homology import faces_in_homology
 from .veering_tri import is_veering, loop_twistednesses
 
 
-def regina_edge_orientation_agrees(tet, vert_pair):
-    """
-    Given tet and an ordered pair of (regina) vert nums of that tet, does this ordering
-    agree with regina's ordering of the verts of that edge of the triangulation
-    """
-    edge_num = vert_pair_to_edge_num[tuple(vert_pair)]
-    mapping = tet.faceMapping(1, edge_num)
-    map_order = [mapping[0], mapping[1]]
-    assert set(map_order) == set(vert_pair)
-    return map_order == vert_pair
-
-
 @liberal
 def is_edge_orientable(tri, angle, return_type = "boolean"):
     """
@@ -44,7 +32,19 @@ def is_edge_orientable(tri, angle, return_type = "boolean"):
     return all([lt == 1 for lt in lts])
 
 # 2022-09-10 I checked that the new version gives the same answer as
-# the old version (just below) on all manifolds in the census.
+# the old version (below) on all manifolds in the census.
+
+def regina_edge_orientation_agrees(tet, vert_pair):
+    """
+    Given tet and an ordered pair of (regina) vert nums of that tet,
+    determines if this ordering agrees with regina's ordering of the
+    verts of that edge of the triangulation.
+    """
+    edge_num = vert_pair_to_edge_num[tuple(vert_pair)]
+    mapping = tet.faceMapping(1, edge_num)
+    map_order = [mapping[0], mapping[1]]
+    assert set(map_order) == set(vert_pair)
+    return map_order == vert_pair
 
 @liberal
 def is_edge_orientable_old(tri, angle, return_type = "boolean"):

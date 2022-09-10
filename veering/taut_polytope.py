@@ -117,10 +117,10 @@ def min_neg_euler_carried(tri, angle, solver = "GLPK"):
     # (1) If we know that tri_angle has betti number one, then all
     # solutions have neg_euler being a multiple of the min, and we
     # could use that to cheat (by checking the second largest
-    # divisor).
+    # divisor).  
 
     # (2) Or we could find the components of the surface by brute
-    # force (using Agol-Hass-Thurston is over kill in almost all cases
+    # force (using Agol-Hass-Thurston is overkill in almost all cases
     # - if you really need it see the implementation by Culler.)
 
     # (3) [Anna] Look for an integer point on an extremal ray.
@@ -133,8 +133,10 @@ def min_neg_euler_carried(tri, angle, solver = "GLPK"):
     # to kill rows/colms of A, and invert the square matrix that is
     # left. This last should be implemented someplace?
     
-    # (4) [Chi Cheuk] Note that in the fibered + b_1 = 1 case we can
-    # just use the Alexander polynomial.
+    # (4) [Anna] In the fibered + b_1 = 1 + edge-orientable case, we
+    # can use the span of the taut polynomial.  [Chi Cheuk] In the
+    # fibered + b_1 = 1 case we can use the span of the Alexander
+    # polynomial.
 
     # However, I want the the code to be a bit more general... I
     # settled on binary search.  This is almost surely almost as fast

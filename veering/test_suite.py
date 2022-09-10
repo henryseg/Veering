@@ -6,6 +6,7 @@ import random
 
 from .file_io import parse_data_file, read_from_pickle
 
+
 def check_polynomial_coefficients(p, correct_coeffs):
     p = p.coefficients()
     p.sort()
@@ -13,8 +14,8 @@ def check_polynomial_coefficients(p, correct_coeffs):
     n.reverse()
     return (p == correct_coeffs) or (n == correct_coeffs)
 
-    
-def run_tests(num_to_check=10, smaller_num_to_check = 10):
+
+def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
     from . import taut
     veering_isosigs = parse_data_file("veering_census.txt")
@@ -281,7 +282,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         from sage.rings.integer_ring import ZZ
         sage_working = True
     except:
-        print("failed to import from sage?")
+        print("failed to import from sage")
         sage_working = False
 
     if sage_working:
@@ -299,8 +300,8 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         except ValueError:
             print("ignore is_fibered (no data file)")
             mflds = None
-        mflds = mflds[58:]  # get rid of the preamble
         if mflds is not None:
+            mflds = mflds[58:]  # get rid of the preamble
             print("testing is_fibered")
             mflds = [line.split("\t")[0:2] for line in mflds]
             for (name, kind) in random.sample(mflds, num_to_check):        
@@ -329,12 +330,12 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
             p = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             assert check_polynomial_coefficients(p, taut_polys[sig]), sig
         #     assert p.__repr__() == taut_polys[sig]
-        print("testing (taut = taut_fox) for random triangulations")
+        print("testing taut == taut_fox")
         for sig in random.sample(veering_isosigs[500:3000], smaller_num_to_check):        
             taut1 = taut_polynomial.taut_polynomial_via_tree(sig)
             taut2 = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             assert taut1 == taut2
-        print("testing (fox simplified = fox unsimplified) for random small triangulations")
+        print("testing fox simplified == fox unsimplified")
         for sig in random.sample(veering_isosigs[100:500], 3):        
             taut2 = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             taut3 = taut_polynomial.taut_polynomial_via_fox_calculus(sig, simplified = False)
@@ -375,6 +376,18 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         for sig in empties:
             assert taut_polytope.LMN_tri_angle(sig) == "N", sig
 
+    if sage_working:
+        print("testing euler characteristic")
+        for sig in random.sample(veering_isosigs[:3000], 3*num_to_check):
+            snap_sig = sig.split("_")[0]
+            M = snappy.Manifold(snap_sig)
+            if M.homology().betti_number() == 1:
+                if taut_polytope.is_layered(sig):
+                    eul = int(sum(taut_polytope.min_neg_euler_carried(sig)) / 2)
+                    alex = M.alexander_polynomial()
+                    alex_span = alex.exponents()[-1] - alex.exponents()[0]
+                    assert eul == alex_span - 1, sig
+                    
     if sage_working:  # warning - this takes random amounts of time!
         print("testing hom dim")
         for sig in random.sample(veering_isosigs[:3000], 3): # magic number
@@ -464,7 +477,7 @@ def run_tests(num_to_check=10, smaller_num_to_check = 10):
         from . import taut_euler_class
         print("testing euler and edge orientability")
         for sig in random.sample(veering_isosigs[:3000], 3):
-            # Theorem: If (tri, angle) is edge orientable then e = 0.
+            # Theorem: If (tri, angle) is edge-orientable then e = 0.
             assert not ( edge_orientability.is_edge_orientable(sig) and
                          (taut_euler_class.order_of_euler_class_wrapper(sig) == 2) ), sig
 
