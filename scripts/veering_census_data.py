@@ -128,7 +128,7 @@ def other_names_from_old_data(triang_data):
 functions_list = [veering_isosig, depth_from_old_data, num_cusps_from_old_data, is_geometric_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, ladder_counts_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
 
 def recompute():
-	compute_census_data('veering_census_with_data.txt', 'extra_data/veering_census_with_more_data.txt', functions_list, verbose = 1)
+	compute_census_data('veering_census_with_data.txt', 'data_census/veering_census_with_more_data.txt', functions_list, verbose = 1)
 
 def search():
 	census_data = parse_data_file('veering_census_with_data.txt') 
@@ -137,4 +137,4 @@ def search():
 		line_data = line.split(' ')
 		if line_data[3] == 'N': # non geometric
 			out.append([line_data[0]])
-	write_data_file(out, 'extra_data/veering_non_geometric.txt')
+	write_data_file(out, 'data_extra/veering_non_geometric.txt')
