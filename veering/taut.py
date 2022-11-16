@@ -46,14 +46,17 @@ vert_pair_to_edge_num = {(0, 1):0, (1, 0):0, (0, 2):1, (2, 0):1, (0, 3):2, (3, 0
 vert_pair_to_edge_pair = {(0, 1): 0, (2, 3): 0, (0, 2): 1, (1, 3): 1, (0, 3): 2, (1, 2): 2}
 unsorted_vert_pair_to_edge_pair = {(0, 1): 0, (1, 0): 0, (2, 3): 0, (3, 2): 0, (0, 2): 1, (2, 0): 1, (1, 3): 1, (3, 1): 1, (0, 3): 2, (3, 0): 2, (1, 2): 2, (2, 1): 2}
 
+
 def edge_pair_to_edge_numbers(e):
     return (e, 5 - e)
+
 
 def edge_number_to_edge_pair(n):
     if n < 3:
         return n
     else:
         return 5 - n
+
 
 # converting a taut isosig to (tri,angle) pair and back again
 
@@ -62,8 +65,8 @@ def isosig_to_tri_angle(isosig, return_isom = False):
     """
     Given a taut isosig, returns an oriented regina triangulation and
     the list of angles for the taut angle structure, for the new
-    labelling.
-    If return_isom, returns the isomorphism from the regina isosig triang to the oriented triangulation
+    labelling.  If return_isom, returns the isomorphism from the
+    regina isosig triang to the oriented triangulation.
     """
     data = isosig.split("_")
     isosig, angle = data[0], data[1]  ## we don't care if there is extra data in the sig, such as a branched surface
@@ -77,12 +80,14 @@ def isosig_to_tri_angle(isosig, return_isom = False):
     else:
         return tri, angle
 
+
 def isoms_move_tetrahedra_to_same_tetrahedra(isom1, isom2):
     assert isom1.size() == isom2.size()
     for i in range(isom1.size()):
         if isom1.simpImage(i) != isom2.simpImage(i):
             return False
     return True
+
 
 def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False):
     """
@@ -122,6 +127,7 @@ def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = F
 
 # checking tautness
 
+
 @liberal
 def is_taut(tri, angle, return_totals = False):
     totals = [0] * tri.countEdges()
@@ -157,6 +163,7 @@ def apply_isom_to_angle_struct_list(original_angle_struct_list, isom, return_edg
         new_angle_struct_list[mapped_tet_index] = pi_number
     return new_angle_struct_list
 
+
 def lex_smallest_angle_structure(tri, angle, return_isom = False):
     """
     Finds the lexicographically smallest angle structure among
@@ -173,6 +180,7 @@ def lex_smallest_angle_structure(tri, angle, return_isom = False):
         return all_angles[0]
     else:
         return all_angles[0][0]
+
 
 def num_taut_automorphisms(tri, angle):
     """
@@ -249,18 +257,21 @@ def reverse_tet_orientation(triangulation, tet, pi_location):
         tet.join(swap[face], adjtets[face], adjgluings[face])
     return swap
 
+
 def moves_tetrahedra(isom):
     for i in range(isom.size()):
         if isom.simpImage(i) != i:
             return True
     return False
 
+
 def fix_orientations(tri, angle, return_isom = False):
     """
     Fix the orientations of the tetrahedra in triangulation so that
     they are consistently oriented.  We choose how to flip each
-    tetrahedron so that the angle structure list does not change.
-    If return_isom, return the isomorphism from the original tri to the fixed orientations tri
+    tetrahedron so that the angle structure list does not change.  If
+    return_isom, return the isomorphism from the original tri to the
+    fixed orientations tri
     """
     orig_tri = regina.Triangulation3(tri)
 
@@ -288,8 +299,6 @@ def fix_orientations(tri, angle, return_isom = False):
         #             assert isom == out_isom
         #         return isom
         assert False ## should never get here
-
-
 
 
 # functions for converting regina's angle structure format to ours
@@ -334,6 +343,7 @@ def charge_to_angle(charge):
         out.append( pi_edgepair_dict[tuple(tet)] )
     return out
 
+
 def angle_to_charge(angle, flipper_format = False):
     """
     Given a list of n integers in [0,2], convert to charge format.
@@ -351,6 +361,7 @@ def angle_to_charge(angle, flipper_format = False):
         # flipper adds a variable to homogenise, so we do the same.
         out.append(-1)
     return out
+
 
 def there_is_a_pi_here(angle_struct, embed):
     """
