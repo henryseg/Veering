@@ -14,7 +14,7 @@ def fundamental_group(tri, angle, simplified = True):
     Returns the finite presentation of the fundamental group arising
     from the canonical spanning tree.
     
-    Input 
+    Input:
 
     * "tri" -- a regina triangulation.
 
@@ -25,22 +25,15 @@ def fundamental_group(tri, angle, simplified = True):
 
     Examples:
 
-        sage: sig = "cPcbbbdxm_10"  
-        sage: fundamental_group(sig, False)
-        Finitely presented group < x0, x1, x2, x3 | x1^-1*x0^-1*x1^-1*x3*x2*x3, x2^-1*x1^-1*x2^-1*x0*x3*x0, x0 >
+    sage: sig = "cPcbbbdxm_10"  # figure-eight knot sibling
+    sage: fundamental_group(sig, False)  # unsimplified
+    Finitely presented group < x0, x1, x2, x3 | x1^-1*x0^-1*x1^-1*x3*x2*x3, x2^-1*x1^-1*x2^-1*x0*x3*x0, x0 >
 
-    This is the unsimplified presentation of the fundamental group of
-    the figure-eight sibling.  Note that we are using the liberal
-    decorator here.
+    sage: sig = "cPcbbbiht_12"  # figure-eight
+    sage: fundamental_group(sig)  # simplified
+    Finitely presented group < x1, x2 | x1^-1*x2^-2*x1^-1*x2*x1*x2^-1*x1*x2 >
 
-        sage: sig = "cPcbbbiht_12"  # figure-eight
-        sage: fundamental_group(sig)
-        Finitely presented group < x1, x2 | x1^-1*x2^-2*x1^-1*x2*x1*x2^-1*x1*x2 >
-    
-    This is the simplified presentation of the fundamental group of
-    the figure-eight knot complement.
     """
-    
     tree = spanning_dual_tree(tri)
     tree_faces = tree[0]
     F = FreeGroup(tri.countTriangles())
