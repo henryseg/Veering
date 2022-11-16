@@ -1,0 +1,200 @@
+['lLLALzAQccedefijhkjkkiikarqdkuwwj_10221011200', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,2,1]', 'Z+Z+Z', '[]']
+None
+['lLLvPAAQccdihfhjhkkjkdkdsknisxttw_12001112220', 'M', '2', 'G', '2', 'E', '1', '[4,4]', '[8,2,1]', 'Z+Z', '[]']
+None
+['lLLvvQQQccdhikjhijhkkhsostsnvsnth_12220111102', 'M', '2', 'G', '2', 'N', '1', '[2,2]', '[8,1,2]', 'Z+Z', '[]']
+None
+['lLLvvQQQccdhjkihijhkkhsovtwnvsnth_12220111102', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,2]', 'Z+Z+Z', '[]']
+None
+['mLLALzAMQcedefijhkllkliikarqdkuqeje_102210112000', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,3,1]', 'Z/2+Z+Z+Z', '[]']
+None
+['mLLLvPAQQcdghjikkljljlhshstsdittdhk_122201110212', 'M', '2', 'G', '2', 'N', '1', '[2,2]', '[8,1,3]', 'Z/2+Z+Z', '[]']
+None
+['mLLLvPAQQcdgijhkkljljlhshvtwdittdhk_122201110212', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,3]', 'Z/2+Z+Z+Z', '[]']
+None
+['mLLMzvPQQbedfgjikkllklxxrpixrobogso_011102211100', 'M', '2', 'G', '2', 'E', '1', '[4,4]', '[8,1,3]', 'Z/2+Z+Z', '[]']
+None
+['mLLvzAPQQbehfihjlkkjllhhaggbbupaghb_011102202201', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[6,1,5]', 'Z+Z', "['L14n11130']"]
+2
+['nLLALzAMPkcedefijhklkmmmiikarqdkuqjawb_1022101120001', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,4,1]', 'Z+Z+Z', '[]']
+None
+['nLLAvwMPQkcedeikhjlmmllmiikaipkabconkc_0112200001112', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,1,4]', 'Z+Z+Z', '[]']
+None
+['nLLLvPAMQkcdghjikljmjlmmhshstsdhtihosv_1222011102120', 'M', '2', 'G', '2', 'N', '1', '[2,2]', '[8,1,4]', 'Z+Z', '[]']
+None
+['nLLLvPAMQkcdgijhkljmjlmmhshvtwdhtihosv_1222011102120', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,4]', 'Z+Z+Z', '[]']
+None
+['nLLMzLPMMkcdefgjhikllmmmhsehmhenodeuhr_1222011212201', 'M', '2', 'G', '2', 'E', '1', '[4,4]', '[8,1,4]', 'Z+Z', '[]']
+None
+['nLLvzAPPQkcdifhjkmjmkllmdkdknapiietkgk_1200111220200', 'M', '2', 'G', '1', 'E', '1', '[4,4]', '[8,4,1]', 'Z+Z', '[]']
+None
+['nvLvALMQQkdfhijklijkmlmmsamdbvfsbflkid_0221110100200', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,4,1]', 'Z+Z', '[]']
+2
+['oLLALzAMPPccedefijhklkmnnniikarqdkuqjaqpe_10221011200012', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,5,1]', 'Z/2+Z+Z+Z', '[]']
+None
+['oLLAvvPQAQccedemhkkmjlnmnniikadkpacbbqnaq_01122000011120', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,5]', 'Z/2+Z+Z+Z', '[]']
+None
+['oLLAzwvPQQccedeghnmkmlnlnmiikaqiitoivawiu_01122000112222', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,2,4]', 'Z+Z+Z', '[]']
+None
+['oLLLLzPPPQcbdeffiljmknmlnndwegjvpearcfggf_21010212220210', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,3,1]', 'Z+Z', '[]']
+2
+['oLLLvLLQQQccdgjknkljmnjmmnhshthupxtxlhbfc_12220111022220', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,3,3]', 'Z+Z', '[]']
+None
+['oLLLvPAMAQccdghjikljmjmnnnhshstsdhtihsipu_12220111021200', 'M', '2', 'G', '2', 'N', '2', '[2,2]', '[8,1,5]', 'Z/4+Z+Z', '[]']
+None
+['oLLLvPAMAQccdgijhkljmjmnnnhshvtwdhtihsipu_12220111021200', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,5]', 'Z/2+Z+Z+Z', '[]']
+None
+['oLLMwAPvPQcacdfehgjimnnmmnjkavcxxaagowofb_20021102112002', 'M', '2', 'G', '1', 'N', '1', '[2,6]', '[10,1,3]', 'Z+Z', '[]']
+2
+['oLLMzLPMzQccdefgjhiklmnmnnhsehmhenodhijsj_12220112122010', 'M', '2', 'G', '2', 'E', '1', '[4,4]', '[8,1,5]', 'Z/4+Z+Z', '[]']
+None
+['oLLvLLPQMQcbdfhkjmkljlnmmndwgvinuxtstaccw_21010211222201', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,2,2]', 'Z+Z', '[]']
+2
+['oLLvPAwMMQccdihfhjijmnmmnndkdsknijtnxooxa_02210010012211', 'M', '2', 'G', '2', 'N', '2', '[4,4]', '[8,1,5]', 'Z/4+Z+Z', '[]']
+None
+['oLLvvAPMQQccdjfmmhnjnklmlnhssbeantghemsbw_12220111102022', 'M', '2', 'G', '1', 'E', '1', '[4,4]', '[8,4,2]', 'Z+Z', '[]']
+None
+['oLLvzMMzQQcbehgihlmjnknlmnxxavvvaacaxvvvv_21112002001211', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[6,5,3]', 'Z+Z+Z', '[]']
+None
+['oLLvzMwAQQcbehgihlmjnknmmnxxavvvuucaxvvoo_21112002001221', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[6,5,3]', 'Z+Z', "['L14n12544']"]
+None
+['oLLwLwzQMQcbeeehilmjklmnnnhhaaofutdibndxd_01110000021210', 'M', '2', 'G', '2', 'N', '1', '[2,2]', '[8,1,5]', 'Z/4+Z+Z', '[]']
+None
+['oLLwLwzQMQcbeeehilmjkmlnnnhhaaofutdijjdxd_01110000021210', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,5]', 'Z/2+Z+Z+Z', '[]']
+None
+['pLLALzAMPzQcedefijhklkmnoooiikarqdkuqjaqxbw_102210112000120', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,6,1]', 'Z+Z+Z', '[]']
+None
+['pLLAvvMPAQQcedejkkjkjnnonooiinappiiwwwoaoal_102210110222221', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[10,4,1]', 'Z/2+Z+Z+Z', '[]']
+None
+['pLLAvwLQLQQcedeihljmlnonmooiikaikaabviaacxw_011220000112122', 'M', '3', 'G', '1', 'N', '1', '[2,2,4]', '[10,3,2]', 'Z+Z+Z', '[]']
+None
+['pLLAvwLQMPQcedeihljmklnmoooiikaikaabbvpcdrc_011220000112120', 'M', '3', 'G', '1', 'N', '1', '[2,2,4]', '[10,2,3]', 'Z+Z+Z', '[]']
+None
+['pLLAzwzPzQQcedeghkmllmononoiikaqiqitiatqocw_011220001122202', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,3,4]', 'Z+Z+Z', '[]']
+None
+['pLLLLLLMMQQbdefkimjnloknmoodwegqvpearcsfggf_210102122200210', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,3,2]', 'Z/3+Z+Z', '[]']
+2
+['pLLLLLzPQPQccefgiilnknoomnolnewbnfevfrptcsm_120011121222100', 'M', '2', 'G', '1', 'N', '1', '[6,4]', '[10,2,3]', 'Z+Z', '[]']
+None
+['pLLLPPLLPMQbdehfgiklmmlnooodwuhgjupkpegasvf_210102221001021', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,2,5]', 'Z+Z', '[]']
+2
+['pLLLvAvMQQQcdgifijklkommnoohshsbgemsbrgjjbj_122201110202222', 'M', '2', 'G', '1', 'E', '1', '[4,4]', '[8,4,3]', 'Z+Z', '[]']
+None
+['pLLLvLvQQQQcdgjokljmnjommnohshthpxtxlhbbfcn_122201110222202', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,3,4]', 'Z/2+Z+Z', '[]']
+None
+['pLLLvPAMAMQcdghjikljmjmonoohshstsdhtihshuos_122201110212001', 'M', '2', 'G', '2', 'N', '1', '[2,2]', '[8,1,6]', 'Z+Z', '[]']
+None
+['pLLLvPAMAMQcdgijhkljmjmonoohshvtwdhtihshuos_122201110212001', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,6]', 'Z+Z+Z', '[]']
+None
+['pLLLwAzwAQQceeghgijkllonnoolqutrgniwkkenjee_120001121220001', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,1,6]', 'Z+Z', '[]']
+2
+['pLLLwLwAQPQccegjgmljmknoonolnaaanllcnvxtaak_120011110200021', 'M', '2', 'G', '1', 'N', '1', '[4,6]', '[10,2,3]', 'Z+Z', '[]']
+None
+['pLLMzLPMzMQcdefgjhiklmnnooohsehmhenodhisetq_122201121220101', 'M', '2', 'G', '2', 'E', '1', '[4,4]', '[8,1,6]', 'Z+Z', '[]']
+None
+['pLLPLAPLzQPceefehgjillmmnooqlptqvvaaagwbhqj_210100021120202', 'M', '2', 'G', '1', 'N', '1', '[6,2]', '[10,1,4]', 'Z/3+Z+Z', '[]']
+2
+['pLLPvvLMQQQcdcfhjmlomnllnoohsraqvnnugksrkll_122201021122110', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,2,3]', 'Z+Z', '[]']
+2
+['pLLvvLAAQQQcdkihjhlmoknononhstwnsnppuhgobob_122201111022202', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,5,2]', 'Z+Z+Z', '[]']
+None
+['pLLvvLAQAQQceikjnmkjlnmmoooiivnnihsshhuufwf_102212101002022', 'M', '2', 'G', '1', 'E', '1', '[4,4]', '[10,4,1]', 'Z/2+Z+Z', '[]']
+None
+['pLLvwLMPAQQacfhijhnlmonmmoojkjqqxwkvwmrfwml_200212111022221', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,4,1]', 'Z+Z', '[]']
+2
+['pLLvzALPQAQbehfiknlmlmnkoooxxaccxamxaxaxaxm_211120020012110', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[6,5,4]', 'Z/3+Z+Z', '[]']
+2
+['pLLvzPLMMQQbehkjljnmkjloonoxxaxrabaadrcbbbb_011102202211110', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[6,3,6]', 'Z+Z+Z', '[]']
+None
+['pLvAvLMPAQQadfhijnilmonmmoojaqhxxrsrwmrfwml_200211100022221', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,3,2]', 'Z/2+Z+Z', '[]']
+2
+['pLvvAPMMzQQbfihjkkimnlomonoxaavoxevaapogovw_211122002200210', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,5,2]', 'Z/2+Z+Z', '[]']
+2
+['pLvvLQLLQQQbighihnomollmonndegbbfhaheehhhjb_210102222020100', 'M', '2', 'G', '1', 'N', '1', '[4,2]', '[6,0,9]', 'Z/2+Z+Z', '[]']
+None
+['pvLLLLLPQQQefgjljomnjonmomngppivoxuakitqham_210010021122121', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[12,3,0]', 'Z+Z', '[]']
+2
+['pvLvLQvQPQQchjkimklnonlmnoowaueaxsxxutiixww_102021110222202', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,1,4]', 'Z+Z', '[]']
+None
+['pvLvLQvQPQQcijkhmklnonlmnooweuedxsxxutiixww_102021110222202', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[10,1,4]', 'Z+Z+Z', '[]']
+None
+['pvvLLAMPQPQgfjkhllmjmkononomieuebctcacaaqcn_102021220020212', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,5,0]', 'Z+Z', '[]']
+2
+['qLALLvvPMQQkcbbegjmokpnommnppqqjnaxrrbewosnwqq_0220012120200220', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,4,2]', 'Z+Z', '[]']
+2
+['qLALLwQLwLQkcbbegghjilkoppoopqqjnavcxxaagowofb_0220012102112002', 'M', '2', 'G', '1', 'N', '1', '[2,6]', '[10,5,1]', 'Z+Z', '[]']
+2
+['qLALvvAwAQQkbcbehhmjlnmpnoopphhwsvwhqvnougksll_2112201102110110', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,3,3]', 'Z+Z', '[]']
+2
+['qLLALwLwMQMkccedhgkjnkmnnoppplnhchwcnxcexamxip_1200111220021120', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,2,6]', 'Z+Z', '[]']
+2
+['qLLALzAMPzMkcedefijhklkmnopppiikarqdkuqjaqxqep_1022101120001200', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,7,1]', 'Z/2+Z+Z+Z', '[]']
+None
+['qLLAvvLPAQQkcedejjknjnnoopoppiikaqaabrwrokagid_0112200001112122', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[12,1,3]', 'Z/3+Z+Z+Z', '[]']
+None
+['qLLAvvMPAPQkcedelhkmjnoppnpooiikapkabrcaxacqhp_0112200001111200', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,1,7]', 'Z/2+Z+Z+Z', '[]']
+None
+['qLLAvvMQAPMkcedejkmkjkjonopppiinappaiiwwlaxnbn_1022101102222111', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[10,4,2]', 'Z+Z+Z', '[]']
+None
+['qLLAvvwLQQQkcedelkmjonpnmpopoiikapabrcncnncckj_0112200001111121', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,1,7]', 'Z+Z+Z', '[]']
+None
+['qLLAvwLQLAQkcedeihljmlnomooppiikaikaabviacxwwr_0112200001121222', 'M', '3', 'G', '1', 'N', '1', '[2,2,4]', '[10,4,2]', 'Z+Z+Z', '[]']
+None
+['qLLAvwLQMPMkcedeihljmklnmooppiikaikaabbvpcdcps_0112200001121200', 'M', '3', 'G', '1', 'N', '1', '[2,2,4]', '[10,2,4]', 'Z+Z+Z', '[]']
+None
+['qLLAvwMMPLQkccedgjilklkonnppppwxrrajccrwbnbwkn_1022111002221111', 'M', '2', 'G', '1', 'N', '2', '[2,2]', '[8,2,6]', 'Z/4+Z+Z', '[]']
+None
+['qLLAvwMMPLQkccedgjilklkoonppppwxrrajccrwbkbkwk_1022111002221111', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,2,6]', 'Z+Z+Z', '[]']
+None
+['qLLAvwzAAMQkacdegkiljklnonpppjkaajajaajjglkmkn_2002100002221100', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,1,7]', 'Z+Z', '[]']
+2
+['qLLAwLMzLQMkccedfhijjnomooppppwxrxjvcjbhbahhah_1022110022110022', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,5,3]', 'Z+Z', '[]']
+2
+['qLLAzvLMQPMkcedegjimlmlonopppiikaqrrfofolaacrc_0112200011122200', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[10,2,4]', 'Z/2+Z/2+Z+Z+Z', '[]']
+None
+['qLLAzvLQQLAkcedegjiklmlmnooppiinahwwbsosopisak_1022101022222001', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,5,3]', 'Z/2+Z/2+Z+Z', '[]']
+2
+['qLLAzwzPzMQkcedeghkmllmponpopiikaqiqitiaqocfwk_0112200011222020', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,4,4]', 'Z+Z+Z', '[]']
+None
+['qLLLLPLPPMMkceggjhjkmknnonppphhhahvaqaackqcqsj_0222100002122100', 'M', '1', 'G', '1', 'N', '2', '[2]', '[6,8,2]', 'Z/4+Z', '[]']
+None
+['qLLLLPvLPQQkceggjhnkmmlonppophhhahvaagbcrjcccc_0222100002122211', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,6,2]', 'Z+Z', '[]']
+2
+['qLLLPPvwPAQkbdehfgilmmnlnpoppdwuhgjuhpedsdskvf_2101022210010021', 'M', '2', 'G', '1', 'N', '2', '[2,2]', '[8,3,5]', 'Z/4+Z+Z', '[]']
+None
+['qLLLPPvwPAQkbdehfgilomnlnppopdwuhgjuhdedsdswkv_2101022210010021', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,3,5]', 'Z+Z+Z', '[]']
+None
+['qLLLvALMQMMkcdgifmijklknooppphshsbhgemsbrdauhn_1222011102022211', 'M', '2', 'G', '1', 'E', '1', '[4,4]', '[8,4,4]', 'Z/7+Z+Z', '[]']
+None
+['qLLLvLAMMMQkbdfhklljkmoonpnppdwurieqxlmvfjesxh_2101021221222112', 'M', '2', 'G', '1', 'N', '1', '[2,4]', '[12,4,0]', 'Z/2+Z+Z', '[]']
+None
+['qLLLvLLAMQQkcdgjknkjnjmmoppophshthuptlhbfsssvo_1222011102222022', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,5,3]', 'Z+Z', '[]']
+None
+['qLLLvLvQQMQkcdgjokljmnjmmnppphshthpxtxlhbfctha_1222011102222021', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,3,5]', 'Z+Z', '[]']
+None
+['qLLLvLwQPPQkcdgjhmklnjopoponphshtwuppdhvhvhwga_1222011102220210', 'M', '3', 'G', '1', 'N', '1', '[2,2,2]', '[8,5,3]', 'Z/2+Z+Z+Z', '[]']
+None
+['qLLLvPAMAMMkcdghjikljmjmonppphshstsdhtihshuxip_1222011102120011', 'M', '2', 'G', '2', 'N', '1', '[2,2]', '[8,1,7]', 'Z/2+Z+Z', '[]']
+None
+['qLLLvPAMAMMkcdgijhkljmjmonppphshvtwdhtihshuxip_1222011102120011', 'M', '3', 'G', '2', 'N', '1', '[2,2,2]', '[8,1,7]', 'Z/2+Z+Z+Z', '[]']
+None
+['qLLLvPMQLMAkcegkhikhjknnmnopphhhhvfasjpxwvveqj_0222100011220202', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,5,3]', 'Z+Z', '[]']
+None
+['qLLLvQAzMAMkbegfihhijmmnmoopphhpgksgknqopoenxr_0111022202001112', 'M', '3', 'G', '1', 'N', '1', '[2,2,4]', '[10,2,4]', 'Z+Z+Z', '[]']
+None
+['qLLLvzMQLQMkcegkikhjloonnopnphhhhfasjaxasfoqsj_0222100011212220', 'M', '2', 'G', '1', 'N', '2', '[2,2]', '[6,5,5]', 'Z/16+Z+Z', '[]']
+None
+['qLLLvzPMMPQkceehhjinkolmpnppolquvvnvxuxfwpvpmk_1200011221122000', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[6,2,8]', 'Z+Z', '[]']
+None
+['qLLLwAvwQQAkceeghgjlkmomonopplqutrgilwkbkkkcxn_1200011212200021', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,2,6]', 'Z/2+Z+Z', '[]']
+None
+['qLLLwAzMAMAkceeghgijmkllnoopplqutrgnixwkkamvin_1200011212200120', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,3,5]', 'Z+Z', '[]']
+2
+['qLLMzLPMzMPkcdefgjhiklmnnpopphsehmhenodhishqfj_1222011212201012', 'M', '2', 'G', '2', 'E', '1', '[4,4]', '[8,1,7]', 'Z/2+Z+Z', '[]']
+None
+['qLLPvwPLMMQkcdcfghhknlopmonpphsravqjvpvalhfggf_1222010212210210', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[10,1,5]', 'Z+Z', '[]']
+2
+['qLLvAAvPAPQkbeehfgjnlkmmpopopxxxacvpadvcvptqpv_2111200222111112', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,6,2]', 'Z+Z', '[]']
+2
+['qLLvAPMLzMQkbeghjgjijlnopnopphhhahnecpvwtqcpmv_2111200201211212', 'M', '2', 'G', '1', 'N', '1', '[2,2]', '[8,7,1]', 'Z+Z', '[]']
+None
