@@ -20,12 +20,12 @@ def is_edge_orientable(tri, angle, return_type = "boolean"):
 
     Example: 
 
-    >>> from veering.edge_orientability import is_edge_orientable
-    >>> sig = "cPcbbbdxm_10"
-    >>> is_edge_orientable(sig)
+    sage: from veering.edge_orientability import is_edge_orientable
+    sage: sig = "cPcbbbdxm_10"
+    sage: is_edge_orientable(sig)
     False
-    >>> sig = "cPcbbbiht_12"
-    >>> is_edge_orientable(sig)
+    sage: sig = "cPcbbbiht_12"
+    sage: is_edge_orientable(sig)
     True
     """
     lts = loop_twistednesses(tri, angle)
@@ -168,15 +168,15 @@ def is_max_fab_edge_orientable(tri, angle, return_type = "boolean"):
 
     Example: 
 
-    >>> from veering.edge_orientability import is_fab_edge_orientable
-    >>> sig = "cPcbbbdxm_10"
-    >>> is_fab_edge_orientable(sig)
+    sage: from veering.edge_orientability import is_fab_edge_orientable
+    sage: sig = "cPcbbbdxm_10"
+    sage: is_fab_edge_orientable(sig)
     True
-    >>> sig = "cPcbbbiht_12"
-    >>> is_fab_edge_orientable(sig)
+    sage: sig = "cPcbbbiht_12"
+    sage: is_fab_edge_orientable(sig)
     True
-    >>> sig = "gLLAQbecdfffhhnkqnc_120012"
-    >>> is_fab_edge_orientable(sig)
+    sage: sig = "gLLAQbecdfffhhnkqnc_120012"
+    sage: is_fab_edge_orientable(sig)
     False
     """
     # See the 2022-09-06 email from Anna Parlak
