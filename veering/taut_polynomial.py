@@ -24,6 +24,7 @@ verbose = 0
 
 # upper and lower diagonals of the tet
 
+
 def tet_lower_upper_edges(tetrahedron, coorientations):
     tet_coor = coorientations[tetrahedron.index()]
     lower_edge_endpoints = [i for i in range(4) if tet_coor[i] == +1]
@@ -35,6 +36,7 @@ def tet_lower_upper_edges(tetrahedron, coorientations):
 
 # Polynomials that come with snappy (in sage) - delete these or move
 # them to the correct place.
+
 
 def alex_is_monic(M):
     p = M.alexander_polynomial()
@@ -270,7 +272,7 @@ def taut_polynomial_via_fox_calculus(tri, angle, simplified = True):
     the Alexander polynomial twisted by the edge-orientation
     homomorphism.  See Proposition 5.7 of arxiv:2101.12162.
     
-    Input 
+    Input:
 
     * "tri" -- a regina triangulation.
 
@@ -284,9 +286,6 @@ def taut_polynomial_via_fox_calculus(tri, angle, simplified = True):
     sage: sig = "cPcbbbdxm_10"
     sage: taut_polynomial_via_fox_calculus(sig)  
     a^2 - 3*a + 1
-
-    The above works because of the "liberal" decorator.
-
     sage: sig = "eLMkbcddddedde_2100"
     sage: tri, angle = isosig_to_tri_angle(sig)
     sage: taut_polynomial_via_fox_calculus(tri, angle)
