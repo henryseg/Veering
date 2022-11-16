@@ -12,11 +12,11 @@ def parse_data_file(filename):
     # 1. try relative path
     data_file = Path(filename)
     if not data_file.exists():
-        # 2. try data path in the installation folder
-        data_file = Path(__file__).parent / "data" / filename
+        # 2. try data_census path in the installation folder
+        data_file = Path(__file__).parent / "../data_census" / filename
         if not data_file.exists():
-            # 3. try extra_data path in the installation folder
-            data_file = Path(__file__).parent / "extra_data" / filename
+            # 3. try data_extra path in the installation folder
+            data_file = Path(__file__).parent / "../data_extra" / filename
             if not data_file.exists():
                 raise ValueError('no data file {}'.format(filename))
 
