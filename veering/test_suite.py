@@ -18,7 +18,7 @@ def check_polynomial_coefficients(p, correct_coeffs):
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
     from . import taut
-    veering_isosigs = parse_data_file("veering_census.txt")
+    veering_isosigs = parse_data_file("data_census/veering_census.txt")
     print("testing is_taut")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
