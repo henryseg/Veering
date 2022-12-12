@@ -10,7 +10,7 @@ from veering.file_io import parse_data_file
 
 from veering.veering_tri import is_veering
 from veering.transverse_taut import is_transverse_taut
-import veering.veering_detect  # ??? broken
+import veering_detect
 from veering.taut import isosig_to_tri_angle
 
 # pyx.text.set(mode="latex")
