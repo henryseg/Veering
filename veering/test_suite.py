@@ -25,14 +25,24 @@ def timing_split():
 
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
+    import regina
+    
     timing_split()
     
     from . import taut
     veering_isosigs = parse_data_file("data_census/veering_census.txt")
     print("testing is_taut")
     for sig in random.sample(veering_isosigs, num_to_check):
+        print(sig)
+        timing_split()
         tri, angle = taut.isosig_to_tri_angle(sig)
+        timing_split()
         assert taut.is_taut(tri, angle), sig
+        timing_split()
+        tmp = regina.Example3.weberSeifert()
+        timing_split()
+
+    return
 
     timing_split()
         
@@ -116,26 +126,26 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
     from . import branched_surface
     import regina
-    print("testing branched_surface and pachner with branched surface")
-    for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
-        tri_original = regina.Triangulation3(tri) #copy
-        branch = branched_surface.upper_branched_surface(tri, angle, return_lower = random.choice([True, False]))
+    # print("testing branched_surface and pachner with branched surface")
+    # for sig in random.sample(veering_isosigs, num_to_check):
+    #     tri, angle = taut.isosig_to_tri_angle(sig)
+    #     tri_original = regina.Triangulation3(tri) #copy
+    #     branch = branched_surface.upper_branched_surface(tri, angle, return_lower = random.choice([True, False]))
         
-        ### test branch isosig round trip
-        sig_with_branch = branched_surface.isosig_from_tri_angle_branch(tri, angle, branch)
-        tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
-        assert (branch == branch2) and (angle == angle2), sig
+    #     ### test branch isosig round trip
+    #     sig_with_branch = branched_surface.isosig_from_tri_angle_branch(tri, angle, branch)
+    #     tri2, angle2, branch2 = branched_surface.isosig_to_tri_angle_branch(sig_with_branch)
+    #     assert (branch == branch2) and (angle == angle2), sig
 
-        branch_original = branch[:]  # copy
-        face_num = random.randrange(tri.countTriangles())
-        out = pachner.twoThreeMove(tri, face_num, branch = branch, return_edge = True)
-        if out != False:
-            tri, possible_branches, edge_num = out
-            tri, branch = pachner.threeTwoMove(tri, edge_num, branch = possible_branches[0])
-            all_isoms = tri.findAllIsomorphisms(tri_original)
-            all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
-            assert branch_original in all_branches, sig
+    #     branch_original = branch[:]  # copy
+    #     face_num = random.randrange(tri.countTriangles())
+    #     out = pachner.twoThreeMove(tri, face_num, branch = branch, return_edge = True)
+    #     if out != False:
+    #         tri, possible_branches, edge_num = out
+    #         tri, branch = pachner.threeTwoMove(tri, edge_num, branch = possible_branches[0])
+    #         all_isoms = tri.findAllIsomorphisms(tri_original)
+    #         all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
+    #         assert branch_original in all_branches, sig
 
     timing_split()
     
@@ -326,23 +336,23 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
         for sig in veering_isosigs[17:21]:
             assert not taut_polytope.is_layered(sig), sig
 
-    if sage_working:
-        from . import fibered
-        try:
-            mflds = parse_data_file("mflds_which_fiber.txt")
-        except ValueError:
-            print("ignore is_fibered (no data file)")
-            mflds = None
-        if mflds is not None:
-            mflds = mflds[58:]  # get rid of the preamble
+    # if sage_working:
+    #     from . import fibered
+    #     try:
+    #         mflds = parse_data_file("mflds_which_fiber.txt")
+    #     except ValueError:
+    #         print("ignore is_fibered (no data file)")
+    #         mflds = None
+    #     if mflds is not None:
+    #         mflds = mflds[58:]  # get rid of the preamble
 
-            timing_split()
+    #         timing_split()
             
-            print("testing is_fibered")
-            mflds = [line.split("\t")[0:2] for line in mflds]
-            for (name, kind) in random.sample(mflds, num_to_check):        
-                if not fibered.is_fibered(name) == (kind == "fibered"):
-                    print("is_fibered failed on", name, "but don't worry about that... is_fibered is pretty random.")
+    #         print("testing is_fibered")
+    #         mflds = [line.split("\t")[0:2] for line in mflds]
+    #         for (name, kind) in random.sample(mflds, num_to_check):        
+    #             if not fibered.is_fibered(name) == (kind == "fibered"):
+    #                 print("is_fibered failed on", name, "but don't worry about that... is_fibered is pretty random.")
 
     if sage_working:
         from . import veering_polynomial

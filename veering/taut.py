@@ -128,7 +128,7 @@ def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = F
 # checking tautness
 
 
-@liberal
+#@liberal
 def is_taut(tri, angle, return_totals = False):
     totals = [0] * tri.countEdges()
     for i, tet in enumerate(tri.tetrahedra()):
