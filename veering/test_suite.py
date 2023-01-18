@@ -695,6 +695,7 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
                 assert tri.isoSig() == 'jLLALMQcecdhggiiihqrwqwrafo'
                 #print('spiq to rafo passed')
 
+        timing_split()
                 
     if sage_working:
         print("all tests depending on sage passed")
