@@ -3,6 +3,7 @@
 #
 
 import random
+import time
 
 from .file_io import parse_data_file, read_from_pickle
 
@@ -15,8 +16,17 @@ def check_polynomial_coefficients(p, correct_coeffs):
     return (p == correct_coeffs) or (n == correct_coeffs)
 
 
+split_time = 0
+def timing_split():
+    global split_time
+    t = time.time()
+    print('Split:', t - split_time)
+    split_time = t
+
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
+    timing_split()
+    
     from . import taut
     veering_isosigs = parse_data_file("data_census/veering_census.txt")
     print("testing is_taut")
@@ -24,6 +34,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
         tri, angle = taut.isosig_to_tri_angle(sig)
         assert taut.is_taut(tri, angle), sig
 
+    timing_split()
+        
     print("testing isosig round trip")
     for sig in random.sample(veering_isosigs, num_to_check):
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -32,6 +44,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
         # we only test this round trip - the other round trip does not
         # make sense because tri->isosig is many to one.
 
+    timing_split()
+        
     from . import transverse_taut
     print("testing is_transverse_taut")
     for sig in random.sample(veering_isosigs, num_to_check):
@@ -49,6 +63,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             tri, angle = taut.isosig_to_tri_angle(sig)
             assert not transverse_taut.is_transverse_taut(tri, angle), sig
 
+    timing_split()
+            
     from . import veering_tri
     print("testing is_veering")
     for sig in random.sample(veering_isosigs, num_to_check):
@@ -59,6 +75,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
     # # tests to see that it makes only veering triangulations as it goes
 
+    timing_split()
+
     from . import veering_dehn_surgery
     print("testing veering_dehn_surgery")
     for sig in random.sample(veering_isosigs, num_to_check):
@@ -66,6 +84,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering_tri.is_veering(tri_s, angle_s), sig
+            
+    timing_split()
             
     from . import veering_fan_excision
     print("testing veering_fan_excision")
@@ -79,6 +99,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             assert ( excised_tri.isIsomorphicTo(m003) != None or
                      excised_tri.isIsomorphicTo(m004) != None ), sig
 
+    timing_split()
+
     from . import pachner
     print("testing pachner with taut structure")
     for sig in random.sample(veering_isosigs, num_to_check):
@@ -90,7 +112,7 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             tri3, angle3 = pachner.threeTwoMove(tri2, edge_num, angle = angle2)
             assert taut.isosig_from_tri_angle(tri, angle) == taut.isosig_from_tri_angle(tri3, angle3), sig
 
-
+    timing_split()
 
     from . import branched_surface
     import regina
@@ -115,6 +137,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
             assert branch_original in all_branches, sig
 
+    timing_split()
+    
     from . import flow_cycles
     from . import drill
     print("testing taut and branched drill + semiflows on drillings")
@@ -142,6 +166,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
         snappy_working = False
 
     if snappy_working:        
+
+        timing_split()
+
         print("testing algebraic intersection")
         census = snappy.OrientableCuspedCensus() # not a set or list, so can't use random.sample
         for i in range(10):
@@ -158,6 +185,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
                        
     if snappy_working:
         from . import veering_drill_midsurface_bdy
+
+        timing_split()
+        
         print("testing veering drilling and filling")
         for sig in random.sample(veering_isosigs[:3000], num_to_check):
             T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
@@ -287,6 +317,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
     if sage_working:
         from . import taut_polytope
+
+        timing_split()
+
         print("testing is_layered")
         for sig in veering_isosigs[:17]:
             assert taut_polytope.is_layered(sig), sig
@@ -302,6 +335,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             mflds = None
         if mflds is not None:
             mflds = mflds[58:]  # get rid of the preamble
+
+            timing_split()
+            
             print("testing is_fibered")
             mflds = [line.split("\t")[0:2] for line in mflds]
             for (name, kind) in random.sample(mflds, num_to_check):        
@@ -311,6 +347,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     if sage_working:
         from . import veering_polynomial
         from . import taut_polynomial
+
+        timing_split()
         
         print("testing veering poly")
         for sig in veering_polys:
@@ -320,26 +358,41 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             ### to equivalent but not equal polynomials. To avoid this kind of change breaking things
             ### in the future, we changed to comparing the list of coefficients.
             # assert p.__repr__() == veering_polys[sig]
+
+        timing_split()
+        
         print("testing taut poly")
         for sig in taut_polys:
             p = taut_polynomial.taut_polynomial_via_tree(sig)
             assert check_polynomial_coefficients(p, taut_polys[sig]), sig
         #     assert p.__repr__() == taut_polys[sig]
+
+        timing_split()
+        
         print("testing taut poly via Fox calculus")
         for sig in taut_polys:
             p = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             assert check_polynomial_coefficients(p, taut_polys[sig]), sig
         #     assert p.__repr__() == taut_polys[sig]
+
+        timing_split()
+        
         print("testing taut == taut_fox")
         for sig in random.sample(veering_isosigs[500:3000], smaller_num_to_check):        
             taut1 = taut_polynomial.taut_polynomial_via_tree(sig)
             taut2 = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             assert taut1 == taut2
+
+        timing_split()
+
         print("testing fox simplified == fox unsimplified")
         for sig in random.sample(veering_isosigs[100:500], 3):        
             taut2 = taut_polynomial.taut_polynomial_via_fox_calculus(sig)
             taut3 = taut_polynomial.taut_polynomial_via_fox_calculus(sig, simplified = False)
             assert taut2 == taut3
+
+        timing_split()
+
         print("testing divide")
         for sig in random.sample(veering_isosigs[:3000], num_to_check):
             p = veering_polynomial.veering_polynomial(sig)
@@ -350,6 +403,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
                 assert q.divides(p), sig
 
     if sage_working:
+
+        timing_split()
+
         print("testing alex")
         for sig in random.sample(veering_isosigs[:3000], num_to_check):        
             snap_sig = sig.split("_")[0]
@@ -360,23 +416,38 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     if sage_working:
         # would be nice to automate this - need to fetch the angle
         # structure say via z_charge.py...
+
+        timing_split()
+
         print("testing is_torus_bundle")
         for sig in torus_bundles: 
             assert taut_polytope.is_torus_bundle(sig), sig
 
     if sage_working:
         # ditto
+
+        timing_split()
+        
         print("testing is_layered")
         for sig in torus_bundles:
             assert taut_polytope.is_layered(sig), sig
+
+        timing_split()
+        
         print("testing measured")
         for sig in measured:
             assert taut_polytope.LMN_tri_angle(sig) == "M", sig
+
+        timing_split()
+
         print("testing empty")
         for sig in empties:
             assert taut_polytope.LMN_tri_angle(sig) == "N", sig
 
     if sage_working:
+
+        timing_split()
+        
         print("testing euler characteristic")
         for sig in random.sample(veering_isosigs[:3000], 3*num_to_check):
             snap_sig = sig.split("_")[0]
@@ -389,6 +460,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
                     assert eul == alex_span - 1, sig
                     
     if sage_working:  # warning - this takes random amounts of time!
+
+        timing_split()
+        
         print("testing hom dim")
         for sig in random.sample(veering_isosigs[:3000], 3): # magic number
             # dimension = zero if and only if nothing is carried.
@@ -441,6 +515,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
     if sage_working:
         from . import taut_carried     
+
+        timing_split()
+
         print("testing boundary cycles")
         for sig, surface in boundary_cycles:
             surface_list = list(surface)
@@ -449,6 +526,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             assert cycles.__repr__() == boundary_cycles[(sig, surface)], sig
 
     if sage_working:
+
+        timing_split()
+        
         print("testing taut with cycles")
         for sig, cycles in taut_polys_with_cycles:
             cycles_in = [list(cycle) for cycle in cycles]
@@ -457,6 +537,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             # assert p.__repr__() == taut_polys_with_cycles[(sig, cycles)]
 
     if sage_working:
+
+        timing_split()
+        
         print("testing taut with images")
         for sig, cycles in taut_polys_image:
             cycles_in = [list(cycle) for cycle in cycles]
@@ -465,6 +548,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
             # assert p.__repr__() == taut_polys_image[(sig, cycles)]
 
     if sage_working:
+
+        timing_split()
+
         print("testing alex with cycles")
         for sig, cycles in alex_polys_with_cycles:
             cycles_in = [list(cycle) for cycle in cycles]
@@ -475,6 +561,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     if sage_working:
         from . import edge_orientability
         from . import taut_euler_class
+
+        timing_split()
+        
         print("testing euler and edge orientability")
         for sig in random.sample(veering_isosigs[:3000], 3):
             # Theorem: If (tri, angle) is edge-orientable then e = 0.
@@ -488,6 +577,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
         pass
             
     if sage_working:
+
+        timing_split()
+
         print("testing exotics")
         for sig in random.sample(veering_isosigs[:3000], 3):
             tri, angle = taut.isosig_to_tri_angle(sig)
@@ -498,6 +590,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
                 assert is_eo == transverse_taut.is_transverse_taut(tri, angle), sig
         
     if sage_working:
+
+        timing_split()
+        
         print("testing depth")
         for sig in random.sample(veering_isosigs[:3000], 3):
             is_finite, depth = taut_polytope.depth(sig)
@@ -521,6 +616,8 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 
         sig_starts = ["b+-LR", "b++LR"]
 
+        timing_split()
+        
         print("testing lattice for punc torus bundle")
         for i in range(3):
             for sig_start in sig_starts:
@@ -545,6 +642,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
                 ## so l-t defms are the part of the kernel that doesn't flip over
 
     if sage_working:
+
+        timing_split()
+        
         print("testing charges for punc torus bundle")
         for i in range(3):
             for sig_start in sig_starts:
@@ -555,6 +655,9 @@ def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     if sage_working:
         from . import carried_surface
         from . import mutation
+
+        timing_split()
+        
         print("testing building carried surfaces and mutations")
         sigs_weights = [
             ['iLLLPQccdgefhhghqrqqssvof_02221000',  (0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0)], 
