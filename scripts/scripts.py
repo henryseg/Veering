@@ -322,19 +322,33 @@ def draw_veering_triangulation_and_mid_annuli_script():
     #     draw_triangulation_from_veering_isosig(sig)
 
 
-    # draw_triangulation_from_veering_isosig('mvvLPQwQQfghffjikllklkaaaaaaaaaaaaa_102021111100')
+    # to_draw_for_paper = ['cPcbbbdxm_10',
+    #                      'cPcbbbiht_12', 
+    #                      'eLMkbcddddedde_2100', 
+    #                      'gLLAQbecdfffhhnkqnc_120012', 
+    #                      'fLLQccecddehqrwjj_20102']
+    # for sig in to_draw_for_paper:
+    #     draw_triangulation_from_veering_isosig(sig)
+    
+    # draw_triangulation_from_veering_isosig('qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200')
 
     # draw_triangulation_from_veering_isosig('cPcbbbiht_12')
 
     # from file_io import parse_data_file
-    # # census = parse_data_file('veering_census.txt')
+    
+    # census = parse_data_file('veering_census.txt')
+    # for sig in census[:5]:
+    #     draw_triangulation_from_veering_isosig(sig)
 
-    # # for sig in census[:20]:
-    # #     draw_triangulation_from_veering_isosig(sig)
+    census = parse_data_file('veering_census.txt')
+    for sig in census:
+        # if ord(sig[0]) <= 109: ### up to 'm'
+        if ord(sig[0]) == 109: ### 'm'
+            draw_triangulation_from_veering_isosig(sig, tetrahedra_filename = 'Images/Triangulation/Census/' + sig + '_tetrahedra.pdf', midannuli_filename = 'Images/Mid-annuli/Census/' + sig +'_mid-annuli.pdf')
 
-    only_toggles = parse_data_file('only_toggles.txt')
-    for sig in only_toggles:
-        draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/only_toggles/' + sig +'_mid-annuli.pdf')
+    # only_toggles = parse_data_file('only_toggles.txt')
+    # for sig in only_toggles:
+    #     draw_triangulation_from_veering_isosig(sig, midannuli_filename = 'Images/Mid-annuli/only_toggles/' + sig +'_mid-annuli.pdf')
 
     # data = parse_data_file('low_volume_stacks.txt')
     # for line in data:

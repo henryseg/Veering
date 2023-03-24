@@ -33,11 +33,12 @@ cyan = pyx.color.rgb(0.0,1.0,1.0)
 tet_width = 5.0
 tet_gap = 1.0
 lw1 = 0.1  # line width
-lw2 = 0.05  # thinner line width for edges in front of and behind diamonds
+lw2 = 0.05  # line width for green and purple
+lw3 = 0.025     # width for edges in front of and behind diamonds
 rw = 0.25  # rectangle width
 hlw = 0.2 # hinge cut line width
 as1 = 0.7
-as2 = 0.35
+as2 = 0.2  # arrow size for edges in front of and behind diamonds
 dot_rad = 0.35  #0.1
 # dot = '$\odot$'
 # cross = '$\otimes$'
@@ -90,8 +91,8 @@ def draw_edge(canvas, triangulation, veering_colours, tet_num, vert_posns, v0, v
 
     if context == 'tetrahedron':
         style = [pyx.deco.stroked([col]), pyx.style.linewidth(lw1), pyx.deco.earrow([pyx.deco.filled([col])], size = as1)]
-    else:
-        style = [pyx.deco.stroked([col]), pyx.style.linewidth(lw2), pyx.deco.earrow([pyx.deco.filled([col])], size = as2)]
+    else:  ### diamond
+        style = [pyx.deco.stroked([col]), pyx.style.linewidth(lw3), pyx.deco.earrow([pyx.deco.filled([col])], size = as2)]
         if dotted:
             style.append(pyx.style.linestyle.dotted)
 
@@ -111,7 +112,7 @@ def draw_edge(canvas, triangulation, veering_colours, tet_num, vert_posns, v0, v
         else:
             pos = edge_center + 0.17*diff + 0.08*perp
     else:
-        pos = edge_center + 0.35j  
+        pos = edge_center + 0.75 * (w1 - w0)  # put edge number at the end of the arrow
     edge_string = str(get_edge_between_verts_index(triangulation.tetrahedron(tet_num), v0, v1))
     # if starred:  # the stars died, 2018-09-10 RIP
     #     edge_string = edge_string + '*'
@@ -738,7 +739,7 @@ def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, ve
     c.fill(polygon.path(), [light_col])
 
     if tet_types[tet_num] == 'toggle':
-        p0, p1 = [0.7*(p - diamond_center) + diamond_center for p in [diamond_pts[1], diamond_pts[3]]]
+        p0, p1 = [0.5*(p - diamond_center) + diamond_center for p in [diamond_pts[1], diamond_pts[3]]]
         c.stroke(pyx.path.line( p0.real, p0.imag, p1.real, p1.imag), [pyx.style.linewidth(hlw), pyx.style.linecap.round] )
 
     ## front and back edges
@@ -756,7 +757,7 @@ def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, ve
                 diamond_pt_indices = [1,2]
         edge_endpt_posns_pair = [diamond_pts[diamond_pt_indices[k]] for k in range(2)]
         edge_center = 0.5*(edge_endpt_posns_pair[0] + edge_endpt_posns_pair[1])
-        edge_endpt_posns_pair = [0.5*p + 0.5*edge_center for p in edge_endpt_posns_pair]
+        edge_endpt_posns_pair = [0.25*p + 0.75*edge_center for p in edge_endpt_posns_pair]
         edge_endpt_posns = ['','','','']
         for k in range(2):    ### hack so we can reuse tetrahedron drawing code
             edge_endpt_posns[edge_verts[k]] = edge_endpt_posns_pair[k]  
@@ -817,7 +818,7 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
         angle = veering_structures[0]
         print('angle structure:', str(angle))
 
-    veering_colours = veering.is_veering(triangulation, angle, return_type = 'veering_colours')
+    veering_colours = is_veering(triangulation, angle, return_type = 'veering_colours')
     assert veering_colours != False
 
     coorientations = is_transverse_taut(triangulation, angle, return_type = 'tet_vert_coorientations')
@@ -826,7 +827,7 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
         return False
     # coorientations = [[-c for c in t] for t in coorientations] # flip all
 
-    tet_types = veering.is_veering(triangulation, angle, return_type = 'tet_types')
+    tet_types = is_veering(triangulation, angle, return_type = 'tet_types')
     tet_vert_posns_below, tet_vert_posns_above, zigzags, cut_edges = get_consistent_tet_vert_posns(triangulation, angle, tet_types, coorientations)
     edge_orientations_relative_to_regina = get_nice_edge_orientations_relative_to_regina(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, zigzags)
 
