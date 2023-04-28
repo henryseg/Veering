@@ -116,7 +116,7 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name = N
                         return None 
 
         frontier_isoSigs = new_frontier_isoSigs
-        # print(len(big_dict_of_nodes), len(frontier_isoSigs))
+        print(len(big_dict_of_nodes), len(frontier_isoSigs))
 
     print('did not find path')
     return None

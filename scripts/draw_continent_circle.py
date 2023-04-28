@@ -155,97 +155,6 @@ def are_anticlockwise(a, b, c): ### given indices in this order, are they anticl
 def are_linking(a1, a2, b1, b2): ### given indices on a circle, do the a's link the b's?
     return (a1 - b1)*(a1 - b2)*(a2 - b1)*(a2 - b2) < 0 ### same as the sign of the cross-ratio
 
-def install_thorn_ends(con):
-    """For each cusp c, install c.purple_thorn_ends = [] ### [coastal arc, position along that arc] 
-    and same for green_thorn_ends"""
-    purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
-    green_train_routes = []
-  
-    for edge in con.lower_landscape_edges:
-        leaf_end_edges = []
-        if edge.is_coastal():
-            if not edge.is_coastal_sink(upper = False):
-                leaf_end_edges.append(edge)
-                for tri in edge.boundary_triangles:
-                    if not tri.is_upper:
-                        last_tri = con.flow(tri)[0]
-                        last_edge = last_tri.edges[last_tri.downriver_index()]
-                        leaf_end_edges.append(last_edge)
-        else:
-            if edge.is_watershed():
-                for tri in edge.boundary_triangles:
-                    last_tri = con.flow(tri)[0]
-                    last_edge = last_tri.edges[last_tri.downriver_index()]
-                    leaf_end_edges.append(last_edge)
-        if len(leaf_end_edges) == 2:
-            purple_train_routes.append(leaf_end_edges)
-
-        
-    for edge in con.upper_landscape_edges:
-        leaf_end_edges = []
-        if edge.is_coastal():
-            if not edge.is_coastal_sink(upper = True):
-                leaf_end_edges.append(edge)
-                for tri in edge.boundary_triangles:
-                    if tri.is_upper:
-                        last_tri = con.flow(tri)[0]
-                        last_edge = last_tri.edges[last_tri.downriver_index()]
-                        leaf_end_edges.append(last_edge)
-        else:
-            if edge.is_watershed():
-                for tri in edge.boundary_triangles:
-                    last_tri = con.flow(tri)[0]
-                    last_edge = last_tri.edges[last_tri.downriver_index()]
-                    leaf_end_edges.append(last_edge)
-        if len(leaf_end_edges) == 2:
-            green_train_routes.append(leaf_end_edges)
-                
-    for e in con.coastal_edges:
-        e.purple_ends = []  ### of train routes
-        e.green_ends = []
-    for e1, e2 in purple_train_routes:
-        assert e1.is_coastal()
-        assert e2.is_coastal()
-        e1.purple_ends.append(e2)
-        e2.purple_ends.append(e1)
-    for e1, e2 in green_train_routes:
-        e1.green_ends.append(e2)
-        e2.green_ends.append(e1)
-    for i, e in enumerate(con.coastal_edges):
-        rotated_coastal_edges = con.coastal_edges[i:] + con.coastal_edges[:i]
-        e.purple_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-        e.green_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-        if e.is_red:
-            e.ends = e.green_ends + e.purple_ends
-        else:
-            e.ends = e.purple_ends + e.green_ends
-    
-    for i, c in enumerate(con.coast):
-        c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
-        e = con.coastal_edges[i]
-        e1 = e.purple_ends[0]
-        while True:
-            index = e1.purple_ends.index(e)
-            if index == len(e1.purple_ends) - 1:
-                assert con.coast[ (con.coastal_edges.index(e1) + 1) % len(con.coast) ] == c
-                break
-            else:
-                c.purple_thorn_ends.append( (e1, e1.ends.index(e)) )
-                e, e1 = e1, e1.purple_ends[index + 1]
-        
-    for i, c in enumerate(con.coast):
-        c.green_thorn_ends = [] ### [coastal arc, position along that arc]
-        e = con.coastal_edges[i]  ### immediately after the cusp
-        e1 = e.green_ends[0] ### of train routes, ordered counterclockwise along the edge
-        while True: # go around the crown counterclockwise, meaning that the thorn_ends are ordered clockwise around c
-            index = e1.green_ends.index(e)
-            if index == len(e1.green_ends) - 1:
-                assert con.coast[ (con.coastal_edges.index(e1) + 1) % len(con.coast) ] == c
-                break
-            else:
-                c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
-                e, e1 = e1, e1.green_ends[index + 1]
-
 def tet_rectangle_sides(tet, v):
     ### a side is a pair (v, thorn_end), where v is the cusp and thorn_end is (coastal_arc, index_on_that_arc)
     ### we are looking for at most two cusp leaves to form the sides
@@ -465,93 +374,93 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                         p = make_arc(midpts[i], midpts[(i+1)%3])
                         p = p.transformed(scl)
                         canv.stroke(p, [style.linewidth(track_thickness), style.linecap.round, green])
-        if draw_foliation:
-            for edge in con.upper_landscape_edges:
-                leaf_end_edges = []
-                if edge.is_coastal():
-                    if not edge.is_coastal_sink(upper = True):
-                        leaf_end_edges.append(edge)
-                        for tri in edge.boundary_triangles:
-                            if tri.is_upper:
-                                last_tri = con.flow(tri)[0]
-                                last_edge = last_tri.edges[last_tri.downriver_index()]
-                                leaf_end_edges.append(last_edge)
-                else:
-                    if edge.is_watershed():
-                        for tri in edge.boundary_triangles:
-                            last_tri = con.flow(tri)[0]
-                            last_edge = last_tri.edges[last_tri.downriver_index()]
-                            leaf_end_edges.append(last_edge)
-                if len(leaf_end_edges) == 2:
-                    green_train_routes.append(leaf_end_edges)
-                    if foliation_style_old:
-                        leaf_ends = []
-                        for e in leaf_end_edges:
-                            endpts = e.vertices
-                            _, midpt = make_arc(endpts[0].circle_pos, endpts[1].circle_pos, return_midpt = True)
-                            leaf_ends.append(midpt)
-                        p = make_arc(leaf_ends[0], leaf_ends[1])
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+        # if draw_foliation:
+        #     for edge in con.upper_landscape_edges:
+        #         leaf_end_edges = []
+        #         if edge.is_coastal():
+        #             if not edge.is_coastal_sink(upper = True):
+        #                 leaf_end_edges.append(edge)
+        #                 for tri in edge.boundary_triangles:
+        #                     if tri.is_upper:
+        #                         last_tri = con.flow(tri)[0]
+        #                         last_edge = last_tri.edges[last_tri.downriver_index()]
+        #                         leaf_end_edges.append(last_edge)
+        #         else:
+        #             if edge.is_watershed():
+        #                 for tri in edge.boundary_triangles:
+        #                     last_tri = con.flow(tri)[0]
+        #                     last_edge = last_tri.edges[last_tri.downriver_index()]
+        #                     leaf_end_edges.append(last_edge)
+        #         if len(leaf_end_edges) == 2:
+        #             green_train_routes.append(leaf_end_edges)
+        #             if foliation_style_old:
+        #                 leaf_ends = []
+        #                 for e in leaf_end_edges:
+        #                     endpts = e.vertices
+        #                     _, midpt = make_arc(endpts[0].circle_pos, endpts[1].circle_pos, return_midpt = True)
+        #                     leaf_ends.append(midpt)
+        #                 p = make_arc(leaf_ends[0], leaf_ends[1])
+        #                 p = p.transformed(scl)
+        #                 canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
     
     if draw_foliation and (foliation_style_split or foliation_style_cusp_leaves or foliation_style_boundary_leaves):
-        for e in con.coastal_edges:
-            e.purple_ends = []
-            e.green_ends = []
-        for e1, e2 in purple_train_routes:
-            e1.purple_ends.append(e2)
-            e2.purple_ends.append(e1)
-        for e1, e2 in green_train_routes:
-            e1.green_ends.append(e2)
-            e2.green_ends.append(e1)
-        for i, e in enumerate(con.coastal_edges):
-            rotated_coastal_edges = con.coastal_edges[i:] + con.coastal_edges[:i]
-            e.purple_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-            e.green_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-            if e.is_red:
-                e.ends = e.green_ends + e.purple_ends
-            else:
-                e.ends = e.purple_ends + e.green_ends
-        if foliation_style_split:
-            for e1, e2 in purple_train_routes:
-                p1 = end_pos(e2, e1)
-                p2 = end_pos(e1, e2)
-                p = make_arc(p1, p2)
-                p = p.transformed(scl)
-                canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-            for e1, e2 in green_train_routes:
-                p1 = end_pos(e2, e1)
-                p2 = end_pos(e1, e2)
-                p = make_arc(p1, p2)
-                p = p.transformed(scl)
-                canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+    #     for e in con.coastal_edges:
+    #         e.purple_ends = []
+    #         e.green_ends = []
+    #     for e1, e2 in purple_train_routes:
+    #         e1.purple_ends.append(e2)
+    #         e2.purple_ends.append(e1)
+    #     for e1, e2 in green_train_routes:
+    #         e1.green_ends.append(e2)
+    #         e2.green_ends.append(e1)
+    #     for i, e in enumerate(con.coastal_edges):
+    #         rotated_coastal_edges = con.coastal_edges[i:] + con.coastal_edges[:i]
+    #         e.purple_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
+    #         e.green_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
+    #         if e.is_red:
+    #             e.ends = e.green_ends + e.purple_ends
+    #         else:
+    #             e.ends = e.purple_ends + e.green_ends
+    #     if foliation_style_split:
+    #         for e1, e2 in purple_train_routes:
+    #             p1 = end_pos(e2, e1)
+    #             p2 = end_pos(e1, e2)
+    #             p = make_arc(p1, p2)
+    #             p = p.transformed(scl)
+    #             canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+    #         for e1, e2 in green_train_routes:
+    #             p1 = end_pos(e2, e1)
+    #             p2 = end_pos(e1, e2)
+    #             p = make_arc(p1, p2)
+    #             p = p.transformed(scl)
+    #             canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
         if foliation_style_cusp_leaves or foliation_style_boundary_leaves:
             for i, c in enumerate(con.coast):
-                c.purple_thorn_end_positions = [] ### complex numbers
-                c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
-                e = con.coastal_edges[i]
-                e1 = e.purple_ends[0]
-                while True:
-                    index = e1.purple_ends.index(e)
-                    if index == len(e1.purple_ends) - 1:
-                        break
-                    else:
-                        c.purple_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
-                        c.purple_thorn_ends.append( (e1, e1.ends.index(e)) )
-                        e, e1 = e1, e1.purple_ends[index + 1]
+                # c.purple_thorn_end_positions = [] ### complex numbers
+                # c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
+                # e = con.coastal_edges[i]
+                # e1 = e.purple_ends[0]
+                # while True:
+                #     index = e1.purple_ends.index(e)
+                #     if index == len(e1.purple_ends) - 1:
+                #         break
+                #     else:
+                #         c.purple_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
+                #         c.purple_thorn_ends.append( (e1, e1.ends.index(e)) )
+                #         e, e1 = e1, e1.purple_ends[index + 1]
 
-                if foliation_style_boundary_leaves:
-                    e_before = con.coastal_edges[(i-1)%len(con.coast)]
-                    e_after = con.coastal_edges[i]
-                    first_pos = end_pos(e_after.purple_ends[0], e_after, offset = -0.25)
-                    last_pos = end_pos(e_before.purple_ends[-1], e_before, offset = 0.25)
-                    c.purple_thorn_end_positions = [first_pos] + c.purple_thorn_end_positions + [last_pos]
-                    arcs = []
-                    for i in range(len(c.purple_thorn_end_positions) - 1):
-                        arcs.append(make_arc(c.purple_thorn_end_positions[i], c.purple_thorn_end_positions[i+1]))
-                    for p in arcs:
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+                # if foliation_style_boundary_leaves:
+                #     e_before = con.coastal_edges[(i-1)%len(con.coast)]
+                #     e_after = con.coastal_edges[i]
+                #     first_pos = end_pos(e_after.purple_ends[0], e_after, offset = -0.25)
+                #     last_pos = end_pos(e_before.purple_ends[-1], e_before, offset = 0.25)
+                #     c.purple_thorn_end_positions = [first_pos] + c.purple_thorn_end_positions + [last_pos]
+                #     arcs = []
+                #     for i in range(len(c.purple_thorn_end_positions) - 1):
+                #         arcs.append(make_arc(c.purple_thorn_end_positions[i], c.purple_thorn_end_positions[i+1]))
+                #     for p in arcs:
+                #         p = p.transformed(scl)
+                #         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
 
                 if foliation_style_cusp_leaves:
                     for thorn_end in c.purple_thorn_ends:
@@ -560,31 +469,31 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                         p = p.transformed(scl)
                         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
                 
-            for i, c in enumerate(con.coast):
-                c.green_thorn_end_positions = [] ### complex numbers
-                c.green_thorn_ends = [] ### [coastal arc, position along that arc]
-                e = con.coastal_edges[i]
-                e1 = e.green_ends[0]
-                while True:
-                    index = e1.green_ends.index(e)
-                    if index == len(e1.green_ends) - 1:
-                        break
-                    else:
-                        c.green_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
-                        c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
-                        e, e1 = e1, e1.green_ends[index + 1]
-                if foliation_style_boundary_leaves:
-                    e_before = con.coastal_edges[(i-1)%len(con.coast)]
-                    e_after = con.coastal_edges[i]
-                    first_pos = end_pos(e_after.green_ends[0], e_after, offset = -0.25)
-                    last_pos = end_pos(e_before.green_ends[-1], e_before, offset = 0.25)
-                    c.green_thorn_end_positions = [first_pos] + green_thorn_end_positions + [last_pos]
-                    arcs = []
-                    for i in range(len(c.green_thorn_end_positions) - 1):
-                        arcs.append(make_arc(c.green_thorn_end_positions[i], c.green_thorn_end_positions[i+1]))
-                    for p in arcs:
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+    #         for i, c in enumerate(con.coast):
+    #             c.green_thorn_end_positions = [] ### complex numbers
+    #             c.green_thorn_ends = [] ### [coastal arc, position along that arc]
+    #             e = con.coastal_edges[i]
+    #             e1 = e.green_ends[0]
+    #             while True:
+    #                 index = e1.green_ends.index(e)
+    #                 if index == len(e1.green_ends) - 1:
+    #                     break
+    #                 else:
+    #                     c.green_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
+    #                     c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
+    #                     e, e1 = e1, e1.green_ends[index + 1]
+    #             if foliation_style_boundary_leaves:
+    #                 e_before = con.coastal_edges[(i-1)%len(con.coast)]
+    #                 e_after = con.coastal_edges[i]
+    #                 first_pos = end_pos(e_after.green_ends[0], e_after, offset = -0.25)
+    #                 last_pos = end_pos(e_before.green_ends[-1], e_before, offset = 0.25)
+    #                 c.green_thorn_end_positions = [first_pos] + green_thorn_end_positions + [last_pos]
+    #                 arcs = []
+    #                 for i in range(len(c.green_thorn_end_positions) - 1):
+    #                     arcs.append(make_arc(c.green_thorn_end_positions[i], c.green_thorn_end_positions[i+1]))
+    #                 for p in arcs:
+    #                     p = p.transformed(scl)
+    #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
 
                 if foliation_style_cusp_leaves:
                     for thorn_end in c.green_thorn_ends:
@@ -593,49 +502,50 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                         p = p.transformed(scl)
                         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
 
-            for tet in draw_tetrahedron_rectangles:
-                a, c = tet.upper_edge().vertices
-                b, d = tet.lower_edge().vertices
-                if not are_anticlockwise(a.coastal_index, b.coastal_index, c.coastal_index):
-                    b, d = d, b   ### now a, b, c, d are anticlockwise
-                # print(con.vertices.index(a), con.vertices.index(b), con.vertices.index(c), con.vertices.index(d))
-                all_sides_discrete = [tet_rectangle_sides(tet, v) for v in [a,b,c,d]]
-                all_sides_geometry = []
-                for vertex_sides_discrete in all_sides_discrete:
-                    vertex_sides_geometry = []
-                    for side_discrete in vertex_sides_discrete:
-                        a, b = side_discrete
-                        if side_discrete != None:
-                            v, thorn_end = side_discrete
-                            # print(thorn_end)
-                            # print((v.circle_pos, end_pos2(thorn_end)))
-                            vertex_sides_geometry.append( (v.circle_pos, end_pos2(thorn_end)) )
-                        else:
-                            vertex_sides_geometry.append( None )
-                    all_sides_geometry.append(vertex_sides_geometry)
-                for i in range(4):
-                    if all_sides_geometry[i][0] != None and all_sides_geometry[(i+1)%4][1] != None:
-                        v1, t1 = all_sides_geometry[i][0]
-                        v2, t2 = all_sides_geometry[(i+1)%4][1]
-                        intersection = geodesic_isect(v1, t1, v2, t2)
-                        assert intersection != None
-                        all_sides_geometry[i][0] = (v1, intersection)
-                        all_sides_geometry[(i+1)%4][1] = (v2, intersection)
+    #         for tet in draw_tetrahedron_rectangles:
+    #             a, c = tet.upper_edge().vertices
+    #             b, d = tet.lower_edge().vertices
+    #             if not are_anticlockwise(a.coastal_index, b.coastal_index, c.coastal_index):
+    #                 b, d = d, b   ### now a, b, c, d are anticlockwise
+    #             # print(con.vertices.index(a), con.vertices.index(b), con.vertices.index(c), con.vertices.index(d))
+    #             all_sides_discrete = [tet_rectangle_sides(tet, v) for v in [a,b,c,d]]
+    #             all_sides_geometry = []
+    #             for vertex_sides_discrete in all_sides_discrete:
+    #                 vertex_sides_geometry = []
+    #                 for side_discrete in vertex_sides_discrete:
+    #                     a, b = side_discrete
+    #                     if side_discrete != None:
+    #                         v, thorn_end = side_discrete
+    #                         # print(thorn_end)
+    #                         # print((v.circle_pos, end_pos2(thorn_end)))
+    #                         vertex_sides_geometry.append( (v.circle_pos, end_pos2(thorn_end)) )
+    #                     else:
+    #                         vertex_sides_geometry.append( None )
+    #                 all_sides_geometry.append(vertex_sides_geometry)
+    #             for i in range(4):
+    #                 if all_sides_geometry[i][0] != None and all_sides_geometry[(i+1)%4][1] != None:
+    #                     v1, t1 = all_sides_geometry[i][0]
+    #                     v2, t2 = all_sides_geometry[(i+1)%4][1]
+    #                     intersection = geodesic_isect(v1, t1, v2, t2)
+    #                     assert intersection != None
+    #                     all_sides_geometry[i][0] = (v1, intersection)
+    #                     all_sides_geometry[(i+1)%4][1] = (v2, intersection)
 
-                for i, vertex_sides_geometry in enumerate(all_sides_geometry):
-                    if i%2 == 0:
-                        col = purple
-                    else:
-                        col = green
-                    for side_geometry in vertex_sides_geometry: 
-                        if side_geometry != None:
-                            # print(side_geometry)
-                            v_pos, t_pos = side_geometry 
-                            p = make_arc(v_pos, t_pos)
-                            p = p.transformed(scl)
-                            canv.stroke(p, [style.linewidth(3*leaf_thickness), style.linecap.round, col])
+    #             for i, vertex_sides_geometry in enumerate(all_sides_geometry):
+    #                 if i%2 == 0:
+    #                     col = purple
+    #                 else:
+    #                     col = green
+    #                 for side_geometry in vertex_sides_geometry: 
+    #                     if side_geometry != None:
+    #                         # print(side_geometry)
+    #                         v_pos, t_pos = side_geometry 
+    #                         p = make_arc(v_pos, t_pos)
+    #                         p = p.transformed(scl)
+    #                         canv.stroke(p, [style.linewidth(3*leaf_thickness), style.linecap.round, col])
 
     output_filename = 'Images/CircleContinent/' + name + '.pdf'
+    print(output_filename)
     canv.writePDFfile(output_filename)
 
 def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
@@ -645,6 +555,7 @@ def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
     con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
     con.make_convex()
+    con.update_boundary()
     print(len(con.triangles), len(con.vertices), len(con.tetrahedra))
     return con
 
@@ -688,6 +599,7 @@ def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
     #     path_index = path_index + 1
 
     #     con.make_convex() ### could this take us further up dual_cycle?
+    #     con.update_boundary()
 
     for i in range(num_steps):
         if i%2 == 0:
@@ -740,6 +652,7 @@ def go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index)
     flow_tetrahedra.append(last_tet)
     flow_edges.append(flow_edge_in_continent(last_tet, flow_cycle[upwards_flow_index][1]))
     con.make_convex() ### could this take us further up dual_cycle? We don't think so
+    con.update_boundary()
     return upwards_flow_index
 
 def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index):
@@ -783,6 +696,7 @@ def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_in
     assert last_tet != None
     flow_tetrahedra.insert(0, last_tet)
     con.make_convex() ### could this take us further down dual_cycle? We don't think so
+    con.update_boundary()
     return downwards_flow_index
 
 def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
@@ -817,6 +731,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
         else: ### go down
             downwards_flow_index = go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index)
     con.update_boundary()
+    con.install_thorn_ends()
     return con, flow_tetrahedra, flow_edges
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
@@ -826,7 +741,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
         for v in tet.vertices:
             # print('tet vert age', con.vertices.index(v))
             con.update_boundary()
-            install_thorn_ends(con)
+            con.install_thorn_ends()
             sides = tet_rectangle_sides(tet, v)
             for direction in range(2):
                 while sides[direction] == None:
@@ -839,7 +754,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
                         con.bury(triangles[1])
                     con.make_convex()
                     con.update_boundary()
-                    install_thorn_ends(con)
+                    con.install_thorn_ends()
                     sides = tet_rectangle_sides(tet, v)
                     k += 1
                     if k > 50:

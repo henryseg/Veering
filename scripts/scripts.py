@@ -208,7 +208,7 @@ def draw_continent_script():
 
 
 def draw_continent_circle_script():
-    from draw_continent_circle import draw_continent_circle
+    from draw_continent_circle import draw_continent_circle, make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles
     # veering_isosig = 'cPcbbbdxm_10' 
     # flow_cycle = [(0, 2)]
 
@@ -216,7 +216,7 @@ def draw_continent_circle_script():
     flow_cycle = [(1, 0), (2, 5)]
 
     # for num_steps in range(10):
-    num_steps = 4
+    num_steps = 3
     con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
     fund_dom_tets = get_fund_domain_tetrahedra(con)
     complete_tetrahedron_rectangles(con, fund_dom_tets)
