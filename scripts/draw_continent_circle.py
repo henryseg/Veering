@@ -9,6 +9,7 @@ from veering.veering_tri import veering_triangulation
 
 from continent import continent, continent_tetrahedron
 from boundary_triangulation import tet_face
+from circular_order import are_anticlockwise, are_linking
 
 def unitize(a):
     return a/abs(a)
@@ -149,11 +150,10 @@ def end_pos2(thorn_end):
     u1, v1 = u1.circle_pos, v1.circle_pos     
     return unitize((1-t) * u1 + t * v1)
 
-def are_anticlockwise(a, b, c): ### given indices in this order, are they anticlockwise on the circle?
-    return (b - a)*(c - b)*(a - c) < 0  ### either one or two are negative
+def circle_position(t, n):
+    s = 2*pi*t/n
+    return complex(cos(s), sin(s))
 
-def are_linking(a1, a2, b1, b2): ### given indices on a circle, do the a's link the b's?
-    return (a1 - b1)*(a1 - b2)*(a2 - b1)*(a2 - b2) < 0 ### same as the sign of the cross-ratio
 
 def tet_rectangle_sides(tet, v):
     ### a side is a pair (v, thorn_end), where v is the cusp and thorn_end is (coastal_arc, index_on_that_arc)
@@ -202,6 +202,7 @@ def tet_purple_rectangle_sides(tet, actually_do_green = False):
     return out
 
 def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lower_landscape = False, 
+    draw_coastal_edges = True,
     draw_upper_green = True, draw_lower_purple = False, draw_train_tracks = False, 
     draw_foliation = True, foliation_style_old = False, foliation_style_split = False, 
     foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = True,
@@ -231,6 +232,15 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         # vert_pos2 = v.circle_pos * 1.2 * global_scale_up
         # p = path.path(path.moveto(vert_pos.real, vert_pos.imag), path.lineto(vert_pos2.real, vert_pos2.imag))
         # canv.stroke(p, [deco.curvedtext("$"+str(con.vertices.index(v))+"$")])
+
+    if draw_coastal_edges:
+        for e in con.coastal_edges:
+            col = edge_colours[e.is_red]
+            u, v = e.vertices
+            p = make_arc(u.circle_pos, v.circle_pos)
+            p = p.transformed(scl)
+            canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
+
 
     ### highlight vertices of tetrahedra in a fundamental domain
     if draw_fund_domain:
@@ -462,12 +472,14 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
                 #         p = p.transformed(scl)
                 #         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
 
-                if foliation_style_cusp_leaves:
-                    for thorn_end in c.purple_thorn_ends:
-                        thorn_end_pos = end_pos2(thorn_end)
-                        p = make_arc(c.circle_pos, thorn_end_pos)
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+                # if foliation_style_cusp_leaves:
+                #     for i, thorn_end in enumerate(c.purple_thorn_ends):
+                #         thorn_end_pos = end_pos2(thorn_end)
+                #         thorn_end_pos2 = thorn_end_pos * global_scale_up
+                #         canv.text(thorn_end_pos2.real, thorn_end_pos2.imag, "$"+str(i)+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle])
+                #         p = make_arc(c.circle_pos, thorn_end_pos)
+                #         p = p.transformed(scl)
+                #         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
                 
     #         for i, c in enumerate(con.coast):
     #             c.green_thorn_end_positions = [] ### complex numbers
@@ -495,12 +507,29 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
     #                     p = p.transformed(scl)
     #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
 
+                # if foliation_style_cusp_leaves:
+                #     for i, thorn_end in enumerate(c.green_thorn_ends):
+                #         thorn_end_pos = end_pos2(thorn_end)
+                #         thorn_end_pos2 = thorn_end_pos * global_scale_up
+                #         canv.text(thorn_end_pos2.real, thorn_end_pos2.imag, "$"+str(i)+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle])
+                #         p = make_arc(c.circle_pos, thorn_end_pos)
+                #         p = p.transformed(scl)
+                #         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
                 if foliation_style_cusp_leaves:
-                    for thorn_end in c.green_thorn_ends:
-                        thorn_end_pos = end_pos2(thorn_end)
-                        p = make_arc(c.circle_pos, thorn_end_pos)
+                    for leaf in c.cusp_leaves:
+                        if leaf.is_upper:
+                            col = green
+                        else:
+                            col = purple
+                        start, end = leaf.end_positions()
+                        start = circle_position(start, len(con.coast))
+                        end = circle_position(end, len(con.coast))
+                        p = make_arc(start, end)
                         p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
+
+
+
 
     #         for tet in draw_tetrahedron_rectangles:
     #             a, c = tet.upper_edge().vertices

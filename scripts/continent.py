@@ -60,7 +60,7 @@ class landscape_edge:
     def __repr__(self):
         u, v = self.vertices
         # return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
-        return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v)] )
+        return '_'.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v)] )
 
     def length(self):
         u, v = self.vertices
@@ -383,7 +383,21 @@ class continent_tetrahedron:
     #         out.append(vert)
     #     return out
         
+class cusp_leaf:
+    def __init__(self, continent, cusp, coastal_edge, index_on_edge, is_upper):
+        self.continent = continent
+        self.cusp = cusp
+        self.coastal_edge = coastal_edge
+        self.index_on_edge = index_on_edge 
+        self.is_upper = is_upper 
 
+    def end_positions(self): 
+        start = self.cusp.coastal_index
+        end = self.coastal_edge.coastal_index + (float(self.index_on_edge) + 0.5)/float(len(self.coastal_edge.ends))
+        ### ends is ends of train routes, not ends of cusp leaves, so the order is correct but they are not evenly spaced.
+        return (start, end)
+
+        ### to do: functions to check if leaves link each other etc
 
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
@@ -740,7 +754,7 @@ class continent:
                 e.ends = e.green_ends + e.purple_ends
             else:
                 e.ends = e.purple_ends + e.green_ends
-        
+
         for i, c in enumerate(self.coast):
             c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
             e = self.coastal_edges[i]
@@ -766,6 +780,24 @@ class continent:
                 else:
                     c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
                     e, e1 = e1, e1.green_ends[index + 1]
+
+        for i, c in enumerate(self.coast):
+            c.cusp_leaves = []  ## interleaved
+            e = self.coastal_edges[i]  ### immediately after the cusp
+            thorn_ends_lists = [c.purple_thorn_ends, c.green_thorn_ends]
+
+            first_is_upper = False
+            if e.is_red:
+                first_is_upper = True
+                thorn_ends_lists.reverse()
+            for j in range(len(thorn_ends_lists[1])):
+                coastal_edge, index_on_edge = thorn_ends_lists[0][j]
+                c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, first_is_upper) )
+                coastal_edge, index_on_edge = thorn_ends_lists[1][j]
+                c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, not first_is_upper) )
+            if len(thorn_ends_lists[0]) > len(thorn_ends_lists[1]):
+                coastal_edge, index_on_edge = thorn_ends_lists[0][-1]
+                c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, first_is_upper) )
 
     # purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
     # green_train_routes = []
