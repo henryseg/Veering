@@ -233,6 +233,8 @@ def drill_midsurface_bdy(tri, angle):
             tetperm = regina.Perm4(toggle_face, toggle_edge, toggle_edge, toggle_face, toggle_e0, toggle_e0, toggle_e1, toggle_e1)
             other_tetperm = regina.Perm4(other_toggle_face, other_toggle_edge, other_toggle_edge, other_toggle_face, other_toggle_e0, other_toggle_e0, other_toggle_e1, other_toggle_e1)
             gluing = regina.Perm4(toggle_e0, other_toggle_e0, toggle_e1, other_toggle_e1, toggle_face, other_toggle_face, toggle_edge, other_toggle_edge)
+            subtet.unjoin(toggle_edge)  # 2023-05-28
+            # other_subtet.unjoin(other_tetperm*gluing*tetperm[toggle_edge])  # seems not to be needed... 
             subtet.join(toggle_edge, other_subtet, other_tetperm*gluing*tetperm)
 
     return drilledTri, meridians
