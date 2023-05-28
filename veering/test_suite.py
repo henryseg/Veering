@@ -724,7 +724,6 @@ regina_tests = [testing_is_taut,
 
 snappy_tests = [testing_algebraic_intersection,
                 testing_veering_drilling_and_filling,
-                
 ]
 
 sage_tests = [testing_is_layered,
