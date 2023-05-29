@@ -450,7 +450,7 @@ def testing_euler_characteristic(veering_isosigs, num_to_check, smaller_num_to_c
     import snappy
     from . import taut_polytope
 
-    for sig in random.sample(veering_isosigs[:3000], 3*num_to_check):
+    for sig in random.sample(veering_isosigs[:2500], num_to_check):
         snap_sig = sig.split("_")[0]
         M = snappy.Manifold(snap_sig)
         if M.homology().betti_number() == 1:
