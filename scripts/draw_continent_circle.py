@@ -106,7 +106,7 @@ def make_arc(a, b, return_midpt = False):
         if not return_midpt:
             return make_line(a, b)
         else:
-            return ( make_line(a, b), (0.5*(a[0]+b[0]), 0.5*(a[1]+b[1])) )
+            return ( make_line(a, b), 0.5*(a+b) )
     else:
         # theta = 0.5 * acos( a[0]*b[0] + a[1]*b[1] )
         # r = tan(theta)
@@ -319,7 +319,9 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         for tri in boundary_tris[i]:
             center = incenter(tri.vertices[0].circle_pos, tri.vertices[1].circle_pos, tri.vertices[2].circle_pos)
             # canv.fill(path.circle(global_scale_up*center[0], global_scale_up*center[1], 0.1)) 
-            canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+str(tri.index)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle] + transp)
+            tri_name = str(tri.index) ## in quotient manifold
+            tri_name = str(tri.continent.triangles.index(tri)) ## in continent
+            canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+tri_name+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle] + transp)
 
     ### train tracks...
 

@@ -208,31 +208,40 @@ def draw_continent_script():
 
 
 def draw_continent_circle_script():
-    from draw_continent_circle import draw_continent_circle, make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles
+    from draw_continent_circle import draw_continent_circle, make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive
     # veering_isosig = 'cPcbbbdxm_10' 
     # flow_cycle = [(0, 2)]
 
     veering_isosig = 'eLAkaccddjsnak_2001'
-    flow_cycle = [(1, 0), (2, 5)]
+    # flow_cycle = [(1, 0), (2, 5)]
 
-    # for num_steps in range(10):
-    num_steps = 3
-    con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
-    fund_dom_tets = get_fund_domain_tetrahedra(con)
-    # complete_tetrahedron_rectangles(con, fund_dom_tets)
-    print(len(flow_tetrahedra))
-    name = veering_isosig + '_' + str(flow_cycle) + '_' + str(num_steps) + '_cusp_leaves'
-    # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
-    tets_to_draw = fund_dom_tets[0:]
+    # # for num_steps in range(10):
+    # num_steps = 3
+    # con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
+    # fund_dom_tets = get_fund_domain_tetrahedra(con)
+    # # complete_tetrahedron_rectangles(con, fund_dom_tets)
+    # print(len(flow_tetrahedra))
+    # name = veering_isosig + '_' + str(flow_cycle) + '_' + str(num_steps) + '_cusp_leaves'
+    # # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
+    # tets_to_draw = fund_dom_tets[0:]
+
+    max_num_tetrahedra = 100
+    con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
+    fund_dom_tets = []
+    tets_to_draw = []
+    name = veering_isosig + '_naive_' + str(max_num_tetrahedra)
+
     draw_continent_circle(con, name = name,
+        # draw_upper_landscape = True, draw_lower_landscape = True, 
         draw_upper_landscape = False, draw_lower_landscape = False, 
         draw_coastal_edges = True,
         draw_upper_green = True, draw_lower_purple = True,
         draw_train_tracks = False, draw_foliation = True, 
+        # draw_train_tracks = True, draw_foliation = False, 
         foliation_style_old = False, foliation_style_split = False, 
         foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
         shade_triangles = False, draw_fund_domain = False, fund_dom_tets = fund_dom_tets,
-        draw_fund_domain_edges = True, draw_tetrahedron_rectangles = tets_to_draw)
+        draw_fund_domain_edges = False, draw_tetrahedron_rectangles = tets_to_draw)
 
 
 

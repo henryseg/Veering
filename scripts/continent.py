@@ -8,6 +8,7 @@ from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num
 from veering.veering_tri import veering_triangulation
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
+from circular_order import are_anticlockwise
 
 class vertex:
     def __init__(self, continent, pos):
@@ -18,6 +19,7 @@ class vertex:
         self.continent.vertices.append(self)
         self.coastal_index = None
         self.circle_pos = None
+        self.cusp_leaves = []
     
     def is_ladderpole_descendant(self):
         return len(self.ladderpole_ancestors) != 0
@@ -30,7 +32,10 @@ class vertex:
 
     def __repr__(self):
         if self.pos == None:
-            return str(self.coastal_index)
+            if self.coastal_index != None:
+                return str(self.coastal_index)
+            else:
+                return 'chronological_index ' + str(self.continent.vertices.index(self))
         elif not self.pos.is_infinity():
             return str(self.pos.complex())
         else:
@@ -51,6 +56,7 @@ class landscape_edge:
         self.is_red = is_red
         self.boundary_triangles = [] ### updated in update_boundary. If this edge is on boundary of the continent then there will be two triangles in here.
         self.coastal_index = None
+        self.cusp_leaves = [] ### should be empty if not a coastal edge
         # try:
         #     assert self.length() > 0.0001
         # except:
@@ -140,6 +146,13 @@ class landscape_triangle:
             return self.lower_tet
         else:
             return self.upper_tet
+
+    def outwards_con_tet(self):
+        assert self.is_buried
+        if self.is_upper:
+            return self.upper_tet
+        else:
+            return self.lower_tet
 
     def downriver_index(self):
         """index of triangle in self.neighbours that is downriver of self"""
@@ -384,17 +397,18 @@ class continent_tetrahedron:
     #     return out
         
 class cusp_leaf:
-    def __init__(self, continent, cusp, coastal_edge, index_on_edge, is_upper):
+    def __init__(self, continent, cusp, coastal_edge, is_upper):
         self.continent = continent
         self.cusp = cusp
         self.coastal_edge = coastal_edge
-        self.index_on_edge = index_on_edge 
+        self.index_on_edge = None  ### shouldnt use, instead get this from the coastal edge
         self.is_upper = is_upper 
 
     def end_positions(self): 
         start = self.cusp.coastal_index
-        end = self.coastal_edge.coastal_index + (float(self.index_on_edge) + 0.5)/float(len(self.coastal_edge.ends))
-        ### ends is ends of train routes, not ends of cusp leaves, so the order is correct but they are not evenly spaced.
+        index_on_edge = self.coastal_edge.cusp_leaves.index(self)
+        end = self.coastal_edge.coastal_index + (float(index_on_edge) + 1)/float(len(self.coastal_edge.cusp_leaves) + 1)
+        ### OLD: ends is ends of train routes, not ends of cusp leaves, so the order is correct but they are not evenly spaced.
         return (start, end)
 
         ### to do: functions to check if leaves link each other etc
@@ -458,13 +472,13 @@ class continent:
         upper_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, lower_face_nums)
         lower_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, upper_face_nums)
 
-        ab_is_red = ( lower_edge_colour == "red" )  ## the triangles, not the edge
+        tris_ab_are_red = ( lower_edge_colour == "red" )  ## the triangles, not the edge
         ab_is_upper = False
         cd_is_red = ( upper_edge_colour == "red" )
         cd_is_upper = True
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red, None, None, None)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red, None, None, None)
         triangle_c = landscape_triangle(self, face_c_index, cd_is_upper, cd_is_red, None, None, None)
         triangle_d = landscape_triangle(self, face_d_index, cd_is_upper, cd_is_red, None, None, None)
 
@@ -475,7 +489,7 @@ class continent:
         vert_c = self.vertices[face_c]
         vert_d = self.vertices[face_d]
 
-        if ab_is_red:
+        if tris_ab_are_red:
             triangle_a.vertices = [vert_c, vert_d, vert_b]
             triangle_b.vertices = [vert_d, vert_c, vert_a]
         else:
@@ -521,7 +535,7 @@ class continent:
         edge_bd = landscape_edge(self, [vert_b, vert_d], edge_bd_index, False)
         edge_cd = landscape_edge(self, [vert_c, vert_d], edge_cd_index, lower_edge_colour == "red")
 
-        if ab_is_red: ## the triangles a and b, not the edge
+        if tris_ab_are_red: ## the triangles a and b, not the edge
             triangle_a.edges = [edge_bd, edge_bc, edge_cd]
             triangle_b.edges = [edge_ac, edge_ad, edge_cd]
         else:
@@ -537,7 +551,7 @@ class continent:
 
         ## now for the neighbours
 
-        if ab_is_red:
+        if tris_ab_are_red:
             triangle_a.neighbours = [triangle_c, triangle_d, triangle_b]
             triangle_b.neighbours = [triangle_d, triangle_c, triangle_a]
         else:
@@ -557,7 +571,42 @@ class continent:
                 if v != self.infinity:
                     self.check_vertex_desired(v) 
 
+        ## now cusp leaves
+        ###   c---R----b
+        ###   |`d    ,'|     faces a, b on bottom, c, d on top
+        ###   L  ` ,' a| 
+        ###   |b ,' .  L 
+        ###   |,'    c.| 
+        ###   a----R---d 
+
+        if tris_ab_are_red:
+            a_leaf = cusp_leaf(self, vert_a, edge_bc, True)
+            edge_bc.cusp_leaves.append(a_leaf)
+            b_leaf = cusp_leaf(self, vert_b, edge_ad, True)
+            edge_ad.cusp_leaves.append(b_leaf)
+        else:
+            a_leaf = cusp_leaf(self, vert_a, edge_bd, True)
+            edge_bd.cusp_leaves.append(a_leaf)
+            b_leaf = cusp_leaf(self, vert_b, edge_ac, True)
+            edge_ac.cusp_leaves.append(b_leaf)
+        vert_a.cusp_leaves.append(a_leaf)
+        vert_b.cusp_leaves.append(b_leaf)
+
+        if cd_is_red:
+            c_leaf = cusp_leaf(self, vert_c, edge_ad, False)
+            edge_ad.cusp_leaves.append(c_leaf)
+            d_leaf = cusp_leaf(self, vert_d, edge_bc, False)
+            edge_bc.cusp_leaves.append(d_leaf)
+        else:
+            c_leaf = cusp_leaf(self, vert_c, edge_bd, False)
+            edge_bd.cusp_leaves.insert(0, c_leaf)  # prepend
+            d_leaf = cusp_leaf(self, vert_d, edge_ac, False)
+            edge_ac.cusp_leaves.insert(0, d_leaf)
+        vert_c.cusp_leaves.append(c_leaf)
+        vert_d.cusp_leaves.append(d_leaf)
+
         # self.update_boundary()
+        assert self.is_convex()
 
     def check_vertex_desired(self, v, epsilon = 0.001):
         v_in_C = v.pos.complex()
@@ -592,25 +641,500 @@ class continent:
                 else:
                     triangle = neighbour
 
+    # def silt(self, triangle):
+    #     """flow downriver from this triangle until we hit either a sink, or the coast, add one tetrahedron there"""
+    #     downriver_triangle, is_coastal = self.flow(triangle)
+    #     if is_coastal:
+    #         self.coastal_fill(downriver_triangle)
+    #     else:
+    #         self.in_fill(downriver_triangle)
+    #     # self.sanity_check()
+
     def silt(self, triangle):
-        """flow downriver from this triangle until we hit either a sink, or the coast, add one tetrahedron there"""
         downriver_triangle, is_coastal = self.flow(triangle)
-        if is_coastal:
-            new_tet = self.coastal_fill(downriver_triangle)
-        else:
-            new_tet = self.in_fill(downriver_triangle)
-        # self.sanity_check()
-        return new_tet
+        self.coastal_fill(downriver_triangle) ## also in_fills everything possible from that coastal_fill
+        assert self.is_convex()
 
     def bury(self, triangle):
+        ### assume continent is convex before we start
+        assert self.is_convex()
+        assert not triangle.is_buried
         while not triangle.is_buried:
-            new_tet = self.silt(triangle)
-        if triangle.is_upper:
-            assert triangle in new_tet.lower_triangles
+            self.silt(triangle)
+        return triangle.outwards_con_tet()
+
+    #     #### the following no longer works since we are making convex after each coastal_fill
+    #     # if triangle.is_upper:
+    #     #     assert triangle in new_tet.lower_triangles
+    #     # else:
+    #     #     assert triangle in new_tet.upper_triangles
+    #     # return new_tet ### return the last added tetrahedron
+
+    def in_fill(self, triangle):
+        # print('in fill')
+        
+        neighbour = triangle.downriver()
+        assert not triangle.is_buried
+        assert not neighbour.is_buried
+        assert triangle == neighbour.downriver() 
+        assert triangle.is_upper == neighbour.is_upper 
+        assert triangle.is_red == neighbour.is_red
+     
+        ###   b---R----t
+        ###   |`a    ,'|     is_upper, so faces t and n are below, a and b are new triangles above
+        ###   L  ` ,' n|
+        ###   |t ,' .  L     
+        ###   |,'    b.|
+        ###   n----R---a 
+ 
+        ###   n---R----b
+        ###   |`t    ,'|     not is_upper, so t and n are above, a and b are new triangles below
+        ###   L  ` ,' a| 
+        ###   |b ,' .  L     
+        ###   |,'    n.|
+        ###   a----R---t       
+
+        ## We find the easy information so we can build the new triangles
+        tet, embed, other_tet = triangle.outwards_tet(return_other_tet = True)  
+        face_t = embed.face()
+        
+        n_tet, n_embed, n_other_tet = neighbour.outwards_tet(return_other_tet = True)  
+        face_n = n_embed.face()
+
+        assert tet == n_tet
+
+        other_con_tet = triangle.inwards_con_tet()
+        n_other_con_tet = neighbour.inwards_con_tet()
+
+        verts = list(range(4))
+        verts.remove(face_t)
+        verts.remove(face_n)
+
+        if (sign([verts[0], face_n, verts[1], face_t]) == 1) == (not triangle.is_upper): ## get orientation correct  
+            face_b, face_a = verts  
         else:
-            assert triangle in new_tet.upper_triangles
-        return new_tet ### return the last added tetrahedron
-  
+            face_a, face_b = verts
+
+        face_a_index = tet.face(2,face_a).index()
+        face_b_index = tet.face(2,face_b).index()
+
+        far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_t, face_n))
+        tris_ab_are_red = ( far_edge_colour == "red" )
+        ab_is_upper = triangle.is_upper
+
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red, None, None, None)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red, None, None, None)
+
+        ## add the tetrahedron 
+
+        con_tet = continent_tetrahedron(self, tet.index())
+
+        ### do the other triangle as well...
+
+        if triangle.is_upper:
+            triangle.set_upper_tet(con_tet)
+            neighbour.set_upper_tet(con_tet)
+            triangle_a.set_lower_tet(con_tet)
+            triangle_b.set_lower_tet(con_tet)
+        else:
+            triangle.set_lower_tet(con_tet)
+            neighbour.set_lower_tet(con_tet)
+            triangle_a.set_upper_tet(con_tet)
+            triangle_b.set_upper_tet(con_tet)            
+
+        ## now for the vertices
+
+        if triangle.is_red == triangle.is_upper:
+            vert_a, vert_b, vert_n = triangle.vertices
+            vert_bn, vert_an, vert_t = neighbour.vertices
+        else:
+            vert_b, vert_n, vert_a = triangle.vertices
+            vert_an, vert_t, vert_bn = neighbour.vertices
+
+        assert vert_b == vert_bn and vert_a == vert_an
+
+        if tris_ab_are_red == ab_is_upper:
+            triangle_a.vertices = [vert_t, vert_b, vert_n]
+            triangle_b.vertices = [vert_n, vert_a, vert_t]
+        else:
+            triangle_a.vertices = [vert_n, vert_t, vert_b]
+            triangle_b.vertices = [vert_t, vert_n, vert_a]
+        
+        ## add gluings and vertices to con_tet
+
+        gluing = tet.adjacentGluing(face_t)
+        con_tet.gluings[face_t] = (other_tet, gluing)
+        other_face_t = gluing[face_t]
+        assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
+        other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
+
+        n_gluing = n_tet.adjacentGluing(face_n)
+        con_tet.gluings[face_n] = (n_other_tet, n_gluing)
+        other_face_n = n_gluing[face_n]
+        assert n_other_con_tet.gluings[other_face_n] == None ### make sure it is not already glued to something
+        n_other_con_tet.gluings[other_face_n] = (n_tet, n_other_tet.adjacentGluing(other_face_n))
+
+        for vert_num in range(4):
+            if vert_num != face_t and vert_num != face_n:
+                vt = other_con_tet.vertices[gluing[vert_num]]
+                vn = n_other_con_tet.vertices[n_gluing[vert_num]]
+                assert vt == vn
+                con_tet.vertices[vert_num] = vt
+            elif vert_num == face_t:
+                con_tet.vertices[vert_num] = n_other_con_tet.vertices[n_gluing[vert_num]] 
+            else:
+                assert vert_num == face_n
+                con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
+
+        ## now for the edges
+
+        edge_tn_index = tet.face(1, vert_pair_to_edge_num[(face_t, face_n)]).index()
+        edge_tn = landscape_edge(self, [vert_t, vert_n], edge_tn_index, far_edge_colour == "red") ## never coastal
+
+        if triangle.is_red == triangle.is_upper:
+            edge_bn, edge_na, edge_ab = triangle.edges 
+            edge_at, edge_tb, edge_ba = neighbour.edges
+        else:
+            edge_na, edge_ab, edge_bn = triangle.edges 
+            edge_tb, edge_ba, edge_at = neighbour.edges
+        assert edge_ab == edge_ba
+
+        if tris_ab_are_red == ab_is_upper:
+            triangle_a.edges = [edge_bn, edge_tn, edge_tb]
+            triangle_b.edges = [edge_at, edge_tn, edge_na]
+        else:
+            triangle_a.edges = [edge_tb, edge_bn, edge_tn]
+            triangle_b.edges = [edge_na, edge_at, edge_tn]
+
+        ## now for the neighbours
+
+        if tris_ab_are_red == ab_is_upper:
+            triangle_a.neighbours = [triangle.not_downriver()[0], triangle_b, neighbour.not_downriver()[1]]
+            triangle_b.neighbours = [neighbour.not_downriver()[0], triangle_a, triangle.not_downriver()[1]]
+        else:
+            triangle_a.neighbours = [neighbour.not_downriver()[1], triangle.not_downriver()[0], triangle_b]
+            triangle_b.neighbours = [triangle.not_downriver()[1], neighbour.not_downriver()[0], triangle_a]
+
+        triangle.not_downriver()[0].update_contacts(triangle, triangle_a)
+        triangle.not_downriver()[1].update_contacts(triangle, triangle_b)
+        neighbour.not_downriver()[0].update_contacts(neighbour, triangle_b)
+        neighbour.not_downriver()[1].update_contacts(neighbour, triangle_a)
+
+        if self.desired_vertices != []:
+            new_edge = [vert_t, vert_n]
+            if self.infinity in new_edge:
+                new_edge.remove(self.infinity)
+                self.check_vertex_desired(new_edge.pop()) 
+
+        triangle.is_buried = True
+        neighbour.is_buried = True
+        self.num_tetrahedra += 1
+        return (triangle_a, triangle_b) ### pass back the new landscape triangles
+
+    def coastal_fill(self, triangle):
+        # print('coastal fill ' + str(self.triangles.index(triangle)) + ' triang ind ' + str(triangle.index)) 
+        neighbour_australian = triangle.downriver() ## it's upside down from us
+        assert triangle.is_upper != neighbour_australian.is_upper
+        assert triangle in neighbour_australian.neighbours ## don't know which one
+        assert not triangle.is_buried
+        assert not neighbour_australian.is_buried
+
+        ###   b---R----t
+        ###   |`a    ,'|     is_upper, so faces t and c are below, a and b are new triangles above
+        ###   L  ` ,' c|
+        ###   |t ,' .  L     
+        ###   |,'    b.|     
+        ###   c----R---a 
+ 
+        ###   c---R----b
+        ###   |`t    ,'|     not is_upper, so t and c are above, a and b are new triangles below
+        ###   L  ` ,' a| 
+        ###   |b ,' .  L     
+        ###   |,'    c.|
+        ###   a----R---t   
+
+        ### at is red iff not triangle.is_upper
+        ### bt is red iff triangle.is_upper
+
+        ## We find the easy information so we can build the new triangles
+        tet, embed, other_tet = triangle.outwards_tet(return_other_tet = True)  
+        face_t = embed.face()
+        # print 'tet.index(), face_t', tet.index(), face_t
+
+        for i in range(4):
+            if i != face_t:
+                if self.vt.coorientations[tet.index()][face_t] == self.vt.coorientations[tet.index()][i]:
+                    face_c = i
+
+        other_con_tet = triangle.inwards_con_tet()
+
+        verts = list(range(4))
+        verts.remove(face_t)
+        verts.remove(face_c)
+
+        if (sign([verts[0], face_c, verts[1], face_t]) == 1) == (not triangle.is_upper): ## get orientation correct  
+            face_b, face_a = verts  
+        else:
+            face_a, face_b = verts
+        # print 'face_a, face_b, face_c', face_a, face_b, face_c
+        face_a_index = tet.face(2,face_a).index()
+        face_b_index = tet.face(2,face_b).index()
+        face_c_index = tet.face(2,face_c).index()
+        # print 'face triangulation indices: a b c', face_a_index, face_b_index, face_c_index
+
+        far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_c, face_t))
+        # print 'far edge colour', far_edge_colour
+        tris_ab_are_red = ( far_edge_colour == "red" ) ## faces, not talking about an edge
+        c_is_red = triangle.is_red
+        ab_is_upper = triangle.is_upper
+        c_is_upper = not triangle.is_upper
+
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red, None, None, None)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red, None, None, None)
+        triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red, None, None, None)
+
+        ## add the tetrahedron 
+
+        con_tet = continent_tetrahedron(self, tet.index())
+
+        if triangle.is_upper:
+            triangle.set_upper_tet(con_tet)
+            triangle_c.set_upper_tet(con_tet)
+            triangle_a.set_lower_tet(con_tet)
+            triangle_b.set_lower_tet(con_tet)
+        else:
+            triangle.set_lower_tet(con_tet)
+            triangle_c.set_lower_tet(con_tet)
+            triangle_a.set_upper_tet(con_tet)
+            triangle_b.set_upper_tet(con_tet)  
+
+        ## now for the vertices
+
+        ### let's find out vert_a, vert_b, vert_c, which are the vertices (with CP1 data) opposite faces.
+        if triangle.is_red == triangle.is_upper:
+            vert_a, vert_b, vert_c = triangle.vertices
+        else:
+            vert_b, vert_c, vert_a = triangle.vertices
+
+        tet_vert_posns = [None, None, None, None]
+        tet_vert_posns[face_a] = vert_a.pos
+        tet_vert_posns[face_b] = vert_b.pos
+        tet_vert_posns[face_c] = vert_c.pos
+
+        if self.vt.tet_shapes != None:
+            ### next: permute the triangle verts in CP1 into tet order. Then plug through tet_ordering so we can develop
+            tet_shape = self.vt.tet_shapes[tet.index()]
+            # print tet_shape
+            tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
+            pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape)
+        
+            # ancestors = [ a for a in vert_a.ladderpole_ancestors if a in vert_b.ladderpole_ancestors ]
+            ancestors = vert_a.ladderpole_ancestors.intersection(vert_b.ladderpole_ancestors)
+
+            vert_t = vertex( self, pos)
+
+            vert_t.ladderpole_ancestors = ancestors
+        else:
+            vert_t = vertex( self, None)
+
+        if self.desired_vertices != []:
+            if self.infinity in triangle.vertices:
+                self.check_vertex_desired(vert_t) 
+
+        if tris_ab_are_red == ab_is_upper:
+            triangle_a.vertices = [vert_t, vert_b, vert_c]
+            triangle_b.vertices = [vert_c, vert_a, vert_t]
+        else:
+            triangle_a.vertices = [vert_c, vert_t, vert_b]
+            triangle_b.vertices = [vert_t, vert_c, vert_a]
+
+        if c_is_red != c_is_upper:
+            triangle_c.vertices = [vert_b, vert_a, vert_t]
+        else:
+            triangle_c.vertices = [vert_a, vert_t, vert_b]
+
+        ## add gluings and vertices to con_tet
+
+        gluing = tet.adjacentGluing(face_t)
+        con_tet.gluings[face_t] = (other_tet, gluing)
+        other_face_t = gluing[face_t]
+        assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
+        other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
+
+        for vert_num in range(4):
+            if vert_num != face_t:
+                con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
+            else:
+                assert vert_num == face_t
+                con_tet.vertices[vert_num] = vert_t
+
+        ### now for the edges
+
+        edge_at_index = tet.face(1, vert_pair_to_edge_num[(face_a, face_t)]).index()
+        edge_bt_index = tet.face(1, vert_pair_to_edge_num[(face_b, face_t)]).index()
+        edge_ct_index = tet.face(1, vert_pair_to_edge_num[(face_c, face_t)]).index()
+
+        edge_at = landscape_edge(self, [vert_a, vert_t], edge_at_index, not triangle.is_upper) ## coastal
+        edge_bt = landscape_edge(self, [vert_b, vert_t], edge_bt_index, triangle.is_upper) ## coastal
+        edge_ct = landscape_edge(self, [vert_c, vert_t], edge_ct_index, far_edge_colour == "red") ## never coastal
+
+        if triangle.is_red == triangle.is_upper:
+            edge_bc, edge_ca, edge_ab = triangle.edges 
+        else:
+            edge_ca, edge_ab, edge_bc = triangle.edges
+
+        if tris_ab_are_red == ab_is_upper:
+            triangle_a.edges = [edge_bc, edge_ct, edge_bt]
+            triangle_b.edges = [edge_at, edge_ct, edge_ca]
+        else:
+            triangle_a.edges = [edge_bt, edge_bc, edge_ct]
+            triangle_b.edges = [edge_ca, edge_at, edge_ct]
+
+        if c_is_red != c_is_upper:
+            triangle_c.edges = [edge_at, edge_bt, edge_ab]
+        else:
+            triangle_c.edges = [edge_bt, edge_ab, edge_at]
+
+        ### now for the neighbours
+
+        if tris_ab_are_red == ab_is_upper:
+            triangle_a.neighbours = [triangle.not_downriver()[0], triangle_b, triangle_c]
+            triangle_b.neighbours = [triangle_c, triangle_a, triangle.not_downriver()[1]]
+        else:
+            triangle_a.neighbours = [triangle_c, triangle.not_downriver()[0], triangle_b]
+            triangle_b.neighbours = [triangle.not_downriver()[1], triangle_c, triangle_a]
+
+        if c_is_red != c_is_upper:
+            triangle_c.neighbours = [triangle_b, triangle_a, neighbour_australian]
+        else:
+            triangle_c.neighbours = [triangle_a, neighbour_australian, triangle_b]
+
+        triangle.not_downriver()[0].update_contacts(triangle, triangle_a)
+        triangle.not_downriver()[1].update_contacts(triangle, triangle_b)
+        neighbour_australian.update_contacts(triangle, triangle_c)
+
+        triangle.is_buried = True
+        self.num_tetrahedra += 1
+
+        ### now do all the in_fills that we can, coming from the new stuff we added.
+        ### one of a and b triangles point to the coast, the other we need to in_fill along
+
+        outer_triangles = [triangle_a, triangle_b]
+        while True:
+            tri_to_fill = None
+            for tri in outer_triangles:
+                nb = tri.downriver()
+                if tri.is_upper == nb.is_upper:
+                    if nb.downriver() == tri:
+                        tri_to_fill = tri
+                        break
+            if tri_to_fill != None:
+                outer_triangles = self.in_fill(tri_to_fill)
+            else:
+                break 
+
+        ### now the cusp leaves
+
+        ### we may have added lots of faces incident to vert_t. only one of them should have a cusp leaf 
+        ### on the same side as we added the filling tetrahedra. That triangle is one of the outer_triangles 
+
+        self.update_boundary()  ### could be made much more efficient given that very little has changed from the coastal_fill
+
+        # print('a', self.vertices.index(vert_a), 'b', self.vertices.index(vert_b), 'c', self.vertices.index(vert_c))
+        # print('ab_is_upper', ab_is_upper, 'edge_ab.is_red', edge_ab.is_red)
+
+        last_tri = None
+        for tri in outer_triangles:
+            if vert_t == tri.vertices[tri.downriver_index()]:
+                last_tri, tri_is_coastal = self.flow(tri)
+                assert tri_is_coastal
+                break
+        
+        last_edge = last_tri.edges[last_tri.downriver_index()]
+        t_leaf = cusp_leaf(self, vert_t, last_edge, ab_is_upper)
+        vert_t.cusp_leaves.append(t_leaf)
+
+        ### find where on last_edge.cusp_leaves this cusp_leaf lands
+        if ab_is_upper == last_edge.is_red:
+            insert_index = 0 # default at start
+        else:
+            insert_index = None # default at end 
+        for i, leaf in enumerate(last_edge.cusp_leaves):
+            if leaf.is_upper == t_leaf.is_upper: 
+                if are_anticlockwise(t_leaf.cusp.coastal_index, leaf.cusp.coastal_index, last_edge.coastal_index + 0.5):
+                    insert_index = i + 1 ## goes after this one, can repeat
+                else:
+                    if insert_index == None:
+                        insert_index = i ## before this one, cannot repeat
+                        break
+        # print('insert_index', insert_index)
+        if insert_index == None:
+            last_edge.cusp_leaves.append(t_leaf)
+        else:
+            last_edge.cusp_leaves.insert(insert_index, t_leaf)
+
+        ### now move forward all the cusp_leaves on the edge that got covered up
+        leaves_to_move_forward = edge_ab.cusp_leaves
+        edge_ab.cusp_leaves = []  ### clear because no longer coastal
+
+        same_side_leaves = []
+        opposite_side_leaves = []
+        for leaf in leaves_to_move_forward:
+            if leaf.is_upper == triangle.is_upper:
+                same_side_leaves.append(leaf)
+            else:
+                opposite_side_leaves.append(leaf)
+
+        before_cut = []
+        after_cut = []
+        for leaf in same_side_leaves:
+            if are_anticlockwise(vert_t.coastal_index, last_edge.coastal_index + 0.5, leaf.cusp.coastal_index):
+                before_cut.append(leaf)
+            else:
+                after_cut.append(leaf)
+
+        ### add new opposite side cusp leaf
+        if edge_ab.is_red == ab_is_upper:
+            new_opposite_leaf = cusp_leaf(self, vert_a, edge_bt, not ab_is_upper)
+            vert_a.cusp_leaves.append(new_opposite_leaf)
+            opposite_side_leaves.insert(0, new_opposite_leaf)
+        else:
+            new_opposite_leaf = cusp_leaf(self, vert_b, edge_at, not ab_is_upper)
+            vert_b.cusp_leaves.insert(0, new_opposite_leaf)
+            opposite_side_leaves.append(new_opposite_leaf)
+
+        ### add on opposite_side_leaves
+        if ab_is_upper == edge_ab.is_red:
+            after_cut = after_cut + opposite_side_leaves
+        else:
+            before_cut = opposite_side_leaves + before_cut
+
+        edge_at.cusp_leaves = before_cut
+        edge_bt.cusp_leaves = after_cut
+        for leaf in edge_at.cusp_leaves:
+            leaf.coastal_edge = edge_at
+        for leaf in edge_bt.cusp_leaves:
+            leaf.coastal_edge = edge_bt
+
+        ### figure out where each leaf's cusp is relative to last_edge to determine their positions on the two new coastal edges
+        ### then figure out where t_leaf goes in last_edge.cusp_leaves
+        ### finally, do the stuff on the other side
+
+        ###   b---R----t
+        ###   |`a    ,'|     is_upper, so faces t and c are below, a and b are new triangles above
+        ###   L  ` ,' c|
+        ###   |t ,' .  L     
+        ###   |,'    b.|     
+        ###   c----R---a 
+ 
+        ###   c---R----b
+        ###   |`t    ,'|     not is_upper, so t and c are above, a and b are new triangles below
+        ###   L  ` ,' a| 
+        ###   |b ,' .  L     
+        ###   |,'    c.|
+        ###   a----R---t   
+
+
     def make_convex(self):
         ### new triangles are added to the end of the list so this is safe.
         ### new sinks created by in-fills have new triangles that point at them, so we get everything.
@@ -619,6 +1143,14 @@ class continent:
                 downriver_triangle, is_coastal = self.flow(tri)
                 if not is_coastal:
                     self.in_fill(downriver_triangle)
+
+    def is_convex(self):
+        for tri in self.triangles:
+            if not tri.is_buried:
+                downriver_triangle, is_coastal = self.flow(tri)
+                if not is_coastal:
+                    return False
+        return True
 
     def update_boundary(self):
         """Installs coastal vertices in anticlockwise order as viewed from above
@@ -781,255 +1313,24 @@ class continent:
                     c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
                     e, e1 = e1, e1.green_ends[index + 1]
 
-        for i, c in enumerate(self.coast):
-            c.cusp_leaves = []  ## interleaved
-            e = self.coastal_edges[i]  ### immediately after the cusp
-            thorn_ends_lists = [c.purple_thorn_ends, c.green_thorn_ends]
+        # for i, c in enumerate(self.coast):
+        #     c.cusp_leaves = []  ## interleaved
+        #     e = self.coastal_edges[i]  ### immediately after the cusp
+        #     thorn_ends_lists = [c.purple_thorn_ends, c.green_thorn_ends]
 
-            first_is_upper = False
-            if e.is_red:
-                first_is_upper = True
-                thorn_ends_lists.reverse()
-            for j in range(len(thorn_ends_lists[1])):
-                coastal_edge, index_on_edge = thorn_ends_lists[0][j]
-                c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, first_is_upper) )
-                coastal_edge, index_on_edge = thorn_ends_lists[1][j]
-                c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, not first_is_upper) )
-            if len(thorn_ends_lists[0]) > len(thorn_ends_lists[1]):
-                coastal_edge, index_on_edge = thorn_ends_lists[0][-1]
-                c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, first_is_upper) )
+        #     first_is_upper = False
+        #     if e.is_red:
+        #         first_is_upper = True
+        #         thorn_ends_lists.reverse()
+        #     for j in range(len(thorn_ends_lists[1])):
+        #         coastal_edge, index_on_edge = thorn_ends_lists[0][j]
+        #         c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, first_is_upper) )
+        #         coastal_edge, index_on_edge = thorn_ends_lists[1][j]
+        #         c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, not first_is_upper) )
+        #     if len(thorn_ends_lists[0]) > len(thorn_ends_lists[1]):
+        #         coastal_edge, index_on_edge = thorn_ends_lists[0][-1]
+        #         c.cusp_leaves.append( cusp_leaf(self, c, coastal_edge, index_on_edge, first_is_upper) )
 
-    # purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
-    # green_train_routes = []
-    # if draw_lower_purple:
-    #     if draw_train_tracks:
-    #         for tri in lower_tris:
-    #             midpts = []
-    #             is_reds = []
-    #             for e in tri.edges:
-    #                 is_reds.append(e.is_red)
-    #                 u, v = e.vertices
-    #                 p, midpt = make_arc(u.circle_pos, v.circle_pos, return_midpt = True)
-    #                 midpts.append(midpt)
-    #             for i in range(3):
-    #                 if (is_reds[i] == is_reds[(i+1)%3]) or (not is_reds[i] and is_reds[(i+1)%3]):
-    #                     p = make_arc(midpts[i], midpts[(i+1)%3])
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(track_thickness), style.linecap.round, purple])    
-    #     if draw_foliation:   
-    #         for edge in con.lower_landscape_edges:
-    #             leaf_end_edges = []
-    #             if edge.is_coastal():
-    #                 if not edge.is_coastal_sink(upper = False):
-    #                     leaf_end_edges.append(edge)
-    #                     for tri in edge.boundary_triangles:
-    #                         if not tri.is_upper:
-    #                             last_tri = con.flow(tri)[0]
-    #                             last_edge = last_tri.edges[last_tri.downriver_index()]
-    #                             leaf_end_edges.append(last_edge)
-    #             else:
-    #                 if edge.is_watershed():
-    #                     for tri in edge.boundary_triangles:
-    #                         last_tri = con.flow(tri)[0]
-    #                         last_edge = last_tri.edges[last_tri.downriver_index()]
-    #                         leaf_end_edges.append(last_edge)
-    #             if len(leaf_end_edges) == 2:
-    #                 purple_train_routes.append(leaf_end_edges)
-    #                 if foliation_style_old:
-    #                     leaf_ends = []
-    #                     for e in leaf_end_edges:
-    #                         endpts = e.vertices
-    #                         _, midpt = make_arc(endpts[0].circle_pos, endpts[1].circle_pos, return_midpt = True)
-    #                         leaf_ends.append(midpt)
-    #                     p = make_arc(leaf_ends[0], leaf_ends[1])
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-
-    # if draw_upper_green:
-    #     if draw_train_tracks:
-    #         for tri in upper_tris:
-    #             midpts = []
-    #             is_reds = []
-    #             for e in tri.edges:
-    #                 is_reds.append(e.is_red)
-    #                 u, v = e.vertices
-    #                 p, midpt = make_arc(u.circle_pos, v.circle_pos, return_midpt = True)
-    #                 midpts.append(midpt)
-    #             for i in range(3):
-    #                 if (is_reds[i] == is_reds[(i+1)%3]) or (is_reds[i] and not is_reds[(i+1)%3]):
-    #                     p = make_arc(midpts[i], midpts[(i+1)%3])
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(track_thickness), style.linecap.round, green])
-    #     if draw_foliation:
-    #         for edge in con.upper_landscape_edges:
-    #             leaf_end_edges = []
-    #             if edge.is_coastal():
-    #                 if not edge.is_coastal_sink(upper = True):
-    #                     leaf_end_edges.append(edge)
-    #                     for tri in edge.boundary_triangles:
-    #                         if tri.is_upper:
-    #                             last_tri = con.flow(tri)[0]
-    #                             last_edge = last_tri.edges[last_tri.downriver_index()]
-    #                             leaf_end_edges.append(last_edge)
-    #             else:
-    #                 if edge.is_watershed():
-    #                     for tri in edge.boundary_triangles:
-    #                         last_tri = con.flow(tri)[0]
-    #                         last_edge = last_tri.edges[last_tri.downriver_index()]
-    #                         leaf_end_edges.append(last_edge)
-    #             if len(leaf_end_edges) == 2:
-    #                 green_train_routes.append(leaf_end_edges)
-    #                 if foliation_style_old:
-    #                     leaf_ends = []
-    #                     for e in leaf_end_edges:
-    #                         endpts = e.vertices
-    #                         _, midpt = make_arc(endpts[0].circle_pos, endpts[1].circle_pos, return_midpt = True)
-    #                         leaf_ends.append(midpt)
-    #                     p = make_arc(leaf_ends[0], leaf_ends[1])
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
-    
-    # if draw_foliation and (foliation_style_split or foliation_style_cusp_leaves or foliation_style_boundary_leaves):
-    #     for e in con.coastal_edges:
-    #         e.purple_ends = []
-    #         e.green_ends = []
-    #     for e1, e2 in purple_train_routes:
-    #         e1.purple_ends.append(e2)
-    #         e2.purple_ends.append(e1)
-    #     for e1, e2 in green_train_routes:
-    #         e1.green_ends.append(e2)
-    #         e2.green_ends.append(e1)
-    #     for i, e in enumerate(con.coastal_edges):
-    #         rotated_coastal_edges = con.coastal_edges[i:] + con.coastal_edges[:i]
-    #         e.purple_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-    #         e.green_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-    #         if e.is_red:
-    #             e.ends = e.green_ends + e.purple_ends
-    #         else:
-    #             e.ends = e.purple_ends + e.green_ends
-    #     if foliation_style_split:
-    #         for e1, e2 in purple_train_routes:
-    #             p1 = end_pos(e2, e1)
-    #             p2 = end_pos(e1, e2)
-    #             p = make_arc(p1, p2)
-    #             p = p.transformed(scl)
-    #             canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-    #         for e1, e2 in green_train_routes:
-    #             p1 = end_pos(e2, e1)
-    #             p2 = end_pos(e1, e2)
-    #             p = make_arc(p1, p2)
-    #             p = p.transformed(scl)
-    #             canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
-    #     if foliation_style_cusp_leaves or foliation_style_boundary_leaves:
-    #         for i, c in enumerate(con.coast):
-    #             c.purple_thorn_end_positions = [] ### complex numbers
-    #             c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
-    #             e = con.coastal_edges[i]
-    #             e1 = e.purple_ends[0]
-    #             while True:
-    #                 index = e1.purple_ends.index(e)
-    #                 if index == len(e1.purple_ends) - 1:
-    #                     break
-    #                 else:
-    #                     c.purple_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
-    #                     c.purple_thorn_ends.append( (e1, e1.ends.index(e)) )
-    #                     e, e1 = e1, e1.purple_ends[index + 1]
-
-    #             if foliation_style_boundary_leaves:
-    #                 e_before = con.coastal_edges[(i-1)%len(con.coast)]
-    #                 e_after = con.coastal_edges[i]
-    #                 first_pos = end_pos(e_after.purple_ends[0], e_after, offset = -0.25)
-    #                 last_pos = end_pos(e_before.purple_ends[-1], e_before, offset = 0.25)
-    #                 c.purple_thorn_end_positions = [first_pos] + c.purple_thorn_end_positions + [last_pos]
-    #                 arcs = []
-    #                 for i in range(len(c.purple_thorn_end_positions) - 1):
-    #                     arcs.append(make_arc(c.purple_thorn_end_positions[i], c.purple_thorn_end_positions[i+1]))
-    #                 for p in arcs:
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-
-    #             if foliation_style_cusp_leaves:
-    #                 for thorn_end in c.purple_thorn_ends:
-    #                     thorn_end_pos = end_pos2(thorn_end)
-    #                     p = make_arc(c.circle_pos, thorn_end_pos)
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-                
-    #         for i, c in enumerate(con.coast):
-    #             c.green_thorn_end_positions = [] ### complex numbers
-    #             c.green_thorn_ends = [] ### [coastal arc, position along that arc]
-    #             e = con.coastal_edges[i]
-    #             e1 = e.green_ends[0]
-    #             while True:
-    #                 index = e1.green_ends.index(e)
-    #                 if index == len(e1.green_ends) - 1:
-    #                     break
-    #                 else:
-    #                     c.green_thorn_end_positions.append( end_pos(e, e1, offset = 0.5) )
-    #                     c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
-    #                     e, e1 = e1, e1.green_ends[index + 1]
-    #             if foliation_style_boundary_leaves:
-    #                 e_before = con.coastal_edges[(i-1)%len(con.coast)]
-    #                 e_after = con.coastal_edges[i]
-    #                 first_pos = end_pos(e_after.green_ends[0], e_after, offset = -0.25)
-    #                 last_pos = end_pos(e_before.green_ends[-1], e_before, offset = 0.25)
-    #                 c.green_thorn_end_positions = [first_pos] + green_thorn_end_positions + [last_pos]
-    #                 arcs = []
-    #                 for i in range(len(c.green_thorn_end_positions) - 1):
-    #                     arcs.append(make_arc(c.green_thorn_end_positions[i], c.green_thorn_end_positions[i+1]))
-    #                 for p in arcs:
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
-
-    #             if foliation_style_cusp_leaves:
-    #                 for thorn_end in c.green_thorn_ends:
-    #                     thorn_end_pos = end_pos2(thorn_end)
-    #                     p = make_arc(c.circle_pos, thorn_end_pos)
-    #                     p = p.transformed(scl)
-    #                     canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
-
-    #         for tet in draw_tetrahedron_rectangles:
-    #             a, c = tet.upper_edge().vertices
-    #             b, d = tet.lower_edge().vertices
-    #             if not are_anticlockwise(a.coastal_index, b.coastal_index, c.coastal_index):
-    #                 b, d = d, b   ### now a, b, c, d are anticlockwise
-    #             # print(con.vertices.index(a), con.vertices.index(b), con.vertices.index(c), con.vertices.index(d))
-    #             all_sides_discrete = [tet_rectangle_sides(tet, v) for v in [a,b,c,d]]
-    #             all_sides_geometry = []
-    #             for vertex_sides_discrete in all_sides_discrete:
-    #                 vertex_sides_geometry = []
-    #                 for side_discrete in vertex_sides_discrete:
-    #                     a, b = side_discrete
-    #                     if side_discrete != None:
-    #                         v, thorn_end = side_discrete
-    #                         # print(thorn_end)
-    #                         # print((v.circle_pos, end_pos2(thorn_end)))
-    #                         vertex_sides_geometry.append( (v.circle_pos, end_pos2(thorn_end)) )
-    #                     else:
-    #                         vertex_sides_geometry.append( None )
-    #                 all_sides_geometry.append(vertex_sides_geometry)
-    #             for i in range(4):
-    #                 if all_sides_geometry[i][0] != None and all_sides_geometry[(i+1)%4][1] != None:
-    #                     v1, t1 = all_sides_geometry[i][0]
-    #                     v2, t2 = all_sides_geometry[(i+1)%4][1]
-    #                     intersection = geodesic_isect(v1, t1, v2, t2)
-    #                     assert intersection != None
-    #                     all_sides_geometry[i][0] = (v1, intersection)
-    #                     all_sides_geometry[(i+1)%4][1] = (v2, intersection)
-
-    #             for i, vertex_sides_geometry in enumerate(all_sides_geometry):
-    #                 if i%2 == 0:
-    #                     col = purple
-    #                 else:
-    #                     col = green
-    #                 for side_geometry in vertex_sides_geometry: 
-    #                     if side_geometry != None:
-    #                         # print(side_geometry)
-    #                         v_pos, t_pos = side_geometry 
-    #                         p = make_arc(v_pos, t_pos)
-    #                         p = p.transformed(scl)
-    #                         canv.stroke(p, [style.linewidth(3*leaf_thickness), style.linecap.round, col])
-                        
     def build_fundamental_domain_old(self, max_num_tetrahedra = 50000):
         self.first_non_buried_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
@@ -1204,352 +1505,6 @@ class continent:
         # print(('num_long_edges_direct_count', self.count_long_edges()))
         # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
-
-
-    def in_fill(self, triangle):
-        # print 'in fill'
-        
-        neighbour = triangle.downriver()
-        assert not triangle.is_buried
-        assert not neighbour.is_buried
-        assert triangle == neighbour.downriver() and triangle.is_upper == neighbour.is_upper and triangle.is_red == neighbour.is_red
-     
-        ###   b---R----t
-        ###   |`a    ,'|     is_upper, so faces t and n are below, a and b are new triangles above
-        ###   L  ` ,' n|
-        ###   |t ,' .  L     
-        ###   |,'    b.|
-        ###   n----R---a 
- 
-        ###   n---R----b
-        ###   |`t    ,'|     not is_upper, so t and n are above, a and b are new triangles below
-        ###   L  ` ,' a| 
-        ###   |b ,' .  L     
-        ###   |,'    n.|
-        ###   a----R---t       
-
-        ## We find the easy information so we can build the new triangles
-        tet, embed, other_tet = triangle.outwards_tet(return_other_tet = True)  
-        face_t = embed.face()
-        
-        n_tet, n_embed, n_other_tet = neighbour.outwards_tet(return_other_tet = True)  
-        face_n = n_embed.face()
-
-        assert tet == n_tet
-
-        other_con_tet = triangle.inwards_con_tet()
-        n_other_con_tet = neighbour.inwards_con_tet()
-
-        verts = list(range(4))
-        verts.remove(face_t)
-        verts.remove(face_n)
-
-        if (sign([verts[0], face_n, verts[1], face_t]) == 1) == (not triangle.is_upper): ## get orientation correct  
-            face_b, face_a = verts  
-        else:
-            face_a, face_b = verts
-
-        face_a_index = tet.face(2,face_a).index()
-        face_b_index = tet.face(2,face_b).index()
-
-        far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_t, face_n))
-        ab_is_red = ( far_edge_colour == "red" )
-        ab_is_upper = triangle.is_upper
-
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
-
-        ## add the tetrahedron 
-
-        con_tet = continent_tetrahedron(self, tet.index())
-
-        ### do the other triangle as well...
-
-        if triangle.is_upper:
-            triangle.set_upper_tet(con_tet)
-            neighbour.set_upper_tet(con_tet)
-            triangle_a.set_lower_tet(con_tet)
-            triangle_b.set_lower_tet(con_tet)
-        else:
-            triangle.set_lower_tet(con_tet)
-            neighbour.set_lower_tet(con_tet)
-            triangle_a.set_upper_tet(con_tet)
-            triangle_b.set_upper_tet(con_tet)            
-
-        ## now for the vertices
-
-        if triangle.is_red == triangle.is_upper:
-            vert_a, vert_b, vert_n = triangle.vertices
-            vert_bn, vert_an, vert_t = neighbour.vertices
-        else:
-            vert_b, vert_n, vert_a = triangle.vertices
-            vert_an, vert_t, vert_bn = neighbour.vertices
-
-        assert vert_b == vert_bn and vert_a == vert_an
-
-        if ab_is_red == ab_is_upper:
-            triangle_a.vertices = [vert_t, vert_b, vert_n]
-            triangle_b.vertices = [vert_n, vert_a, vert_t]
-        else:
-            triangle_a.vertices = [vert_n, vert_t, vert_b]
-            triangle_b.vertices = [vert_t, vert_n, vert_a]
-        
-        ## add gluings and vertices to con_tet
-
-        gluing = tet.adjacentGluing(face_t)
-        con_tet.gluings[face_t] = (other_tet, gluing)
-        other_face_t = gluing[face_t]
-        assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
-        other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
-
-        n_gluing = n_tet.adjacentGluing(face_n)
-        con_tet.gluings[face_n] = (n_other_tet, n_gluing)
-        other_face_n = n_gluing[face_n]
-        assert n_other_con_tet.gluings[other_face_n] == None ### make sure it is not already glued to something
-        n_other_con_tet.gluings[other_face_n] = (n_tet, n_other_tet.adjacentGluing(other_face_n))
-
-        for vert_num in range(4):
-            if vert_num != face_t and vert_num != face_n:
-                vt = other_con_tet.vertices[gluing[vert_num]]
-                vn = n_other_con_tet.vertices[n_gluing[vert_num]]
-                assert vt == vn
-                con_tet.vertices[vert_num] = vt
-            elif vert_num == face_t:
-                con_tet.vertices[vert_num] = n_other_con_tet.vertices[n_gluing[vert_num]] 
-            else:
-                assert vert_num == face_n
-                con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
-
-        ## now for the edges
-
-        edge_tn_index = tet.face(1, vert_pair_to_edge_num[(face_t, face_n)]).index()
-        edge_tn = landscape_edge(self, [vert_t, vert_n], edge_tn_index, far_edge_colour == "red") ## never coastal
-
-        if triangle.is_red == triangle.is_upper:
-            edge_bn, edge_na, edge_ab = triangle.edges 
-            edge_at, edge_tb, edge_ba = neighbour.edges
-        else:
-            edge_na, edge_ab, edge_bn = triangle.edges 
-            edge_tb, edge_ba, edge_at = neighbour.edges
-        assert edge_ab == edge_ba
-
-        if ab_is_red == ab_is_upper:
-            triangle_a.edges = [edge_bn, edge_tn, edge_tb]
-            triangle_b.edges = [edge_at, edge_tn, edge_na]
-        else:
-            triangle_a.edges = [edge_tb, edge_bn, edge_tn]
-            triangle_b.edges = [edge_na, edge_at, edge_tn]
-
-        ## now for the neighbours
-
-        if ab_is_red == ab_is_upper:
-            triangle_a.neighbours = [triangle.not_downriver()[0], triangle_b, neighbour.not_downriver()[1]]
-            triangle_b.neighbours = [neighbour.not_downriver()[0], triangle_a, triangle.not_downriver()[1]]
-        else:
-            triangle_a.neighbours = [neighbour.not_downriver()[1], triangle.not_downriver()[0], triangle_b]
-            triangle_b.neighbours = [triangle.not_downriver()[1], neighbour.not_downriver()[0], triangle_a]
-
-        triangle.not_downriver()[0].update_contacts(triangle, triangle_a)
-        triangle.not_downriver()[1].update_contacts(triangle, triangle_b)
-        neighbour.not_downriver()[0].update_contacts(neighbour, triangle_b)
-        neighbour.not_downriver()[1].update_contacts(neighbour, triangle_a)
-
-        if self.desired_vertices != []:
-            new_edge = [vert_t, vert_n]
-            if self.infinity in new_edge:
-                new_edge.remove(self.infinity)
-                self.check_vertex_desired(new_edge.pop()) 
-
-        triangle.is_buried = True
-        neighbour.is_buried = True
-        self.num_tetrahedra += 1
-        return con_tet ### pass back the tetrahedron we added
-
-    def coastal_fill(self, triangle):
-        # print 'coastal fill ' + str(self.triangles.index(triangle)) + ' triang ind ' + str(triangle.index) 
-        neighbour_australian = triangle.downriver() ## it's upside down from us
-        assert triangle.is_upper != neighbour_australian.is_upper
-        assert triangle in neighbour_australian.neighbours ## don't know which one
-        assert not triangle.is_buried
-        assert not neighbour_australian.is_buried
-
-        ###   b---R----t
-        ###   |`a    ,'|     is_upper, so faces t and c are below, a and b are new triangles above
-        ###   L  ` ,' c|
-        ###   |t ,' .  L     
-        ###   |,'    b.|     
-        ###   c----R---a 
- 
-        ###   c---R----b
-        ###   |`t    ,'|     not is_upper, so t and c are above, a and b are new triangles below
-        ###   L  ` ,' a| 
-        ###   |b ,' .  L     
-        ###   |,'    c.|
-        ###   a----R---t   
-
-        ### at is red iff not triangle.is_upper
-        ### bt is red iff triangle.is_upper
-
-        ## We find the easy information so we can build the new triangles
-        tet, embed, other_tet = triangle.outwards_tet(return_other_tet = True)  
-        face_t = embed.face()
-        # print 'tet.index(), face_t', tet.index(), face_t
-
-        for i in range(4):
-            if i != face_t:
-                if self.vt.coorientations[tet.index()][face_t] == self.vt.coorientations[tet.index()][i]:
-                    face_c = i
-
-        other_con_tet = triangle.inwards_con_tet()
-
-        verts = list(range(4))
-        verts.remove(face_t)
-        verts.remove(face_c)
-
-        if (sign([verts[0], face_c, verts[1], face_t]) == 1) == (not triangle.is_upper): ## get orientation correct  
-            face_b, face_a = verts  
-        else:
-            face_a, face_b = verts
-        # print 'face_a, face_b, face_c', face_a, face_b, face_c
-        face_a_index = tet.face(2,face_a).index()
-        face_b_index = tet.face(2,face_b).index()
-        face_c_index = tet.face(2,face_c).index()
-        # print 'face triangulation indices: a b c', face_a_index, face_b_index, face_c_index
-
-        far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_c, face_t))
-        # print 'far edge colour', far_edge_colour
-        ab_is_red = ( far_edge_colour == "red" )
-        c_is_red = triangle.is_red
-        ab_is_upper = triangle.is_upper
-        c_is_upper = not triangle.is_upper
-
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, ab_is_red, None, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, ab_is_red, None, None, None)
-        triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red, None, None, None)
-
-        ## add the tetrahedron 
-
-        con_tet = continent_tetrahedron(self, tet.index())
-
-        if triangle.is_upper:
-            triangle.set_upper_tet(con_tet)
-            triangle_c.set_upper_tet(con_tet)
-            triangle_a.set_lower_tet(con_tet)
-            triangle_b.set_lower_tet(con_tet)
-        else:
-            triangle.set_lower_tet(con_tet)
-            triangle_c.set_lower_tet(con_tet)
-            triangle_a.set_upper_tet(con_tet)
-            triangle_b.set_upper_tet(con_tet)  
-
-        ## now for the vertices
-
-        ### let's find out vert_a, vert_b, vert_c, which are the vertices (with CP1 data) opposite faces.
-        if triangle.is_red == triangle.is_upper:
-            vert_a, vert_b, vert_c = triangle.vertices
-        else:
-            vert_b, vert_c, vert_a = triangle.vertices
-
-        tet_vert_posns = [None, None, None, None]
-        tet_vert_posns[face_a] = vert_a.pos
-        tet_vert_posns[face_b] = vert_b.pos
-        tet_vert_posns[face_c] = vert_c.pos
-
-        if self.vt.tet_shapes != None:
-            ### next: permute the triangle verts in CP1 into tet order. Then plug through tet_ordering so we can develop
-            tet_shape = self.vt.tet_shapes[tet.index()]
-            # print tet_shape
-            tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
-            pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape)
-        
-            # ancestors = [ a for a in vert_a.ladderpole_ancestors if a in vert_b.ladderpole_ancestors ]
-            ancestors = vert_a.ladderpole_ancestors.intersection(vert_b.ladderpole_ancestors)
-
-            vert_t = vertex( self, pos)
-
-            vert_t.ladderpole_ancestors = ancestors
-        else:
-            vert_t = vertex( self, None)
-
-        if self.desired_vertices != []:
-            if self.infinity in triangle.vertices:
-                self.check_vertex_desired(vert_t) 
-
-        if ab_is_red == ab_is_upper:
-            triangle_a.vertices = [vert_t, vert_b, vert_c]
-            triangle_b.vertices = [vert_c, vert_a, vert_t]
-        else:
-            triangle_a.vertices = [vert_c, vert_t, vert_b]
-            triangle_b.vertices = [vert_t, vert_c, vert_a]
-
-        if c_is_red != c_is_upper:
-            triangle_c.vertices = [vert_b, vert_a, vert_t]
-        else:
-            triangle_c.vertices = [vert_a, vert_t, vert_b]
-
-        ## add gluings and vertices to con_tet
-
-        gluing = tet.adjacentGluing(face_t)
-        con_tet.gluings[face_t] = (other_tet, gluing)
-        other_face_t = gluing[face_t]
-        assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
-        other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
-
-        for vert_num in range(4):
-            if vert_num != face_t:
-                con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
-            else:
-                assert vert_num == face_t
-                con_tet.vertices[vert_num] = vert_t
-
-        ### now for the edges
-
-        edge_at_index = tet.face(1, vert_pair_to_edge_num[(face_a, face_t)]).index()
-        edge_bt_index = tet.face(1, vert_pair_to_edge_num[(face_b, face_t)]).index()
-        edge_ct_index = tet.face(1, vert_pair_to_edge_num[(face_c, face_t)]).index()
-
-        edge_at = landscape_edge(self, [vert_a, vert_t], edge_at_index, not triangle.is_upper) ## coastal
-        edge_bt = landscape_edge(self, [vert_b, vert_t], edge_bt_index, triangle.is_upper) ## coastal
-        edge_ct = landscape_edge(self, [vert_c, vert_t], edge_ct_index, far_edge_colour == "red") ## never coastal
-
-        if triangle.is_red == triangle.is_upper:
-            edge_bc, edge_ca, edge_ab = triangle.edges 
-        else:
-            edge_ca, edge_ab, edge_bc = triangle.edges
-
-        if ab_is_red == ab_is_upper:
-            triangle_a.edges = [edge_bc, edge_ct, edge_bt]
-            triangle_b.edges = [edge_at, edge_ct, edge_ca]
-        else:
-            triangle_a.edges = [edge_bt, edge_bc, edge_ct]
-            triangle_b.edges = [edge_ca, edge_at, edge_ct]
-
-        if c_is_red != c_is_upper:
-            triangle_c.edges = [edge_at, edge_bt, edge_ab]
-        else:
-            triangle_c.edges = [edge_bt, edge_ab, edge_at]
-
-        ### now for the neighbours
-
-        if ab_is_red == ab_is_upper:
-            triangle_a.neighbours = [triangle.not_downriver()[0], triangle_b, triangle_c]
-            triangle_b.neighbours = [triangle_c, triangle_a, triangle.not_downriver()[1]]
-        else:
-            triangle_a.neighbours = [triangle_c, triangle.not_downriver()[0], triangle_b]
-            triangle_b.neighbours = [triangle.not_downriver()[1], triangle_c, triangle_a]
-
-        if c_is_red != c_is_upper:
-            triangle_c.neighbours = [triangle_b, triangle_a, neighbour_australian]
-        else:
-            triangle_c.neighbours = [triangle_a, neighbour_australian, triangle_b]
-
-        triangle.not_downriver()[0].update_contacts(triangle, triangle_a)
-        triangle.not_downriver()[1].update_contacts(triangle, triangle_b)
-        neighbour_australian.update_contacts(triangle, triangle_c)
-
-        triangle.is_buried = True
-        self.num_tetrahedra += 1
-        return con_tet ### pass back the tetrahedron we added
 
     def mark_ladderpole_descendants(self, ladderpole_descendant_segments):
         for i, v in enumerate(self.coast):
