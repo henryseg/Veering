@@ -762,7 +762,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
         else: ### go down
             downwards_flow_index = go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index)
     con.update_boundary()
-    con.install_thorn_ends()
+    # con.install_thorn_ends()
     return con, flow_tetrahedra, flow_edges
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
@@ -772,7 +772,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
         for v in tet.vertices:
             # print('tet vert age', con.vertices.index(v))
             con.update_boundary()
-            con.install_thorn_ends()
+            # con.install_thorn_ends()
             sides = tet_rectangle_sides(tet, v)
             for direction in range(2):
                 while sides[direction] == None:
@@ -785,7 +785,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
                         con.bury(triangles[1])
                     con.make_convex()
                     con.update_boundary()
-                    con.install_thorn_ends()
+                    # con.install_thorn_ends()
                     sides = tet_rectangle_sides(tet, v)
                     k += 1
                     if k > 50:

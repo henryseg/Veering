@@ -1017,6 +1017,9 @@ class continent:
         self.num_tetrahedra += 1
 
         ### now do all the in_fills that we can, coming from the new stuff we added.
+        self.back_fill(triangle, vert_a, vert_b, vert_t, triangle_a, triangle_b, edge_ab, edge_at, edge_bt, ab_is_upper)
+
+    def back_fill(self, triangle, vert_a, vert_b, vert_t, triangle_a, triangle_b, edge_ab, edge_at, edge_bt, ab_is_upper):    
         ### one of a and b triangles point to the coast, the other we need to in_fill along
 
         outer_triangles = [triangle_a, triangle_b]
@@ -1116,25 +1119,6 @@ class continent:
         for leaf in edge_bt.cusp_leaves:
             leaf.coastal_edge = edge_bt
 
-        ### figure out where each leaf's cusp is relative to last_edge to determine their positions on the two new coastal edges
-        ### then figure out where t_leaf goes in last_edge.cusp_leaves
-        ### finally, do the stuff on the other side
-
-        ###   b---R----t
-        ###   |`a    ,'|     is_upper, so faces t and c are below, a and b are new triangles above
-        ###   L  ` ,' c|
-        ###   |t ,' .  L     
-        ###   |,'    b.|     
-        ###   c----R---a 
- 
-        ###   c---R----b
-        ###   |`t    ,'|     not is_upper, so t and c are above, a and b are new triangles below
-        ###   L  ` ,' a| 
-        ###   |b ,' .  L     
-        ###   |,'    c.|
-        ###   a----R---t   
-
-
     def make_convex(self):
         ### new triangles are added to the end of the list so this is safe.
         ### new sinks created by in-fills have new triangles that point at them, so we get everything.
@@ -1223,95 +1207,95 @@ class continent:
                     self.coastal_edges.append(e)
                     break
 
-    def install_thorn_ends(self):
-        """For each cusp c, install c.purple_thorn_ends = [] ### [coastal arc, position along that arc] 
-        and same for green_thorn_ends. Must run update_boundary before running this"""
-        purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
-        green_train_routes = []
+    # def install_thorn_ends(self):
+    #     """For each cusp c, install c.purple_thorn_ends = [] ### [coastal arc, position along that arc] 
+    #     and same for green_thorn_ends. Must run update_boundary before running this"""
+    #     purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
+    #     green_train_routes = []
       
-        for edge in self.lower_landscape_edges:
-            leaf_end_edges = []
-            if edge.is_coastal():
-                if not edge.is_coastal_sink(upper = False):
-                    leaf_end_edges.append(edge)
-                    for tri in edge.boundary_triangles:
-                        if not tri.is_upper:
-                            last_tri = self.flow(tri)[0]
-                            last_edge = last_tri.edges[last_tri.downriver_index()]
-                            leaf_end_edges.append(last_edge)
-            else:
-                if edge.is_watershed():
-                    for tri in edge.boundary_triangles:
-                        last_tri = self.flow(tri)[0]
-                        last_edge = last_tri.edges[last_tri.downriver_index()]
-                        leaf_end_edges.append(last_edge)
-            if len(leaf_end_edges) == 2:
-                purple_train_routes.append(leaf_end_edges)
+    #     for edge in self.lower_landscape_edges:
+    #         leaf_end_edges = []
+    #         if edge.is_coastal():
+    #             if not edge.is_coastal_sink(upper = False):
+    #                 leaf_end_edges.append(edge)
+    #                 for tri in edge.boundary_triangles:
+    #                     if not tri.is_upper:
+    #                         last_tri = self.flow(tri)[0]
+    #                         last_edge = last_tri.edges[last_tri.downriver_index()]
+    #                         leaf_end_edges.append(last_edge)
+    #         else:
+    #             if edge.is_watershed():
+    #                 for tri in edge.boundary_triangles:
+    #                     last_tri = self.flow(tri)[0]
+    #                     last_edge = last_tri.edges[last_tri.downriver_index()]
+    #                     leaf_end_edges.append(last_edge)
+    #         if len(leaf_end_edges) == 2:
+    #             purple_train_routes.append(leaf_end_edges)
  
-        for edge in self.upper_landscape_edges:
-            leaf_end_edges = []
-            if edge.is_coastal():
-                if not edge.is_coastal_sink(upper = True):
-                    leaf_end_edges.append(edge)
-                    for tri in edge.boundary_triangles:
-                        if tri.is_upper:
-                            last_tri = self.flow(tri)[0]
-                            last_edge = last_tri.edges[last_tri.downriver_index()]
-                            leaf_end_edges.append(last_edge)
-            else:
-                if edge.is_watershed():
-                    for tri in edge.boundary_triangles:
-                        last_tri = self.flow(tri)[0]
-                        last_edge = last_tri.edges[last_tri.downriver_index()]
-                        leaf_end_edges.append(last_edge)
-            if len(leaf_end_edges) == 2:
-                green_train_routes.append(leaf_end_edges)
+    #     for edge in self.upper_landscape_edges:
+    #         leaf_end_edges = []
+    #         if edge.is_coastal():
+    #             if not edge.is_coastal_sink(upper = True):
+    #                 leaf_end_edges.append(edge)
+    #                 for tri in edge.boundary_triangles:
+    #                     if tri.is_upper:
+    #                         last_tri = self.flow(tri)[0]
+    #                         last_edge = last_tri.edges[last_tri.downriver_index()]
+    #                         leaf_end_edges.append(last_edge)
+    #         else:
+    #             if edge.is_watershed():
+    #                 for tri in edge.boundary_triangles:
+    #                     last_tri = self.flow(tri)[0]
+    #                     last_edge = last_tri.edges[last_tri.downriver_index()]
+    #                     leaf_end_edges.append(last_edge)
+    #         if len(leaf_end_edges) == 2:
+    #             green_train_routes.append(leaf_end_edges)
                     
-        for e in self.coastal_edges:
-            e.purple_ends = []  ### of train routes
-            e.green_ends = []
-        for e1, e2 in purple_train_routes:
-            assert e1.is_coastal()
-            assert e2.is_coastal()
-            e1.purple_ends.append(e2)
-            e2.purple_ends.append(e1)
-        for e1, e2 in green_train_routes:
-            e1.green_ends.append(e2)
-            e2.green_ends.append(e1)
-        for i, e in enumerate(self.coastal_edges):
-            rotated_coastal_edges = self.coastal_edges[i:] + self.coastal_edges[:i]
-            e.purple_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-            e.green_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
-            if e.is_red:
-                e.ends = e.green_ends + e.purple_ends
-            else:
-                e.ends = e.purple_ends + e.green_ends
+    #     for e in self.coastal_edges:
+    #         e.purple_ends = []  ### of train routes
+    #         e.green_ends = []
+    #     for e1, e2 in purple_train_routes:
+    #         assert e1.is_coastal()
+    #         assert e2.is_coastal()
+    #         e1.purple_ends.append(e2)
+    #         e2.purple_ends.append(e1)
+    #     for e1, e2 in green_train_routes:
+    #         e1.green_ends.append(e2)
+    #         e2.green_ends.append(e1)
+    #     for i, e in enumerate(self.coastal_edges):
+    #         rotated_coastal_edges = self.coastal_edges[i:] + self.coastal_edges[:i]
+    #         e.purple_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
+    #         e.green_ends.sort(key = lambda e_other:rotated_coastal_edges.index(e_other), reverse = True)
+    #         if e.is_red:
+    #             e.ends = e.green_ends + e.purple_ends
+    #         else:
+    #             e.ends = e.purple_ends + e.green_ends
 
-        for i, c in enumerate(self.coast):
-            c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
-            e = self.coastal_edges[i]
-            e1 = e.purple_ends[0]
-            while True:
-                index = e1.purple_ends.index(e)
-                if index == len(e1.purple_ends) - 1:
-                    assert self.coast[ (self.coastal_edges.index(e1) + 1) % len(self.coast) ] == c
-                    break
-                else:
-                    c.purple_thorn_ends.append( (e1, e1.ends.index(e)) )
-                    e, e1 = e1, e1.purple_ends[index + 1]
+    #     for i, c in enumerate(self.coast):
+    #         c.purple_thorn_ends = [] ### [coastal arc, position along that arc]
+    #         e = self.coastal_edges[i]
+    #         e1 = e.purple_ends[0]
+    #         while True:
+    #             index = e1.purple_ends.index(e)
+    #             if index == len(e1.purple_ends) - 1:
+    #                 assert self.coast[ (self.coastal_edges.index(e1) + 1) % len(self.coast) ] == c
+    #                 break
+    #             else:
+    #                 c.purple_thorn_ends.append( (e1, e1.ends.index(e)) )
+    #                 e, e1 = e1, e1.purple_ends[index + 1]
             
-        for i, c in enumerate(self.coast):
-            c.green_thorn_ends = [] ### [coastal arc, position along that arc]
-            e = self.coastal_edges[i]  ### immediately after the cusp
-            e1 = e.green_ends[0] ### of train routes, ordered counterclockwise along the edge
-            while True: # go around the crown counterclockwise, meaning that the thorn_ends are ordered clockwise around c
-                index = e1.green_ends.index(e)
-                if index == len(e1.green_ends) - 1:
-                    assert self.coast[ (self.coastal_edges.index(e1) + 1) % len(self.coast) ] == c
-                    break
-                else:
-                    c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
-                    e, e1 = e1, e1.green_ends[index + 1]
+    #     for i, c in enumerate(self.coast):
+    #         c.green_thorn_ends = [] ### [coastal arc, position along that arc]
+    #         e = self.coastal_edges[i]  ### immediately after the cusp
+    #         e1 = e.green_ends[0] ### of train routes, ordered counterclockwise along the edge
+    #         while True: # go around the crown counterclockwise, meaning that the thorn_ends are ordered clockwise around c
+    #             index = e1.green_ends.index(e)
+    #             if index == len(e1.green_ends) - 1:
+    #                 assert self.coast[ (self.coastal_edges.index(e1) + 1) % len(self.coast) ] == c
+    #                 break
+    #             else:
+    #                 c.green_thorn_ends.append( (e1, e1.ends.index(e)) )
+    #                 e, e1 = e1, e1.green_ends[index + 1]
 
         # for i, c in enumerate(self.coast):
         #     c.cusp_leaves = []  ## interleaved
