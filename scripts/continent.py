@@ -69,6 +69,9 @@ class landscape_edge:
     def coastal_index(self):
         return self.continent.coastal_edges.index(self)
 
+    def is_coastal(self):
+        return self in self.continent.coastal_edges
+
     def length(self):
         u, v = self.vertices
         return abs(u.pos.complex() - v.pos.complex())

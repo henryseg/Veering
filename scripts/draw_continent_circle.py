@@ -202,7 +202,7 @@ def tet_purple_rectangle_sides(tet, actually_do_green = False):
     return out
 
 def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landscape = False, draw_lower_landscape = False, 
-    draw_coastal_edges = True,
+    draw_coastal_edges = True, draw_all_edges = False,
     draw_cusp_leaves = True,
     shade_triangles = False, draw_fund_domain = False, fund_dom_tets = None, draw_fund_domain_edges = False,
     draw_tetrahedron_rectangles = [],
@@ -231,14 +231,16 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         # p = path.path(path.moveto(vert_pos.real, vert_pos.imag), path.lineto(vert_pos2.real, vert_pos2.imag))
         # canv.stroke(p, [deco.curvedtext("$"+str(con.vertices.index(v))+"$")])
 
-    if draw_coastal_edges:
-        for e in con.coastal_edges:
+    for e in con.edges:  
+    ### would be nice to get edges drawn in the correct order. upper bdry edges are on top, lower bdry edges are below, coast doesnt matter
+    ### internal edges (we think) have their edge rectangles in cusp leaves. Then check who spans who.
+    ### alternatively, draw lower landscape first then flip up through tetrahedra.
+        if draw_all_edges or (draw_coastal_edges and e.is_coastal()):
             col = edge_colours[e.is_red]
             u, v = e.vertices
             p = make_arc(u.circle_pos, v.circle_pos)
             p = p.transformed(scl)
             canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
-
 
     ### highlight vertices of tetrahedra in a fundamental domain
     if draw_fund_domain:
