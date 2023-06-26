@@ -201,25 +201,22 @@ def tet_purple_rectangle_sides(tet, actually_do_green = False):
         out.append(tet_rectangle_sides(tet, v))
     return out
 
-def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lower_landscape = False, 
+def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landscape = False, draw_lower_landscape = False, 
     draw_coastal_edges = True,
-    draw_upper_green = True, draw_lower_purple = False, draw_train_tracks = False, 
-    draw_foliation = True, foliation_style_old = False, foliation_style_split = False, 
-    foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = True,
+    draw_cusp_leaves = True,
     shade_triangles = False, draw_fund_domain = False, fund_dom_tets = None, draw_fund_domain_edges = False,
-    draw_tetrahedron_rectangles = []):
+    draw_tetrahedron_rectangles = [],
+    edge_thickness = 0.02,
+    leaf_thickness = 0.03):
     
     global_scale_up = 10.0
-    edge_thickness = 0.02
-    track_thickness = 0.02
-    leaf_thickness = 0.03
     edge_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
     green = color.rgb(0.0,0.5,0.0)
     purple = color.rgb(0.5,0.0,0.5)
 
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
-    canv.stroke(path.circle(0,0,global_scale_up), [style.linewidth(0.02)])
+    canv.stroke(path.circle(0,0,global_scale_up), [style.linewidth(edge_thickness)])
 
     n = len(con.coast)
     for v in con.coast:
@@ -227,7 +224,8 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         t = 2*pi*float(i)/float(n)
         v.circle_pos = complex(cos(t), sin(t))
         vert_pos = v.circle_pos * 1.01 * global_scale_up
-        canv.text(vert_pos.real, vert_pos.imag, "$"+str(con.vertices.index(v))+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
+        if draw_labels:
+            canv.text(vert_pos.real, vert_pos.imag, "$"+str(con.vertices.index(v))+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
 
         # vert_pos2 = v.circle_pos * 1.2 * global_scale_up
         # p = path.path(path.moveto(vert_pos.real, vert_pos.imag), path.lineto(vert_pos2.real, vert_pos2.imag))
@@ -259,7 +257,8 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
         update_fund_dom_tet_nums(con, fund_dom_tets)
         for v in [v for v in con.coast if v.fund_dom_tet_nums != []]:
             vert_pos = v.circle_pos * 1.03 * global_scale_up
-            canv.text(vert_pos.real, vert_pos.imag, "$"+str(v.fund_dom_tet_nums)+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
+            if draw_labels:
+                canv.text(vert_pos.real, vert_pos.imag, "$"+str(v.fund_dom_tet_nums)+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
 
 
     # lower_colours = {True: color.rgb(0.5,0.3,0), False: color.rgb(0,0.3,0.5)}
@@ -321,120 +320,25 @@ def draw_continent_circle(con, name = "", draw_upper_landscape = True, draw_lowe
             # canv.fill(path.circle(global_scale_up*center[0], global_scale_up*center[1], 0.1)) 
             tri_name = str(tri.index) ## in quotient manifold
             tri_name = str(tri.continent.triangles.index(tri)) ## in continent
-            canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+tri_name+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle] + transp)
+            if draw_labels:
+                canv.text(global_scale_up*center[0], global_scale_up*center[1], "$"+tri_name+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle] + transp)
 
-    ### train tracks...
-
-    purple_train_routes = []  ### pairs of coastal edges corresponding to a train route
-    green_train_routes = []
-    if draw_lower_purple:
-        if draw_train_tracks:
-            for tri in lower_tris:
-                midpts = []
-                is_reds = []
-                for e in tri.edges:
-                    is_reds.append(e.is_red)
-                    u, v = e.vertices
-                    p, midpt = make_arc(u.circle_pos, v.circle_pos, return_midpt = True)
-                    midpts.append(midpt)
-                for i in range(3):
-                    if (is_reds[i] == is_reds[(i+1)%3]) or (not is_reds[i] and is_reds[(i+1)%3]):
-                        p = make_arc(midpts[i], midpts[(i+1)%3])
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(track_thickness), style.linecap.round, purple])    
-        if draw_foliation:   
-            for edge in con.lower_landscape_edges:
-                leaf_end_edges = []
-                if edge.is_coastal():
-                    if not edge.is_coastal_sink(upper = False):
-                        leaf_end_edges.append(edge)
-                        for tri in edge.boundary_triangles:
-                            if not tri.is_upper:
-                                last_tri = con.flow(tri)[0]
-                                last_edge = last_tri.edges[last_tri.downriver_index()]
-                                leaf_end_edges.append(last_edge)
+    if draw_cusp_leaves:
+        leaves = { green: [], purple: []}
+        for i, c in enumerate(con.coast):
+            for leaf in c.cusp_leaves:
+                if leaf.is_upper:
+                    leaves[green].append(leaf)
                 else:
-                    if edge.is_watershed():
-                        for tri in edge.boundary_triangles:
-                            last_tri = con.flow(tri)[0]
-                            last_edge = last_tri.edges[last_tri.downriver_index()]
-                            leaf_end_edges.append(last_edge)
-                if len(leaf_end_edges) == 2:
-                    purple_train_routes.append(leaf_end_edges)
-                    if foliation_style_old:
-                        leaf_ends = []
-                        for e in leaf_end_edges:
-                            endpts = e.vertices
-                            _, midpt = make_arc(endpts[0].circle_pos, endpts[1].circle_pos, return_midpt = True)
-                            leaf_ends.append(midpt)
-                        p = make_arc(leaf_ends[0], leaf_ends[1])
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, purple])
-
-    if draw_upper_green:
-        if draw_train_tracks:
-            for tri in upper_tris:
-                midpts = []
-                is_reds = []
-                for e in tri.edges:
-                    is_reds.append(e.is_red)
-                    u, v = e.vertices
-                    p, midpt = make_arc(u.circle_pos, v.circle_pos, return_midpt = True)
-                    midpts.append(midpt)
-                for i in range(3):
-                    if (is_reds[i] == is_reds[(i+1)%3]) or (is_reds[i] and not is_reds[(i+1)%3]):
-                        p = make_arc(midpts[i], midpts[(i+1)%3])
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(track_thickness), style.linecap.round, green])
-        # if draw_foliation:
-        #     for edge in con.upper_landscape_edges:
-        #         leaf_end_edges = []
-        #         if edge.is_coastal():
-        #             if not edge.is_coastal_sink(upper = True):
-        #                 leaf_end_edges.append(edge)
-        #                 for tri in edge.boundary_triangles:
-        #                     if tri.is_upper:
-        #                         last_tri = con.flow(tri)[0]
-        #                         last_edge = last_tri.edges[last_tri.downriver_index()]
-        #                         leaf_end_edges.append(last_edge)
-        #         else:
-        #             if edge.is_watershed():
-        #                 for tri in edge.boundary_triangles:
-        #                     last_tri = con.flow(tri)[0]
-        #                     last_edge = last_tri.edges[last_tri.downriver_index()]
-        #                     leaf_end_edges.append(last_edge)
-        #         if len(leaf_end_edges) == 2:
-        #             green_train_routes.append(leaf_end_edges)
-        #             if foliation_style_old:
-        #                 leaf_ends = []
-        #                 for e in leaf_end_edges:
-        #                     endpts = e.vertices
-        #                     _, midpt = make_arc(endpts[0].circle_pos, endpts[1].circle_pos, return_midpt = True)
-        #                     leaf_ends.append(midpt)
-        #                 p = make_arc(leaf_ends[0], leaf_ends[1])
-        #                 p = p.transformed(scl)
-        #                 canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
-    
-    if draw_foliation and (foliation_style_split or foliation_style_cusp_leaves or foliation_style_boundary_leaves):
-        if foliation_style_cusp_leaves or foliation_style_boundary_leaves:
-            leaves = { green: [], purple: []}
-            for i, c in enumerate(con.coast):
-                if foliation_style_cusp_leaves:
-                    for leaf in c.cusp_leaves:
-                        if leaf.is_upper:
-                            leaves[green].append(leaf)
-                        else:
-                            leaves[purple].append(leaf)
-            for col in [purple, green]:
-                for leaf in leaves[col]:
-                    start, end = leaf.end_positions()
-                    start = circle_position(start, len(con.coast))
-                    end = circle_position(end, len(con.coast))
-                    p = make_arc(start, end)
-                    p = p.transformed(scl)
-                    canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
-
-
+                    leaves[purple].append(leaf)
+        for col in [purple, green]:
+            for leaf in leaves[col]:
+                start, end = leaf.end_positions()
+                start = circle_position(start, len(con.coast))
+                end = circle_position(end, len(con.coast))
+                p = make_arc(start, end)
+                p = p.transformed(scl)
+                canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
 
     #         for tet in draw_tetrahedron_rectangles:
     #             a, c = tet.upper_edge().vertices
@@ -488,11 +392,11 @@ def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     initial_tet_face = tet_face(vt, 0, 0, verts_pos = [None, None, None, None])
     con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
     con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
-    # con.make_convex()
-    con.update_boundary()
-    print(len(con.triangles), len(con.vertices), len(con.tetrahedra))
+    con.build_boundary_data()
+    print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
     return con
 
+### this is probably broken, needs to be redone anyway - move around the universal cover building onto the continent as necessary
 def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
@@ -532,8 +436,7 @@ def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
     #     triangle_path.append(highest_triangle)
     #     path_index = path_index + 1
 
-    #     con.make_convex() ### could this take us further up dual_cycle?
-    #     con.update_boundary()
+    #     con.build_boundary_data()
 
     for i in range(num_steps):
         if i%2 == 0:
@@ -550,10 +453,7 @@ def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
                     triangle_path.insert(0, triangle)
                     break
             lowest_path_index = lowest_path_index - 1
-
-        con.make_convex() ### could this take us further up dual_cycle?
-
-    con.update_boundary()
+    con.build_boundary_data()
     con.triangle_path = triangle_path
     return con
 
@@ -575,7 +475,6 @@ def go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index)
     edge = flow_edges[-1]
     last_tet = None
     while True:
-        con.update_boundary()  
         upper_boundary_triangles = [t for t in edge.boundary_triangles if t.is_upper] 
         if len(upper_boundary_triangles) == 0:
             break ## out of while loop
@@ -585,8 +484,7 @@ def go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index)
     assert last_tet.index == flow_cycle[upwards_flow_index][0]
     flow_tetrahedra.append(last_tet)
     flow_edges.append(flow_edge_in_continent(last_tet, flow_cycle[upwards_flow_index][1]))
-    con.make_convex() ### could this take us further up dual_cycle? We don't think so
-    con.update_boundary()
+    con.build_boundary_data()
     return upwards_flow_index
 
 def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index):
@@ -605,7 +503,7 @@ def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_in
 
     if (tet_below_num, top_edge_num) == flow_cycle[downwards_flow_index]: ### flow cycle went straight up
         while True:
-            con.update_boundary()  
+            con.build_boundary_data()  
             lower_boundary_triangles = [t for t in edge.boundary_triangles if not t.is_upper] 
             if len(lower_boundary_triangles) == 0:
                 break ## out of while loop
@@ -623,14 +521,13 @@ def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_in
                 downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
         assert downward_path != None
         for j, (tet_num, edge_num) in enumerate(downward_path):
-            con.update_boundary()  
+            con.build_boundary_data()  
             lower_boundary_triangles = [t for t in edge.boundary_triangles if not t.is_upper and t.index == downward_path_faces[j][0]] 
             assert len(lower_boundary_triangles) == 1
             last_tet = con.bury(lower_boundary_triangles[0])
     assert last_tet != None
     flow_tetrahedra.insert(0, last_tet)
-    con.make_convex() ### could this take us further down dual_cycle? We don't think so
-    con.update_boundary()
+    con.build_boundary_data()
     return downwards_flow_index
 
 def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
@@ -664,7 +561,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
 
         else: ### go down
             downwards_flow_index = go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index)
-    con.update_boundary()
+    con.build_boundary_data()
     # con.install_thorn_ends()
     return con, flow_tetrahedra, flow_edges
 
@@ -674,7 +571,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     for tet in tetrahedra_to_complete:
         for v in tet.vertices:
             # print('tet vert age', con.vertices.index(v))
-            con.update_boundary()
+            con.build_boundary_data()
             # con.install_thorn_ends()
             sides = tet_rectangle_sides(tet, v)
             for direction in range(2):
@@ -686,8 +583,7 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
                         con.bury(triangles[0])
                     else:
                         con.bury(triangles[1])
-                    con.make_convex()
-                    con.update_boundary()
+                    con.build_boundary_data()
                     # con.install_thorn_ends()
                     sides = tet_rectangle_sides(tet, v)
                     k += 1

@@ -224,24 +224,23 @@ def draw_continent_circle_script():
     # # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
     # tets_to_draw = fund_dom_tets[0:]
 
-    for i in range(14):
-        max_num_tetrahedra = i
-        con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-        fund_dom_tets = []
-        tets_to_draw = []
-        name = veering_isosig + 'naive' + str(max_num_tetrahedra)
+    # for i in range(14):
+    #     max_num_tetrahedra = i
+    max_num_tetrahedra = 100
+    con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
+    fund_dom_tets = []
+    tets_to_draw = []
+    name = veering_isosig + 'naive' + str(max_num_tetrahedra)
 
-        draw_continent_circle(con, name = name,
-            draw_upper_landscape = True, draw_lower_landscape = True, 
-            # draw_upper_landscape = False, draw_lower_landscape = False, 
-            draw_coastal_edges = True,
-            draw_upper_green = True, draw_lower_purple = True,
-            draw_train_tracks = False, draw_foliation = True, 
-            # draw_train_tracks = True, draw_foliation = False, 
-            foliation_style_old = False, foliation_style_split = False, 
-            foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
-            shade_triangles = False, draw_fund_domain = False, fund_dom_tets = fund_dom_tets,
-            draw_fund_domain_edges = False, draw_tetrahedron_rectangles = tets_to_draw)
+    draw_continent_circle(con, name = name, draw_labels = False,
+        # draw_upper_landscape = True, draw_lower_landscape = True, 
+        draw_upper_landscape = False, draw_lower_landscape = False, 
+        draw_coastal_edges = True,
+        draw_cusp_leaves = True,
+        shade_triangles = False, draw_fund_domain = False, fund_dom_tets = fund_dom_tets,
+        draw_fund_domain_edges = False, draw_tetrahedron_rectangles = tets_to_draw,
+        edge_thickness = 0.001,
+        leaf_thickness = 0.0005)
 
     # veering_isosig = 'cPcbbbiht_12'
     # veering_isosig = 'dLQacccjsnk_200'
