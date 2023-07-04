@@ -342,6 +342,30 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
                 p = p.transformed(scl)
                 canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
 
+
+    ### check edge rectangle
+    e = con.edges[38]
+    col = edge_colours[e.is_red]
+    u, v = e.vertices
+    p = make_arc(u.circle_pos, v.circle_pos)
+    p = p.transformed(scl)
+    canv.stroke(p, [style.linewidth(2*edge_thickness), style.linecap.round, col])
+    cusp_leaves = e.rectangle_sides()
+    for leaf in cusp_leaves:
+        if leaf != None:
+            if leaf.is_upper:
+                col = green
+            else:
+                col = purple
+            start, end = leaf.end_positions()
+            start = circle_position(start, len(con.coast))
+            end = circle_position(end, len(con.coast))
+            p = make_arc(start, end)
+            p = p.transformed(scl)
+            canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, col])
+
+
+
     #         for tet in draw_tetrahedron_rectangles:
     #             a, c = tet.upper_edge().vertices
     #             b, d = tet.lower_edge().vertices

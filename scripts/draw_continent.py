@@ -359,7 +359,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, 
 
         con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
         
-        con.build_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
+        con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
         # print(('unfound desired_vertices', con.desired_vertices))
         # assert con.desired_vertices == [] ### found all the desired vertices

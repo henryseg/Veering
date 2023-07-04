@@ -226,7 +226,7 @@ def draw_continent_circle_script():
 
     # for i in range(14):
     #     max_num_tetrahedra = i
-    max_num_tetrahedra = 10
+    max_num_tetrahedra = 100
     con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
     fund_dom_tets = []
     tets_to_draw = []
@@ -235,12 +235,12 @@ def draw_continent_circle_script():
     draw_continent_circle(con, name = name, draw_labels = False,
         # draw_upper_landscape = True, draw_lower_landscape = True, 
         draw_upper_landscape = False, draw_lower_landscape = False, 
-        draw_coastal_edges = True, draw_all_edges = True,
+        draw_coastal_edges = True, draw_all_edges = False,
         draw_cusp_leaves = True,
         shade_triangles = False, draw_fund_domain = False, fund_dom_tets = fund_dom_tets,
         draw_fund_domain_edges = False, draw_tetrahedron_rectangles = tets_to_draw,
         edge_thickness = 0.02,
-        leaf_thickness = 0.03)
+        leaf_thickness = 0.02)
         # edge_thickness = 0.001,
         # leaf_thickness = 0.0005)
 

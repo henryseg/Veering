@@ -8,7 +8,7 @@ from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num
 from veering.veering_tri import veering_triangulation
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
-from circular_order import are_anticlockwise
+from circular_order import are_anticlockwise, are_linking
 from sage.rings.rational_field import QQ 
 
 class vertex:
@@ -55,6 +55,7 @@ class landscape_edge:
         self.index = edge_index
         self.is_red = is_red
         self.cusp_leaves = [] ### should be empty if not a coastal edge
+        self.rectangle_sides_data = [None, None, None, None]
         # try:
         #     assert self.length() > 0.0001
         # except:
@@ -69,8 +70,53 @@ class landscape_edge:
     def coastal_index(self):
         return self.continent.coastal_edges.index(self)
 
+    def end_positions(self):
+        return [v.coastal_index() for v in self.vertices]
+
+    def links(self, other):
+        """Returns True if this edge links other (could be leaf or edge)"""
+        a1, a2 = self.end_positions()
+        b1, b2 = other.end_positions()
+        return are_linking(a1, a2, b1, b2)
+
     def is_coastal(self):
         return self in self.continent.coastal_edges
+
+    def rectangle_sides(self):
+        if not None in self.rectangle_sides_data:
+            return self.rectangle_sides_data
+        ### otherwise update things
+        u, v = self.vertices
+        leaves = u.cusp_leaves
+        first_leaf = leaves[0]
+        last_leaf = leaves[-1]
+        if are_anticlockwise(u.coastal_index(), first_leaf.end_positions()[1], v.coastal_index()):
+            self.rectangle_sides_data[1] = first_leaf
+        elif are_anticlockwise(u.coastal_index(), v.coastal_index(), last_leaf.end_positions()[1]):
+            self.rectangle_sides_data[0] = last_leaf
+        else:      
+            for i, leaf in enumerate(leaves):
+                if are_anticlockwise(u.coastal_index(), leaf.end_positions()[1], v.coastal_index()):
+                    self.rectangle_sides_data[0] = leaves[i-1]
+                    self.rectangle_sides_data[1] = leaf
+                    break
+        leaves = v.cusp_leaves
+        first_leaf = leaves[0]
+        last_leaf = leaves[-1]
+        if are_anticlockwise(v.coastal_index(), first_leaf.end_positions()[1], u.coastal_index()):
+            self.rectangle_sides_data[3] = first_leaf
+        elif are_anticlockwise(v.coastal_index(), u.coastal_index(), last_leaf.end_positions()[1]):
+            self.rectangle_sides_data[2] = last_leaf
+        else:      
+            for i, leaf in enumerate(leaves):
+                if are_anticlockwise(v.coastal_index(), leaf.end_positions()[1], u.coastal_index()):
+                    self.rectangle_sides_data[2] = leaves[i-1]
+                    self.rectangle_sides_data[3] = leaf
+                    break
+        if not None in self.rectangle_sides_data:
+            a, b, c, d = self.rectangle_sides_data
+            assert a.links(d) and b.links(c)
+        return self.rectangle_sides_data
 
     def length(self):
         u, v = self.vertices
@@ -90,6 +136,28 @@ class landscape_edge:
         intersection = set(self.vertices) & set(other.vertices) 
         assert len(intersection) == 1
         return intersection.pop()
+
+class cusp_leaf:
+    def __init__(self, continent, cusp, coastal_edge, is_upper):
+        self.continent = continent
+        self.cusp = cusp
+        self.coastal_edge = coastal_edge
+        self.is_upper = is_upper 
+
+    def end_positions(self):
+        start = self.cusp.coastal_index()
+        index_on_edge = self.coastal_edge.cusp_leaves.index(self)
+        end = self.coastal_edge.coastal_index() + QQ( ((index_on_edge) + 1)/(len(self.coastal_edge.cusp_leaves) + 1) )
+        return (start, end)
+
+    def links(self, other):
+        """Returns True if this cusp leaf links other (could be leaf or edge)"""
+        a1, a2 = self.end_positions()
+        b1, b2 = other.end_positions()
+        return are_linking(a1, a2, b1, b2)
+
+        ### have faces know about the cusp leaves that start there, and vice versa?
+
 
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
@@ -387,21 +455,6 @@ class continent_tetrahedron:
     #         out.append(vert)
     #     return out
         
-class cusp_leaf:
-    def __init__(self, continent, cusp, coastal_edge, is_upper):
-        self.continent = continent
-        self.cusp = cusp
-        self.coastal_edge = coastal_edge
-        self.is_upper = is_upper 
-
-    def end_positions(self):
-        start = self.cusp.coastal_index()
-        index_on_edge = self.coastal_edge.cusp_leaves.index(self)
-        end = self.coastal_edge.coastal_index() + QQ( ((index_on_edge) + 1)/(len(self.coastal_edge.cusp_leaves) + 1) )
-        return (start, end)
-
-        ### to do: functions to check if leaves link each other or edges etc
-
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
@@ -788,6 +841,12 @@ class continent:
             triangle_a.edges = [edge_tb, edge_bn, edge_tn]
             triangle_b.edges = [edge_na, edge_at, edge_tn]
 
+        assert edge_tn.links(edge_ab)
+        assert not edge_tn.links(edge_bn)
+        assert not edge_tn.links(edge_na)
+        assert not edge_tn.links(edge_at)
+        assert not edge_tn.links(edge_tb)
+
         ## now for the neighbours
 
         if tris_ab_are_red == ab_is_upper:
@@ -983,6 +1042,13 @@ class continent:
             triangle_c.edges = [edge_at, edge_bt, edge_ab]
         else:
             triangle_c.edges = [edge_bt, edge_ab, edge_at]
+
+        assert edge_ct.links(edge_ab)
+        assert not edge_ct.links(edge_at)
+        assert not edge_ct.links(edge_bt)
+        assert not edge_ct.links(edge_bc)
+        assert not edge_ct.links(edge_ca)
+        ### could check more...
 
         ### now for the neighbours
 
@@ -1180,7 +1246,22 @@ class continent:
         old_coast = old_coast[inf_vert_index:] + old_coast[:inf_vert_index]
         return old_coast
 
-    def build_fundamental_domain_old(self, max_num_tetrahedra = 50000):
+    def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
+        self.first_non_buried_index = 0
+        while self.num_tetrahedra < max_num_tetrahedra:  
+            tri = self.triangles[self.first_non_buried_index]  
+            self.bury(tri)
+            self.first_non_buried_index += 1
+            while self.triangles[self.first_non_buried_index].is_buried():
+                self.first_non_buried_index += 1
+        self.build_boundary_data()  
+
+    def build_triangulation_fundamental_domain(self, max_num_tetrahedra = 50000):
+        """Build a continent that contains a fundamental domain as given to us by 
+           tree_faces of fundamental_domain.spanning_dual_tree"""
+        pass
+
+    def build_boundary_fundamental_domain_old(self, max_num_tetrahedra = 50000):
         self.first_non_buried_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
             tri = self.triangles[self.first_non_buried_index]  
@@ -1192,7 +1273,8 @@ class continent:
         self.build_boundary_data()  
 
     ### old version builds lots of things we dont care about, this is much faster.
-    def build_fundamental_domain(self, max_num_tetrahedra = 50000):
+    def build_boundary_fundamental_domain(self, max_num_tetrahedra = 50000):
+        ### fundamental domain for the boundary torus?
         self.first_non_buried_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
             tri = self.triangles[self.first_non_buried_index] 
@@ -1205,15 +1287,7 @@ class continent:
                 self.first_non_buried_index += 1
         self.build_boundary_data()  
 
-    def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
-        self.first_non_buried_index = 0
-        while self.num_tetrahedra < max_num_tetrahedra:  
-            tri = self.triangles[self.first_non_buried_index]  
-            self.bury(tri)
-            self.first_non_buried_index += 1
-            while self.triangles[self.first_non_buried_index].is_buried():
-                self.first_non_buried_index += 1
-        self.build_boundary_data()  
+
 
     def build_on_coast(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
         self.max_length = max_length
