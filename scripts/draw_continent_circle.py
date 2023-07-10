@@ -209,6 +209,12 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     edge_thickness = 0.02,
     leaf_thickness = 0.03):
     
+    # ### check edge rectangle
+    # check_edge = con.edges[240]
+    # print(len(con.tetrahedra))
+    # check_edge.ensure_continent_contains_rectangle()
+    # print(len(con.tetrahedra))
+
     global_scale_up = 10.0
     edge_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
     green = color.rgb(0.0,0.5,0.0)
@@ -343,26 +349,25 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
                 canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
 
 
-    ### check edge rectangle
-    e = con.edges[38]
-    col = edge_colours[e.is_red]
-    u, v = e.vertices
-    p = make_arc(u.circle_pos, v.circle_pos)
-    p = p.transformed(scl)
-    canv.stroke(p, [style.linewidth(2*edge_thickness), style.linecap.round, col])
-    cusp_leaves = e.rectangle_sides()
-    for leaf in cusp_leaves:
-        if leaf != None:
-            if leaf.is_upper:
-                col = green
-            else:
-                col = purple
-            start, end = leaf.end_positions()
-            start = circle_position(start, len(con.coast))
-            end = circle_position(end, len(con.coast))
-            p = make_arc(start, end)
-            p = p.transformed(scl)
-            canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, col])
+    # ### draw edge rectangle
+    # col = edge_colours[check_edge.is_red]
+    # u, v = check_edge.vertices
+    # p = make_arc(u.circle_pos, v.circle_pos)
+    # p = p.transformed(scl)
+    # canv.stroke(p, [style.linewidth(2*edge_thickness), style.linecap.round, col])
+    # cusp_leaves = check_edge.rectangle_sides()
+    # for leaf in cusp_leaves:
+    #     if leaf != None:
+    #         if leaf.is_upper:
+    #             col = green
+    #         else:
+    #             col = purple
+    #         start, end = leaf.end_positions()
+    #         start = circle_position(start, len(con.coast))
+    #         end = circle_position(end, len(con.coast))
+    #         p = make_arc(start, end)
+    #         p = p.transformed(scl)
+    #         canv.stroke(p, [style.linewidth(2*leaf_thickness), style.linecap.round, col])
 
 
 

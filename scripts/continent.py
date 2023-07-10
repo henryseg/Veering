@@ -50,6 +50,7 @@ class landscape_edge:
         self.vertices = vertices
         for v in self.vertices:
             v.edges.append(self)
+        self.triangles = []
         self.other_end = {self.vertices[0]:self.vertices[1], self.vertices[1]:self.vertices[0]}
         self.continent.edges.append(self)
         self.index = edge_index
@@ -118,6 +119,16 @@ class landscape_edge:
             assert a.links(d) and b.links(c)
         return self.rectangle_sides_data
 
+    def ensure_continent_contains_rectangle(self):
+        """Add to the continent to ensure that this edge has all its cusp leaves in the continent"""
+        while None in self.rectangle_sides():
+            for tri in self.triangles:
+                if not tri.is_buried():
+                    self.continent.bury(tri)
+                    break
+                if tri == self.triangles[-1]:
+                    assert False
+
     def length(self):
         u, v = self.vertices
         return abs(u.pos.complex() - v.pos.complex())
@@ -157,15 +168,16 @@ class cusp_leaf:
         return are_linking(a1, a2, b1, b2)
 
         ### have faces know about the cusp leaves that start there, and vice versa?
+        ### leave until we need it
 
 
 class landscape_triangle:
-    def __init__(self, continent, face_index, is_upper, is_red, vertices, edges, neighbours):
+    def __init__(self, continent, face_index, is_upper, is_red):
         self.continent = continent
         self.index = face_index ## in the quotient manifold
         self.is_upper = is_upper ## true if we are on the upper landscape of the continent (or were, before we got buried) 
         self.is_red = is_red ## if self has two red edges
-        self.vertices = vertices  ## list of three vertices, oriented anticlockwise as viewed from above, with the special vertex first
+        self.vertices = []  ## list of three vertices, oriented anticlockwise as viewed from above, with the special vertex first
         ### the special vertex is incident to two edges of the same colour
 
         ###    *                *
@@ -174,14 +186,19 @@ class landscape_triangle:
         ### /     \          /     \
         ### ---B---          ---R---
 
-        self.edges = edges
+        self.edges = []
         self.upper_tet = None
         self.lower_tet = None
-        self.neighbours = neighbours ## list of three triangles incident to this one, opposite corresponding vertices
+        self.neighbours = [] ## list of three triangles incident to this one, opposite corresponding vertices
         self.continent.triangles.append(self)
 
     def __str__(self):
         return 'continent_ind,triang_ind,upper,red,vertices,buried ' + str([self.continent.triangles.index(self), self.index, self.is_upper, self.is_red, self.vertices, self.is_buried()])
+
+    def update_edges(self, edges):
+        self.edges = edges
+        for e in self.edges:
+            e.triangles.append(self)
 
     def is_buried(self):
         return self.upper_tet != None and self.lower_tet != None
@@ -519,10 +536,10 @@ class continent:
         cd_is_red = ( upper_edge_colour == "red" )
         cd_is_upper = True
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red, None, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red, None, None, None)
-        triangle_c = landscape_triangle(self, face_c_index, cd_is_upper, cd_is_red, None, None, None)
-        triangle_d = landscape_triangle(self, face_d_index, cd_is_upper, cd_is_red, None, None, None)
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red)
+        triangle_c = landscape_triangle(self, face_c_index, cd_is_upper, cd_is_red)
+        triangle_d = landscape_triangle(self, face_d_index, cd_is_upper, cd_is_red)
 
         ## now for the vertices
 
@@ -586,18 +603,18 @@ class continent:
         self.coastal_edges = self.coastal_edges[inf_vert_index:] + self.coastal_edges[:inf_vert_index]
 
         if tris_ab_are_red: ## the triangles a and b, not the edge
-            triangle_a.edges = [edge_bd, edge_bc, edge_cd]
-            triangle_b.edges = [edge_ac, edge_ad, edge_cd]
+            triangle_a.update_edges( [edge_bd, edge_bc, edge_cd] )
+            triangle_b.update_edges( [edge_ac, edge_ad, edge_cd] )
         else:
-            triangle_a.edges = [edge_bc, edge_cd, edge_bd]
-            triangle_b.edges = [edge_ad, edge_cd, edge_ac]
+            triangle_a.update_edges( [edge_bc, edge_cd, edge_bd] )
+            triangle_b.update_edges( [edge_ad, edge_cd, edge_ac] )
 
         if cd_is_red: 
-            triangle_c.edges = [edge_bd, edge_ab, edge_ad]
-            triangle_d.edges = [edge_ac, edge_ab, edge_bc]
+            triangle_c.update_edges( [edge_bd, edge_ab, edge_ad] )
+            triangle_d.update_edges( [edge_ac, edge_ab, edge_bc] )
         else:
-            triangle_c.edges = [edge_ad, edge_bd, edge_ab]
-            triangle_d.edges = [edge_bc, edge_ac, edge_ab]
+            triangle_c.update_edges( [edge_ad, edge_bd, edge_ab] )
+            triangle_d.update_edges( [edge_bc, edge_ac, edge_ab] )
 
         ## now for the neighbours
 
@@ -757,8 +774,8 @@ class continent:
         tris_ab_are_red = ( far_edge_colour == "red" )
         ab_is_upper = triangle.is_upper
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red, None, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red, None, None, None)
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red)
 
         ## add the tetrahedron 
 
@@ -835,11 +852,11 @@ class continent:
         assert edge_ab == edge_ba
 
         if tris_ab_are_red == ab_is_upper:
-            triangle_a.edges = [edge_bn, edge_tn, edge_tb]
-            triangle_b.edges = [edge_at, edge_tn, edge_na]
+            triangle_a.update_edges( [edge_bn, edge_tn, edge_tb] )
+            triangle_b.update_edges( [edge_at, edge_tn, edge_na] )
         else:
-            triangle_a.edges = [edge_tb, edge_bn, edge_tn]
-            triangle_b.edges = [edge_na, edge_at, edge_tn]
+            triangle_a.update_edges( [edge_tb, edge_bn, edge_tn] )
+            triangle_b.update_edges( [edge_na, edge_at, edge_tn] )
 
         assert edge_tn.links(edge_ab)
         assert not edge_tn.links(edge_bn)
@@ -928,9 +945,9 @@ class continent:
         ab_is_upper = triangle.is_upper
         c_is_upper = not triangle.is_upper
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red, None, None, None)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red, None, None, None)
-        triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red, None, None, None)
+        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red)
+        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red)
+        triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red)
 
         ## add the tetrahedron 
 
@@ -1032,16 +1049,16 @@ class continent:
             edge_ca, edge_ab, edge_bc = triangle.edges
 
         if tris_ab_are_red == ab_is_upper:
-            triangle_a.edges = [edge_bc, edge_ct, edge_bt]
-            triangle_b.edges = [edge_at, edge_ct, edge_ca]
+            triangle_a.update_edges( [edge_bc, edge_ct, edge_bt] )
+            triangle_b.update_edges( [edge_at, edge_ct, edge_ca] )
         else:
-            triangle_a.edges = [edge_bt, edge_bc, edge_ct]
-            triangle_b.edges = [edge_ca, edge_at, edge_ct]
+            triangle_a.update_edges( [edge_bt, edge_bc, edge_ct] )
+            triangle_b.update_edges( [edge_ca, edge_at, edge_ct] )
 
         if c_is_red != c_is_upper:
-            triangle_c.edges = [edge_at, edge_bt, edge_ab]
+            triangle_c.update_edges( [edge_at, edge_bt, edge_ab] )
         else:
-            triangle_c.edges = [edge_bt, edge_ab, edge_at]
+            triangle_c.update_edges( [edge_bt, edge_ab, edge_at] )
 
         assert edge_ct.links(edge_ab)
         assert not edge_ct.links(edge_at)
