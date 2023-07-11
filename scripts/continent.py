@@ -6,10 +6,12 @@ from veering.file_io import parse_data_file, read_from_pickle
 from veering.basic_math import sign
 from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num
 from veering.veering_tri import veering_triangulation
+from veering.fundamental_domain import spanning_dual_tree
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
 from circular_order import are_anticlockwise, are_linking
 from sage.rings.rational_field import QQ 
+
 
 class vertex:
     def __init__(self, continent, pos):
@@ -24,6 +26,9 @@ class vertex:
     def coastal_index(self):
         return self.continent.coast.index(self)
 
+    def chronological_index(self):
+        return self.continent.vertices.index(self)
+
     def is_ladderpole_descendant(self):
         return len(self.ladderpole_ancestors) != 0
 
@@ -35,7 +40,7 @@ class vertex:
 
     def __repr__(self):
         if self.pos == None:
-            return 'chron' + str(self.continent.vertices.index(self))
+            return 'chron' + str(self.chronological_index())
         elif not self.pos.is_infinity():
             return str(self.pos.complex())
         else:
@@ -443,22 +448,22 @@ class continent_tetrahedron:
     #         out = out.union(set(tri.vertices))
     #     return out
 
-    # def ordered_faces(self):
-    #     out = []
-    #     for i in range(4):
-    #         face_index = self.continent.vt.tri.tetrahedron(self.index).triangle(i).index()
-    #         if self.continent.vt.coorientations[self.index][i] == +1: ## is upper triangle
-    #             for triangle in self.upper_triangles:
-    #                 if triangle.index == face_index:
-    #                     out.append(triangle)
-    #                     break
-    #         else:
-    #             for triangle in self.lower_triangles:
-    #                 if triangle.index == face_index:
-    #                     out.append(triangle)
-    #                     break
-    #     assert len(out) == 4
-    #     return out
+    def ordered_faces(self):
+        out = []
+        for i in range(4):
+            face_index = self.continent.vt.tri.tetrahedron(self.index).triangle(i).index()
+            if self.continent.vt.coorientations[self.index][i] == +1: ## is upper triangle
+                for triangle in self.upper_triangles:
+                    if triangle.index == face_index:
+                        out.append(triangle)
+                        break
+            else:
+                for triangle in self.lower_triangles:
+                    if triangle.index == face_index:
+                        out.append(triangle)
+                        break
+        assert len(out) == 4
+        return out
 
     # def ordered_vertices(self):
     #     out = []
@@ -1276,7 +1281,42 @@ class continent:
     def build_triangulation_fundamental_domain(self, max_num_tetrahedra = 50000):
         """Build a continent that contains a fundamental domain as given to us by 
            tree_faces of fundamental_domain.spanning_dual_tree"""
-        pass
+        initial_tet_num = self.tet_face.tet_num
+        tree_faces, non_tree_faces, distances_to_root = spanning_dual_tree(self.vt.tri, initial_tet_num = initial_tet_num)
+        print(tree_faces)
+        initial_continent_tet = self.tetrahedra[0]
+        continent_fund_dom_tets = [initial_continent_tet]
+        initial_regina_tet = self.vt.tri.tetrahedron(initial_tet_num)
+        initial_landscape_triangles = initial_continent_tet.ordered_faces()
+
+        continent_tree_faces_frontier = []
+        for i in range(4):
+            face_index = initial_regina_tet.face(2, i).index()
+            if face_index in tree_faces:
+                continent_tree_faces_frontier.append(initial_landscape_triangles[i])
+                tree_faces.remove(face_index)
+
+        while len(continent_fund_dom_tets) < self.vt.tri.countTetrahedra():
+            triangle = continent_tree_faces_frontier.pop()
+            neighbouring_continent_tets = [triangle.upper_tet, triangle.lower_tet] ### could be None
+            got_already = [tet in continent_fund_dom_tets for tet in neighbouring_continent_tets]
+            assert got_already.count(True) == 1
+            new_continent_tet = neighbouring_continent_tets[got_already.index(False)]
+            if new_continent_tet == None:
+                self.bury(triangle)
+            neighbouring_continent_tets = [triangle.upper_tet, triangle.lower_tet]
+            new_continent_tet = neighbouring_continent_tets[got_already.index(False)]
+            assert new_continent_tet != None
+            continent_fund_dom_tets.append(new_continent_tet)
+            new_regina_tet = self.vt.tri.tetrahedron(new_continent_tet.index)
+            new_landscape_triangles = new_continent_tet.ordered_faces()
+            for i in range(4):
+                face_index = new_regina_tet.face(2, i).index()
+                if face_index in tree_faces:
+                    continent_tree_faces_frontier.append(new_landscape_triangles[i])
+                    tree_faces.remove(face_index)
+        return continent_fund_dom_tets
+
 
     def build_boundary_fundamental_domain_old(self, max_num_tetrahedra = 50000):
         self.first_non_buried_index = 0

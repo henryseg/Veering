@@ -427,6 +427,16 @@ def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
     return con
 
+def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50):
+    tri, angle = isosig_to_tri_angle(veering_isosig)
+    vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
+    initial_tet_face = tet_face(vt, 0, 0, verts_pos = [None, None, None, None])
+    con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
+    continent_fund_dom_tets = con.build_triangulation_fundamental_domain(max_num_tetrahedra = max_num_tetrahedra)
+    con.build_boundary_data()
+    print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
+    return con, continent_fund_dom_tets
+
 ### this is probably broken, needs to be redone anyway - move around the universal cover building onto the continent as necessary
 def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
     tri, angle = isosig_to_tri_angle(veering_isosig)

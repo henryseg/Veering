@@ -10,16 +10,18 @@ from .transverse_taut import is_transverse_taut, edge_side_face_collections
 
 verbose = 0
 
-def spanning_dual_tree(triangulation):
+def spanning_dual_tree(triangulation, initial_tet_num = 0):
     """
     Returns three lists - tree faces (dual to edges in the spanning
     tree), non-tree faces (dual to edges not in the spanning tree),
     and the distance of each tet (in the tree) to the root.  We use
     the regina numbering to determine the tree.
     """
-    explored_tetrahedra = [0]
-    distances_to_root = [0] + [None]*(triangulation.countTetrahedra() - 1)
-    frontier_tet_faces = [(0, 0), (0, 1), (0, 2), (0, 3)]
+    explored_tetrahedra = [initial_tet_num]
+    distances_to_root = [None]*triangulation.countTetrahedra()
+    distances_to_root[initial_tet_num] = 0
+
+    frontier_tet_faces = [(initial_tet_num, 0), (initial_tet_num, 1), (initial_tet_num, 2), (initial_tet_num, 3)]
     tree_faces = []
     non_tree_faces = []
     
