@@ -56,6 +56,9 @@ class landscape_edge:
         for v in self.vertices:
             v.edges.append(self)
         self.triangles = []
+        self.upper_tet = None
+        self.lower_tet = None
+        self.side_tetrahedra = []
         self.other_end = {self.vertices[0]:self.vertices[1], self.vertices[1]:self.vertices[0]}
         self.continent.edges.append(self)
         self.index = edge_index
@@ -427,20 +430,37 @@ class continent_tetrahedron:
         self.coorientations = continent.vt.coorientations[tet_index]
         self.upper_triangles = []  ### this gets set when we set this tet as lower_tet for some triangle. No particular meaning to the order of this list.
         self.lower_triangles = []
+        self.upper_edge = None
+        self.lower_edge = None
+        self.equatorial_edges = []
         self.continent.tetrahedra.append(self)
         self.vertices = [None, None, None, None] ## ordered according to the indices of the vertices downstairs in the manifold
         self.gluings = [None, None, None, None] ## a gluing specifies another tetrahedron and the Perm4 from the downstairs manifold
 
-    def upper_edge(self):
-        return self.upper_triangles[0].shared_edge(self.upper_triangles[1])
+    def set_upper_edge(self, e):
+        self.upper_edge = e
+        e.lower_tet = self
 
-    def lower_edge(self):
-        return self.lower_triangles[0].shared_edge(self.lower_triangles[1])
+    def set_lower_edge(self, e):
+        self.lower_edge = e
+        e.upper_tet = self
+
+    def set_equatorial_edges(self, edges):
+        self.equatorial_edges = edges
+        for e in edges:
+            e.side_tetrahedra.append(self)
+
+    # def upper_edge(self):
+    #     return self.upper_triangles[0].shared_edge(self.upper_triangles[1])
+
+    # def lower_edge(self):
+    #     return self.lower_triangles[0].shared_edge(self.lower_triangles[1])
 
     def edges(self):
-        out = self.upper_triangles[0].edges[:] ### copy of list
-        out.remove(self.upper_edge())
-        return out + self.upper_triangles[1].edges + [self.lower_edge()]
+        return self.equatorial_edges + [self.upper_edge, self.lower_edge]
+        # out = self.upper_triangles[0].edges[:] ### copy of list
+        # out.remove(self.upper_edge())
+        # return out + self.upper_triangles[1].edges + [self.lower_edge()]
 
     # def vertices(self):
     #     out = set([])
@@ -567,16 +587,7 @@ class continent:
             triangle_c.vertices = [vert_b, vert_a, vert_d]
             triangle_d.vertices = [vert_a, vert_b, vert_c]
 
-        ## add the tetrahedron
-
-        con_tet = continent_tetrahedron(self, self.tet_face.tet_num)
-        con_tet.vertices = self.vertices[:] ## copy of the vertices of the continent
-        triangle_a.set_upper_tet(con_tet)
-        triangle_b.set_upper_tet(con_tet)
-        triangle_c.set_lower_tet(con_tet)
-        triangle_d.set_lower_tet(con_tet)
-
-        ## now for the edges
+        ## add the edges
 
         ###   c---R----b
         ###   |`d    ,'|     faces a, b on bottom, c, d on top
@@ -642,6 +653,18 @@ class continent:
             for v in self.vertices:
                 if v != self.infinity:
                     self.check_vertex_desired(v) 
+
+        ## add the tetrahedron
+
+        con_tet = continent_tetrahedron(self, self.tet_face.tet_num)
+        con_tet.vertices = self.vertices[:] ## copy of the vertices of the continent
+        con_tet.set_upper_edge(edge_ab)
+        con_tet.set_lower_edge(edge_cd) 
+        con_tet.set_equatorial_edges([edge_ad, edge_bd, edge_bc, edge_ac])
+        triangle_a.set_upper_tet(con_tet)
+        triangle_b.set_upper_tet(con_tet)
+        triangle_c.set_lower_tet(con_tet)
+        triangle_d.set_lower_tet(con_tet)
 
         ## now cusp leaves
         ###   c---R----b
@@ -869,6 +892,14 @@ class continent:
         assert not edge_tn.links(edge_at)
         assert not edge_tn.links(edge_tb)
 
+        if triangle.is_upper:
+            con_tet.set_upper_edge(edge_tn)
+            con_tet.set_lower_edge(edge_ab)
+        else: 
+            con_tet.set_upper_edge(edge_ab)
+            con_tet.set_lower_edge(edge_tn)
+        con_tet.set_equatorial_edges([edge_at, edge_tb, edge_bn, edge_na])
+
         ## now for the neighbours
 
         if tris_ab_are_red == ab_is_upper:
@@ -1064,6 +1095,14 @@ class continent:
             triangle_c.update_edges( [edge_at, edge_bt, edge_ab] )
         else:
             triangle_c.update_edges( [edge_bt, edge_ab, edge_at] )
+
+        if triangle.is_upper:
+            con_tet.set_upper_edge(edge_ct)
+            con_tet.set_lower_edge(edge_ab)
+        else: 
+            con_tet.set_upper_edge(edge_ab)
+            con_tet.set_lower_edge(edge_ct)
+        con_tet.set_equatorial_edges([edge_at, edge_bt, edge_bc, edge_ca])
 
         assert edge_ct.links(edge_ab)
         assert not edge_ct.links(edge_at)
@@ -1315,6 +1354,7 @@ class continent:
                 if face_index in tree_faces:
                     continent_tree_faces_frontier.append(new_landscape_triangles[i])
                     tree_faces.remove(face_index)
+        continent_fund_dom_tets.sort(key = lambda t : t.index)
         return continent_fund_dom_tets
 
 
@@ -1592,7 +1632,7 @@ class continent:
                                             lower_tris.reverse()
                                         assert a in lower_tris[0].edges and b in lower_tris[1].edges
                                         river = river[:i] + lower_tris + river[i+1:]
-                                        river_edges = river_edges[:i] + [the_lower_tet.lower_edge()] + river_edges[i:]
+                                        river_edges = river_edges[:i] + [the_lower_tet.lower_edge] + river_edges[i:]
                                         restart_while_loop = True
                                         break # out of for loop
                             if restart_while_loop:
@@ -1607,7 +1647,7 @@ class continent:
                                         lower_tris.reverse()
                                     assert a in lower_tris[0].edges and b in lower_tris[1].edges
                                     river = river[:i] + lower_tris + river[i+2:]
-                                    river_edges = river_edges[:i] + [the_lower_tet.lower_edge()] + river_edges[i+1:]
+                                    river_edges = river_edges[:i] + [the_lower_tet.lower_edge] + river_edges[i+1:]
                                     restart_while_loop = True
                                     break # out of for loop
                             if restart_while_loop:
@@ -1651,7 +1691,7 @@ class continent:
                                             upper_tris.reverse()
                                         assert a in upper_tris[0].edges and b in upper_tris[1].edges
                                         river = river[:i] + upper_tris + river[i+1:]
-                                        river_edges = river_edges[:i] + [the_upper_tet.upper_edge()] + river_edges[i:]
+                                        river_edges = river_edges[:i] + [the_upper_tet.upper_edge] + river_edges[i:]
                                         restart_while_loop = True
                                         break # out of for loop
                             if restart_while_loop:
@@ -1666,7 +1706,7 @@ class continent:
                                         upper_tris.reverse()
                                     assert a in upper_tris[0].edges and b in upper_tris[1].edges
                                     river = river[:i] + upper_tris + river[i+2:]
-                                    river_edges = river_edges[:i] + [the_upper_tet.upper_edge()] + river_edges[i+1:]
+                                    river_edges = river_edges[:i] + [the_upper_tet.upper_edge] + river_edges[i+1:]
                                     restart_while_loop = True
                                     break # out of for loop
                             if restart_while_loop:

@@ -207,38 +207,48 @@ def draw_continent_script():
     # draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = max_length, draw_args = draw_args)
 
 def draw_continent_circle_script():
-    from draw_continent_circle import draw_continent_circle, make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
+    from draw_continent_circle import draw_continent_circle
+    from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
     # veering_isosig = 'cPcbbbdxm_10' 
     # flow_cycle = [(0, 2)]
 
     # veering_isosig = 'eLAkaccddjsnak_2001'
-    # veering_isosig = 'dLQacccjsnk_200'
-    veering_isosig = 'mLLLPLPAQbcgefgikijkllloutgndeqnrak_022110002110'
-    # flow_cycle = [(1, 0), (2, 5)]
 
-    # # for num_steps in range(10):
-    # num_steps = 3
-    # con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
+    veering_isosig = 'dLQacccjsnk_200'
+    # from veering.branched_surface import upper_branched_surface
+    # from veering.flow_cycles import find_flow_cycles
+    # tri, angle = isosig_to_tri_angle(veering_isosig)
+    # branch = upper_branched_surface(tri, angle)
+    # loops = find_flow_cycles(tri, branch)
+    # print(loops)
+
+    flow_cycle = [(1, 0), (2, 5)]
+    # flow_cycle = [(1, 4)]
+
+    # # # for num_steps in range(10):
+    num_steps = 2
+    con, flow_tetrahedra, flow_edges = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
     # fund_dom_tets = get_fund_domain_tetrahedra(con)
     # # complete_tetrahedron_rectangles(con, fund_dom_tets)
     # print(len(flow_tetrahedra))
-    # name = veering_isosig + '' + str(flow_cycle) + '' + str(num_steps) + '_cusp_leaves'
+    name = veering_isosig + '' + str(flow_cycle) + '' + str(num_steps) + '_cusp_leaves'
+
     # # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
     # tets_to_draw = fund_dom_tets[0:]
 
     # for i in range(14):
     #     max_num_tetrahedra = i
-    max_num_tetrahedra = 100
-    # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    for tet in continent_fund_dom_tets:
-        print(tet.index, [v.chronological_index() for v in tet.vertices])
+    # max_num_tetrahedra = 100
+    # # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
+    # con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
+    # for tet in continent_fund_dom_tets:
+    #     print(tet.index, [v.chronological_index() for v in tet.vertices])
+
+    # # name = veering_isosig + 'naive' + str(max_num_tetrahedra)
+    # name = veering_isosig + 'fund_dom' + str(max_num_tetrahedra)
 
     fund_dom_tets = []
     tets_to_draw = []
-    # name = veering_isosig + 'naive' + str(max_num_tetrahedra)
-    name = veering_isosig + 'fund_dom' + str(max_num_tetrahedra)
-
     draw_continent_circle(con, name = name, draw_labels = True,
         draw_upper_landscape = True, draw_lower_landscape = True, 
         # draw_upper_landscape = False, draw_lower_landscape = False, 
