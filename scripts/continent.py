@@ -91,6 +91,14 @@ class landscape_edge:
     def is_coastal(self):
         return self in self.continent.coastal_edges
 
+    def boundary_triangles(self):
+        out = []
+        for tri in self.triangles:
+            if tri.is_boundary():
+                out.append(tri)
+        assert len(out) == 2 or len(out) == 0
+        return out
+
     def rectangle_sides(self):
         if not None in self.rectangle_sides_data:
             return self.rectangle_sides_data
@@ -1266,16 +1274,16 @@ class continent:
         self.upper_landscape_edges = set([])
         self.lower_landscape_edges = set([])
 
-        for e in self.edges:
-            e.boundary_triangles = []
+        # for e in self.edges:
+        #     e.boundary_triangles = []
 
         for tri in self.upper_landscape_triangles:
             for e in tri.edges:
-                e.boundary_triangles.append(tri)
+                # e.boundary_triangles.append(tri)
                 self.upper_landscape_edges.add(e)
         for tri in self.lower_landscape_triangles:
             for e in tri.edges:
-                e.boundary_triangles.append(tri)
+                # e.boundary_triangles.append(tri)
                 self.lower_landscape_edges.add(e)
 
     def old_coast(self):

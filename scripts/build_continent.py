@@ -109,8 +109,7 @@ def flow_edge_in_continent(con_tet, edge_num):
 def go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index):
     edge = flow_edges[-1]
     while True:
-        con.build_boundary_data()
-        upper_boundary_triangles = [t for t in edge.boundary_triangles if t.is_upper] 
+        upper_boundary_triangles = [t for t in edge.boundary_triangles() if t.is_upper] 
         if len(upper_boundary_triangles) == 0:
             break ## out of while loop
         con.bury(upper_boundary_triangles[0])
@@ -120,7 +119,7 @@ def go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index)
     assert last_tet.index == flow_cycle[upwards_flow_index][0]
     flow_tetrahedra.append(last_tet)
     flow_edges.append(flow_edge_in_continent(last_tet, flow_cycle[upwards_flow_index][1]))
-    con.build_boundary_data()
+    # con.build_boundary_data()
     return upwards_flow_index
 
 def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index):
@@ -139,8 +138,8 @@ def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_in
 
     if (tet_below_num, top_edge_num) == flow_cycle[downwards_flow_index]: ### flow cycle went straight up
         while True:
-            con.build_boundary_data()  
-            lower_boundary_triangles = [t for t in edge.boundary_triangles if not t.is_upper] 
+            # con.build_boundary_data()  
+            lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper] 
             if len(lower_boundary_triangles) == 0:
                 break ## out of while loop
             last_tet = con.bury(lower_boundary_triangles[0])
@@ -157,13 +156,13 @@ def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_in
                 downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
         assert downward_path != None
         for j, (tet_num, edge_num) in enumerate(downward_path):
-            con.build_boundary_data()  
-            lower_boundary_triangles = [t for t in edge.boundary_triangles if not t.is_upper and t.index == downward_path_faces[j][0]] 
+            # con.build_boundary_data()  
+            lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
             assert len(lower_boundary_triangles) == 1
             last_tet = con.bury(lower_boundary_triangles[0])
     assert last_tet != None
     flow_tetrahedra.insert(0, last_tet)
-    con.build_boundary_data()
+    # con.build_boundary_data()
     return downwards_flow_index
 
 def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
@@ -193,14 +192,13 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
     downwards_flow_index = 0
     for i in range(num_steps):
         # if i%2 == 0: ### go up
-        con.build_boundary_data()
+        # con.build_boundary_data()
         upwards_flow_index = go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index)
 
         # else: ### go down
         #     con.build_boundary_data()
         #     downwards_flow_index = go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index)
     con.build_boundary_data()
-    # con.install_thorn_ends()
     return con, flow_tetrahedra, flow_edges
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
@@ -209,19 +207,19 @@ def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     for tet in tetrahedra_to_complete:
         for v in tet.vertices:
             # print('tet vert age', con.vertices.index(v))
-            con.build_boundary_data()
+            # con.build_boundary_data()
             # con.install_thorn_ends()
             sides = tet_rectangle_sides(tet, v)
             for direction in range(2):
                 while sides[direction] == None:
                     # print('direction, k', direction, k)
                     e = con.coastal_edges[(v.coastal_index() - direction)%len(con.coast)] 
-                    triangles = e.boundary_triangles  ### grow around this edge
+                    triangles = e.boundary_triangles()  ### grow around this edge
                     if triangles[0].is_upper != (k % 2 == 0): ### xor, alternate which one we add to
                         con.bury(triangles[0])
                     else:
                         con.bury(triangles[1])
-                    con.build_boundary_data()
+                    # con.build_boundary_data()
                     # con.install_thorn_ends()
                     sides = tet_rectangle_sides(tet, v)
                     k += 1
