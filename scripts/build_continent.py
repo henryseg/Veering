@@ -31,66 +31,67 @@ def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50):
     print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
     return con, continent_fund_dom_tets
 
-### this is probably broken, needs to be redone anyway - move around the universal cover building onto the continent as necessary
-def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
-    tri, angle = isosig_to_tri_angle(veering_isosig)
-    vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
-    ### initial tetrahedron is above face 0 of the dual cycle
-    face0 = vt.tri.triangles()[dual_cycle[0]]
-    embeds = face0.embeddings()
-    tet_0, face_0 = None, None
-    for embed in embeds:
-        tet_num = embed.simplex().index()
-        face_num = embed.face()
-        if vt.coorientations[tet_num][face_num] == -1: ## into the tet
-            tet_0, face_0 = tet_num, face_num
-            break
-    assert tet_0 != None and face_0 != None
-    initial_tet_face = tet_face(vt, tet_0, face_0, verts_pos = [None, None, None, None])
-    con = continent( vt, initial_tet_face)
+# ### this is probably broken, needs to be redone anyway - move around the universal cover building onto the continent as necessary
+# def make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps):
+#     tri, angle = isosig_to_tri_angle(veering_isosig)
+#     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
+#     ### initial tetrahedron is above face 0 of the dual cycle
+#     face0 = vt.tri.triangles()[dual_cycle[0]]
+#     embeds = face0.embeddings()
+#     tet_0, face_0 = None, None
+#     for embed in embeds:
+#         tet_num = embed.simplex().index()
+#         face_num = embed.face()
+#         if vt.coorientations[tet_num][face_num] == -1: ## into the tet
+#             tet_0, face_0 = tet_num, face_num
+#             break
+#     assert tet_0 != None and face_0 != None
+#     initial_tet_face = tet_face(vt, tet_0, face_0, verts_pos = [None, None, None, None])
+#     con = continent( vt, initial_tet_face)
 
-    ### identify the triangle corresponding to dual_cycle[1]
-    for triangle in con.triangles:
-        if not triangle.is_upper and triangle.index == dual_cycle[0]:
-            lowest_triangle = triangle
-        if triangle.is_upper and triangle.index == dual_cycle[1]:
-            highest_triangle = triangle
-    triangle_path = [lowest_triangle, highest_triangle]
-    lowest_path_index = 0
-    highest_path_index = 1
-    # for i in range(num_steps):
-    #     last_added_tet = con.bury(highest_triangle)
+#     ### identify the triangle corresponding to dual_cycle[1]
+#     for triangle in con.triangles:
+#         if not triangle.is_upper and triangle.index == dual_cycle[0]:
+#             lowest_triangle = triangle
+#         if triangle.is_upper and triangle.index == dual_cycle[1]:
+#             highest_triangle = triangle
+#     triangle_path = [lowest_triangle, highest_triangle]
+#     lowest_path_index = 0
+#     highest_path_index = 1
+#     # for i in range(num_steps):
+#     #     last_added_tet = con.bury(highest_triangle)
 
-    #     ### find next_triangle
-    #     highest_triangle = None
-    #     for triangle in last_added_tet.upper_triangles:
-    #         if triangle.index == dual_cycle[(path_index + 1) % len(dual_cycle)]:
-    #             highest_triangle = triangle
-    #             break
-    #     assert highest_triangle != None
-    #     triangle_path.append(highest_triangle)
-    #     path_index = path_index + 1
+#     #     ### find next_triangle
+#     #     highest_triangle = None
+#     #     for triangle in last_added_tet.upper_triangles:
+#     #         if triangle.index == dual_cycle[(path_index + 1) % len(dual_cycle)]:
+#     #             highest_triangle = triangle
+#     #             break
+#     #     assert highest_triangle != None
+#     #     triangle_path.append(highest_triangle)
+#     #     path_index = path_index + 1
 
-    #     con.build_boundary_data()
+#     #     con.build_boundary_data()
 
-    for i in range(num_steps):
-        if i%2 == 0:
-            last_added_tet = con.bury(triangle_path[-1]) ## go up
-            for triangle in last_added_tet.upper_triangles:
-                if triangle.index == dual_cycle[(highest_path_index + 1) % len(dual_cycle)]:
-                    triangle_path.append(triangle)
-                    break
-            highest_path_index = highest_path_index + 1
-        else:
-            last_added_tet = con.bury(triangle_path[0]) ## go down
-            for triangle in last_added_tet.lower_triangles:
-                if triangle.index == dual_cycle[(lowest_path_index - 1) % len(dual_cycle)]:
-                    triangle_path.insert(0, triangle)
-                    break
-            lowest_path_index = lowest_path_index - 1
-    con.build_boundary_data()
-    con.triangle_path = triangle_path
-    return con
+#     for i in range(num_steps):
+#         if i%2 == 0:
+#             last_added_tet = con.bury(triangle_path[-1]) ## go up
+#             for triangle in last_added_tet.upper_triangles:
+#                 if triangle.index == dual_cycle[(highest_path_index + 1) % len(dual_cycle)]:
+#                     triangle_path.append(triangle)
+#                     break
+#             highest_path_index = highest_path_index + 1
+#         else:
+#             last_added_tet = con.bury(triangle_path[0]) ## go down
+#             for triangle in last_added_tet.lower_triangles:
+#                 if triangle.index == dual_cycle[(lowest_path_index - 1) % len(dual_cycle)]:
+#                     triangle_path.insert(0, triangle)
+#                     break
+#             lowest_path_index = lowest_path_index - 1
+#     con.build_boundary_data()
+#     con.triangle_path = triangle_path
+#     return con
+
 
 def flow_edge_in_continent(con_tet, edge_num):
     tet_vertices = con_tet.vertices
@@ -106,64 +107,75 @@ def flow_edge_in_continent(con_tet, edge_num):
     assert edge != None
     return edge
 
-def go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index):
-    edge = flow_edges[-1]
-    while True:
-        upper_boundary_triangles = [t for t in edge.boundary_triangles() if t.is_upper] 
-        if len(upper_boundary_triangles) == 0:
-            break ## out of while loop
-        con.bury(upper_boundary_triangles[0])
-    last_tet = edge.upper_tet
-    assert last_tet != None
-    upwards_flow_index = (upwards_flow_index + 1) % len(flow_cycle)
-    assert last_tet.index == flow_cycle[upwards_flow_index][0]
-    flow_tetrahedra.append(last_tet)
-    flow_edges.append(flow_edge_in_continent(last_tet, flow_cycle[upwards_flow_index][1]))
-    # con.build_boundary_data()
-    return upwards_flow_index
+class flow_interval:
+    def __init__(self, continent, flow_cycle, init_flow_tetrahedron, init_flow_edge, init_flow_index):
+        self.continent = continent
+        self.flow_cycle = flow_cycle
+        self.tetrahedra = [init_flow_tetrahedron]
+        self.edges = [init_flow_edge]
+        self.up_index = init_flow_index
+        self.down_index = init_flow_index
 
-def go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index):
-    tet = flow_tetrahedra[0]
-    edge = tet.lower_edge()
-    flow_edges.insert(0, edge) 
-    ### now build the continent to get new_lowest_tet
-    vt = con.vt
-    manifold_edge = vt.tri.edge(edge.index)
-    downwards_flow_index = (downwards_flow_index - 1) % len(flow_cycle)
-    ### is the flow cycle vertical through the tetrahedron? 
-    tet_below = get_tet_above_edge(vt.tri, vt.angle, manifold_edge, tet_vert_coorientations = vt.coorientations, get_tet_below_edge = True)
-    tet_below_num = tet_below.index()
-    top_vert_nums = get_tet_top_vert_nums(vt.coorientations, tet_below_num)
-    top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]
-
-    if (tet_below_num, top_edge_num) == flow_cycle[downwards_flow_index]: ### flow cycle went straight up
+    def go_up(self):
+        #flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index):
+        edge = self.edges[-1]
         while True:
-            # con.build_boundary_data()  
-            lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper] 
-            if len(lower_boundary_triangles) == 0:
+            upper_boundary_triangles = [t for t in edge.boundary_triangles() if t.is_upper] 
+            if len(upper_boundary_triangles) == 0:
                 break ## out of while loop
-            last_tet = con.bury(lower_boundary_triangles[0])
-    else:
-        ### find which side of the edge our tet is in
-        # print('edge index', edge.index)
-        side_tet_collections_at_edge = vt.side_tet_collections[edge.index] ## index in the manifold
-        side_face_collections_at_edge = vt.side_face_collections[edge.index]
-        downward_path = None
-        flow_step = flow_cycle[downwards_flow_index]
-        for i, side_tet_collection in enumerate(side_tet_collections_at_edge):
-            if flow_step in side_tet_collection:
-                downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
-                downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
-        assert downward_path != None
-        for j, (tet_num, edge_num) in enumerate(downward_path):
-            # con.build_boundary_data()  
-            lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
-            assert len(lower_boundary_triangles) == 1
-            last_tet = con.bury(lower_boundary_triangles[0])
-    assert last_tet != None
-    flow_tetrahedra.insert(0, last_tet)
-    # con.build_boundary_data()
-    return downwards_flow_index
+            self.continent.bury(upper_boundary_triangles[0])
+        last_tet = edge.upper_tet
+        assert last_tet != None
+        self.up_index = (self.up_index + 1) % len(self.flow_cycle)
+        assert last_tet.index == self.flow_cycle[self.up_index][0]
+        self.tetrahedra.append(last_tet)
+        self.edges.append(flow_edge_in_continent(last_tet, self.flow_cycle[self.up_index][1]))
+
+    def go_down(self):
+        tet = self.tetrahedra[0]
+        edge = tet.lower_edge
+        self.edges.insert(0, edge) 
+        ### now build the continent to get new_lowest_tet
+        vt = self.continent.vt
+        manifold_edge = vt.tri.edge(edge.index)
+        self.down_index = (self.down_index - 1) % len(self.flow_cycle)
+        ### is the flow cycle vertical through the tetrahedron? 
+        tet_below = get_tet_above_edge(vt.tri, vt.angle, manifold_edge, tet_vert_coorientations = vt.coorientations, get_tet_below_edge = True)
+        tet_below_num = tet_below.index()
+        top_vert_nums = get_tet_top_vert_nums(vt.coorientations, tet_below_num)
+        top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]
+
+        if (tet_below_num, top_edge_num) == self.flow_cycle[self.down_index]: ### flow cycle went straight up
+            while True:
+                lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper] 
+                if len(lower_boundary_triangles) == 0:
+                    break ## out of while loop
+                self.continent.bury(lower_boundary_triangles[0])
+                new_tet = edge.lower_tet
+        else:
+            ### find which side of the edge our tet is in
+            side_tet_collections_at_edge = vt.side_tet_collections[edge.index] ## index in the manifold
+            side_face_collections_at_edge = vt.side_face_collections[edge.index]
+            downward_path = None
+            flow_step = self.flow_cycle[self.down_index] ### pair of (tet index in manifold, index of edge in that tet)
+            for i, side_tet_collection in enumerate(side_tet_collections_at_edge):
+                if flow_step in side_tet_collection:
+                    downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
+                    downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
+            assert downward_path != None
+            for j, (tet_num, edge_num) in enumerate(downward_path): 
+                lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
+                lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
+                assert len(lower_boundary_triangles) <= 1
+                if len(lower_boundary_triangles) == 1:
+                    self.continent.bury(lower_boundary_triangles[0])
+                for tet in edge.side_tetrahedra:
+                    if tet.index == flow_step[0]:
+                        if tet.edge(flow_step[1]) == edge:
+                            new_tet = tet
+                            break
+        assert new_tet != None
+        self.tetrahedra.insert(0, new_tet)
 
 def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
     ### format for loops: it is a list of tuples, 
@@ -184,22 +196,15 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
     assert init_tetrahedron.index == flow_cycle[0][0]
     init_edge = flow_edge_in_continent(init_tetrahedron, flow_cycle[0][1])
 
-    flow_tetrahedra = [init_tetrahedron]
-    flow_edges = [init_edge]
-    ### both in the continent
+    interval = flow_interval(con, flow_cycle, init_tetrahedron, init_edge, 0)
 
-    upwards_flow_index = 0
-    downwards_flow_index = 0
     for i in range(num_steps):
-        # if i%2 == 0: ### go up
-        # con.build_boundary_data()
-        upwards_flow_index = go_up_flow(flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index)
-
-        # else: ### go down
-        #     con.build_boundary_data()
-        #     downwards_flow_index = go_down_flow(flow_cycle, con, flow_edges, flow_tetrahedra, downwards_flow_index)
+        if i%2 == 0: ### go up
+            interval.go_up()
+        else: ### go down
+            interval.go_down()
     con.build_boundary_data()
-    return con, flow_tetrahedra, flow_edges
+    return con, interval
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""

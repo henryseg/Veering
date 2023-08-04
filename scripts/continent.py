@@ -4,7 +4,7 @@
 
 from veering.file_io import parse_data_file, read_from_pickle
 from veering.basic_math import sign
-from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num
+from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num, edge_num_to_vert_pair
 from veering.veering_tri import veering_triangulation
 from veering.fundamental_domain import spanning_dual_tree
 
@@ -492,6 +492,15 @@ class continent_tetrahedron:
                         break
         assert len(out) == 4
         return out
+
+    def edge(self, ind):
+        """given index in this tetrahedron of the edges downstairs in the manifold, return the corresponding continent edge"""
+        faces = self.ordered_faces()
+        vert_pair = edge_num_to_vert_pair(ind)
+        face_pair = [0,1,2,3]
+        face_pair.remove(vert_pair[0])
+        face_pair.remove(vert_pair[1])
+        return face_pair[0].shared_edge(face_pair[1])
 
     # def ordered_vertices(self):
     #     out = []
