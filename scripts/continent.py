@@ -103,6 +103,12 @@ class landscape_edge:
         if not None in self.rectangle_sides_data:
             return self.rectangle_sides_data
         ### otherwise update things
+        #     -3-v
+        #    |  /|
+        #    0 e 2
+        #    |/  |
+        #    u-1-
+
         u, v = self.vertices
         leaves = u.cusp_leaves
         first_leaf = leaves[0]
@@ -132,19 +138,27 @@ class landscape_edge:
                     break
         if not None in self.rectangle_sides_data:
             a, b, c, d = self.rectangle_sides_data
-            assert a.links(d) and b.links(c)
+            if not (a.links(d) and b.links(c)):
+                print('rectangle sides linking failed')
+                print(self.vertices)
+            # assert a.links(d) and b.links(c)
         return self.rectangle_sides_data
 
     def ensure_continent_contains_rectangle(self):
         """Add to the continent to ensure that this edge has all its cusp leaves in the continent"""
         while None in self.rectangle_sides():
+            print('edge has this many triangles', len(self.triangles))
+            found_a_tri_to_bury = False
             for tri in self.triangles:
+                print(tri.index)
                 if not tri.is_buried():
+                    found_a_tri_to_bury = True
+                    print('bury')
                     self.continent.bury(tri)
+                    assert tri.is_buried()
                     break
-                if tri == self.triangles[-1]:
-                    assert False
-
+            assert found_a_tri_to_bury ### We checked all triangles and all are buried so we should be done
+                    
     def length(self):
         u, v = self.vertices
         return abs(u.pos.complex() - v.pos.complex())
@@ -490,17 +504,18 @@ class continent_tetrahedron:
                     if triangle.index == face_index:
                         out.append(triangle)
                         break
+        # print(out)
         assert len(out) == 4
         return out
 
     def edge(self, ind):
         """given index in this tetrahedron of the edges downstairs in the manifold, return the corresponding continent edge"""
         faces = self.ordered_faces()
-        vert_pair = edge_num_to_vert_pair(ind)
+        vert_pair = edge_num_to_vert_pair[ind]
         face_pair = [0,1,2,3]
         face_pair.remove(vert_pair[0])
         face_pair.remove(vert_pair[1])
-        return face_pair[0].shared_edge(face_pair[1])
+        return faces[face_pair[0]].shared_edge(faces[face_pair[1]])
 
     # def ordered_vertices(self):
     #     out = []

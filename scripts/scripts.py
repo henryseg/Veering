@@ -209,12 +209,22 @@ def draw_continent_script():
 def draw_continent_circle_script():
     from draw_continent_circle import draw_continent_circle
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
+    
+    ##### finds a bug with rectangle sides not linking...
     # veering_isosig = 'cPcbbbdxm_10' 
     # flow_cycle = [(0, 2)]
+    # num_steps = 3
+
+    veering_isosig = 'cPcbbbiht_12'
+    flow_cycle = [(0, 0)]
+    num_steps = 3
 
     # veering_isosig = 'eLAkaccddjsnak_2001'
 
-    veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'dLQacccjsnk_200'
+    # flow_cycle = [(1, 0), (2, 5)]
+
+
     # from veering.branched_surface import upper_branched_surface
     # from veering.flow_cycles import find_flow_cycles
     # tri, angle = isosig_to_tri_angle(veering_isosig)
@@ -222,12 +232,16 @@ def draw_continent_circle_script():
     # loops = find_flow_cycles(tri, branch)
     # print(loops)
 
-    flow_cycle = [(1, 0), (2, 5)]
+    
     # flow_cycle = [(1, 4)]
 
     # # # for num_steps in range(10):
-    num_steps = 4
+    
     con, interval = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps)
+    edge_rectangles_to_draw = interval.edges
+    for e in edge_rectangles_to_draw:
+        e.ensure_continent_contains_rectangle()
+
     # fund_dom_tets = get_fund_domain_tetrahedra(con)
     # # complete_tetrahedron_rectangles(con, fund_dom_tets)
     # print(len(flow_tetrahedra))
@@ -248,14 +262,17 @@ def draw_continent_circle_script():
     # name = veering_isosig + 'fund_dom' + str(max_num_tetrahedra)
 
     fund_dom_tets = []
-    tets_to_draw = []
+    #tets_to_draw = []
+    # edge_rectangles_to_draw = []
     draw_continent_circle(con, name = name, draw_labels = True,
         # draw_upper_landscape = True, draw_lower_landscape = True, 
         draw_upper_landscape = False, draw_lower_landscape = False, 
         draw_coastal_edges = True, draw_all_edges = False,
-        draw_cusp_leaves = True,
+        draw_cusp_leaves = False,
         shade_triangles = False, draw_fund_domain = False, fund_dom_tets = fund_dom_tets,
-        draw_fund_domain_edges = False, draw_tetrahedron_rectangles = tets_to_draw,
+        draw_fund_domain_edges = False, 
+        #draw_tetrahedron_rectangles = tets_to_draw,
+        edge_rectangles_to_draw = edge_rectangles_to_draw,
         edge_thickness = 0.02,
         leaf_thickness = 0.02)
         # edge_thickness = 0.001,

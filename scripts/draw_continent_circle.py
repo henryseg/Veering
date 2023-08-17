@@ -196,11 +196,54 @@ def tet_purple_rectangle_sides(tet, actually_do_green = False):
         out.append(tet_rectangle_sides(tet, v))
     return out
 
+def draw_edge(e, edge_thickness, edge_colours, scl, canv):
+    col = edge_colours[e.is_red]
+    u, v = e.vertices
+    p = make_arc(u.circle_pos, v.circle_pos)
+    p = p.transformed(scl)
+    canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
+
+def draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv):
+    col = leaf_colours[leaf.is_upper]
+    start, end = leaf.end_positions()
+    start = circle_position(start, len(leaf.continent.coast))
+    end = circle_position(end, len(leaf.continent.coast))
+    p = make_arc(start, end)
+    p = p.transformed(scl)
+    canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
+
+def draw_edge_rectangle_half(l, m, leaf_thickness, leaf_colours, scl, canv):
+    if l == None and m != None:
+        draw_leaf(m, leaf_thickness, leaf_colours, scl, canv)
+    elif m == None and l != None:
+        draw_leaf(l, leaf_thickness, leaf_colours, scl, canv)
+    elif l != None and m != None:
+        l_start, l_end = l.end_positions()
+        l_start = circle_position(l_start, len(l.continent.coast))
+        l_end = circle_position(l_end, len(l.continent.coast))
+        m_start, m_end = m.end_positions()
+        m_start = circle_position(m_start, len(m.continent.coast))
+        m_end = circle_position(m_end, len(m.continent.coast))
+
+        intersection = geodesic_isect(l_start, l_end, m_start, m_end)
+        if intersection == None:
+            print('no intersection')
+            return None
+        # assert intersection != None
+
+        p = make_arc(l_start, intersection)
+        p = p.transformed(scl)
+        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, leaf_colours[l.is_upper]])
+        p = make_arc(m_start, intersection)
+        p = p.transformed(scl)
+        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, leaf_colours[m.is_upper]])
+
 def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landscape = False, draw_lower_landscape = False, 
     draw_coastal_edges = True, draw_all_edges = False,
     draw_cusp_leaves = True,
     shade_triangles = False, draw_fund_domain = False, fund_dom_tets = None, draw_fund_domain_edges = False,
-    draw_tetrahedron_rectangles = [],
+    # draw_tetrahedron_rectangles = [],
+    edge_rectangles_to_draw = [],
     edge_thickness = 0.02,
     leaf_thickness = 0.03):
     
@@ -211,10 +254,13 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     # print(len(con.tetrahedra))
 
     global_scale_up = 10.0
-    edge_colours = {True: color.rgb(0.9,0.3,0), False: color.rgb(0,0.3,0.9)}
+    red = color.rgb(0.9,0.3,0)
+    blue = color.rgb(0,0.3,0.9)
+    edge_colours = {True: red, False: blue}
     green = color.rgb(0.0,0.5,0.0)
     purple = color.rgb(0.5,0.0,0.5)
-
+    leaf_colours = {True: green, False: purple}
+    
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
     canv.stroke(path.circle(0,0,global_scale_up), [style.linewidth(edge_thickness)])
@@ -237,11 +283,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     ### internal edges (we think) have their edge rectangles in cusp leaves. Then check who spans who.
     ### alternatively, draw lower landscape first then flip up through tetrahedra.
         if draw_all_edges or (draw_coastal_edges and e.is_coastal()):
-            col = edge_colours[e.is_red]
-            u, v = e.vertices
-            p = make_arc(u.circle_pos, v.circle_pos)
-            p = p.transformed(scl)
-            canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
+            draw_edge(e, edge_thickness, edge_colours, scl, canv)
 
     ### highlight vertices of tetrahedra in a fundamental domain
     if draw_fund_domain:
@@ -251,11 +293,12 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
             if type(con_tet) == continent_tetrahedron:  ### could be an integer if we didnt find this tet
                 if draw_fund_domain_edges:
                     for e in con_tet.edges():
-                        col = edge_colours[e.is_red]
-                        u, v = e.vertices
-                        p = make_arc(u.circle_pos, v.circle_pos)
-                        p = p.transformed(scl)
-                        canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
+                        draw_edge(e, edge_thickness, edge_colours, scl, canv)
+                        # col = edge_colours[e.is_red]
+                        # u, v = e.vertices
+                        # p = make_arc(u.circle_pos, v.circle_pos)
+                        # p = p.transformed(scl)
+                        # canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
 
         update_fund_dom_tet_nums(con, fund_dom_tets)
         for v in [v for v in con.coast if v.fund_dom_tet_nums != []]:
@@ -330,18 +373,52 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         leaves = { green: [], purple: []}
         for i, c in enumerate(con.coast):
             for leaf in c.cusp_leaves:
-                if leaf.is_upper:
-                    leaves[green].append(leaf)
-                else:
-                    leaves[purple].append(leaf)
-        for col in [purple, green]:
-            for leaf in leaves[col]:
-                start, end = leaf.end_positions()
-                start = circle_position(start, len(con.coast))
-                end = circle_position(end, len(con.coast))
-                p = make_arc(start, end)
-                p = p.transformed(scl)
-                canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
+                draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv)
+        #         if leaf.is_upper:
+        #             leaves[green].append(leaf)
+        #         else:
+        #             leaves[purple].append(leaf)
+        # for col in [purple, green]:
+        #     for leaf in leaves[col]:
+        #         start, end = leaf.end_positions()
+        #         start = circle_position(start, len(con.coast))
+        #         end = circle_position(end, len(con.coast))
+        #         p = make_arc(start, end)
+        #         p = p.transformed(scl)
+        #         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
+
+    for e in edge_rectangles_to_draw:
+        draw_edge(e, edge_thickness, edge_colours, scl, canv)
+
+        #     -3-v
+        #    |  /|
+        #    0 e 2
+        #    |/  |
+        #    u-1-
+        a, b, c, d = e.rectangle_sides()
+        draw_edge_rectangle_half(a, d, leaf_thickness, leaf_colours, scl, canv)
+        draw_edge_rectangle_half(b, c, leaf_thickness, leaf_colours, scl, canv)
+
+        ### draw full leaves
+        # for leaf in e.rectangle_sides():
+        #     if leaf != None:
+        #         draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv)
+
+
+
+
+
+
+                # if leaf.is_upper:
+                #     col = green
+                # else:
+                #     col = purple
+                # start, end = leaf.end_positions()
+                # start = circle_position(start, len(con.coast))
+                # end = circle_position(end, len(con.coast))
+                # p = make_arc(start, end)
+                # p = p.transformed(scl)
+                # canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
 
 
     # ### draw edge rectangle
