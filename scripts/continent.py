@@ -138,22 +138,22 @@ class landscape_edge:
                     break
         if not None in self.rectangle_sides_data:
             a, b, c, d = self.rectangle_sides_data
-            if not (a.links(d) and b.links(c)):
-                print('rectangle sides linking failed')
-                print(self.vertices)
-            # assert a.links(d) and b.links(c)
+            # if not (a.links(d) and b.links(c)):
+            #     print('rectangle sides linking failed')
+            #     print(self.vertices)
+            assert a.links(d) and b.links(c)
         return self.rectangle_sides_data
 
     def ensure_continent_contains_rectangle(self):
         """Add to the continent to ensure that this edge has all its cusp leaves in the continent"""
         while None in self.rectangle_sides():
-            print('edge has this many triangles', len(self.triangles))
+            # print('edge has this many triangles', len(self.triangles))
             found_a_tri_to_bury = False
             for tri in self.triangles:
-                print(tri.index)
+                # print('tri.index', tri.index)
                 if not tri.is_buried():
                     found_a_tri_to_bury = True
-                    print('bury')
+                    # print('bury triangle with index', tri.index)
                     self.continent.bury(tri)
                     assert tri.is_buried()
                     break
@@ -589,14 +589,14 @@ class continent:
         lower_edge_colour = self.vt.get_edge_between_verts_colour(self.tet_face.tet_num, upper_face_nums)
 
         tris_ab_are_red = ( lower_edge_colour == "red" )  ## the triangles, not the edge
-        ab_is_upper = False
-        cd_is_red = ( upper_edge_colour == "red" )
-        cd_is_upper = True
+        tris_ab_are_upper = False
+        tris_cd_are_red = ( upper_edge_colour == "red" )
+        tris_cd_are_upper = True
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red)
-        triangle_c = landscape_triangle(self, face_c_index, cd_is_upper, cd_is_red)
-        triangle_d = landscape_triangle(self, face_d_index, cd_is_upper, cd_is_red)
+        triangle_a = landscape_triangle(self, face_a_index, tris_ab_are_upper, tris_ab_are_red)
+        triangle_b = landscape_triangle(self, face_b_index, tris_ab_are_upper, tris_ab_are_red)
+        triangle_c = landscape_triangle(self, face_c_index, tris_cd_are_upper, tris_cd_are_red)
+        triangle_d = landscape_triangle(self, face_d_index, tris_cd_are_upper, tris_cd_are_red)
 
         ## now for the vertices
 
@@ -612,7 +612,7 @@ class continent:
             triangle_a.vertices = [vert_d, vert_b, vert_c]
             triangle_b.vertices = [vert_c, vert_a, vert_d]
 
-        if cd_is_red:
+        if tris_cd_are_red:
             triangle_c.vertices = [vert_a, vert_d, vert_b]
             triangle_d.vertices = [vert_b, vert_c, vert_a]
         else:
@@ -657,7 +657,7 @@ class continent:
             triangle_a.update_edges( [edge_bc, edge_cd, edge_bd] )
             triangle_b.update_edges( [edge_ad, edge_cd, edge_ac] )
 
-        if cd_is_red: 
+        if tris_cd_are_red: 
             triangle_c.update_edges( [edge_bd, edge_ab, edge_ad] )
             triangle_d.update_edges( [edge_ac, edge_ab, edge_bc] )
         else:
@@ -673,7 +673,7 @@ class continent:
             triangle_a.neighbours = [triangle_d, triangle_b, triangle_c]
             triangle_b.neighbours = [triangle_c, triangle_a, triangle_d]
 
-        if cd_is_red:
+        if tris_cd_are_red:
             triangle_c.neighbours = [triangle_a, triangle_d, triangle_b]
             triangle_d.neighbours = [triangle_b, triangle_c, triangle_a]
         else:
@@ -706,7 +706,7 @@ class continent:
         ###   |,'    c.| 
         ###   a----R---d 
 
-        if tris_ab_are_red:
+        if tris_cd_are_red: ### upper edge
             a_leaf = cusp_leaf(self, vert_a, edge_bc, True)
             edge_bc.cusp_leaves.append(a_leaf)
             b_leaf = cusp_leaf(self, vert_b, edge_ad, True)
@@ -719,7 +719,7 @@ class continent:
         vert_a.cusp_leaves.append(a_leaf)
         vert_b.cusp_leaves.append(b_leaf)
 
-        if cd_is_red:
+        if tris_ab_are_red: ### lower edge
             c_leaf = cusp_leaf(self, vert_c, edge_ad, False)
             edge_ad.cusp_leaves.append(c_leaf)
             d_leaf = cusp_leaf(self, vert_d, edge_bc, False)
@@ -832,10 +832,10 @@ class continent:
 
         far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_t, face_n))
         tris_ab_are_red = ( far_edge_colour == "red" )
-        ab_is_upper = triangle.is_upper
+        tris_ab_are_upper = triangle.is_upper
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red)
+        triangle_a = landscape_triangle(self, face_a_index, tris_ab_are_upper, tris_ab_are_red)
+        triangle_b = landscape_triangle(self, face_b_index, tris_ab_are_upper, tris_ab_are_red)
 
         ## add the tetrahedron 
 
@@ -865,7 +865,7 @@ class continent:
 
         assert vert_b == vert_bn and vert_a == vert_an
 
-        if tris_ab_are_red == ab_is_upper:
+        if tris_ab_are_red == tris_ab_are_upper:
             triangle_a.vertices = [vert_t, vert_b, vert_n]
             triangle_b.vertices = [vert_n, vert_a, vert_t]
         else:
@@ -911,7 +911,7 @@ class continent:
             edge_tb, edge_ba, edge_at = neighbour.edges
         assert edge_ab == edge_ba
 
-        if tris_ab_are_red == ab_is_upper:
+        if tris_ab_are_red == tris_ab_are_upper:
             triangle_a.update_edges( [edge_bn, edge_tn, edge_tb] )
             triangle_b.update_edges( [edge_at, edge_tn, edge_na] )
         else:
@@ -934,7 +934,7 @@ class continent:
 
         ## now for the neighbours
 
-        if tris_ab_are_red == ab_is_upper:
+        if tris_ab_are_red == tris_ab_are_upper:
             triangle_a.neighbours = [triangle.not_downriver()[0], triangle_b, neighbour.not_downriver()[1]]
             triangle_b.neighbours = [neighbour.not_downriver()[0], triangle_a, triangle.not_downriver()[1]]
         else:
@@ -1010,11 +1010,11 @@ class continent:
         # print 'far edge colour', far_edge_colour
         tris_ab_are_red = ( far_edge_colour == "red" ) ## faces, not talking about an edge
         c_is_red = triangle.is_red
-        ab_is_upper = triangle.is_upper
+        tris_ab_are_upper = triangle.is_upper
         c_is_upper = not triangle.is_upper
 
-        triangle_a = landscape_triangle(self, face_a_index, ab_is_upper, tris_ab_are_red)
-        triangle_b = landscape_triangle(self, face_b_index, ab_is_upper, tris_ab_are_red)
+        triangle_a = landscape_triangle(self, face_a_index, tris_ab_are_upper, tris_ab_are_red)
+        triangle_b = landscape_triangle(self, face_b_index, tris_ab_are_upper, tris_ab_are_red)
         triangle_c = landscape_triangle(self, face_c_index,  c_is_upper,  c_is_red)
 
         ## add the tetrahedron 
@@ -1071,7 +1071,7 @@ class continent:
             if self.infinity in triangle.vertices:
                 self.check_vertex_desired(vert_t) 
 
-        if tris_ab_are_red == ab_is_upper:
+        if tris_ab_are_red == tris_ab_are_upper:
             triangle_a.vertices = [vert_t, vert_b, vert_c]
             triangle_b.vertices = [vert_c, vert_a, vert_t]
         else:
@@ -1116,7 +1116,7 @@ class continent:
         else:
             edge_ca, edge_ab, edge_bc = triangle.edges
 
-        if tris_ab_are_red == ab_is_upper:
+        if tris_ab_are_red == tris_ab_are_upper:
             triangle_a.update_edges( [edge_bc, edge_ct, edge_bt] )
             triangle_b.update_edges( [edge_at, edge_ct, edge_ca] )
         else:
@@ -1145,7 +1145,7 @@ class continent:
 
         ### now for the neighbours
 
-        if tris_ab_are_red == ab_is_upper:
+        if tris_ab_are_red == tris_ab_are_upper:
             triangle_a.neighbours = [triangle.not_downriver()[0], triangle_b, triangle_c]
             triangle_b.neighbours = [triangle_c, triangle_a, triangle.not_downriver()[1]]
         else:
@@ -1166,9 +1166,9 @@ class continent:
         ### now do all the in_fills that we can, coming from the new stuff we added.
         ### This step is not how we do things in [FSS] - there we add tetrahedra only until we cover the triangle we are trying to bury.
         ### Here we must make the continent convex in order to work out where the cusp leaves go as we build.
-        self.back_fill(triangle, vert_a, vert_b, vert_t, triangle_a, triangle_b, edge_ab, edge_at, edge_bt, ab_is_upper)
+        self.back_fill(triangle, vert_a, vert_b, vert_t, triangle_a, triangle_b, edge_ab, edge_at, edge_bt, tris_ab_are_upper)
 
-    def back_fill(self, triangle, vert_a, vert_b, vert_t, triangle_a, triangle_b, edge_ab, edge_at, edge_bt, ab_is_upper):    
+    def back_fill(self, triangle, vert_a, vert_b, vert_t, triangle_a, triangle_b, edge_ab, edge_at, edge_bt, tris_ab_are_upper):    
         """Running this as part of each coastal_fill makes the continent convex"""
         ### at least one of a and b triangles points to the coast, the other we may need to in_fill along
 
@@ -1192,7 +1192,7 @@ class continent:
         ### on the same side as we added the filling tetrahedra. That triangle is one of the outer_triangles 
 
         # print('a', self.vertices.index(vert_a), 'b', self.vertices.index(vert_b), 'c', self.vertices.index(vert_c))
-        # print('ab_is_upper', ab_is_upper, 'edge_ab.is_red', edge_ab.is_red)
+        # print('tris_ab_are_upper', tris_ab_are_upper, 'edge_ab.is_red', edge_ab.is_red)
 
         last_tri = None
         for tri in outer_triangles:
@@ -1202,11 +1202,11 @@ class continent:
                 break
         
         last_edge = last_tri.edges[last_tri.downriver_index()]
-        t_leaf = cusp_leaf(self, vert_t, last_edge, ab_is_upper)
+        t_leaf = cusp_leaf(self, vert_t, last_edge, tris_ab_are_upper)
         vert_t.cusp_leaves.append(t_leaf)
 
         ### find where on last_edge.cusp_leaves this cusp_leaf lands
-        if ab_is_upper == last_edge.is_red:
+        if tris_ab_are_upper == last_edge.is_red:
             insert_index = 0 # default at start
         else:
             insert_index = None # default at end 
@@ -1245,17 +1245,17 @@ class continent:
                 after_cut.append(leaf)
 
         ### add new opposite side cusp leaf
-        if edge_ab.is_red == ab_is_upper:
-            new_opposite_leaf = cusp_leaf(self, vert_a, edge_bt, not ab_is_upper)
+        if edge_ab.is_red == tris_ab_are_upper:
+            new_opposite_leaf = cusp_leaf(self, vert_a, edge_bt, not tris_ab_are_upper)
             vert_a.cusp_leaves.append(new_opposite_leaf)
             opposite_side_leaves.insert(0, new_opposite_leaf)
         else:
-            new_opposite_leaf = cusp_leaf(self, vert_b, edge_at, not ab_is_upper)
+            new_opposite_leaf = cusp_leaf(self, vert_b, edge_at, not tris_ab_are_upper)
             vert_b.cusp_leaves.insert(0, new_opposite_leaf)
             opposite_side_leaves.append(new_opposite_leaf)
 
         ### add on opposite_side_leaves
-        if ab_is_upper == edge_ab.is_red:
+        if tris_ab_are_upper == edge_ab.is_red:
             after_cut = after_cut + opposite_side_leaves
         else:
             before_cut = opposite_side_leaves + before_cut

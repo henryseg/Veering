@@ -228,6 +228,8 @@ def draw_edge_rectangle_half(l, m, leaf_thickness, leaf_colours, scl, canv):
         intersection = geodesic_isect(l_start, l_end, m_start, m_end)
         if intersection == None:
             print('no intersection')
+            draw_leaf(m, 2*leaf_thickness, leaf_colours, scl, canv)
+            draw_leaf(l, 2*leaf_thickness, leaf_colours, scl, canv)
             return None
         # assert intersection != None
 
@@ -244,6 +246,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     shade_triangles = False, draw_fund_domain = False, fund_dom_tets = None, draw_fund_domain_edges = False,
     # draw_tetrahedron_rectangles = [],
     edge_rectangles_to_draw = [],
+    draw_edges_for_edge_rectangles = False,
     edge_thickness = 0.02,
     leaf_thickness = 0.03):
     
@@ -264,6 +267,8 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
     canv.stroke(path.circle(0,0,global_scale_up), [style.linewidth(edge_thickness)])
+
+    con.build_boundary_data()
 
     n = len(con.coast)
     for v in con.coast:
@@ -287,20 +292,17 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
 
     ### highlight vertices of tetrahedra in a fundamental domain
     if draw_fund_domain:
-        if fund_dom_tets == None:
-            fund_dom_tets = get_fund_domain_tetrahedra(con)
         for con_tet in fund_dom_tets:
             if type(con_tet) == continent_tetrahedron:  ### could be an integer if we didnt find this tet
                 if draw_fund_domain_edges:
                     for e in con_tet.edges():
-                        draw_edge(e, edge_thickness, edge_colours, scl, canv)
-                        # col = edge_colours[e.is_red]
-                        # u, v = e.vertices
-                        # p = make_arc(u.circle_pos, v.circle_pos)
-                        # p = p.transformed(scl)
-                        # canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
+                        draw_edge(e, 1.5*edge_thickness, edge_colours, scl, canv)
 
-        update_fund_dom_tet_nums(con, fund_dom_tets)
+        for v in con.coast:
+            v.fund_dom_tet_nums = []
+        for con_tet in fund_dom_tets:
+            for v in con_tet.vertices:
+                v.fund_dom_tet_nums.append(con_tet.index)
         for v in [v for v in con.coast if v.fund_dom_tet_nums != []]:
             vert_pos = v.circle_pos * 1.03 * global_scale_up
             if draw_labels:
@@ -388,7 +390,8 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         #         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
 
     for e in edge_rectangles_to_draw:
-        draw_edge(e, edge_thickness, edge_colours, scl, canv)
+        if draw_edges_for_edge_rectangles:
+            draw_edge(e, 3*edge_thickness, edge_colours, scl, canv)
 
         #     -3-v
         #    |  /|

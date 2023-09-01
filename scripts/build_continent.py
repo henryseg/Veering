@@ -190,7 +190,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
     # print('stc', side_tet_collections)
     ### identify the next edge in the cycle 
 
-    print([t.index for t in continent_fund_dom_tets])
+    # print([t.index for t in continent_fund_dom_tets])
     init_tetrahedron = continent_fund_dom_tets[flow_cycle[0][0]]
     print('init tet index, flow cycle', init_tetrahedron.index, flow_cycle)
     assert init_tetrahedron.index == flow_cycle[0][0]
@@ -204,7 +204,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
         else: ### go down
             interval.go_down()
     con.build_boundary_data()
-    return con, interval
+    return con, interval, continent_fund_dom_tets
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""
