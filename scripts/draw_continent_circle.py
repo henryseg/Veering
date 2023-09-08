@@ -149,7 +149,6 @@ def circle_position(t, n):
     s = 2*pi*t/n
     return complex(cos(s), sin(s))
 
-
 def tet_rectangle_sides(tet, v):
     ### a side is a pair (v, thorn_end), where v is the cusp and thorn_end is (coastal_arc, index_on_that_arc)
     ### we are looking for at most two cusp leaves to form the sides
@@ -203,6 +202,12 @@ def draw_edge(e, edge_thickness, edge_colours, scl, canv):
     p = p.transformed(scl)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
 
+def draw_tetrahedron(t, edge_thickness, edge_colours, scl, canv):
+    draw_edge(t.lower_edge, edge_thickness, edge_colours, scl, canv)
+    for e in t.equatorial_edges:
+        draw_edge(e, edge_thickness, edge_colours, scl, canv)
+    draw_edge(t.upper_edge, edge_thickness, edge_colours, scl, canv)
+
 def draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv):
     col = leaf_colours[leaf.is_upper]
     start, end = leaf.end_positions()
@@ -236,19 +241,22 @@ def draw_edge_rectangle_half(l, m, leaf_thickness, leaf_colours, scl, canv):
         p = make_arc(l_start, intersection)
         p = p.transformed(scl)
         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, leaf_colours[l.is_upper]])
-        p = make_arc(m_start, intersection)
-        p = p.transformed(scl)
-        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, leaf_colours[m.is_upper]])
+        q = make_arc(intersection, m_start)
+        q = q.transformed(scl)
+        canv.stroke(q, [style.linewidth(leaf_thickness), style.linecap.round, leaf_colours[m.is_upper]])
+        return [p,q]
 
 def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landscape = False, draw_lower_landscape = False, 
     draw_coastal_edges = True, draw_all_edges = False,
     draw_cusp_leaves = True,
     shade_triangles = False, draw_fund_domain = False, fund_dom_tets = None, draw_fund_domain_edges = False,
-    # draw_tetrahedron_rectangles = [],
     edge_rectangles_to_draw = [],
+    tetrahedron_rectangles_to_draw = [],
+    tetrahedra_to_draw = [],
     draw_edges_for_edge_rectangles = False,
     edge_thickness = 0.02,
-    leaf_thickness = 0.03):
+    leaf_thickness = 0.03,
+    transparency = 0.9):
     
     # ### check edge rectangle
     # check_edge = con.edges[240]
@@ -329,7 +337,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         p.append(q[1])
         p.append(r[1])  ### remove extraneous moveto commands
         p = p.transformed(scl)
-        canv.stroke(p, [deco.filled([color.transparency(0.8)]), style.linewidth(0)])
+        canv.stroke(p, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
         u,v,w = con.triangle_path[-1].vertices
         p = make_arc(u.circle_pos, v.circle_pos)
         q = make_arc(v.circle_pos, w.circle_pos)
@@ -337,7 +345,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         p.append(q[1])
         p.append(r[1])  ### remove extraneous moveto commands
         p = p.transformed(scl)
-        canv.stroke(p, [deco.filled([color.transparency(0.8)]), style.linewidth(0)])
+        canv.stroke(p, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
         # for triangle in con.triangle_path:
         #     u,v,w = triangle.vertices
         #     p = make_arc(u.circle_pos, v.circle_pos)
@@ -401,6 +409,32 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         a, b, c, d = e.rectangle_sides()
         draw_edge_rectangle_half(a, d, leaf_thickness, leaf_colours, scl, canv)
         draw_edge_rectangle_half(b, c, leaf_thickness, leaf_colours, scl, canv)
+
+    for t in tetrahedra_to_draw:
+        draw_tetrahedron(t, edge_thickness, edge_colours, scl, canv)
+
+    for t in tetrahedron_rectangles_to_draw:
+        eq_edges = t.equatorial_edges
+        t_rect_arcs = []
+        for i, e in enumerate(eq_edges):
+            before_e_verts = eq_edges[(i-1) % 4].vertices
+            after_e_verts = eq_edges[(i+1) % 4].vertices
+            u, v = e.vertices
+            if u in before_e_verts:
+                assert v in after_e_verts
+                p = e.rectangle_sides()[1]
+                q = e.rectangle_sides()[2]
+            else:
+                assert u in after_e_verts
+                assert v in before_e_verts
+                p = e.rectangle_sides()[3]
+                q = e.rectangle_sides()[0]
+            arcs = draw_edge_rectangle_half(p, q, leaf_thickness, leaf_colours, scl, canv)
+            t_rect_arcs.extend(arcs)
+
+        assert len(t_rect_arcs) == 8
+        polygon = t_rect_arcs[0] << t_rect_arcs[1] << t_rect_arcs[2] << t_rect_arcs[3] << t_rect_arcs[4] << t_rect_arcs[5] << t_rect_arcs[6] << t_rect_arcs[7]
+        canv.stroke(polygon, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
 
         ### draw full leaves
         # for leaf in e.rectangle_sides():

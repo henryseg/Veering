@@ -124,12 +124,12 @@ class flow_interval:
             if len(upper_boundary_triangles) == 0:
                 break ## out of while loop
             self.continent.bury(upper_boundary_triangles[0])
-        last_tet = edge.upper_tet
-        assert last_tet != None
+        up_tet = edge.upper_tet
+        assert up_tet != None
         self.up_index = (self.up_index + 1) % len(self.flow_cycle)
-        assert last_tet.index == self.flow_cycle[self.up_index][0]
-        self.tetrahedra.append(last_tet)
-        self.edges.append(flow_edge_in_continent(last_tet, self.flow_cycle[self.up_index][1]))
+        assert up_tet.index == self.flow_cycle[self.up_index][0]
+        self.tetrahedra.append(up_tet)
+        self.edges.append(flow_edge_in_continent(up_tet, self.flow_cycle[self.up_index][1]))
 
     def go_down(self):
         tet = self.tetrahedra[0]
