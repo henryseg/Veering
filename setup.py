@@ -4,7 +4,7 @@ from pathlib import Path
 long_description = (Path(__file__).parent / "README.md").read_text()
 
 setup(name='veering',
-      version='0.1',
+      version='0.2',
       description='Taut and veering triangulations',
       long_description=long_description,
       long_description_content_type='text/markdown',
