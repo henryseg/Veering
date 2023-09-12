@@ -10,7 +10,7 @@ We thank Nathan Dunfield for many helpful comments (and for some code).
 
 To install Veering inside Sage via the command line type:
 
-    sage -pip install git+https://github.com/henryseg/Veering
+    sage -pip install veering
 
 If you wish to install in Python, replace `sage -pip` by `pip`
 in the above command.
@@ -35,8 +35,8 @@ For a sanity check do, run in a sage console:
 
 As an example, start a sage sessiond and type:
 
-    sage: from veering.file_io import parse_data_file
-    sage: veering_isosigs = parse_data_file('veering_census.txt')
+    sage: from veering import veering_census
+    sage: veering_isosigs = veering_census()
 
 The list `veering_isosigs` now contains all taut isomorphism signatures
 for the veering triangulations with at most 16 tetrahedra. These are
@@ -45,7 +45,7 @@ ordered lexicographically.
     sage: sig = veering_isosigs[1]; sig
     'cPcbbbiht_12'
 
-This is the taut isomorphism signature for the only known veering
+This is the taut isomorphism signature for the only (!) veering
 structure on the figure eight knot complement. The string before the
 underscore is the isomorphism signature for the triangulation; the
 string after the underscore records the positions of the edges with
@@ -98,9 +98,9 @@ When citing the codebase, please use the following (updating the year).
 ```
 @Misc{Veering,
     author = {Anna Parlak and Saul Schleimer and Henry Segerman},
-    title = {Veering, code for studying taut and veering ideal triangulations},
+    title = {Veering x.y, code for studying taut and veering ideal triangulations},
     howpublished = {\url{https://github.com/henryseg/Veering}},
-    year = {20xx},
+    year = {20zz},
 }
 ```
 
