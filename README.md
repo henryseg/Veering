@@ -1,6 +1,6 @@
 # Veering
 
-Python code for working with transverse taut and veering ideal triangulations; 
+Python code (using regina, snappy, and sage) for working with transverse taut and veering ideal triangulations.; 
 implemented by Anna Parlak, Saul Schleimer, and Henry Segerman. The taut and 
 veering polynomials are defined by Michael Landry, Yair Minsky and Sam Taylor. 
 We thank Nathan Dunfield for many helpful comments (and for some code).
