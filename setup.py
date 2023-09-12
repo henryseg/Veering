@@ -12,8 +12,7 @@ setup(name='veering',
       author_email='segerman (at) math (dot) okstate (dot) edu',
       url='https://github.com/henryseg/Veering',
       packages=['veering'],
-      package_data={'veering': ['data_census/veering_census.txt', 'data_census/veering_census_with_data.txt']},
-      include_package_data=True,
+      package_data={'veering': ['data/*']},
       install_requires=['regina', 'snappy'],
       keywords='surfaces, manifolds, geometry, taut triangulation, veering triangulation'
      )

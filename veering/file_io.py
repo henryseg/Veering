@@ -14,12 +14,9 @@ def parse_data_file(filename):
     data_file = Path(filename)
     if not data_file.exists():
         # 2. try data_census path in the installation folder
-        data_file = Path(__file__).parent / "../data_census" / filename
+        data_file = Path(__file__).parent / "data" / filename
         if not data_file.exists():
-            # 3. try data_extra path in the installation folder
-            data_file = Path(__file__).parent / "../data_extra" / filename
-            if not data_file.exists():
-                raise ValueError('no data file {}'.format(filename))
+            raise ValueError('no data file {}'.format(filename))
 
     data_file = data_file.open()
     out = [line.strip() for line in data_file.readlines()]
