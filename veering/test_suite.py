@@ -5,7 +5,7 @@
 import random
 import time
 
-from .file_io import parse_data_file, read_from_pickle
+from .file_io import veering_census, parse_data_file, read_from_pickle
 
 
 # regina tests
@@ -753,7 +753,7 @@ sage_tests = [testing_is_layered,
 ]
 
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
-    veering_isosigs = parse_data_file("data_census/veering_census.txt")
+    veering_isosigs = veering_census()
 
     print("tests requiring regina")
     for test in regina_tests:

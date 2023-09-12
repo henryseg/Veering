@@ -7,7 +7,7 @@
 import regina
 import random
 
-from .file_io import parse_data_file
+from .file_io import veering_census
 from . import taut
 from .taut import isosig_to_tri_angle, unsorted_vert_pair_to_edge_pair, is_taut, there_is_a_pi_here
 from .branched_surface import (large_edge_of_face, determine_possible_branch_given_two_faces, determine_possible_branch_given_three_faces, is_branched,
@@ -624,7 +624,7 @@ def threeTwoMove(tri, edge_num, angle = None, branch = None, perform = True, ret
 
 def test(num_to_check = 1000):
 
-    veering_isosigs = parse_data_file("veering_census.txt")
+    veering_isosigs = veering_census()
 
     # for sig in veering_isosigs[:2000]:  ### random.sample(veering_isosigs, num_to_check):
     #     tri, angle = taut.isosig_to_tri_angle(sig)
@@ -664,6 +664,3 @@ def test(num_to_check = 1000):
     #         all_isoms = tri.findAllIsomorphisms(tri_original)
     #         all_branches = [branched_surface.apply_isom_to_branched_surface(branch, isom) for isom in all_isoms]
     #         assert branch_original in all_branches
-
-
-

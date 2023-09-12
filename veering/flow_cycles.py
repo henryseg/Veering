@@ -10,7 +10,6 @@ from .branched_surface import upper_branched_surface, branch_num_to_large_edge_a
 from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
 from .taut import isosig_to_tri_angle, edge_num_to_vert_pair
 from .drill import drill
-from .file_io import parse_data_file
 
 ### format for loops: it is a list of tuples, 
 ### each tuple is (tet_index, edge_index within this tet that we exit through)

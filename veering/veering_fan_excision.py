@@ -158,8 +158,8 @@ if __name__ == '__main__':
     from . import veering
     from . import transverse_taut
     from . import taut
-    from .file_io import parse_data_file
-    census = parse_data_file('veering_census.txt')
+    from .file_io import veering_census
+    census = veering_census()
 
     for sig in census[:200]:
         tri, angle = excise_fans(sig)

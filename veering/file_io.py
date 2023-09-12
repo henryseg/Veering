@@ -47,3 +47,7 @@ def output_to_pickle(out, filename):
     pickle.dump(out, f)
     f.close()
     return None
+
+# a very common use case
+def veering_census():
+    return parse_data_file("veering_census.txt")
