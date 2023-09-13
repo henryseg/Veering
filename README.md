@@ -82,7 +82,6 @@ manifold; this is not true in general.
 
     sage: sig = census[257]; sig
     'iLLLQPcbeegefhhhhhhahahha_01110221'
-    sage: from veering import taut_polytope
     sage: taut_polytope.cone_in_homology(sig)
     [N(1, -1), N(1, 1)]
     
