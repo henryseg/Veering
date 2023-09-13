@@ -25,14 +25,15 @@ https://github.com/3-manifolds/regina_wheels
 
 ### Testing
 
-For a sanity check do, run in a sage console:
+For a sanity check, after installation start a sage session and 
+run the following:
 
     sage: from veering.test_suite import run_tests
     sage: run_tests()
 
 ### Usage
 
-As an example, start a sage sessiond and type:
+As a simple example:
 
     sage: from veering import veering_census
     sage: veering_isosigs = veering_census()
@@ -65,11 +66,12 @@ is a fibered knot.
     sage: from veering import veering_polynomial
     sage: veering_polynomial.veering_polynomial(sig)
     a^3 - 4*a^2 + 4*a - 1
-    
-Note that the taut polynomial divides the veering polynomial; this is 
-true in general. The taut polynomial of this veering triangulation is
-equal to the Alexander polynomial of the underlying manifold; this is
-not true in general.
+
+The taut and veering polynomials are defined by Michael Landry, Yair 
+Minsky and Sam Taylor. Note that the taut polynomial divides the veering 
+polynomial; this is true in general. The taut polynomial of this veering 
+triangulation is equal to the Alexander polynomial of the underlying 
+manifold; this is not true in general.
 
     sage: sig = veering_isosigs[257]
     sage: from veering import taut_polytope
@@ -78,7 +80,7 @@ not true in general.
     
 The cone of homology classes carried by the veering triangulation 
 `veering_isosigs[257]` is spanned by the rays passing through (1,-1) and
-(1,1). Landry, Minsky and Taylor proved that, if nonempty, this cone is
+(1,1). Landry, Minsky, and Taylor proved that, if nonempty, this cone is
 equal to a cone on a (not necessarily top-dimensional) face of the Thurston 
 norm ball. The chosen basis on H^1 is dual to the basis of H_1 used to 
 compute the taut and veering polynomials.
@@ -92,7 +94,8 @@ https://math.okstate.edu/people/segerman/veering.html
 
 ### Citation
 
-When citing the codebase, please use the following (updating the year). 
+When citing the codebase, please use the following (updating the 
+version number and the year). 
 
 ```
 @Misc{Veering,
