@@ -7,16 +7,20 @@ for some code).
 
 ### Installation
 
-To install Veering inside Sage via the command line type:
+To install/uninstall veering inside Sage via the command line, using pip, type:
 
     sage -pip install veering
 
-If you wish to install in Python, replace `sage -pip` by `pip`
-in the above command.
+or
+
+    sage -pip uninstall veering
+
+For installation into your system's Python, replace `sage -pip` by `pip3` (or 
+just `pip` depending on your Python installation).
 
 Essentially all of the veering code relies on regina; some of it
-relies on snappy and some on SageMath. Other parts rely on the 
-Python vector graphics package pyx. Installation instructions for 
+relies on snappy and some relies on SageMath.  Other parts rely on the 
+Python vector graphics package pyx.  Installation instructions for 
 SageMath, snappy, and regina can be found at the following webpages:
 
 https://doc.sagemath.org/html/en/installation/ \
@@ -25,11 +29,12 @@ https://github.com/3-manifolds/regina_wheels
 
 ### Testing
 
-For a sanity check, after installation start a sage session and 
-run the following:
+After installation start a sage session and run the following:
 
     sage: from veering.test_suite import run_tests
     sage: run_tests()
+
+Each test should take at most a few seconds.
 
 ### Usage
 
