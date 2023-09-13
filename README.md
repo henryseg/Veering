@@ -1,13 +1,13 @@
-# Veering
+# veering
 
 Python code (using regina, snappy, and sage) for working with transverse taut 
-and veering ideal triangulations; implemented by Anna Parlak, Saul Schleimer, 
+and veering ideal triangulations -- implemented by Anna Parlak, Saul Schleimer, 
 and Henry Segerman. We thank Nathan Dunfield for many helpful comments (and 
 for some code).
 
 ### Installation
 
-To install/uninstall veering inside Sage via the command line, using pip, type:
+To install (or uninstall) veering inside Sage via the command line, using pip, type:
 
     sage -pip install veering
 
@@ -15,13 +15,14 @@ or
 
     sage -pip uninstall veering
 
-For installation into your system's Python, replace `sage -pip` by `pip3` (or 
-just `pip` depending on your Python installation).
+For installation into your system's Python, replace `sage -pip` by `pip3`.  
+Note that the github repository of veering contains further data and scripts 
+which are not installed by pip. 
 
-Essentially all of the veering code relies on regina; some of it
-relies on snappy and some relies on SageMath.  Other parts rely on the 
-Python vector graphics package pyx.  Installation instructions for 
-SageMath, snappy, and regina can be found at the following webpages:
+Almost all of the veering code relies on regina; some of it relies on 
+snappy and some relies on SageMath.  Other parts rely on the Python 
+vector graphics package pyx.  Installation instructions for SageMath, 
+snappy, and regina can be found at the following webpages:
 
 https://doc.sagemath.org/html/en/installation/ \
 https://snappy.math.uic.edu/installing.html \
@@ -105,7 +106,7 @@ version number and the year).
 ```
 @Misc{Veering,
     author = {Anna Parlak and Saul Schleimer and Henry Segerman},
-    title = {Veering x.y, code for studying taut and veering ideal triangulations},
+    title = {veering x.y, code for studying taut and veering ideal triangulations},
     howpublished = {\url{https://github.com/henryseg/Veering}},
     year = {20zz},
 }
