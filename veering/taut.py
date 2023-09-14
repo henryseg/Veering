@@ -2,7 +2,7 @@
 # taut.py
 #
 
-# functions for building, recording, and working with (transverse)
+# Functions for building, recording, and working with (transverse)
 # taut ideal triangulations.  We assume that the given manifolds are
 # orientable.
 
@@ -128,7 +128,7 @@ def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = F
 # checking tautness
 
 
-#@liberal
+@liberal
 def is_taut(tri, angle, return_totals = False):
     totals = [0] * tri.countEdges()
     for i, tet in enumerate(tri.tetrahedra()):
@@ -181,7 +181,7 @@ def lex_smallest_angle_structure(tri, angle, return_isom = False):
     else:
         return all_angles[0][0]
 
-
+@liberal
 def num_taut_automorphisms(tri, angle):
     """
     Finds the number of taut automorphisms
@@ -265,6 +265,7 @@ def moves_tetrahedra(isom):
     return False
 
 
+@liberal
 def fix_orientations(tri, angle, return_isom = False):
     """
     Fix the orientations of the tetrahedra in triangulation so that
