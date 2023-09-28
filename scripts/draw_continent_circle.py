@@ -252,6 +252,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     shade_triangles = False, draw_fund_domain = False, fund_dom_tets = None, draw_fund_domain_edges = False,
     edge_rectangles_to_draw = [],
     tetrahedron_rectangles_to_draw = [],
+    tetrahedron_rectangles_to_shade = [],
     tetrahedra_to_draw = [],
     draw_edges_for_edge_rectangles = False,
     edge_thickness = 0.02,
@@ -433,8 +434,9 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
             t_rect_arcs.extend(arcs)
 
         assert len(t_rect_arcs) == 8
-        polygon = t_rect_arcs[0] << t_rect_arcs[1] << t_rect_arcs[2] << t_rect_arcs[3] << t_rect_arcs[4] << t_rect_arcs[5] << t_rect_arcs[6] << t_rect_arcs[7]
-        canv.stroke(polygon, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
+        if t in tetrahedron_rectangles_to_shade:
+            polygon = t_rect_arcs[0] << t_rect_arcs[1] << t_rect_arcs[2] << t_rect_arcs[3] << t_rect_arcs[4] << t_rect_arcs[5] << t_rect_arcs[6] << t_rect_arcs[7]
+            canv.stroke(polygon, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
 
         ### draw full leaves
         # for leaf in e.rectangle_sides():

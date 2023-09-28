@@ -106,7 +106,7 @@ class landscape_edge:
         #     -3-v
         #    |  /|
         #    0 e 2
-        #    |/  |
+        #    |/  |  ### e is red <=> 1, 3 are purple and 0, 2 are green
         #    u-1-
 
         u, v = self.vertices
@@ -142,7 +142,21 @@ class landscape_edge:
             #     print('rectangle sides linking failed')
             #     print(self.vertices)
             assert a.links(d) and b.links(c)
+            assert a.is_upper == c.is_upper
+            assert b.is_upper == d.is_upper
+            assert a.is_upper != b.is_upper
+            assert self.is_red == a.is_upper
         return self.rectangle_sides_data
+
+    def green_purple_rectangle_sides(self):
+        if None in self.rectangle_sides_data: ### either the continent doesnt have the leaves or the list needs updating
+            self.rectangle_sides() ### update 
+        assert not None in self.rectangle_sides_data ### if still not working then should run ensure_continent_contains_rectangle first
+        a, b, c, d = self.rectangle_sides_data
+        if self.is_red:
+            return [[a, c], [b, d]]
+        else:
+            return [[b, d], [a, c]]
 
     def ensure_continent_contains_rectangle(self):
         """Add to the continent to ensure that this edge has all its cusp leaves in the continent"""
@@ -200,6 +214,15 @@ class cusp_leaf:
         ### have faces know about the cusp leaves that start there, and vice versa?
         ### leave until we need it
 
+    def sees_to_its_left(self, cusp): ### if the cusp is to the left of the oriented leaf, return true
+        start, end = self.end_positions()
+        return are_anticlockwise(start, end, cusp.coastal_index())
+
+    def is_entirely_to_one_side_of(self, tet): ### are all of the cusps of tet on one or the other side of self?
+        if self.cusp in tet.vertices:
+            return False
+        are_to_left = [self.sees_to_its_left(v) for v in tet.vertices]
+        return are_to_left.count(True) % 4 == 0 ### True if all are on one side or the other
 
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red):

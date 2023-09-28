@@ -177,7 +177,41 @@ class flow_interval:
         assert new_tet != None
         self.tetrahedra.insert(0, new_tet)
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
+    def is_inside_edge_rectangle_green_sides(self, con_edge):
+        con_edge.ensure_continent_contains_rectangle()
+        greens, purples = con_edge.green_purple_rectangle_sides()
+        for leaf in greens:
+            for v in self.tetrahedra[-1].vertices:
+                if leaf.sees_to_its_left(v) == con_edge.is_red:
+                    return False
+        return True
+
+    def is_inside_edge_rectangle_purple_sides(self, con_edge):
+        con_edge.ensure_continent_contains_rectangle()
+        greens, purples = con_edge.green_purple_rectangle_sides()                
+        for leaf in purples:
+            for v in self.tetrahedra[0].vertices:
+                if leaf.sees_to_its_left(v) != con_edge.is_red:
+                    return False
+        return True
+
+def high_enough(fund_dom_edges, interval):  ### high enough to know where the top tet of flow interval is relative to all the fund dom edges
+    for e in fund_dom_edges:
+        greens, purples = e.green_purple_rectangle_sides()
+        for leaf in greens:
+            if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[-1]):
+                return False
+    return True
+
+def low_enough(fund_dom_edges, interval): ### low enough to know where the bottom tet of flow interval is relative to all the fund dom edges
+    for e in fund_dom_edges:
+        greens, purples = e.green_purple_rectangle_sides()
+        for leaf in purples:
+            if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[0]):
+                return False
+    return True
+
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10, build_until_we_know_position_in_fund_dom = False):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
@@ -198,11 +232,31 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps):
 
     interval = flow_interval(con, flow_cycle, init_tetrahedron, init_edge, 0)
 
-    for i in range(num_steps):
-        if i%2 == 0: ### go up
+    if build_until_we_know_position_in_fund_dom:
+        fund_dom_edges = set([])
+        for tet in continent_fund_dom_tets:
+            for e in tet.edges():
+                fund_dom_edges.add(e)
+        for e in fund_dom_edges:
+            e.ensure_continent_contains_rectangle()
+        max_steps = 100
+        step = 0
+        while not high_enough(fund_dom_edges, interval):
             interval.go_up()
-        else: ### go down
+            step += 1
+            if step > max_steps:
+                assert False  ### break runaway while loop
+        while not low_enough(fund_dom_edges, interval):
             interval.go_down()
+            step += 1
+            if step > max_steps:
+                assert False  ### break runaway while loop
+    else:
+        for i in range(num_steps):
+            if i%2 == 0: ### go up
+                interval.go_up()
+            else: ### go down
+                interval.go_down()
     con.build_boundary_data()
     return con, interval, continent_fund_dom_tets
 
