@@ -146,13 +146,16 @@ class flow_interval:
         top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]
 
         if (tet_below_num, top_edge_num) == self.flow_cycle[self.down_index]: ### flow cycle went straight up
-            while True:
-                lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper] 
-                if len(lower_boundary_triangles) == 0:
-                    break ## out of while loop
-                self.continent.bury(lower_boundary_triangles[0])
-                new_tet = edge.lower_tet
+            print('straight up case')
+            if edge.lower_tet == None:
+                while True:
+                    lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper] 
+                    if len(lower_boundary_triangles) == 0:
+                        break ## out of while loop
+                    self.continent.bury(lower_boundary_triangles[0])
+            new_tet = edge.lower_tet
         else:
+            print('sideways case')
             ### find which side of the edge our tet is in
             side_tet_collections_at_edge = vt.side_tet_collections[edge.index] ## index in the manifold
             side_face_collections_at_edge = vt.side_face_collections[edge.index]
