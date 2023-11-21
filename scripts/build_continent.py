@@ -115,6 +115,32 @@ class flow_interval:
         self.edges = [init_flow_edge]
         self.up_index = init_flow_index
         self.down_index = init_flow_index
+        self.init_tet = init_flow_tetrahedron
+        self.init_edge = init_flow_edge
+
+    def how_far_down(self):
+        """how far down have we built the interval from the init tet"""
+        ind = self.tetrahedra.index(self.init_tet)
+        return ind
+
+    def how_far_up(self):
+        """how far up have we built the interval from the init tet"""
+        ind = self.tetrahedra.index(self.init_tet)
+        return len(self.tetrahedra) - ind - 1
+
+    def position(self, tet):
+        """where is tet in the flow interval, where init_flow_tetrahedron is position 0"""
+        assert tet in self.tetrahedra
+        ind = self.tetrahedra.index(tet)
+        return ind - self.tetrahedra.index(self.init_tet)
+
+    def get_tet_at_position(self, i):
+        ind = self.tetrahedra.index(self.init_tet)
+        return self.tetrahedra[i + ind]
+
+    def get_edge_at_position(self, i):
+        ind = self.edges.index(self.init_edge)
+        return self.edges[i + ind]
 
     def go_up(self):
         #flow_cycle, con, flow_edges, flow_tetrahedra, upwards_flow_index):
@@ -146,7 +172,7 @@ class flow_interval:
         top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]
 
         if (tet_below_num, top_edge_num) == self.flow_cycle[self.down_index]: ### flow cycle went straight up
-            print('straight up case')
+            # print('straight up case')
             if edge.lower_tet == None:
                 while True:
                     lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper] 
@@ -155,7 +181,7 @@ class flow_interval:
                     self.continent.bury(lower_boundary_triangles[0])
             new_tet = edge.lower_tet
         else:
-            print('sideways case')
+            # print('sideways case')
             ### find which side of the edge our tet is in
             side_tet_collections_at_edge = vt.side_tet_collections[edge.index] ## index in the manifold
             side_face_collections_at_edge = vt.side_face_collections[edge.index]
@@ -180,6 +206,18 @@ class flow_interval:
         assert new_tet != None
         self.tetrahedra.insert(0, new_tet)
 
+    def ensure_contains_one_cycle_up(self):
+        """Make sure that the interval contains an entire cycle above init_tet"""
+        if self.how_far_up() < len(self.flow_cycle):
+            for i in range(len(self.flow_cycle) - self.how_far_up()):
+                self.go_up()
+
+    def ensure_contains_one_cycle_down(self):
+        """Make sure that the interval contains an entire cycle below init_tet"""
+        if self.how_far_down() < len(self.flow_cycle):
+            for i in range(len(self.flow_cycle) - self.how_far_down()):
+                self.go_down()
+
     def is_inside_edge_rectangle_green_sides(self, con_edge):
         con_edge.ensure_continent_contains_rectangle()
         greens, purples = con_edge.green_purple_rectangle_sides()
@@ -198,6 +236,16 @@ class flow_interval:
                     return False
         return True
 
+    def is_inside_edge_rectangle(self, con_edge):
+        return self.is_inside_edge_rectangle_green_sides(con_edge) and self.is_inside_edge_rectangle_purple_sides(con_edge)
+
+    def find_edge_rectangle_we_are_inside(self, tet):
+        """Given tet in the fund dom and in our flow cycle, find an edge of tet whose rectangle contains the flow interval's point"""  
+        for e in tet.edges():
+            if self.is_inside_edge_rectangle(e):
+                return e
+        assert False
+
 def high_enough(fund_dom_edges, interval):  ### high enough to know where the top tet of flow interval is relative to all the fund dom edges
     for e in fund_dom_edges:
         greens, purples = e.green_purple_rectangle_sides()
@@ -214,7 +262,7 @@ def low_enough(fund_dom_edges, interval): ### low enough to know where the botto
                 return False
     return True
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10, build_until_we_know_position_in_fund_dom = False):
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
@@ -235,33 +283,63 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10, 
 
     interval = flow_interval(con, flow_cycle, init_tetrahedron, init_edge, 0)
 
-    if build_until_we_know_position_in_fund_dom:
-        fund_dom_edges = set([])
-        for tet in continent_fund_dom_tets:
-            for e in tet.edges():
-                fund_dom_edges.add(e)
-        for e in fund_dom_edges:
-            e.ensure_continent_contains_rectangle()
-        max_steps = 100
-        step = 0
-        while not high_enough(fund_dom_edges, interval):
-            interval.go_up()
-            step += 1
-            if step > max_steps:
-                assert False  ### break runaway while loop
-        while not low_enough(fund_dom_edges, interval):
-            interval.go_down()
-            step += 1
-            if step > max_steps:
-                assert False  ### break runaway while loop
+    fund_dom_edges = set([])
+    for tet in continent_fund_dom_tets:
+        for e in tet.edges():
+            fund_dom_edges.add(e)
+    for e in fund_dom_edges:
+        e.ensure_continent_contains_rectangle()
+    max_steps = 100
+    step = 0
+    while not high_enough(fund_dom_edges, interval):
+        interval.go_up()
+        step += 1
+        if step > max_steps:
+            assert False  ### break runaway while loop
+    while not low_enough(fund_dom_edges, interval):
+        interval.go_down()
+        step += 1
+        if step > max_steps:
+            assert False  ### break runaway while loop
+    edge_whose_rect_contains_point = interval.find_edge_rectangle_we_are_inside(init_tetrahedron)
+    print(edge_whose_rect_contains_point, 'is red:', edge_whose_rect_contains_point.is_red)
+    i = init_tetrahedron.vertices.index(edge_whose_rect_contains_point.vertices[0])
+    j = init_tetrahedron.vertices.index(edge_whose_rect_contains_point.vertices[1])
+    ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
+    interval.ensure_contains_one_cycle_up()
+    interval.ensure_contains_one_cycle_down()
+    up_translate_tet = interval.get_tet_at_position(len(flow_cycle))
+    up_translate_edge = interval.get_edge_at_position(len(flow_cycle))
+    down_translate_tet = interval.get_tet_at_position(-len(flow_cycle))
+
+
+
+    ### c and gamma^2c are corresponding cusps of up_translate_tet, down_translate_tet
+
+    ### next determine a quadrant that contains the puncture p.
+    ### choose a vertex of top edge of up_translate_tet
+    v = up_translate_tet.upper_edge.vertices[0]
+    if v not in up_translate_edge.vertices or (up_translate_edge == up_translate_tet.upper_edge):
+        ### then quadrant starts at v and contains edge rect for up_translate_tet.upper_edge
+        quadrant_edge = up_translate_tet.upper_edge
     else:
-        for i in range(num_steps):
-            if i%2 == 0: ### go up
-                interval.go_up()
-            else: ### go down
-                interval.go_down()
+        ### then quadrant starts at v and contains edge rect for up_translate_edge
+        quadrant_edge = up_translate_edge
+    quadrant_edge.ensure_continent_contains_rectangle()
+    rect_sides = quadrant_edge.rectangle_sides()
+    quadrant_sides = [leaf for leaf in rect_sides if leaf.cusp == v]
+    assert len(quadrant_sides) == 2
+    
+
+
+    #### just build up and down some distance
+    # for i in range(num_steps):
+    #     if i%2 == 0: ### go up
+    #         interval.go_up()
+    #     else: ### go down
+    #         interval.go_down()
     con.build_boundary_data()
-    return con, interval, continent_fund_dom_tets
+    return con, interval, continent_fund_dom_tets, quadrant_sides
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""

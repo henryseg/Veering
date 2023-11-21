@@ -231,8 +231,8 @@ def draw_continent_circle_script():
     veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # flow_cycle = [(0, 0)]
     # flow_cycle = [(0, 4), (4, 0)]
-    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
-    flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
+    flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
+    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
 
 
     # from veering.branched_surface import upper_branched_surface
@@ -247,7 +247,7 @@ def draw_continent_circle_script():
 
     # # # for num_steps in range(10):
     
-    con, interval, continent_fund_dom_tets = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10, build_until_we_know_position_in_fund_dom = True)
+    con, interval, continent_fund_dom_tets, quadrant_sides = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
     print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
 
     print('interval tet indices', [t.index for t in interval.tetrahedra])
@@ -303,6 +303,7 @@ def draw_continent_circle_script():
         tetrahedron_rectangles_to_shade = tetrahedron_rectangles_to_shade,
         tetrahedra_to_draw = tetrahedra_to_draw,
         draw_edges_for_edge_rectangles = True,
+        quadrant_sides = quadrant_sides,
         edge_thickness = 0.02,
         leaf_thickness = 0.02,
         transparency = 0.8)

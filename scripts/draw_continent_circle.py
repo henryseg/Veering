@@ -255,6 +255,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     tetrahedron_rectangles_to_shade = [],
     tetrahedra_to_draw = [],
     draw_edges_for_edge_rectangles = False,
+    quadrant_sides = [],
     edge_thickness = 0.02,
     leaf_thickness = 0.03,
     transparency = 0.9):
@@ -397,6 +398,9 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         #         p = make_arc(start, end)
         #         p = p.transformed(scl)
         #         canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, col])
+
+    for leaf in quadrant_sides:
+        draw_leaf(leaf, 3*leaf_thickness, leaf_colours, scl, canv)
 
     for e in edge_rectangles_to_draw:
         if draw_edges_for_edge_rectangles:
