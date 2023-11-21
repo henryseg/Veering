@@ -318,19 +318,33 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
     ### next determine a quadrant that contains the puncture p.
     ### choose a vertex of top edge of up_translate_tet
-    v = up_translate_tet.upper_edge.vertices[0]
-    if v not in up_translate_edge.vertices or (up_translate_edge == up_translate_tet.upper_edge):
+    up_v = up_translate_tet.upper_edge.vertices[0]
+    if up_v not in up_translate_edge.vertices or (up_translate_edge == up_translate_tet.upper_edge):
         ### then quadrant starts at v and contains edge rect for up_translate_tet.upper_edge
-        quadrant_edge = up_translate_tet.upper_edge
+        up_quadrant_edge = up_translate_tet.upper_edge
     else:
         ### then quadrant starts at v and contains edge rect for up_translate_edge
-        quadrant_edge = up_translate_edge
-    quadrant_edge.ensure_continent_contains_rectangle()
-    rect_sides = quadrant_edge.rectangle_sides()
-    quadrant_sides = [leaf for leaf in rect_sides if leaf.cusp == v]
-    assert len(quadrant_sides) == 2
-    
+        up_quadrant_edge = up_translate_edge
 
+    v_num = up_translate_tet.vertices.index(up_v)
+    # other_end_vert_num = up_translate_tet.vertices.index(up_quadrant_edge.other_end(up_v))
+    e_num = up_translate_tet.ordered_edges().index(up_quadrant_edge)
+
+    down_v = down_translate_tet.vertices[v_num]
+    down_quadrant_edge = down_translate_tet.edge(e_num)
+
+    up_quadrant_edge.ensure_continent_contains_rectangle()
+    down_quadrant_edge.ensure_continent_contains_rectangle()
+
+    up_rect_sides = up_quadrant_edge.rectangle_sides()
+    up_quadrant_sides = [leaf for leaf in up_rect_sides if leaf.cusp == up_v]
+    assert len(up_quadrant_sides) == 2
+
+    down_rect_sides = down_quadrant_edge.rectangle_sides()
+    down_quadrant_sides = [leaf for leaf in down_rect_sides if leaf.cusp == down_v]
+    assert len(down_quadrant_sides) == 2
+    
+    quadrant_sides = up_quadrant_sides + down_quadrant_sides
 
     #### just build up and down some distance
     # for i in range(num_steps):

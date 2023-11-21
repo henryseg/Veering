@@ -540,6 +540,12 @@ class continent_tetrahedron:
         face_pair.remove(vert_pair[1])
         return faces[face_pair[0]].shared_edge(faces[face_pair[1]])
 
+    def ordered_edges(self):
+        out = []
+        for i in range(6):
+            out.append(self.edge(i))
+        return out
+
     # def ordered_vertices(self):
     #     out = []
     #     tet_faces = self.ordered_faces()
