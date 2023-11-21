@@ -2,7 +2,7 @@
 # drill.py
 #
 
-### Given a triangulation and a loop of triangles, drill along that loop
+# Given a triangulation and a loop of triangles, drill along that loop
 
 import regina
 import snappy ### for diagnostics only
