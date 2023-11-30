@@ -252,6 +252,11 @@ def draw_continent_circle_script():
 
     print('interval tet indices', [t.index for t in interval.tetrahedra])
 
+    t1 = con.tetrahedra[-1]
+    t2 = con.tetrahedra[-11]
+
+    print(t1.face_num_path_to_other_tet(t2))
+
     # edge_rectangles_to_draw = interval.edges
 
     # for e in edge_rectangles_to_draw:

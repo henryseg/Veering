@@ -448,6 +448,14 @@ class landscape_triangle:
         assert len(intersection) == 1
         return intersection.pop()
 
+    def tet_on_other_side(self, tet):
+        if tet == self.upper_tet:
+            return self.lower_tet
+        if tet == self.lower_tet:
+            return self.upper_tet
+        assert False
+
+
     # def dist_from_lox(self, edge):
     #     vt = self.continent.vt
     #     edge_index = self.edges.index(edge)
@@ -469,7 +477,7 @@ class landscape_triangle:
     #     ### has two fixed points... get dist of midpoint of the edge to the correct fixed point...
 
 class continent_tetrahedron:
-    def __init__(self, continent, tet_index):
+    def __init__(self, continent, tet_index, came_from):
         self.continent = continent
         self.index = tet_index ## in the quotient manifold
         self.coorientations = continent.vt.coorientations[tet_index]
@@ -481,6 +489,7 @@ class continent_tetrahedron:
         self.continent.tetrahedra.append(self)
         self.vertices = [None, None, None, None] ## ordered according to the indices of the vertices downstairs in the manifold
         self.gluings = [None, None, None, None] ## a gluing specifies another tetrahedron and the Perm4 from the downstairs manifold
+        self.came_from = came_from ### the landscape_triangle that we were glued onto. Initial continent_tetrahedron has None
 
     def set_upper_edge(self, e):
         self.upper_edge = e
@@ -558,6 +567,44 @@ class continent_tetrahedron:
     #         out.append(vert)
     #     return out
         
+    def path_to_init_tet(self):
+        """Returns list of landscape_triangles which connect self back to the initial tet"""
+        path = []
+        current_tet = self
+        while current_tet.came_from != None:
+            path.append(current_tet.came_from)
+            current_tet = current_tet.came_from.tet_on_other_side(current_tet)
+        return path
+
+    def path_to_other_tet(self, other_tet):
+        """Returns list of landscape_triangles which connect self to other"""
+        path1 = self.path_to_init_tet()
+        path2 = other_tet.path_to_init_tet()
+        ### Now trim off the parts of the path they agree on
+        path1.reverse()
+        path2.reverse()
+        if len(path1) > 0 and len(path2) > 0:
+            i = 0
+            while path1[i] == path2[i]:
+                i += 1
+                if len(path1) <= i or len(path2) <= i:
+                    break
+            path1 = path1[i:]
+            path2 = path2[i:]
+
+        path1.reverse()        
+        return path1 + path2
+
+    def face_num_path_to_other_tet(self, other_tet):
+        path = self.path_to_other_tet(other_tet)
+        face_num_path = []
+        current_tet = self
+        for triangle in path:
+            face_num_path.append( current_tet.ordered_faces().index(triangle) )
+            current_tet = triangle.tet_on_other_side(current_tet)
+        assert current_tet == other_tet
+        return face_num_path
+
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
@@ -717,7 +764,7 @@ class continent:
 
         ## add the tetrahedron
 
-        con_tet = continent_tetrahedron(self, self.tet_face.tet_num)
+        con_tet = continent_tetrahedron(self, self.tet_face.tet_num, None)
         con_tet.vertices = self.vertices[:] ## copy of the vertices of the continent
         con_tet.set_upper_edge(edge_ab)
         con_tet.set_lower_edge(edge_cd) 
@@ -868,7 +915,7 @@ class continent:
 
         ## add the tetrahedron 
 
-        con_tet = continent_tetrahedron(self, tet.index())
+        con_tet = continent_tetrahedron(self, tet.index(), triangle)
 
         ### do the other triangle as well...
 
@@ -1048,7 +1095,7 @@ class continent:
 
         ## add the tetrahedron 
 
-        con_tet = continent_tetrahedron(self, tet.index())
+        con_tet = continent_tetrahedron(self, tet.index(), triangle)
 
         if triangle.is_upper:
             triangle.set_upper_tet(con_tet)
