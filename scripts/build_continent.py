@@ -113,7 +113,7 @@ class flow_interval:
         self.flow_cycle = flow_cycle
         self.tetrahedra = [init_flow_tetrahedron]
         self.edges = [init_flow_edge]
-        self.up_index = init_flow_index
+        self.up_index = init_flow_index    ### index in the flow_cycle
         self.down_index = init_flow_index
         self.init_tet = init_flow_tetrahedron
         self.init_edge = init_flow_edge
@@ -301,10 +301,6 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         step += 1
         if step > max_steps:
             assert False  ### break runaway while loop
-    edge_whose_rect_contains_point = interval.find_edge_rectangle_we_are_inside(init_tetrahedron)
-    print(edge_whose_rect_contains_point, 'is red:', edge_whose_rect_contains_point.is_red)
-    i = init_tetrahedron.vertices.index(edge_whose_rect_contains_point.vertices[0])
-    j = init_tetrahedron.vertices.index(edge_whose_rect_contains_point.vertices[1])
     ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
     interval.ensure_contains_one_cycle_up()
     interval.ensure_contains_one_cycle_down()
@@ -346,6 +342,21 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     
     quadrant_sides = up_quadrant_sides + down_quadrant_sides
 
+    for i in range(5):
+        interval.go_up()    ### simulate extending the flow interval to get more cusps
+        interval.go_down()
+
+    ### get candidate triangles with special vertex at up_v that are also in the quadrant
+    candidate_triangles = []
+    for f in up_v.triangles_with_special_vertex_here:
+        a, b = f.vertices[1:]
+        l, m = up_quadrant_sides
+        if l.sees_to_its_left(a) != m.sees_to_its_left(a):
+            assert l.sees_to_its_left(b) != m.sees_to_its_left(b)
+            candidate_triangles.append(f)
+
+    triangles_to_draw = candidate_triangles
+
     #### just build up and down some distance
     # for i in range(num_steps):
     #     if i%2 == 0: ### go up
@@ -353,7 +364,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     #     else: ### go down
     #         interval.go_down()
     con.build_boundary_data()
-    return con, interval, continent_fund_dom_tets, quadrant_sides
+    return con, interval, continent_fund_dom_tets, quadrant_sides, triangles_to_draw
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""

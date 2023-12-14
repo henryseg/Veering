@@ -202,6 +202,10 @@ def draw_edge(e, edge_thickness, edge_colours, scl, canv):
     p = p.transformed(scl)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
 
+def draw_triangle(f, edge_thickness, edge_colours, scl, canv):
+    for e in f.edges:
+        draw_edge(e, edge_thickness, edge_colours, scl, canv)
+
 def draw_tetrahedron(t, edge_thickness, edge_colours, scl, canv):
     draw_edge(t.lower_edge, edge_thickness, edge_colours, scl, canv)
     for e in t.equatorial_edges:
@@ -253,6 +257,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     edge_rectangles_to_draw = [],
     tetrahedron_rectangles_to_draw = [],
     tetrahedron_rectangles_to_shade = [],
+    triangles_to_draw = [],
     tetrahedra_to_draw = [],
     draw_edges_for_edge_rectangles = False,
     quadrant_sides = [],
@@ -414,6 +419,9 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         a, b, c, d = e.rectangle_sides()
         draw_edge_rectangle_half(a, d, leaf_thickness, leaf_colours, scl, canv)
         draw_edge_rectangle_half(b, c, leaf_thickness, leaf_colours, scl, canv)
+
+    for f in triangles_to_draw:
+        draw_triangle(f, edge_thickness, edge_colours, scl, canv)
 
     for t in tetrahedra_to_draw:
         draw_tetrahedron(t, edge_thickness, edge_colours, scl, canv)

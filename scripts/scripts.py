@@ -12,7 +12,6 @@ from veering.snappy_tools import shapes
 from veering.taut_polynomial import taut_polynomial_via_fox_calculus
 from veering.taut_polytope import min_neg_euler_carried
 
-
 def boundary_triangulation_script():
     from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
@@ -233,7 +232,7 @@ def draw_continent_circle_script():
     # flow_cycle = [(0, 4), (4, 0)]
     flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
-
+    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
 
     # from veering.branched_surface import upper_branched_surface
     # from veering.flow_cycles import find_flow_cycles
@@ -247,15 +246,16 @@ def draw_continent_circle_script():
 
     # # # for num_steps in range(10):
     
-    con, interval, continent_fund_dom_tets, quadrant_sides = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
+    con, interval, continent_fund_dom_tets, quadrant_sides, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
     print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
 
     print('interval tet indices', [t.index for t in interval.tetrahedra])
 
-    t1 = con.tetrahedra[-1]
-    t2 = con.tetrahedra[-11]
-
-    print(t1.face_num_path_to_other_tet(t2))
+    # t1 = con.tetrahedra[-1]
+    # t2 = con.tetrahedra[-11]
+    # path = t1.face_num_path_to_other_tet(t2)
+    # print(path)
+    # print(t1.follow_face_num_path(path) == t2)
 
     # edge_rectangles_to_draw = interval.edges
 
@@ -264,7 +264,7 @@ def draw_continent_circle_script():
 
     # tetrahedra_to_draw = []
     # tetrahedra_to_draw = interval.tetrahedra
-    tetrahedra_to_draw = [interval.tetrahedra[0], interval.tetrahedra[-1]] + continent_fund_dom_tets
+    tetrahedra_to_draw = [interval.tetrahedra[0], interval.tetrahedra[-1]] #+ continent_fund_dom_tets
     tetrahedron_rectangles_to_shade = [interval.tetrahedra[0], interval.tetrahedra[-1]]
     for t in tetrahedra_to_draw:
         for e in t.equatorial_edges:
@@ -297,7 +297,7 @@ def draw_continent_circle_script():
     draw_continent_circle(con, name = name, draw_labels = True,
         # draw_upper_landscape = True, draw_lower_landscape = True, 
         draw_upper_landscape = False, draw_lower_landscape = False, 
-        draw_coastal_edges = True, draw_all_edges = False,
+        draw_coastal_edges = False, draw_all_edges = False,
         draw_cusp_leaves = False,
         shade_triangles = False, 
         draw_fund_domain = False, fund_dom_tets = continent_fund_dom_tets,
@@ -306,6 +306,7 @@ def draw_continent_circle_script():
         edge_rectangles_to_draw = edge_rectangles_to_draw,
         tetrahedron_rectangles_to_draw = tetrahedra_to_draw,
         tetrahedron_rectangles_to_shade = tetrahedron_rectangles_to_shade,
+        triangles_to_draw = triangles_to_draw,
         tetrahedra_to_draw = tetrahedra_to_draw,
         draw_edges_for_edge_rectangles = True,
         quadrant_sides = quadrant_sides,

@@ -17,6 +17,8 @@ class vertex:
     def __init__(self, continent, pos):
         self.continent = continent
         self.edges = []
+        self.triangles_with_special_vertex_here = [] ### the edges of the triangle meeting here have the same colour
+        self.triangles_without_special_vertex_here = [] ### the other two kinds of triangle corners
         self.pos = pos  ### complex position, not used for circular pictures
         self.ladderpole_ancestors = set() ## which ladderpole edges did you come from
         self.continent.vertices.append(self)
@@ -247,6 +249,12 @@ class landscape_triangle:
 
     def __str__(self):
         return 'continent_ind,triang_ind,upper,red,vertices,buried ' + str([self.continent.triangles.index(self), self.index, self.is_upper, self.is_red, self.vertices, self.is_buried()])
+
+    def update_vertices(self, vertices):
+        self.vertices = vertices
+        vertices[0].triangles_with_special_vertex_here.append(self)
+        vertices[1].triangles_without_special_vertex_here.append(self)
+        vertices[2].triangles_without_special_vertex_here.append(self)
 
     def update_edges(self, edges):
         self.edges = edges
@@ -605,6 +613,19 @@ class continent_tetrahedron:
         assert current_tet == other_tet
         return face_num_path
 
+    def follow_face_num_path(self, path):
+        """From self, follow the path of face nums, return the continent tet we get to. Will build more continent if necessary"""
+        current_tet = self
+        for face_num in path:
+            triangle = current_tet.ordered_faces()[face_num]
+            if triangle.is_boundary(): ### then build more continent so we can go to the other side of face
+                current_tet = triangle.bury() ## bury the face and return the tet on the other side
+            else:
+                current_tet = triangle.tet_on_other_side(current_tet)
+        return current_tet
+
+
+
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
@@ -682,18 +703,18 @@ class continent:
         vert_d = self.vertices[face_d]
 
         if tris_ab_are_red:
-            triangle_a.vertices = [vert_c, vert_d, vert_b]
-            triangle_b.vertices = [vert_d, vert_c, vert_a]
+            triangle_a.update_vertices( [vert_c, vert_d, vert_b] )
+            triangle_b.update_vertices( [vert_d, vert_c, vert_a] )
         else:
-            triangle_a.vertices = [vert_d, vert_b, vert_c]
-            triangle_b.vertices = [vert_c, vert_a, vert_d]
+            triangle_a.update_vertices( [vert_d, vert_b, vert_c] )
+            triangle_b.update_vertices( [vert_c, vert_a, vert_d] )
 
         if tris_cd_are_red:
-            triangle_c.vertices = [vert_a, vert_d, vert_b]
-            triangle_d.vertices = [vert_b, vert_c, vert_a]
+            triangle_c.update_vertices( [vert_a, vert_d, vert_b] )
+            triangle_d.update_vertices( [vert_b, vert_c, vert_a] )
         else:
-            triangle_c.vertices = [vert_b, vert_a, vert_d]
-            triangle_d.vertices = [vert_a, vert_b, vert_c]
+            triangle_c.update_vertices( [vert_b, vert_a, vert_d] )
+            triangle_d.update_vertices( [vert_a, vert_b, vert_c] )
 
         ## add the edges
 
@@ -942,11 +963,11 @@ class continent:
         assert vert_b == vert_bn and vert_a == vert_an
 
         if tris_ab_are_red == tris_ab_are_upper:
-            triangle_a.vertices = [vert_t, vert_b, vert_n]
-            triangle_b.vertices = [vert_n, vert_a, vert_t]
+            triangle_a.update_vertices( [vert_t, vert_b, vert_n] )
+            triangle_b.update_vertices( [vert_n, vert_a, vert_t] )
         else:
-            triangle_a.vertices = [vert_n, vert_t, vert_b]
-            triangle_b.vertices = [vert_t, vert_n, vert_a]
+            triangle_a.update_vertices( [vert_n, vert_t, vert_b] )
+            triangle_b.update_vertices( [vert_t, vert_n, vert_a] )
         
         ## add gluings and vertices to con_tet
 
@@ -1148,16 +1169,16 @@ class continent:
                 self.check_vertex_desired(vert_t) 
 
         if tris_ab_are_red == tris_ab_are_upper:
-            triangle_a.vertices = [vert_t, vert_b, vert_c]
-            triangle_b.vertices = [vert_c, vert_a, vert_t]
+            triangle_a.update_vertices( [vert_t, vert_b, vert_c] )
+            triangle_b.update_vertices( [vert_c, vert_a, vert_t] )
         else:
-            triangle_a.vertices = [vert_c, vert_t, vert_b]
-            triangle_b.vertices = [vert_t, vert_c, vert_a]
+            triangle_a.update_vertices( [vert_c, vert_t, vert_b] )
+            triangle_b.update_vertices( [vert_t, vert_c, vert_a] )
 
         if c_is_red != c_is_upper:
-            triangle_c.vertices = [vert_b, vert_a, vert_t]
+            triangle_c.update_vertices( [vert_b, vert_a, vert_t] )
         else:
-            triangle_c.vertices = [vert_a, vert_t, vert_b]
+            triangle_c.update_vertices( [vert_a, vert_t, vert_b] )
 
         ## add gluings and vertices to con_tet
 
