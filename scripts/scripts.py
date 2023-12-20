@@ -227,12 +227,24 @@ def draw_continent_circle_script():
     # veering_isosig = 'eLAkaccddjsnak_2001'
     # flow_cycle = [(0, 1), (2, 2), (3, 2)]
 
-    veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
+    # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # flow_cycle = [(0, 0)]
     # flow_cycle = [(0, 4), (4, 0)]
-    flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
+    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
+    
+    # flow cycle which is not boundary parallel but completely in a blue region
+    # veering_isosig = 'eLAkbbcdddhwqj_2102'
+    # flow_cycle = [(3, 2)]
+    
+    # short cycle in a large triangulation
+    veering_isosig = 'qLLALvQLwQMkcecdhkjilmmlnoppphqrwqqaqxhhxofhxq_2010222010122221'
+    # flow_cycle = [(1, 0)]
+    # flow_cycle = [(3, 5)]
+    # flow_cycle = [(4, 2)]
+    # flow_cycle = [(7, 5)]
+    flow_cycle = [(9, 0)]
 
     # from veering.branched_surface import upper_branched_surface
     # from veering.flow_cycles import find_flow_cycles
