@@ -9,7 +9,7 @@ from veering.file_io import parse_data_file, write_data_file
 from veering.taut import isosig_from_tri_angle
 from veering.veering_tri import is_veering
 
-### Usage: make sure you have a "/Data" folder inside your veering directory.
+### Usage: make sure you have a "/data" folder inside your veering/scripts directory.
 ### Generate a census with the following syntax:
 ### main_function(n = 4, verbose = 2, parallel = 5)
 
