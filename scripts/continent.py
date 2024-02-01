@@ -160,6 +160,14 @@ class landscape_edge:
         else:
             return [[b, d], [a, c]]
 
+    def rectangle_sides_by_vertex(self):
+        if None in self.rectangle_sides_data: ### either the continent doesnt have the leaves or the list needs updating
+            self.rectangle_sides() ### update 
+        assert not None in self.rectangle_sides_data ### if still not working then should run ensure_continent_contains_rectangle first
+        a, b, c, d = self.rectangle_sides_data
+        u, v = self.vertices
+        return {u : [a, b], v : [c, d]}
+
     def ensure_continent_contains_rectangle(self):
         """Add to the continent to ensure that this edge has all its cusp leaves in the continent"""
         while None in self.rectangle_sides():

@@ -340,20 +340,48 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     down_quadrant_sides = [leaf for leaf in down_rect_sides if leaf.cusp == down_v]
     assert len(down_quadrant_sides) == 2
     
-    quadrant_sides = up_quadrant_sides + down_quadrant_sides
+    # leaves_to_draw = up_quadrant_sides + down_quadrant_sides
+    leaves_to_draw = up_quadrant_sides[:]
 
-    for i in range(5):
+    for i in range(2):
         interval.go_up()    ### simulate extending the flow interval to get more cusps
-        interval.go_down()
+        # interval.go_down()
 
-    ### get candidate triangles with special vertex at up_v that are also in the quadrant
+    ### get candidate triangles with special vertex (is a corner of the face rectangle) 
+    ### at up_v that are also in the quadrant
     candidate_triangles = []
     for f in up_v.triangles_with_special_vertex_here:
-        a, b = f.vertices[1:]
+        a, b = f.vertices[1:]  ### anticlockwise order as viewed from above is special vertex, then a, then b
         l, m = up_quadrant_sides
+        ### The other two vertices should be in the quadrant:
         if l.sees_to_its_left(a) != m.sees_to_its_left(a):
             assert l.sees_to_its_left(b) != m.sees_to_its_left(b)
             candidate_triangles.append(f)
+
+    for f in candidate_triangles:
+        ### One of the other two vertices should be west of p (and this will be b_NW) while the other is east of p
+        a, b = f.vertices[1:]  ### anticlockwise order as viewed from above is special vertex, then a, then b
+        face_edges = f.edges
+        a_edges = [e for e in face_edges if a in e.vertices]
+        assert len(a_edges) == 2
+        for e in a_edges:
+            e.ensure_continent_contains_rectangle()
+        rect_sides_at_a = [e.rectangle_sides_by_vertex()[a] for e in a_edges]
+        common_leaves = list(set(rect_sides_at_a[0]).intersection(set(rect_sides_at_a[1])))
+        assert len(common_leaves) == 1
+        other_leaves = list(set(rect_sides_at_a[0]).symmetric_difference(set(rect_sides_at_a[1])))
+        assert len(other_leaves) == 2
+        # for sides in rect_sides_at_a:
+        #     leaves_to_draw.extend(sides)
+        leaves_to_draw.append(common_leaves[0])
+
+        #### common leaf goes through the face_rect, other_leaves are on boundary
+        ### b_NW is an a or b of some candidate triangle such that:
+        ### green leaf is an inner leaf from a (say) that has up_v on one side and p on the other
+        ### green leaves on b (say) are outer leaves for the face rect, and they have up_v and p on same side
+
+
+            
 
     triangles_to_draw = candidate_triangles
 
@@ -364,7 +392,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     #     else: ### go down
     #         interval.go_down()
     con.build_boundary_data()
-    return con, interval, continent_fund_dom_tets, quadrant_sides, triangles_to_draw
+    return con, interval, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""

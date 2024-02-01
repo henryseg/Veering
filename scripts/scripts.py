@@ -235,16 +235,16 @@ def draw_continent_circle_script():
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
     
     # flow cycle which is not boundary parallel but completely in a blue region
-    # veering_isosig = 'eLAkbbcdddhwqj_2102'
-    # flow_cycle = [(3, 2)]
+    veering_isosig = 'eLAkbbcdddhwqj_2102'
+    flow_cycle = [(3, 2)]
     
     # short cycle in a large triangulation
-    veering_isosig = 'qLLALvQLwQMkcecdhkjilmmlnoppphqrwqqaqxhhxofhxq_2010222010122221'
-    # flow_cycle = [(1, 0)]
-    # flow_cycle = [(3, 5)]
-    # flow_cycle = [(4, 2)]
-    # flow_cycle = [(7, 5)]
-    flow_cycle = [(9, 0)]
+    # veering_isosig = 'qLLALvQLwQMkcecdhkjilmmlnoppphqrwqqaqxhhxofhxq_2010222010122221'
+    # # flow_cycle = [(1, 0)]
+    # # flow_cycle = [(3, 5)]
+    # # flow_cycle = [(4, 2)]
+    # # flow_cycle = [(7, 5)]
+    # flow_cycle = [(9, 0)]
 
     # from veering.branched_surface import upper_branched_surface
     # from veering.flow_cycles import find_flow_cycles
@@ -258,7 +258,7 @@ def draw_continent_circle_script():
 
     # # # for num_steps in range(10):
     
-    con, interval, continent_fund_dom_tets, quadrant_sides, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
+    con, interval, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
     print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
 
     print('interval tet indices', [t.index for t in interval.tetrahedra])
@@ -321,7 +321,7 @@ def draw_continent_circle_script():
         triangles_to_draw = triangles_to_draw,
         tetrahedra_to_draw = tetrahedra_to_draw,
         draw_edges_for_edge_rectangles = True,
-        quadrant_sides = quadrant_sides,
+        leaves_to_draw = leaves_to_draw,
         edge_thickness = 0.02,
         leaf_thickness = 0.02,
         transparency = 0.8)

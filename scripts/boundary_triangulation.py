@@ -4,8 +4,11 @@ from veering.basic_math import vector, matrix, CP1
 from veering.taut import isosig_to_tri_angle, liberal
 from veering.veering_tri import veering_triangulation
 
-from scripts.develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
-from scripts.veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
+from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
+from veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
+
+# from scripts.develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
+# from scripts.veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
 
 import pyx ### vector graphics 
 
