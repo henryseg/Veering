@@ -224,15 +224,38 @@ class cusp_leaf:
         ### have faces know about the cusp leaves that start there, and vice versa?
         ### leave until we need it
 
-    def sees_to_its_left(self, cusp): ### if the cusp is to the left of the oriented leaf, return true
+    def sees_to_its_left(self, cusp): 
+        ### if the cusp is to the left of the oriented leaf, return true
+        ### In particular, a leaf does _not_ see its own cusp to its left 
+
         start, end = self.end_positions()
         return are_anticlockwise(start, end, cusp.coastal_index())
 
-    def is_entirely_to_one_side_of(self, tet): ### are all of the cusps of tet on one or the other side of self?
-        if self.cusp in tet.vertices:
+    # def is_entirely_to_one_side_of(self, tet): ### are all of the cusps of tet on one or the other side of self?
+    #     if self.cusp in tet.vertices:
+    #         return False
+    #     are_to_left = [self.sees_to_its_left(v) for v in tet.vertices]
+    #     return are_to_left.count(True) % 4 == 0 ### True if all are on one side or the other
+
+    def separates(self, cusp_list_1, cusp_list_2): ### returns True if and only if all of cusp_list_1 is on one side of self, and all of cusp_list_2 is on the other side
+        if self.cusp in cusp_list_1 or self.cusp in cusp_list_2:
             return False
-        are_to_left = [self.sees_to_its_left(v) for v in tet.vertices]
-        return are_to_left.count(True) % 4 == 0 ### True if all are on one side or the other
+        are_to_left_1 = [self.sees_to_its_left(v) for v in cusp_list_1]
+        are_to_left_2 = [self.sees_to_its_left(v) for v in cusp_list_2]
+        if all(are_to_left_1) and not any(are_to_left_2):
+            return True
+        if all(are_to_left_2) and not any(are_to_left_1):
+            return True   
+        return False
+
+    def weakly_separates(self, cusp_list_1, cusp_list_2): 
+        ### like separates, but ignores if self.cusp is in either list
+        cusp_list_1b = [c for c in cusp_list_1 if c != self.cusp]
+        cusp_list_2b = [c for c in cusp_list_2 if c != self.cusp]
+        return self.separates(cusp_list_1b, cusp_list_2b)
+        
+    def is_entirely_to_one_side_of(self, tet):
+        return self.separates(tet.vertices, [])
 
 class landscape_triangle:
     def __init__(self, continent, face_index, is_upper, is_red):
@@ -470,6 +493,21 @@ class landscape_triangle:
         if tet == self.lower_tet:
             return self.upper_tet
         assert False
+
+    def get_non_special_vertex_cusp_leaves(self): ### returns dict from non-special vertices to the [internal, boundary] leaves for self at the vertex
+        out = {}
+        for v in self.vertices[1:]:
+            v_edges = [e for e in self.edges if v in e.vertices]
+            assert len(v_edges) == 2
+            for e in v_edges:
+                e.ensure_continent_contains_rectangle()
+            rect_sides_at_v = [e.rectangle_sides_by_vertex()[v] for e in v_edges]
+            internal_leaf_at_v = list(set(rect_sides_at_v[0]).intersection(set(rect_sides_at_v[1]))) 
+            assert len(internal_leaf_at_v) == 1
+            boundary_leaves_at_v = list(set(rect_sides_at_v[0]).symmetric_difference(set(rect_sides_at_v[1])))
+            assert len(boundary_leaves_at_v) == 2
+            out[v] = {'internal':internal_leaf_at_v[0], 'boundary':boundary_leaves_at_v}
+        return out
 
 
     # def dist_from_lox(self, edge):
