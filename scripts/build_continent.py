@@ -262,6 +262,62 @@ def low_enough(fund_dom_edges, interval): ### low enough to know where the botto
                 return False
     return True
 
+def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
+    ### strip vertex is b_NW in the notes
+    while True:
+        ### get candidate triangles with special vertex (is a corner of the face rectangle) 
+        ### at v that are also in the quadrant
+        candidate_triangles = []
+        for f in v.triangles_with_special_vertex_here:
+            a, b = f.vertices[1:]  ### anticlockwise order as viewed from above is special vertex, then a, then b
+            l, m = quadrant_sides
+            ### The other two vertices should be in the quadrant:
+            if l.sees_to_its_left(a) != m.sees_to_its_left(a):
+                assert l.sees_to_its_left(b) != m.sees_to_its_left(b)
+                candidate_triangles.append(f)
+
+        for f in candidate_triangles:
+            # ### One of the other two vertices should be west (same side as up_v) of p (and this will be b_NW) while the other is east (opposite side from up_v) of p
+            leaf_dict = f.get_non_special_vertex_cusp_leaves()
+            a, b = f.vertices[1:]
+
+            if leaf_dict[a]['internal'].is_upper == is_upper:
+                internal_leaf = leaf_dict[a]['internal']
+                boundary_leaves = leaf_dict[b]['boundary']
+                candidate_strip_vertex = a
+            else:
+                internal_leaf = leaf_dict[b]['internal']
+                boundary_leaves = leaf_dict[a]['boundary']
+                candidate_strip_vertex = b
+            assert internal_leaf.is_upper == is_upper
+
+    ### upper_strip_vertex = b_NW is an a or b of some candidate triangle such that:
+    ### green leaf is an inner leaf from a (say) that has up_v on one side and p on the other
+    ### green leaves on b (say) are outer leaves for the face rect, and they have up_v and p on same side
+
+            if is_upper:
+                tet = interval.tetrahedra[-1]
+            else:
+                tet = interval.tetrahedra[0]
+            if (internal_leaf.weakly_separates([v], tet.vertices) and
+                boundary_leaves[0].weakly_separates(tet.vertices + [v], []) and
+                boundary_leaves[1].weakly_separates(tet.vertices + [v], [])):
+                # print('found strip vertex')
+                return (candidate_strip_vertex, internal_leaf, candidate_triangles)
+
+                # found_the_strip_vertex = True
+                # leaves_to_draw.append(internal_leaf)
+                # break
+ 
+        if is_upper:
+            interval.go_up()
+        else:
+            # print('go down')
+            interval.go_down()
+    # print('did not find strip vertex')
+    # return (None, None, candidate_triangles) ### testing
+
+
 def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
@@ -283,10 +339,10 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
     interval = flow_interval(con, flow_cycle, init_tetrahedron, init_edge, 0)
 
-    fund_dom_edges = set([])
+    fund_dom_edges = []
     for tet in continent_fund_dom_tets:
         for e in tet.edges():
-            fund_dom_edges.add(e)
+            fund_dom_edges.append(e)
     for e in fund_dom_edges:
         e.ensure_continent_contains_rectangle()
     max_steps = 100
@@ -314,7 +370,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
     ### next determine a quadrant that contains the puncture p.
     ### choose a vertex of top edge of up_translate_tet
-    up_v = up_translate_tet.upper_edge.vertices[0]
+    up_v = up_translate_tet.upper_edge.vertices[0] ### this is gamma^2c in the notes
     if up_v not in up_translate_edge.vertices or (up_translate_edge == up_translate_tet.upper_edge):
         ### then quadrant starts at v and contains edge rect for up_translate_tet.upper_edge
         up_quadrant_edge = up_translate_tet.upper_edge
@@ -326,7 +382,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     # other_end_vert_num = up_translate_tet.vertices.index(up_quadrant_edge.other_end(up_v))
     e_num = up_translate_tet.ordered_edges().index(up_quadrant_edge)
 
-    down_v = down_translate_tet.vertices[v_num]
+    down_v = down_translate_tet.vertices[v_num] ### this is c in the notes
     down_quadrant_edge = down_translate_tet.edge(e_num)
 
     up_quadrant_edge.ensure_continent_contains_rectangle()
@@ -341,56 +397,25 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     assert len(down_quadrant_sides) == 2
     
     # leaves_to_draw = up_quadrant_sides + down_quadrant_sides
-    leaves_to_draw = up_quadrant_sides[:]
+    leaves_to_draw = up_quadrant_sides[:] + down_quadrant_sides[:]
 
-    for i in range(2):
-        interval.go_up()    ### simulate extending the flow interval to get more cusps
+    # for i in range(2):
+    #     interval.go_up()    
+### going up a few times before starting to search properly might be more efficient
+### because the search below for the upper_strip_vertex involves get_non_special_vertex_cusp_leaves()
+### which calls ensure_continent_contains_rectangle, which adds tetrahedra and (it seems) more candidate_triangles
+### Maybe there is a more efficient way to check for upper_strip_vertex that doesn't require generating the leaves at 
+### the non-special vertices of the candidate triangles? Just look at the position of the cusps on the circle?
+
         # interval.go_down()
 
-    found_the_first_strip_vertex = False ### first strip vertex is b_NW in the notes
-    while not found_the_first_strip_vertex:
-        ### get candidate triangles with special vertex (is a corner of the face rectangle) 
-        ### at up_v that are also in the quadrant
-        candidate_triangles = []
-        for f in up_v.triangles_with_special_vertex_here:
-            a, b = f.vertices[1:]  ### anticlockwise order as viewed from above is special vertex, then a, then b
-            l, m = up_quadrant_sides
-            ### The other two vertices should be in the quadrant:
-            if l.sees_to_its_left(a) != m.sees_to_its_left(a):
-                assert l.sees_to_its_left(b) != m.sees_to_its_left(b)
-                candidate_triangles.append(f)
+    upper_strip_vertex, internal_leaf, candidate_triangles = find_strip_vertex(up_v, up_quadrant_sides, interval, is_upper = True)
+    leaves_to_draw.append(internal_leaf)
+    triangles_to_draw = candidate_triangles
 
-        for f in candidate_triangles:
-            # ### One of the other two vertices should be west (same side as up_v) of p (and this will be b_NW) while the other is east (opposite side from up_v) of p
-
-            leaf_dict = f.get_non_special_vertex_cusp_leaves()
-            a, b = f.vertices[1:]
-
-            if leaf_dict[a]['internal'].is_upper:
-                internal_leaf = leaf_dict[a]['internal']
-                boundary_leaves = leaf_dict[b]['boundary']
-                candidate_strip_vertex = a
-            else:
-                internal_leaf = leaf_dict[b]['internal']
-                boundary_leaves = leaf_dict[a]['boundary']
-                candidate_strip_vertex = b
-
-    ### first_strip_vertex = b_NW is an a or b of some candidate triangle such that:
-    ### green leaf is an inner leaf from a (say) that has up_v on one side and p on the other
-    ### green leaves on b (say) are outer leaves for the face rect, and they have up_v and p on same side
-
-            if (internal_leaf.weakly_separates([up_v], interval.tetrahedra[-1].vertices) and
-                boundary_leaves[0].weakly_separates(interval.tetrahedra[-1].vertices + [up_v], []) and
-                boundary_leaves[1].weakly_separates(interval.tetrahedra[-1].vertices + [up_v], [])):
-                first_strip_vertex = candidate_strip_vertex
-                found_the_first_strip_vertex = True
-                leaves_to_draw.append(internal_leaf)
-                break
-        if not found_the_first_strip_vertex:
-            interval.go_up()
-
-
-
+    lower_strip_vertex, internal_leaf, candidate_triangles = find_strip_vertex(down_v, down_quadrant_sides, interval, is_upper = False)
+    leaves_to_draw.append(internal_leaf)
+    triangles_to_draw.extend( candidate_triangles )
 
     # leaves_to_draw.append(leaf_dict[a][0])
     # leaves_to_draw.append(leaf_dict[b][0])
@@ -400,7 +425,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
             
 
-    triangles_to_draw = candidate_triangles
+    
 
     #### just build up and down some distance
     # for i in range(num_steps):

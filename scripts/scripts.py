@@ -209,8 +209,8 @@ def draw_continent_circle_script():
     from draw_continent_circle import draw_continent_circle
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
     
-    # veering_isosig = 'cPcbbbdxm_10' 
-    # flow_cycle = [(0, 2)]
+    veering_isosig = 'cPcbbbdxm_10' 
+    flow_cycle = [(0, 2)]
 
     # veering_isosig = 'cPcbbbiht_12'
     # flow_cycle = [(0, 0)]  ### boundary parallel
@@ -235,8 +235,8 @@ def draw_continent_circle_script():
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
     
     # flow cycle which is not boundary parallel but completely in a blue region
-    veering_isosig = 'eLAkbbcdddhwqj_2102'
-    flow_cycle = [(3, 2)]
+    # veering_isosig = 'eLAkbbcdddhwqj_2102'
+    # flow_cycle = [(3, 2)]
     
     # short cycle in a large triangulation
     # veering_isosig = 'qLLALvQLwQMkcecdhkjilmmlnoppphqrwqqaqxhhxofhxq_2010222010122221'
@@ -262,6 +262,7 @@ def draw_continent_circle_script():
     print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
 
     print('interval tet indices', [t.index for t in interval.tetrahedra])
+    print('con size', len(con.tetrahedra), con.num_tetrahedra)
 
     # t1 = con.tetrahedra[-1]
     # t2 = con.tetrahedra[-11]

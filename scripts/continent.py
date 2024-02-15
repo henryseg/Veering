@@ -182,7 +182,8 @@ class landscape_edge:
                     assert tri.is_buried()
                     break
             assert found_a_tri_to_bury ### We checked all triangles and all are buried so we should be done
-                    
+        assert not None in self.rectangle_sides()
+
     def length(self):
         u, v = self.vertices
         return abs(u.pos.complex() - v.pos.complex())
