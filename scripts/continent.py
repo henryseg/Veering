@@ -19,6 +19,7 @@ class vertex:
         self.edges = []
         self.triangles_with_special_vertex_here = [] ### the edges of the triangle meeting here have the same colour
         self.triangles_without_special_vertex_here = [] ### the other two kinds of triangle corners
+        self.tetrahedra = []
         self.pos = pos  ### complex position, not used for circular pictures
         self.ladderpole_ancestors = set() ## which ladderpole edges did you come from
         self.continent.vertices.append(self)
@@ -273,7 +274,7 @@ class landscape_triangle:
         ### /     \          /     \
         ### ---B---          ---R---
 
-        self.edges = []
+        self.edges = [] ## opposite corresponding vertices
         self.upper_tet = None
         self.lower_tet = None
         self.neighbours = [] ## list of three triangles incident to this one, opposite corresponding vertices
@@ -292,6 +293,10 @@ class landscape_triangle:
         self.edges = edges
         for e in self.edges:
             e.triangles.append(self)
+        for i in range(3):  ### edge i should be opposite vertex i
+            assert not self.vertices[i] in self.edges[i].vertices
+            assert self.vertices[(i+1)%3] in self.edges[i].vertices
+            assert self.vertices[(i+2)%3] in self.edges[i].vertices
 
     def is_buried(self):
         return self.upper_tet != None and self.lower_tet != None
@@ -342,19 +347,23 @@ class landscape_triangle:
         ind = self.neighbours.index(old_neighbour)
         self.neighbours[ind] = new_neighbour
 
-    def outwards_tet(self, return_other_tet = False): ### for the universal cover tet outside the continent, next to this triangle, get the corresponding quotient tet
+    def outwards_tet(self, return_other_tet = False, return_other_tet_and_embed = False): ### for the universal cover tet outside the continent, next to this triangle, get the corresponding quotient tet
         face = self.continent.vt.tri.face(2,self.index)
         embed0 = face.embedding(0)
         embed1 = face.embedding(1)
         tet0 = embed0.simplex()
         tet1 = embed1.simplex()
         if (self.continent.vt.coorientations[tet0.index()][embed0.face()] == -1) == (self.is_upper): ## -1 means into the tetrahedron, so this is above triangle
-            if return_other_tet:
+            if return_other_tet_and_embed:
+                return (tet0, embed0, tet1, embed1)
+            elif return_other_tet:
                 return (tet0, embed0, tet1)
             else:
                 return (tet0, embed0)
         else:
-            if return_other_tet:
+            if return_other_tet_and_embed:
+                return (tet1, embed1, tet0, embed0)
+            elif return_other_tet:
                 return (tet1, embed1, tet0)
             else:
                 return (tet1, embed1)
@@ -559,6 +568,10 @@ class continent_tetrahedron:
         for e in edges:
             e.side_tetrahedra.append(self)
 
+    def set_vertex(self, vert_num, vert):
+        self.vertices[vert_num] = vert
+        vert.tetrahedra.append(self)
+
     # def upper_edge(self):
     #     return self.upper_triangles[0].shared_edge(self.upper_triangles[1])
 
@@ -666,7 +679,7 @@ class continent_tetrahedron:
         for face_num in path:
             triangle = current_tet.ordered_faces()[face_num]
             if triangle.is_boundary(): ### then build more continent so we can go to the other side of face
-                current_tet = triangle.bury() ## bury the face and return the tet on the other side
+                current_tet = self.continent.bury(triangle) ## bury the face and return the tet on the other side
             else:
                 current_tet = triangle.tet_on_other_side(current_tet)
         return current_tet
@@ -833,7 +846,8 @@ class continent:
         ## add the tetrahedron
 
         con_tet = continent_tetrahedron(self, self.tet_face.tet_num, None)
-        con_tet.vertices = self.vertices[:] ## copy of the vertices of the continent
+        for i in range(4):
+            con_tet.set_vertex(i, self.vertices[i]) ## copy of the vertices of the continent
         con_tet.set_upper_edge(edge_ab)
         con_tet.set_lower_edge(edge_cd) 
         con_tet.set_equatorial_edges([edge_ad, edge_bd, edge_bc, edge_ac])
@@ -1035,13 +1049,16 @@ class continent:
                 vt = other_con_tet.vertices[gluing[vert_num]]
                 vn = n_other_con_tet.vertices[n_gluing[vert_num]]
                 assert vt == vn
-                con_tet.vertices[vert_num] = vt
+                # con_tet.vertices[vert_num] = vt
+                con_tet.set_vertex(vert_num, vt)
             elif vert_num == face_t:
-                con_tet.vertices[vert_num] = n_other_con_tet.vertices[n_gluing[vert_num]] 
+                # con_tet.vertices[vert_num] = n_other_con_tet.vertices[n_gluing[vert_num]] 
+                con_tet.set_vertex(vert_num, n_other_con_tet.vertices[n_gluing[vert_num]])
             else:
                 assert vert_num == face_n
-                con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
-
+                # con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
+                con_tet.set_vertex(vert_num, other_con_tet.vertices[gluing[vert_num]])
+                
         ## now for the edges
 
         edge_tn_index = tet.face(1, vert_pair_to_edge_num[(face_t, face_n)]).index()
@@ -1237,10 +1254,12 @@ class continent:
 
         for vert_num in range(4):
             if vert_num != face_t:
-                con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
+                # con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
+                con_tet.set_vertex(vert_num, other_con_tet.vertices[gluing[vert_num]])
             else:
                 assert vert_num == face_t
-                con_tet.vertices[vert_num] = vert_t
+                # con_tet.vertices[vert_num] = vert_t
+                con_tet.set_vertex(vert_num, vert_t)
 
         ### now for the edges
 

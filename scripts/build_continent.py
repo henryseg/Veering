@@ -284,16 +284,20 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
             if leaf_dict[a]['internal'].is_upper == is_upper:
                 internal_leaf = leaf_dict[a]['internal']
                 boundary_leaves = leaf_dict[b]['boundary']
+                other_colour_boundary_leaves = leaf_dict[a]['boundary']
                 candidate_strip_vertex = a
+                candidate_index = 1
             else:
                 internal_leaf = leaf_dict[b]['internal']
                 boundary_leaves = leaf_dict[a]['boundary']
+                other_colour_boundary_leaves = leaf_dict[b]['boundary']
                 candidate_strip_vertex = b
+                candidate_index = 2
             assert internal_leaf.is_upper == is_upper
 
     ### upper_strip_vertex = b_NW is an a or b of some candidate triangle such that:
     ### green leaf is an inner leaf from a (say) that has up_v on one side and p on the other
-    ### green leaves on b (say) are outer leaves for the face rect, and they have up_v and p on same side
+    ### purple leaves on b (say) are outer leaves for the face rect, and they have up_v and p on same side
 
             if is_upper:
                 tet = interval.tetrahedra[-1]
@@ -303,11 +307,10 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
                 boundary_leaves[0].weakly_separates(tet.vertices + [v], []) and
                 boundary_leaves[1].weakly_separates(tet.vertices + [v], [])):
                 # print('found strip vertex')
-                return (candidate_strip_vertex, internal_leaf, candidate_triangles)
 
-                # found_the_strip_vertex = True
-                # leaves_to_draw.append(internal_leaf)
-                # break
+                ### Now candidate_strip_vertex is the strip_vertex. internal leaf is one side of the quadrant at the strip vertex that contains tet
+
+                return (candidate_strip_vertex, internal_leaf, other_colour_boundary_leaves, f, candidate_index)
  
         if is_upper:
             interval.go_up()
@@ -409,18 +412,45 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
         # interval.go_down()
 
-    upper_strip_vertex, internal_leaf, candidate_triangles = find_strip_vertex(up_v, up_quadrant_sides, interval, is_upper = True)
-    leaves_to_draw.append(internal_leaf)
-    triangles_to_draw = candidate_triangles
+    upper_strip_vertex, up_internal_leaf, up_boundary_leaves, up_f, up_candidate_index = find_strip_vertex(up_v, up_quadrant_sides, interval, is_upper = True)
+    # leaves_to_draw.append(up_internal_leaf)
+    # leaves_to_draw.extend(up_boundary_leaves)
+    triangles_to_draw = [up_f]
 
-    lower_strip_vertex, internal_leaf, candidate_triangles = find_strip_vertex(down_v, down_quadrant_sides, interval, is_upper = False)
-    leaves_to_draw.append(internal_leaf)
-    triangles_to_draw.extend( candidate_triangles )
+    lower_strip_vertex, down_internal_leaf, down_boundary_leaves, down_f, down_candidate_index = find_strip_vertex(down_v, down_quadrant_sides, interval, is_upper = False)
+    # leaves_to_draw.append(down_internal_leaf)
+    # triangles_to_draw.extend( candidate_triangles )
 
-    # leaves_to_draw.append(leaf_dict[a][0])
-    # leaves_to_draw.append(leaf_dict[b][0])
+    ### Now find the quadrant at upper_strip_vertex that contains the flow line
+
+    ### up_f.edges[0] is the special edge of the face. other_colour_quadrant_sides are the two sides of that edge rect based at upper_strip_vertex
+
+    up_quadrant_sides2 = up_f.edges[0].rectangle_sides_by_vertex()[upper_strip_vertex]
+
+    leaves_to_draw.extend(up_quadrant_sides2)
+
+    ### Now we have a quadrant based at upper_strip_vertex (b_NW in the notes) that contains p
+    up_w = upper_strip_vertex ### rename things to make parallelism clearer
 
 
+    ### We also need down_w, which is the translate of up_w by \gamma^{-2}
+
+    if up_f.is_upper:
+        up_w_tet = up_f.lower_tet
+    else:
+        up_w_tet = up_f.upper_tet
+    f_num = up_w_tet.ordered_faces().index(up_f)
+
+    face_num_path = up_translate_tet.face_num_path_to_other_tet(up_w_tet)
+    down_w_tet = down_translate_tet.follow_face_num_path(face_num_path)
+    down_f = down_w_tet.ordered_faces()[f_num]
+    down_w = down_f.vertices[up_candidate_index]
+    down_quadrant_sides2 = down_f.edges[0].rectangle_sides_by_vertex()[down_w]
+    leaves_to_draw.extend(down_quadrant_sides2)
+
+    triangles_to_draw.append(down_f)    
+
+    print('up_v', up_v, 'down_v', down_v, 'up_w', up_w, 'down_w', down_w, 'lower_strip_vertex', lower_strip_vertex)
 
 
             
