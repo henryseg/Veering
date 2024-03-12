@@ -185,6 +185,30 @@ class landscape_edge:
             assert found_a_tri_to_bury ### We checked all triangles and all are buried so we should be done
         assert not None in self.rectangle_sides()
 
+    def ensure_continent_contains_tet_above(self):
+        while True:
+            upper_boundary_triangles = [t for t in self.boundary_triangles() if t.is_upper] 
+            if len(upper_boundary_triangles) == 0:
+                break ## out of while loop
+            self.continent.bury(upper_boundary_triangles[0])
+        assert self.upper_tet != None
+
+    # def ensure_continent_contains_neighbourhood(self):
+    #     """Add to the continent to ensure that this edge is internal to the continent"""
+    #     while len(self.boundary_triangles()) > 0:
+    #         # print('edge has this many triangles', len(self.triangles))
+    #         found_a_tri_to_bury = False
+    #         for tri in self.triangles:
+    #             # print('tri.index', tri.index)
+    #             if not tri.is_buried():
+    #                 found_a_tri_to_bury = True
+    #                 # print('bury triangle with index', tri.index)
+    #                 self.continent.bury(tri)
+    #                 assert tri.is_buried()
+    #                 break
+    #         assert found_a_tri_to_bury ### We checked all triangles and all are buried so we should be done
+    #     assert len(self.boundary_triangles()) == 0      
+
     def length(self):
         u, v = self.vertices
         return abs(u.pos.complex() - v.pos.complex())
@@ -701,6 +725,7 @@ class continent:
         self.edges = []
         self.vertices = []
         self.tetrahedra = []
+        self.init_tet = None
         for v in self.tet_face.verts_pos:
             vertex(self, v)  ## creates and adds to the list of vertices
         self.infinity = self.vertices[self.tet_face.face]
@@ -846,6 +871,7 @@ class continent:
         ## add the tetrahedron
 
         con_tet = continent_tetrahedron(self, self.tet_face.tet_num, None)
+        self.init_tet = con_tet
         for i in range(4):
             con_tet.set_vertex(i, self.vertices[i]) ## copy of the vertices of the continent
         con_tet.set_upper_edge(edge_ab)

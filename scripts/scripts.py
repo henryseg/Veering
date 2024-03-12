@@ -209,15 +209,15 @@ def draw_continent_circle_script():
     from draw_continent_circle import draw_continent_circle
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
     
-    # veering_isosig = 'cPcbbbdxm_10' 
-    # flow_cycle = [(0, 2)]
+    veering_isosig = 'cPcbbbdxm_10' 
+    flow_cycle = [(0, 2)]
 
     # veering_isosig = 'cPcbbbiht_12'
     # flow_cycle = [(0, 0)]  ### boundary parallel
     # flow_cycle = [(0,4), (1,2)]
 
     # veering_isosig = 'dLQacccjsnk_200'
-    # # flow_cycle = [(1, 0), (2, 5)]
+    # flow_cycle = [(1, 0), (2, 5)]
     # flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
 
     # veering_isosig = 'eLAkaccddjsnak_2001'
@@ -227,9 +227,9 @@ def draw_continent_circle_script():
     # veering_isosig = 'eLAkaccddjsnak_2001'
     # flow_cycle = [(0, 1), (2, 2), (3, 2)]
 
-    veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
+    # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # flow_cycle = [(0, 0)]
-    flow_cycle = [(0, 4), (4, 0)]
+    # flow_cycle = [(0, 4), (4, 0)]
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
@@ -243,7 +243,7 @@ def draw_continent_circle_script():
     # # flow_cycle = [(1, 0)]
     # # flow_cycle = [(3, 5)]
     # # flow_cycle = [(4, 2)]
-    # # flow_cycle = [(7, 5)]
+    # flow_cycle = [(7, 5)]
     # flow_cycle = [(9, 0)]
 
     # from veering.branched_surface import upper_branched_surface
