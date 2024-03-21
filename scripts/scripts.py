@@ -209,14 +209,16 @@ def draw_continent_circle_script():
     from draw_continent_circle import draw_continent_circle
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
     
-    veering_isosig = 'cPcbbbdxm_10' 
-    flow_cycle = [(0, 2)]
+    # veering_isosig = 'cPcbbbdxm_10' 
+    # flow_cycle = [(0, 2)]
 
-    # veering_isosig = 'cPcbbbiht_12'
+    veering_isosig = 'cPcbbbiht_12'
     # flow_cycle = [(0, 0)]  ### boundary parallel
-    # flow_cycle = [(0,4), (1,2)]
+    # flow_cycle = [(0, 4), (1,2)]
+    flow_cycle = [(0, 0), (0, 5)] ### blue edge rectangle has two punctures, red has none.
 
     # veering_isosig = 'dLQacccjsnk_200'
+    # flow_cycle = [(1, 4)]
     # flow_cycle = [(1, 0), (2, 5)]
     # flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
 

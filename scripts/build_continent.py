@@ -120,6 +120,16 @@ class flow_interval:
         self.init_tet = init_flow_tetrahedron  ### never alter after initialization
         self.init_edge = init_flow_edge  ### never alter after initialization
 
+    def equals(self, other):
+        """assuming both intervals have been extended within the continent, checks if they are the same"""
+        return (self.tetrahedra[-1] == other.tetrahedra[-1]) and (self.up_index == other.up_index)
+
+    def is_in_list(self, intervals_list):
+        for other in intervals_list:
+            if self.equals(other):
+                return True
+        return False
+
     def how_far_down(self):
         """how far down have we built the interval from the init tet"""
         ind = self.tetrahedra.index(self.init_tet)
@@ -159,54 +169,69 @@ class flow_interval:
         else:
             return False ### we ran out of continent to extend the flow interval into
 
-    def go_down(self):
+    def go_down(self, expand_continent = True):
+        # print('going down')
         tet = self.tetrahedra[0]
-        edge = tet.lower_edge
-        self.edges.insert(0, edge) 
+        the_edge = tet.lower_edge
         ### now build the continent to get new_lowest_tet
         vt = self.continent.vt
-        manifold_edge = vt.tri.edge(edge.index)
-        self.down_index = (self.down_index - 1) % len(self.flow_cycle)
+        manifold_edge = vt.tri.edge(the_edge.index)
+        next_down_index = (self.down_index - 1) % len(self.flow_cycle)
         ### is the flow cycle vertical through the tetrahedron? 
         tet_below = get_tet_above_edge(vt.tri, vt.angle, manifold_edge, tet_vert_coorientations = vt.coorientations, get_tet_below_edge = True)
         tet_below_num = tet_below.index()
         top_vert_nums = get_tet_top_vert_nums(vt.coorientations, tet_below_num)
         top_edge_num = vert_pair_to_edge_num[tuple(top_vert_nums)]
 
-        if (tet_below_num, top_edge_num) == self.flow_cycle[self.down_index]: ### flow cycle went straight up
-            # print('straight up case')
-            if edge.lower_tet == None:
-                while True:
-                    lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper] 
-                    if len(lower_boundary_triangles) == 0:
-                        break ## out of while loop
-                    self.continent.bury(lower_boundary_triangles[0])
-            new_tet = edge.lower_tet
+        if (tet_below_num, top_edge_num) == self.flow_cycle[next_down_index]: ### flow cycle went straight up
+            # print('straight down case')
+            if the_edge.lower_tet == None:
+                if expand_continent:
+                    while True:
+                        lower_boundary_triangles = [t for t in the_edge.boundary_triangles() if not t.is_upper] 
+                        if len(lower_boundary_triangles) == 0:
+                            break ## out of while loop
+                        self.continent.bury(lower_boundary_triangles[0])
+                else:
+                    return False ### we ran out of continent to extend the flow interval into
+            new_tet = the_edge.lower_tet
         else:
             # print('sideways case')
             ### find which side of the edge our tet is in
-            side_tet_collections_at_edge = vt.side_tet_collections[edge.index] ## index in the manifold
-            side_face_collections_at_edge = vt.side_face_collections[edge.index]
+            side_tet_collections_at_edge = vt.side_tet_collections[the_edge.index] ## index in the manifold
+            side_face_collections_at_edge = vt.side_face_collections[the_edge.index] ## here these are ordered top to bottom
             downward_path = None
-            flow_step = self.flow_cycle[self.down_index] ### pair of (tet index in manifold, index of edge in that tet)
+            flow_step = self.flow_cycle[next_down_index] ### pair of (tet index in manifold, index of edge in that tet)
             for i, side_tet_collection in enumerate(side_tet_collections_at_edge):
                 if flow_step in side_tet_collection:
                     downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
                     downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
             assert downward_path != None
+            new_tet = None
             for j, (tet_num, edge_num) in enumerate(downward_path): 
-                lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
-                lower_boundary_triangles = [t for t in edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
+                lower_boundary_triangles = [t for t in the_edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
                 assert len(lower_boundary_triangles) <= 1
-                if len(lower_boundary_triangles) == 1:
-                    self.continent.bury(lower_boundary_triangles[0])
-                for tet in edge.side_tetrahedra:
+                for tet in the_edge.side_tetrahedra:  ### check to see if we already have the new_tet
                     if tet.index == flow_step[0]:
-                        if tet.edge(flow_step[1]) == edge:
+                        if tet.edge(flow_step[1]) == the_edge:
                             new_tet = tet
                             break
+                if expand_continent:  
+                    if len(lower_boundary_triangles) == 1:
+                        self.continent.bury(lower_boundary_triangles[0])
+                else:  ### did not find new_tet without expanding the continent
+                    return False
+        if new_tet == None: ### if the last bury added new_tet then we must find it (fencepost issue)
+            for tet in the_edge.side_tetrahedra:  
+                if tet.index == flow_step[0]:
+                    if tet.edge(flow_step[1]) == the_edge:
+                        new_tet = tet
+                        break
         assert new_tet != None
         self.tetrahedra.insert(0, new_tet)
+        self.edges.insert(0, the_edge) 
+        self.down_index = next_down_index
+        return True
 
     def extend_within_continent(self): 
         """extend this flow interval as much as possible without growing the continent"""
@@ -218,7 +243,6 @@ class flow_interval:
             succeeded = self.go_down(expand_continent = False)
             if not succeeded:
                 break ### out of while loop
-
 
     def ensure_contains_one_cycle_up(self):
         """Make sure that the interval contains an entire cycle above init_tet"""
@@ -235,19 +259,26 @@ class flow_interval:
     def is_inside_edge_rectangle_green_sides(self, con_edge):
         con_edge.ensure_continent_contains_rectangle()
         greens, purples = con_edge.green_purple_rectangle_sides()
+
         for leaf in greens:
-            for v in self.tetrahedra[-1].vertices:
-                if leaf.sees_to_its_left(v) == con_edge.is_red:
-                    return False
+            while not leaf.is_entirely_to_one_side_of(self.tetrahedra[-1]):
+                self.go_up()
+            v_is_outside = [leaf.sees_to_its_left(v) == con_edge.is_red for v in self.tetrahedra[-1].vertices]
+            assert all(v_is_outside) or not any(v_is_outside)
+            if v_is_outside[0]:
+                return False
         return True
 
     def is_inside_edge_rectangle_purple_sides(self, con_edge):
         con_edge.ensure_continent_contains_rectangle()
         greens, purples = con_edge.green_purple_rectangle_sides()                
         for leaf in purples:
-            for v in self.tetrahedra[0].vertices:
-                if leaf.sees_to_its_left(v) != con_edge.is_red:
-                    return False
+            while not leaf.is_entirely_to_one_side_of(self.tetrahedra[0]):
+                self.go_down()
+            v_is_outside = [leaf.sees_to_its_left(v) != con_edge.is_red for v in self.tetrahedra[0].vertices]
+            assert all(v_is_outside) or not any(v_is_outside)
+            if v_is_outside[0]:
+                return False
         return True
 
     def is_inside_edge_rectangle(self, con_edge):
@@ -260,21 +291,21 @@ class flow_interval:
                 return e
         assert False
 
-def high_enough(fund_dom_edges, interval):  ### high enough to know where the top tet of flow interval is relative to all the fund dom edges
-    for e in fund_dom_edges:
-        greens, purples = e.green_purple_rectangle_sides()
-        for leaf in greens:
-            if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[-1]):
-                return False
-    return True
+# def high_enough(fund_dom_edges, interval):  ### high enough to know where the top tet of flow interval is relative to all the fund dom edges
+#     for e in fund_dom_edges:
+#         greens, purples = e.green_purple_rectangle_sides()
+#         for leaf in greens:
+#             if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[-1]):
+#                 return False
+#     return True
 
-def low_enough(fund_dom_edges, interval): ### low enough to know where the bottom tet of flow interval is relative to all the fund dom edges
-    for e in fund_dom_edges:
-        greens, purples = e.green_purple_rectangle_sides()
-        for leaf in purples:
-            if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[0]):
-                return False
-    return True
+# def low_enough(fund_dom_edges, interval): ### low enough to know where the bottom tet of flow interval is relative to all the fund dom edges
+#     for e in fund_dom_edges:
+#         greens, purples = e.green_purple_rectangle_sides()
+#         for leaf in purples:
+#             if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[0]):
+#                 return False
+#     return True
 
 def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     ### strip vertex is b_NW in the notes
@@ -334,6 +365,12 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # print('did not find strip vertex')
     # return (None, None, candidate_triangles) ### testing
 
+def uniquify_list_of_flow_intervals(flow_intervals):
+    unique_flow_intervals = []
+    for interval in flow_intervals:
+        if not interval.is_in_list(unique_flow_intervals):
+            unique_flow_intervals.append(interval)
+    return unique_flow_intervals
 
 def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     ### format for loops: it is a list of tuples, 
@@ -353,7 +390,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     print('init tet index, flow cycle', init_tetrahedron.index, flow_cycle)
     assert init_tetrahedron.index == flow_cycle[0][0]
 
-    interval = flow_interval(con, flow_cycle, init_tetrahedron, 0)
+    main_interval = flow_interval(con, flow_cycle, init_tetrahedron, 0)
 
     fund_dom_edges = []
     for tet in continent_fund_dom_tets:
@@ -363,22 +400,13 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         e.ensure_continent_contains_rectangle()
     max_steps = 100
     step = 0
-    while not high_enough(fund_dom_edges, interval):
-        interval.go_up()
-        step += 1
-        if step > max_steps:
-            assert False  ### break runaway while loop
-    while not low_enough(fund_dom_edges, interval):
-        interval.go_down()
-        step += 1
-        if step > max_steps:
-            assert False  ### break runaway while loop
+
     ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
-    interval.ensure_contains_one_cycle_up()
-    interval.ensure_contains_one_cycle_down()
-    up_translate_tet = interval.get_tet_at_position(len(flow_cycle))
-    up_translate_edge = interval.get_edge_at_position(len(flow_cycle))
-    down_translate_tet = interval.get_tet_at_position(-len(flow_cycle))
+    main_interval.ensure_contains_one_cycle_up()
+    main_interval.ensure_contains_one_cycle_down()
+    up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
+    up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
+    down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))
 
 
 
@@ -417,21 +445,21 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     leaves_to_draw.extend( up_quadrant_sides[:] + down_quadrant_sides[:] )
 
     # for i in range(2):
-    #     interval.go_up()    
+    #     main_interval.go_up()    
 ### going up a few times before starting to search properly might be more efficient
 ### because the search below for the upper_strip_vertex involves get_non_special_vertex_cusp_leaves()
 ### which calls ensure_continent_contains_rectangle, which adds tetrahedra and (it seems) more candidate_triangles
 ### Maybe there is a more efficient way to check for upper_strip_vertex that doesn't require generating the leaves at 
 ### the non-special vertices of the candidate triangles? Just look at the position of the cusps on the circle?
 
-        # interval.go_down()
+        # main_interval.go_down()
 
-    upper_strip_vertex, up_internal_leaf, up_boundary_leaves, up_f, up_candidate_index = find_strip_vertex(up_v, up_quadrant_sides, interval, is_upper = True)
+    upper_strip_vertex, up_internal_leaf, up_boundary_leaves, up_f, up_candidate_index = find_strip_vertex(up_v, up_quadrant_sides, main_interval, is_upper = True)
     # leaves_to_draw.append(up_internal_leaf)
     # leaves_to_draw.extend(up_boundary_leaves)
     triangles_to_draw = [up_f]
 
-    lower_strip_vertex, down_internal_leaf, down_boundary_leaves, down_f, down_candidate_index = find_strip_vertex(down_v, down_quadrant_sides, interval, is_upper = False)
+    lower_strip_vertex, down_internal_leaf, down_boundary_leaves, down_f, down_candidate_index = find_strip_vertex(down_v, down_quadrant_sides, main_interval, is_upper = False)
     # leaves_to_draw.append(down_internal_leaf)
     # triangles_to_draw.extend( candidate_triangles )
 
@@ -464,8 +492,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
     triangles_to_draw.append(down_f) 
 
-    upper_strip_vertex2, up_internal_leaf2, up_boundary_leaves2, up_f2, up_candidate_index2 = find_strip_vertex(up_w, up_quadrant_sides2, interval, is_upper = True)
-    lower_strip_vertex2, down_internal_leaf2, down_boundary_leaves2, down_f2, down_candidate_index2 = find_strip_vertex(down_w, down_quadrant_sides2, interval, is_upper = False)
+    upper_strip_vertex2, up_internal_leaf2, up_boundary_leaves2, up_f2, up_candidate_index2 = find_strip_vertex(up_w, up_quadrant_sides2, main_interval, is_upper = True)
+    lower_strip_vertex2, down_internal_leaf2, down_boundary_leaves2, down_f2, down_candidate_index2 = find_strip_vertex(down_w, down_quadrant_sides2, main_interval, is_upper = False)
 
     triangles_to_draw.append(up_f2) 
     triangles_to_draw.append(down_f2) 
@@ -483,9 +511,10 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
             
     # print('continent_size', len(con.tetrahedra))
     for e in candidate_drilled_edges:
-        if interval.is_inside_edge_rectangle(e):
+        if main_interval.is_inside_edge_rectangle(e):
             drilled_continent_edges.append(e)
-            # print(e.is_red)
+            # print('main interval found in edge with index', e.index)
+            # print('edge is red?', e.is_red)
     # print('continent_size', len(con.tetrahedra))
 
     flow_intervals = []
@@ -494,13 +523,36 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
             e.ensure_continent_contains_tet_above() 
         fund_dom_translate = continent_fund_dom_tets[e.upper_tet.index]
         assert fund_dom_translate.index == e.upper_tet.index
-        path = e.upper_tet.face_num_path_to_other_tet(con.init_tet) + con.init_tet.face_num_path_to_other_tet(interval.init_tet)
+        path = e.upper_tet.face_num_path_to_other_tet(con.init_tet) + con.init_tet.face_num_path_to_other_tet(main_interval.init_tet)
         translated_interval_init_tet = fund_dom_translate.follow_face_num_path(path)
-        flow_intervals.append( flow_interval(con, flow_cycle, translated_interval_init_tet, 0) )
-        print(translated_interval_init_tet, translated_interval_init_tet in interval.tetrahedra)
+        assert translated_interval_init_tet.index == main_interval.init_tet.index
+        new_interval = flow_interval(con, flow_cycle, translated_interval_init_tet, 0)
+        assert fund_dom_translate.lower_edge.index == e.index
+        assert new_interval.is_inside_edge_rectangle(fund_dom_translate.lower_edge)
+        flow_intervals.append( new_interval )
+        # print(translated_interval_init_tet, translated_interval_init_tet in interval.tetrahedra)
+
+    for interval in flow_intervals:
+        interval.extend_within_continent()
+
+    flow_intervals = uniquify_list_of_flow_intervals(flow_intervals)
+    print('num unique flow_intervals', len(flow_intervals))
+
+    fund_dom_unique_edges = [t.lower_edge for t in continent_fund_dom_tets]
+
+    intervals_inside_edge_rectangles = []
+    for e in fund_dom_unique_edges:
+        flow_intervals_in_e = []
+        for interval in flow_intervals:
+            if interval.is_inside_edge_rectangle(e):
+                flow_intervals_in_e.append(interval)
+        intervals_inside_edge_rectangles.append(flow_intervals_in_e)
+    for i, intervals in enumerate(intervals_inside_edge_rectangles):
+        print('edge below tet', i, 'contains intervals', intervals)
+
 
     con.build_boundary_data()
-    return con, interval, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
+    return con, main_interval, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""
