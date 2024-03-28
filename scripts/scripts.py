@@ -213,9 +213,10 @@ def draw_continent_circle_script():
     # flow_cycle = [(0, 2)]
 
     veering_isosig = 'cPcbbbiht_12'
-    # flow_cycle = [(0, 0)]  ### boundary parallel
-    # flow_cycle = [(0, 4), (1,2)]
-    flow_cycle = [(0, 0), (0, 5)] ### blue edge rectangle has two punctures, red has none.
+    # # flow_cycle = [(0, 0)]  ### boundary parallel
+    # # flow_cycle = [(0, 4), (1,2)]
+    # flow_cycle = [(0, 0), (0, 5)] 
+    flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
 
     # veering_isosig = 'dLQacccjsnk_200'
     # flow_cycle = [(1, 4)]
@@ -242,7 +243,7 @@ def draw_continent_circle_script():
     
     # short cycle in a large triangulation
     # veering_isosig = 'qLLALvQLwQMkcecdhkjilmmlnoppphqrwqqaqxhhxofhxq_2010222010122221'
-    # # flow_cycle = [(1, 0)]
+    # flow_cycle = [(1, 0)]
     # # flow_cycle = [(3, 5)]
     # # flow_cycle = [(4, 2)]
     # flow_cycle = [(7, 5)]

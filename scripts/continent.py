@@ -186,11 +186,12 @@ class landscape_edge:
         assert not None in self.rectangle_sides()
 
     def ensure_continent_contains_tet_above(self):
-        while True:
-            upper_boundary_triangles = [t for t in self.boundary_triangles() if t.is_upper] 
-            if len(upper_boundary_triangles) == 0:
-                break ## out of while loop
-            self.continent.bury(upper_boundary_triangles[0])
+        if self.upper_tet == None:
+            while True:
+                upper_boundary_triangles = [t for t in self.boundary_triangles() if t.is_upper] 
+                if len(upper_boundary_triangles) == 0:
+                    break ## out of while loop
+                self.continent.bury(upper_boundary_triangles[0])
         assert self.upper_tet != None
 
     # def ensure_continent_contains_neighbourhood(self):
@@ -708,7 +709,17 @@ class continent_tetrahedron:
                 current_tet = triangle.tet_on_other_side(current_tet)
         return current_tet
 
-
+    def get_boundary_cusp_leaves(self): ### returns [[green leaves], [purple leaves]] on boundary of tet rect
+        green_leaves = []
+        purple_leaves = []
+        for e in self.equatorial_edges:
+            e.ensure_continent_contains_rectangle()
+            g, p = e.green_purple_rectangle_sides() 
+            green_leaves.extend(g)
+            purple_leaves.extend(p)
+        out_green = [leaf in green_leaves if leaf.cusp in self.lower_edge.vertices]
+        out_purple = [leaf in purple_leaves if leaf.cusp in self.upper_edge.vertices]
+        return [out_green, out_purple]
 
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):

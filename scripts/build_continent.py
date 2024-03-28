@@ -291,21 +291,25 @@ class flow_interval:
                 return e
         assert False
 
-# def high_enough(fund_dom_edges, interval):  ### high enough to know where the top tet of flow interval is relative to all the fund dom edges
-#     for e in fund_dom_edges:
-#         greens, purples = e.green_purple_rectangle_sides()
-#         for leaf in greens:
-#             if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[-1]):
-#                 return False
-#     return True
+    def is_green_comparable_with(self, other): ### check if upper tets do not overlap horizontally
+        self.extend_within_continent()
+        other.extend_within_continent()
+        green_boundary = self.tetrahedra[-1].get_boundary_cusp_leaves()[0]
+        if all([leaf.is_entirely_to_one_side_of(other.tetrahedra[-1]) for leaf in green_boundary]):
+            green_boundary2 = other.tetrahedra[-1].get_boundary_cusp_leaves()[0]
+            assert all([leaf.is_entirely_to_one_side_of(self.tetrahedra[-1]) for leaf in green_boundary2]) # check symmetry
+            return True
+        else:
+            return False
 
-# def low_enough(fund_dom_edges, interval): ### low enough to know where the bottom tet of flow interval is relative to all the fund dom edges
-#     for e in fund_dom_edges:
-#         greens, purples = e.green_purple_rectangle_sides()
-#         for leaf in purples:
-#             if not leaf.is_entirely_to_one_side_of(interval.tetrahedra[0]):
-#                 return False
-#     return True
+    def make_green_comparable_with(self, other): ### make sure that upper tets do not overlap horizontally
+        while not self.is_green_comparable_with(other):
+            self.go_up()
+            other.go_up()
+
+    def determine_order(self, other, W, E): ### are we closer to W or to E than other?
+        pass
+
 
 def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     ### strip vertex is b_NW in the notes
@@ -371,6 +375,22 @@ def uniquify_list_of_flow_intervals(flow_intervals):
         if not interval.is_in_list(unique_flow_intervals):
             unique_flow_intervals.append(interval)
     return unique_flow_intervals
+
+def translate_of_interval_from_one_edge_rect_to_another(e1, e2, interval):
+    assert interval.is_inside_edge_rectangle(e1)
+    assert e1.index == e2.index
+    if e1.upper_tet == None:
+        e1.ensure_continent_contains_tet_above() 
+    if e2.upper_tet == None:
+        e2.ensure_continent_contains_tet_above()
+    t1 = e1.upper_tet
+    t2 = e2.upper_tet
+    assert t1.index == t2.index
+    path = t1.face_num_path_to_other_tet(interval.continent.init_tet) + interval.continent.init_tet.face_num_path_to_other_tet(interval.init_tet)
+    translated_interval_init_tet = t2.follow_face_num_path(path)
+    new_interval = flow_interval(interval.continent, interval.flow_cycle, translated_interval_init_tet, 0)
+    assert new_interval.is_inside_edge_rectangle(e2)
+    return new_interval
 
 def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     ### format for loops: it is a list of tuples, 
@@ -509,7 +529,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     candidate_drilled_edges = con.edges[:] # shallow copy
     drilled_continent_edges = []
             
-    # print('continent_size', len(con.tetrahedra))
+
+    ### find edges in continent that have a puncture
     for e in candidate_drilled_edges:
         if main_interval.is_inside_edge_rectangle(e):
             drilled_continent_edges.append(e)
@@ -517,20 +538,14 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
             # print('edge is red?', e.is_red)
     # print('continent_size', len(con.tetrahedra))
 
+    ### translate punctures to fund dom edges (those edges below fund dom tets)
     flow_intervals = []
     for e in drilled_continent_edges:
         if e.upper_tet == None:
-            e.ensure_continent_contains_tet_above() 
-        fund_dom_translate = continent_fund_dom_tets[e.upper_tet.index]
-        assert fund_dom_translate.index == e.upper_tet.index
-        path = e.upper_tet.face_num_path_to_other_tet(con.init_tet) + con.init_tet.face_num_path_to_other_tet(main_interval.init_tet)
-        translated_interval_init_tet = fund_dom_translate.follow_face_num_path(path)
-        assert translated_interval_init_tet.index == main_interval.init_tet.index
-        new_interval = flow_interval(con, flow_cycle, translated_interval_init_tet, 0)
-        assert fund_dom_translate.lower_edge.index == e.index
-        assert new_interval.is_inside_edge_rectangle(fund_dom_translate.lower_edge)
+            e.ensure_continent_contains_tet_above()
+        e2 = continent_fund_dom_tets[e.upper_tet.index].lower_edge
+        new_interval = translate_of_interval_from_one_edge_rect_to_another(e, e2, main_interval)
         flow_intervals.append( new_interval )
-        # print(translated_interval_init_tet, translated_interval_init_tet in interval.tetrahedra)
 
     for interval in flow_intervals:
         interval.extend_within_continent()
@@ -539,7 +554,9 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     print('num unique flow_intervals', len(flow_intervals))
 
     fund_dom_unique_edges = [t.lower_edge for t in continent_fund_dom_tets]
+    fund_dom_unique_edge_indices = [e.index for e in fund_dom_unique_edges]
 
+    ### figure out which edge rectangles contain which unique punctures
     intervals_inside_edge_rectangles = []
     for e in fund_dom_unique_edges:
         flow_intervals_in_e = []
@@ -548,8 +565,73 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
                 flow_intervals_in_e.append(interval)
         intervals_inside_edge_rectangles.append(flow_intervals_in_e)
     for i, intervals in enumerate(intervals_inside_edge_rectangles):
-        print('edge below tet', i, 'contains intervals', intervals)
+        e = fund_dom_unique_edges[i]
+        print('edge below tet', i, 'is index', e.index, 'is red', e.is_red, 'contains intervals', len(intervals))
 
+    ### copy punctures around to get all punctures going through a tet rect of fund dom
+
+    print(len(continent_fund_dom_tets))
+    intervals_inside_tet_rectangles = []
+    for i, t in enumerate(continent_fund_dom_tets):
+        flow_intervals_in_t = intervals_inside_edge_rectangles[i][:]  ### start with intervals in the lower edge of t
+        edges_to_add = t.equatorial_edges
+        # edges_to_add.append(t.upper_edge)  ### for testing, this should already be covered by other tet rects
+        for e_eq in edges_to_add:   ### then add intervals in equatorial edges
+            j = fund_dom_unique_edge_indices.index(e_eq.index)
+            e = fund_dom_unique_edges[j]  
+            flow_intervals_in_e = intervals_inside_edge_rectangles[j]
+            for interval in flow_intervals_in_e:
+                new_interval = translate_of_interval_from_one_edge_rect_to_another(e, e_eq, interval)
+                flow_intervals_in_t.append(new_interval)
+        for interval in flow_intervals_in_t:
+            interval.extend_within_continent()
+        flow_intervals_in_t = uniquify_list_of_flow_intervals(flow_intervals_in_t)
+        intervals_inside_tet_rectangles.append(flow_intervals_in_t)
+
+    for i, intervals in enumerate(intervals_inside_tet_rectangles):
+        print('tet', i, 'contains intervals', len(intervals))   
+
+    ### Now start sorting the intervals inside the tet rectangles.
+    ### Do horizontal order first. Start with positions of intervals relative to the S, N cusps
+
+    for i, t in enumerate(continent_fund_dom_tets):
+        S_leaf, N_leaf = t.upper_edge.green_purple_rectangle_sides()[0] ## green sides are the cusp_leaves coming from S, N cusps
+        S, N = S_leaf.cusp, N_leaf.cusp
+        W, E = t.lower_edge.vertices
+        if S_leaf.sees_to_its_left(E):
+            W, E = E, W
+        assert S_leaf.sees_to_its_left(W) and not S_leaf.sees_to_its_left(E)
+        if S_leaf.sees_to_its_left(N):
+            horizontal_cusp_order = [W, N, S, E]
+        else:
+            horizontal_cusp_order = [W, S, N, E]
+        for e in t.equatorial_edges:
+            if W in e.vertices and horizontal_cusp_order[1] in e.vertices:
+                west_edge = e
+                break
+        for e in t.equatorial_edges:
+            if E in e.vertices and horizontal_cusp_order[2] in e.vertices:
+                east_edge = e
+                break       
+        print(west_edge.index, t.upper_edge.index, east_edge.index)
+
+        flow_intervals_in_t = intervals_inside_tet_rectangles[i]
+        west_intervals = []
+        middle_intervals = []
+        east_intervals = []
+        for interval in flow_intervals_in_t:
+            if interval.is_inside_edge_rectangle_green_sides(t.upper_edge):
+                middle_intervals.append(interval)
+            elif interval.is_inside_edge_rectangle_green_sides(west_edge):
+                west_intervals.append(interval)
+            else:
+                assert interval.is_inside_edge_rectangle_green_sides(east_edge)
+                east_intervals.append(interval)
+        print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(middle_intervals), len(east_intervals)) 
+        chunks = [west_intervals, middle_intervals, east_intervals]
+        for chunk in chunks:
+            if len(chunk) > 1: ### sort within the chunk
+                pass
 
     con.build_boundary_data()
     return con, main_interval, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
