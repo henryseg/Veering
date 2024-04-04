@@ -119,10 +119,27 @@ class flow_interval:
         self.init_flow_index = init_flow_index  ### never alter after initialization
         self.init_tet = init_flow_tetrahedron  ### never alter after initialization
         self.init_edge = init_flow_edge  ### never alter after initialization
+        self.name = 'interval_' + self.init_tet.__repr__()
+
+    def __repr__(self):
+        return self.name
+    
+    def __str__(self):
+        return self.__repr__()
 
     def equals(self, other):
         """assuming both intervals have been extended within the continent, checks if they are the same"""
-        return (self.tetrahedra[-1] == other.tetrahedra[-1]) and (self.up_index == other.up_index)
+        self.extend_within_continent()
+        other.extend_within_continent()
+        out = (self.tetrahedra[-1] == other.tetrahedra[-1]) and (self.up_index == other.up_index)
+        if out:
+            # print('interval lengths', len(self.tetrahedra), len(other.tetrahedra))
+            # if self.tetrahedra[0] != other.tetrahedra[0]:
+            #     print('self init tet index', self.tetrahedra.index(self.init_tet))
+            #     print('other init tet index', other.tetrahedra.index(other.init_tet))
+            assert self.tetrahedra[0] == other.tetrahedra[0]
+            assert self.down_index == other.down_index
+        return out
 
     def is_in_list(self, intervals_list):
         for other in intervals_list:
@@ -197,36 +214,47 @@ class flow_interval:
             new_tet = the_edge.lower_tet
         else:
             # print('sideways case')
-            ### find which side of the edge our tet is in
-            side_tet_collections_at_edge = vt.side_tet_collections[the_edge.index] ## index in the manifold
-            side_face_collections_at_edge = vt.side_face_collections[the_edge.index] ## here these are ordered top to bottom
-            downward_path = None
-            flow_step = self.flow_cycle[next_down_index] ### pair of (tet index in manifold, index of edge in that tet)
-            for i, side_tet_collection in enumerate(side_tet_collections_at_edge):
-                if flow_step in side_tet_collection:
-                    downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
-                    downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
-            assert downward_path != None
+            #### this was too complicated... let's be less efficient and just make it work
+            # ### find which side of the edge our tet is in
+            # side_tet_collections_at_edge = vt.side_tet_collections[the_edge.index] ## index in the manifold
+            # side_face_collections_at_edge = vt.side_face_collections[the_edge.index] ## here these are ordered top to bottom
+            # downward_path = None
+            # flow_step = self.flow_cycle[next_down_index] ### pair of (tet index in manifold, index of edge in that tet)
+            # for i, side_tet_collection in enumerate(side_tet_collections_at_edge):
+            #     if flow_step in side_tet_collection:
+            #         downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
+            #         downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
+            # assert downward_path != None
+            # new_tet = None
+            # for j, (tet_num, edge_num) in enumerate(downward_path): 
+            #     lower_boundary_triangles = [t for t in the_edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
+            #     assert len(lower_boundary_triangles) <= 1
+            #     for tet in the_edge.side_tetrahedra:  ### check to see if we already have the new_tet
+            #         if tet.index == flow_step[0]:
+            #             if tet.edge(flow_step[1]) == the_edge:
+            #                 new_tet = tet
+            #                 break
+            #     if expand_continent:  
+            #         if len(lower_boundary_triangles) == 1:
+            #             self.continent.bury(lower_boundary_triangles[0])
+            #     else:  ### did not find new_tet without expanding the continent
+            #         return False
+            if expand_continent:  ### this edge is on the bottom of some tet so it has either 2 or 0 lower boundary triangles incident to it, bury them until we get 0.
+                while True:
+                    lower_boundary_triangles = [t for t in the_edge.boundary_triangles() if not t.is_upper] 
+                    if len(lower_boundary_triangles) == 0:
+                        break ## out of while loop
+                    self.continent.bury(lower_boundary_triangles[0])
             new_tet = None
-            for j, (tet_num, edge_num) in enumerate(downward_path): 
-                lower_boundary_triangles = [t for t in the_edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
-                assert len(lower_boundary_triangles) <= 1
-                for tet in the_edge.side_tetrahedra:  ### check to see if we already have the new_tet
-                    if tet.index == flow_step[0]:
-                        if tet.edge(flow_step[1]) == the_edge:
-                            new_tet = tet
-                            break
-                if expand_continent:  
-                    if len(lower_boundary_triangles) == 1:
-                        self.continent.bury(lower_boundary_triangles[0])
-                else:  ### did not find new_tet without expanding the continent
-                    return False
-        if new_tet == None: ### if the last bury added new_tet then we must find it (fencepost issue)
-            for tet in the_edge.side_tetrahedra:  
+            flow_step = self.flow_cycle[next_down_index] ### pair of (tet index in manifold, index of edge in that tet)
+            for tet in the_edge.side_tetrahedra:
                 if tet.index == flow_step[0]:
                     if tet.edge(flow_step[1]) == the_edge:
                         new_tet = tet
                         break
+            if new_tet == None: ### we did not find the tet
+                return False
+
         assert new_tet != None
         self.tetrahedra.insert(0, new_tet)
         self.edges.insert(0, the_edge) 
@@ -255,6 +283,18 @@ class flow_interval:
         if self.how_far_down() < len(self.flow_cycle):
             for i in range(len(self.flow_cycle) - self.how_far_down()):
                 self.go_down()
+
+    def crossing_leaves(self): ### find green leaves of tetrahedra[-1] that cross purple leaves of tetrahedra[0]
+        green_boundary = self.tetrahedra[-1].get_boundary_cusp_leaves()[0]
+        purple_boundary = self.tetrahedra[0].get_boundary_cusp_leaves()[1]
+        out_green = set([])
+        out_purple = set([])
+        for g in green_boundary:
+            for p in purple_boundary:
+                if g.links(p):
+                    out_green.add(g)
+                    out_purple.add(p)
+        return (list(out_green), list(out_purple))
 
     def is_inside_edge_rectangle_green_sides(self, con_edge):
         con_edge.ensure_continent_contains_rectangle()
@@ -303,13 +343,55 @@ class flow_interval:
             return False
 
     def make_green_comparable_with(self, other): ### make sure that upper tets do not overlap horizontally
+        assert not self.equals(other)
         while not self.is_green_comparable_with(other):
             self.go_up()
             other.go_up()
 
-    def determine_order(self, other, W, E): ### are we closer to W or to E than other?
-        pass
+    def order_relative_to_W_E(self, other, W, E): ### are we closer to W or to E than other?
+        """Assuming that W and E are cusps and self, other are between W and E, which is closer to which"""
+        if self.equals(other):
+            return 0  ## for use in sorting, we want answers of -1, 0, and 1.
+        self.make_green_comparable_with(other)
+        ### find a leaf of self that separates W from E
+        green_boundary = self.tetrahedra[-1].get_boundary_cusp_leaves()[0]
+        test_leaf = None
+        for leaf in green_boundary:
+            if leaf.sees_to_its_left(W) != leaf.sees_to_its_left(E):
+                test_leaf = leaf
+                break
+        assert test_leaf != None
+        if leaf.separates([W], other.tetrahedra[-1].vertices):
+            return -1  ## for use in sorting, we want answers of -1, 0, and 1.
+        else:
+            assert leaf.separates([E], other.tetrahedra[-1].vertices)
+            return +1  ## for use in sorting, we want answers of -1, 0, and 1.
 
+def cmp_to_key(W, E):  ### see https://stackoverflow.com/questions/32752739/how-does-the-functools-cmp-to-key-function-work
+    '''Convert a cmp= function into a key= function'''
+    class K(object):
+        def __init__(self, obj, *args):
+            # print('obj created with ',obj)
+            self.obj = obj
+        def __lt__(self, other):
+            # print('comparing less than ',self.obj)
+            return self.obj.order_relative_to_W_E(other.obj, W, E) < 0
+        def __gt__(self, other):
+            # print('comparing greater than ',self.obj)
+            return self.obj.order_relative_to_W_E(other.obj, W, E) > 0
+        def __eq__(self, other):
+            # print('comparing equal to ',self.obj)
+            return self.obj.equals(other.obj)
+        def __le__(self, other):
+             # print('comparing less than equal ',self.obj)
+            return self.obj.order_relative_to_W_E(other.obj, W, E) <= 0
+        def __ge__(self, other):
+            # print('comparing greater than equal',self.obj)
+           return self.obj.order_relative_to_W_E(other.obj, W, E) >= 0
+        def __ne__(self, other):
+            # print('comparing not equal ',self.obj)
+            return not self.obj.equals(other.obj)
+    return K
 
 def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     ### strip vertex is b_NW in the notes
@@ -370,6 +452,7 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # return (None, None, candidate_triangles) ### testing
 
 def uniquify_list_of_flow_intervals(flow_intervals):
+    print('num flow intervals', len(flow_intervals))
     unique_flow_intervals = []
     for interval in flow_intervals:
         if not interval.is_in_list(unique_flow_intervals):
@@ -462,7 +545,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     
     # leaves_to_draw = up_quadrant_sides + down_quadrant_sides
     leaves_to_draw = []
-    leaves_to_draw.extend( up_quadrant_sides[:] + down_quadrant_sides[:] )
+    # leaves_to_draw.extend( up_quadrant_sides[:] + down_quadrant_sides[:] )
 
     # for i in range(2):
     #     main_interval.go_up()    
@@ -477,11 +560,10 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     upper_strip_vertex, up_internal_leaf, up_boundary_leaves, up_f, up_candidate_index = find_strip_vertex(up_v, up_quadrant_sides, main_interval, is_upper = True)
     # leaves_to_draw.append(up_internal_leaf)
     # leaves_to_draw.extend(up_boundary_leaves)
-    triangles_to_draw = [up_f]
+    triangles_to_draw = []
+    # triangles_to_draw.append(up_f)
 
     lower_strip_vertex, down_internal_leaf, down_boundary_leaves, down_f, down_candidate_index = find_strip_vertex(down_v, down_quadrant_sides, main_interval, is_upper = False)
-    # leaves_to_draw.append(down_internal_leaf)
-    # triangles_to_draw.extend( candidate_triangles )
 
     ### Now find the quadrant at upper_strip_vertex that contains the flow line
 
@@ -489,7 +571,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
     up_quadrant_sides2 = up_f.edges[0].rectangle_sides_by_vertex()[upper_strip_vertex]
 
-    leaves_to_draw.extend(up_quadrant_sides2)  # 2 for the edges of opposite slope
+    # leaves_to_draw.extend(up_quadrant_sides2)  # 2 for the edges of opposite slope
 
     ### Now we have a quadrant based at upper_strip_vertex (b_NW in the notes) that contains p
     up_w = upper_strip_vertex ### rename things to make parallelism clearer
@@ -508,21 +590,21 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     down_f = down_w_tet.ordered_faces()[f_num]
     down_w = down_f.vertices[up_candidate_index]
     down_quadrant_sides2 = down_f.edges[0].rectangle_sides_by_vertex()[down_w]
-    leaves_to_draw.extend(down_quadrant_sides2)
+    # leaves_to_draw.extend(down_quadrant_sides2)
 
-    triangles_to_draw.append(down_f) 
+    # triangles_to_draw.append(down_f) 
 
     upper_strip_vertex2, up_internal_leaf2, up_boundary_leaves2, up_f2, up_candidate_index2 = find_strip_vertex(up_w, up_quadrant_sides2, main_interval, is_upper = True)
     lower_strip_vertex2, down_internal_leaf2, down_boundary_leaves2, down_f2, down_candidate_index2 = find_strip_vertex(down_w, down_quadrant_sides2, main_interval, is_upper = False)
 
-    triangles_to_draw.append(up_f2) 
-    triangles_to_draw.append(down_f2) 
-    leaves_to_draw.append(up_internal_leaf2)
-    leaves_to_draw.append(down_internal_leaf2)
+    # triangles_to_draw.append(up_f2) 
+    # triangles_to_draw.append(down_f2) 
+    # leaves_to_draw.append(up_internal_leaf2)
+    # leaves_to_draw.append(down_internal_leaf2)
 
        
 
-    print('up_v', up_v, 'down_v', down_v, 'up_w', up_w, 'down_w', down_w, 'lower_strip_vertex', lower_strip_vertex, 'upper_strip_vertex2', upper_strip_vertex2, 'lower_strip_vertex2', lower_strip_vertex2)
+    # print('up_v', up_v, 'down_v', down_v, 'up_w', up_w, 'down_w', down_w, 'lower_strip_vertex', lower_strip_vertex, 'upper_strip_vertex2', upper_strip_vertex2, 'lower_strip_vertex2', lower_strip_vertex2)
 
     ### Continent is now big enough to contain a translate of any edge whose rectangle contains the puncture.
 
@@ -594,6 +676,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     ### Now start sorting the intervals inside the tet rectangles.
     ### Do horizontal order first. Start with positions of intervals relative to the S, N cusps
 
+    intervals_in_tetrahedra = []
     for i, t in enumerate(continent_fund_dom_tets):
         S_leaf, N_leaf = t.upper_edge.green_purple_rectangle_sides()[0] ## green sides are the cusp_leaves coming from S, N cusps
         S, N = S_leaf.cusp, N_leaf.cusp
@@ -613,7 +696,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
             if E in e.vertices and horizontal_cusp_order[2] in e.vertices:
                 east_edge = e
                 break       
-        print(west_edge.index, t.upper_edge.index, east_edge.index)
+        # print(west_edge.index, t.upper_edge.index, east_edge.index)
+        print('tet', i, 'horizontal_cusp_order', horizontal_cusp_order)
 
         flow_intervals_in_t = intervals_inside_tet_rectangles[i]
         west_intervals = []
@@ -629,12 +713,24 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
                 east_intervals.append(interval)
         print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(middle_intervals), len(east_intervals)) 
         chunks = [west_intervals, middle_intervals, east_intervals]
-        for chunk in chunks:
+        for j, chunk in enumerate(chunks):
+            print(j, chunk)
             if len(chunk) > 1: ### sort within the chunk
-                pass
+                chunk_W_cusp, chunk_E_cusp = horizontal_cusp_order[j], horizontal_cusp_order[j+1]
+                chunk.sort(key=cmp_to_key(chunk_W_cusp, chunk_E_cusp))
+            for k, interval in enumerate(chunk):
+                interval.name = str(i) + str(j) + str(k)
+        print('tet', i, 'chunks', chunks[0], chunks[1], chunks[2])
+
+        intervals_in_tetrahedra.append(chunks[0] + chunks[1] + chunks[2])
+    all_intervals = []
+    for ints in intervals_in_tetrahedra:
+        all_intervals.extend(ints)
+    for interval in all_intervals:
+        interval.extend_within_continent()
 
     con.build_boundary_data()
-    return con, main_interval, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
+    return con, all_intervals, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""

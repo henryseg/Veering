@@ -580,6 +580,10 @@ class continent_tetrahedron:
         self.gluings = [None, None, None, None] ## a gluing specifies another tetrahedron and the Perm4 from the downstairs manifold
         self.came_from = came_from ### the landscape_triangle that we were glued onto. Initial continent_tetrahedron has None
 
+    def __repr__(self):
+        a, b, c, d = self.vertices
+        return '_'.join( [str(self.continent.tetrahedra.index(self)), 'tet', str(a), str(b), str(c), str(d)] )
+
     def set_upper_edge(self, e):
         self.upper_edge = e
         e.lower_tet = self
@@ -717,8 +721,8 @@ class continent_tetrahedron:
             g, p = e.green_purple_rectangle_sides() 
             green_leaves.extend(g)
             purple_leaves.extend(p)
-        out_green = [leaf in green_leaves if leaf.cusp in self.lower_edge.vertices]
-        out_purple = [leaf in purple_leaves if leaf.cusp in self.upper_edge.vertices]
+        out_green = [leaf for leaf in green_leaves if leaf.cusp in self.lower_edge.vertices]
+        out_purple = [leaf for leaf in purple_leaves if leaf.cusp in self.upper_edge.vertices]
         return [out_green, out_purple]
 
 class continent:

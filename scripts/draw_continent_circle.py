@@ -261,6 +261,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     tetrahedra_to_draw = [],
     draw_edges_for_edge_rectangles = False,
     leaves_to_draw = [],
+    intervals_to_draw = [],
     edge_thickness = 0.02,
     leaf_thickness = 0.03,
     transparency = 0.9):
@@ -449,6 +450,61 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         if t in tetrahedron_rectangles_to_shade:
             polygon = t_rect_arcs[0] << t_rect_arcs[1] << t_rect_arcs[2] << t_rect_arcs[3] << t_rect_arcs[4] << t_rect_arcs[5] << t_rect_arcs[6] << t_rect_arcs[7]
             canv.stroke(polygon, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
+
+    for interval in intervals_to_draw:
+        g, p = interval.crossing_leaves()
+        assert len(g) == 2 and len(p) == 2
+
+        # for leaf in g:
+        #     draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv)
+        # for leaf in p:
+        #     draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv)
+
+        intersections2 = []
+        for l in g:
+            intersections1 = []
+            l_start, l_end = l.end_positions()
+            l_start = circle_position(l_start, len(l.continent.coast))
+            l_end = circle_position(l_end, len(l.continent.coast))
+            for m in p:
+                m_start, m_end = m.end_positions()
+                m_start = circle_position(m_start, len(m.continent.coast))
+                m_end = circle_position(m_end, len(m.continent.coast))
+
+                intersection = geodesic_isect(l_start, l_end, m_start, m_end)
+                intersections1.append(intersection)
+            intersections2.append(intersections1)
+        arcs = []
+        p = make_arc(intersections2[0][0], intersections2[0][1])
+        p = p.transformed(scl)
+        arcs.append(p)
+        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+
+        q = make_arc(intersections2[0][1], intersections2[1][1])
+        q = q.transformed(scl)
+        arcs.append(q)
+        canv.stroke(q, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+
+        p = make_arc(intersections2[1][1], intersections2[1][0])
+        p = p.transformed(scl)
+        arcs.append(p)
+        canv.stroke(p, [style.linewidth(leaf_thickness), style.linecap.round, green])
+
+        q = make_arc(intersections2[1][0], intersections2[0][0])
+        q = q.transformed(scl)
+        arcs.append(q)
+        canv.stroke(q, [style.linewidth(leaf_thickness), style.linecap.round, purple])
+
+        polygon = arcs[0] << arcs[1] << arcs[2] << arcs[3]
+        canv.stroke(polygon, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
+
+        text_pos = intersections2[0][0]
+        text_pos = global_scale_up * text_pos
+        canv.text(text_pos.real, text_pos.imag, "$"+interval.name+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle])
+
+
+
+
 
         ### draw full leaves
         # for leaf in e.rectangle_sides():

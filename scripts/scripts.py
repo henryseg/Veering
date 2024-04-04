@@ -261,10 +261,12 @@ def draw_continent_circle_script():
 
     # # # for num_steps in range(10):
     
-    con, interval, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
-    print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
+    print(veering_isosig, flow_cycle)
 
-    print('interval tet indices', [t.index for t in interval.tetrahedra])
+    con, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
+    # print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
+
+    # print('interval tet indices', [t.index for t in interval.tetrahedra])
     print('con size', len(con.tetrahedra), con.num_tetrahedra)
 
     # t1 = con.tetrahedra[-1]
@@ -278,10 +280,19 @@ def draw_continent_circle_script():
     # for e in edge_rectangles_to_draw:
         # e.ensure_continent_contains_rectangle()
 
-    # tetrahedra_to_draw = []
-    # tetrahedra_to_draw = interval.tetrahedra
-    tetrahedra_to_draw = [interval.tetrahedra[0], interval.tetrahedra[-1]] #+ continent_fund_dom_tets
-    tetrahedron_rectangles_to_shade = [interval.tetrahedra[0], interval.tetrahedra[-1]]
+    tetrahedra_to_draw = []
+    tetrahedron_rectangles_to_shade = []
+    tetrahedra_to_draw.extend(continent_fund_dom_tets)
+    # for interval in intervals_list:
+    #     tetrahedra_to_draw.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
+    #     tetrahedron_rectangles_to_shade.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
+    intervals_to_draw = intervals_list
+
+    for interval in intervals_to_draw:  ### important to do this before we start drawing!
+        for e in interval.tetrahedra[0].equatorial_edges:
+            e.ensure_continent_contains_rectangle()
+        for e in interval.tetrahedra[-1].equatorial_edges:
+            e.ensure_continent_contains_rectangle()
     for t in tetrahedra_to_draw:
         for e in t.equatorial_edges:
             e.ensure_continent_contains_rectangle()
@@ -326,6 +337,7 @@ def draw_continent_circle_script():
         tetrahedra_to_draw = tetrahedra_to_draw,
         draw_edges_for_edge_rectangles = True,
         leaves_to_draw = leaves_to_draw,
+        intervals_to_draw = intervals_to_draw,
         edge_thickness = 0.02,
         leaf_thickness = 0.02,
         transparency = 0.8)
