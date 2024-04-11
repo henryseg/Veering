@@ -28,7 +28,7 @@ def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50):
     con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
     continent_fund_dom_tets = con.build_triangulation_fundamental_domain(max_num_tetrahedra = max_num_tetrahedra)
     con.build_boundary_data()
-    print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
+    # print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
     return con, continent_fund_dom_tets
 
 # ### this is probably broken, needs to be redone anyway - move around the universal cover building onto the continent as necessary
@@ -342,11 +342,28 @@ class flow_interval:
         else:
             return False
 
+    def is_purple_comparable_with(self, other): ### check if upper tets do not overlap horizontally
+        self.extend_within_continent()
+        other.extend_within_continent()
+        purple_boundary = self.tetrahedra[0].get_boundary_cusp_leaves()[1]
+        if all([leaf.is_entirely_to_one_side_of(other.tetrahedra[0]) for leaf in purple_boundary]):
+            purple_boundary2 = other.tetrahedra[0].get_boundary_cusp_leaves()[1]
+            assert all([leaf.is_entirely_to_one_side_of(self.tetrahedra[0]) for leaf in purple_boundary2]) # check symmetry
+            return True
+        else:
+            return False
+
     def make_green_comparable_with(self, other): ### make sure that upper tets do not overlap horizontally
         assert not self.equals(other)
         while not self.is_green_comparable_with(other):
             self.go_up()
             other.go_up()
+
+    def make_purple_comparable_with(self, other): ### make sure that lower tets do not overlap vertically
+        assert not self.equals(other)
+        while not self.is_purple_comparable_with(other):
+            self.go_down()
+            other.go_down()
 
     def order_relative_to_W_E(self, other, W, E): ### are we closer to W or to E than other?
         """Assuming that W and E are cusps and self, other are between W and E, which is closer to which"""
@@ -361,37 +378,81 @@ class flow_interval:
                 test_leaf = leaf
                 break
         assert test_leaf != None
-        if leaf.separates([W], other.tetrahedra[-1].vertices):
+        if test_leaf.separates([W], other.tetrahedra[-1].vertices):
             return -1  ## for use in sorting, we want answers of -1, 0, and 1.
         else:
-            assert leaf.separates([E], other.tetrahedra[-1].vertices)
+            assert test_leaf.separates([E], other.tetrahedra[-1].vertices)
             return +1  ## for use in sorting, we want answers of -1, 0, and 1.
 
-def cmp_to_key(W, E):  ### see https://stackoverflow.com/questions/32752739/how-does-the-functools-cmp-to-key-function-work
-    '''Convert a cmp= function into a key= function'''
-    class K(object):
-        def __init__(self, obj, *args):
-            # print('obj created with ',obj)
-            self.obj = obj
-        def __lt__(self, other):
-            # print('comparing less than ',self.obj)
-            return self.obj.order_relative_to_W_E(other.obj, W, E) < 0
-        def __gt__(self, other):
-            # print('comparing greater than ',self.obj)
-            return self.obj.order_relative_to_W_E(other.obj, W, E) > 0
-        def __eq__(self, other):
-            # print('comparing equal to ',self.obj)
-            return self.obj.equals(other.obj)
-        def __le__(self, other):
-             # print('comparing less than equal ',self.obj)
-            return self.obj.order_relative_to_W_E(other.obj, W, E) <= 0
-        def __ge__(self, other):
-            # print('comparing greater than equal',self.obj)
-           return self.obj.order_relative_to_W_E(other.obj, W, E) >= 0
-        def __ne__(self, other):
-            # print('comparing not equal ',self.obj)
-            return not self.obj.equals(other.obj)
-    return K
+    def order_relative_to_S_N(self, other, S, N): ### are we closer to S or to N than other?
+        """Assuming that S and N are cusps and self, other are between S and N, which is closer to which"""
+        if self.equals(other):
+            return 0  ## for use in sorting, we want answers of -1, 0, and 1.
+        self.make_purple_comparable_with(other)
+        ### find a leaf of self that separates S from N
+        purple_boundary = self.tetrahedra[0].get_boundary_cusp_leaves()[1]
+        test_leaf = None
+        for leaf in purple_boundary:
+            if leaf.sees_to_its_left(S) != leaf.sees_to_its_left(N):
+                test_leaf = leaf
+                break
+        assert test_leaf != None
+        if test_leaf.separates([S], other.tetrahedra[0].vertices):
+            return -1  ## for use in sorting, we want answers of -1, 0, and 1.
+        else:
+            assert test_leaf.separates([N], other.tetrahedra[0].vertices)
+            return +1  ## for use in sorting, we want answers of -1, 0, and 1.
+
+def cmp_to_key(small_cusp, big_cusp, is_horizontal = True):  ### see https://stackoverflow.com/questions/32752739/how-does-the-functools-cmp-to-key-function-work
+    '''Convert a cmp= function into a key= function''' ### small is either W or S, big is either E or N
+    if is_horizontal:
+        class K(object):
+            def __init__(self, obj, *args):
+                # print('obj created with ',obj)
+                self.obj = obj
+            def __lt__(self, other):
+                # print('comparing less than ',self.obj)
+                return self.obj.order_relative_to_W_E(other.obj, small_cusp, big_cusp) < 0
+            def __gt__(self, other):
+                # print('comparing greater than ',self.obj)
+                return self.obj.order_relative_to_W_E(other.obj, small_cusp, big_cusp) > 0
+            def __eq__(self, other):
+                # print('comparing equal to ',self.obj)
+                return self.obj.equals(other.obj)
+            def __le__(self, other):
+                 # print('comparing less than equal ',self.obj)
+                return self.obj.order_relative_to_W_E(other.obj, small_cusp, big_cusp) <= 0
+            def __ge__(self, other):
+                # print('comparing greater than equal',self.obj)
+               return self.obj.order_relative_to_W_E(other.obj, small_cusp, big_cusp) >= 0
+            def __ne__(self, other):
+                # print('comparing not equal ',self.obj)
+                return not self.obj.equals(other.obj)
+        return K
+    else:
+        class K(object):
+            def __init__(self, obj, *args):
+                # print('obj created with ',obj)
+                self.obj = obj
+            def __lt__(self, other):
+                # print('comparing less than ',self.obj)
+                return self.obj.order_relative_to_S_N(other.obj, small_cusp, big_cusp) < 0
+            def __gt__(self, other):
+                # print('comparing greater than ',self.obj)
+                return self.obj.order_relative_to_S_N(other.obj, small_cusp, big_cusp) > 0
+            def __eq__(self, other):
+                # print('comparing equal to ',self.obj)
+                return self.obj.equals(other.obj)
+            def __le__(self, other):
+                 # print('comparing less than equal ',self.obj)
+                return self.obj.order_relative_to_S_N(other.obj, small_cusp, big_cusp) <= 0
+            def __ge__(self, other):
+                # print('comparing greater than equal',self.obj)
+               return self.obj.order_relative_to_S_N(other.obj, small_cusp, big_cusp) >= 0
+            def __ne__(self, other):
+                # print('comparing not equal ',self.obj)
+                return not self.obj.equals(other.obj)
+        return K
 
 def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     ### strip vertex is b_NW in the notes
@@ -452,7 +513,7 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # return (None, None, candidate_triangles) ### testing
 
 def uniquify_list_of_flow_intervals(flow_intervals):
-    print('num flow intervals', len(flow_intervals))
+    # print('num flow intervals', len(flow_intervals))
     unique_flow_intervals = []
     for interval in flow_intervals:
         if not interval.is_in_list(unique_flow_intervals):
@@ -670,67 +731,126 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         flow_intervals_in_t = uniquify_list_of_flow_intervals(flow_intervals_in_t)
         intervals_inside_tet_rectangles.append(flow_intervals_in_t)
 
-    for i, intervals in enumerate(intervals_inside_tet_rectangles):
-        print('tet', i, 'contains intervals', len(intervals))   
+    # for i, intervals in enumerate(intervals_inside_tet_rectangles):
+    #     print('tet', i, 'contains intervals', len(intervals))   
 
     ### Now start sorting the intervals inside the tet rectangles.
     ### Do horizontal order first. Start with positions of intervals relative to the S, N cusps
 
-    intervals_in_tetrahedra = []
+    tetrahedra_cusp_orders = []
+    tetrahedra_chunks = []
     for i, t in enumerate(continent_fund_dom_tets):
         S_leaf, N_leaf = t.upper_edge.green_purple_rectangle_sides()[0] ## green sides are the cusp_leaves coming from S, N cusps
         S, N = S_leaf.cusp, N_leaf.cusp
-        W, E = t.lower_edge.vertices
+        W_leaf, E_leaf = t.lower_edge.green_purple_rectangle_sides()[1] 
+        W, E = W_leaf.cusp, E_leaf.cusp
         if S_leaf.sees_to_its_left(E):
             W, E = E, W
         assert S_leaf.sees_to_its_left(W) and not S_leaf.sees_to_its_left(E)
         if S_leaf.sees_to_its_left(N):
+            assert N_leaf.sees_to_its_left(S)
             horizontal_cusp_order = [W, N, S, E]
         else:
+            assert not N_leaf.sees_to_its_left(S)
             horizontal_cusp_order = [W, S, N, E]
-        for e in t.equatorial_edges:
-            if W in e.vertices and horizontal_cusp_order[1] in e.vertices:
-                west_edge = e
-                break
-        for e in t.equatorial_edges:
-            if E in e.vertices and horizontal_cusp_order[2] in e.vertices:
-                east_edge = e
-                break       
-        # print(west_edge.index, t.upper_edge.index, east_edge.index)
-        print('tet', i, 'horizontal_cusp_order', horizontal_cusp_order)
+        if W_leaf.sees_to_its_left(E):
+            assert E_leaf.sees_to_its_left(W)
+            vertical_cusp_order = [S, W, E, N]
+        else:
+            assert not E_leaf.sees_to_its_left(W)
+            vertical_cusp_order = [S, E, W, N]
 
+        tetrahedra_cusp_orders.append([horizontal_cusp_order, vertical_cusp_order])
+
+        # print('tet', i, 'cusp orders', horizontal_cusp_order, vertical_cusp_order)
+        east_edge = None
+        north_edge = None
+        west_edge = None
+        south_edge = None
+        for e in t.equatorial_edges:
+            # print('e.vertices', e.vertices)
+            if horizontal_cusp_order[0] in e.vertices and horizontal_cusp_order[1] in e.vertices:
+                west_edge = e
+            if horizontal_cusp_order[2] in e.vertices and horizontal_cusp_order[3] in e.vertices:
+                east_edge = e
+            if vertical_cusp_order[2] in e.vertices and vertical_cusp_order[3] in e.vertices:
+                north_edge = e 
+            if vertical_cusp_order[0] in e.vertices and vertical_cusp_order[1] in e.vertices:
+                south_edge = e
+        # print(east_edge, north_edge, west_edge, south_edge)
+        assert east_edge != None and west_edge != None and north_edge != None and south_edge != None
+
+        # print('tet', i, 'horizontal_cusp_order', horizontal_cusp_order, 'vertical_cusp_order', vertical_cusp_order)
         flow_intervals_in_t = intervals_inside_tet_rectangles[i]
         west_intervals = []
-        middle_intervals = []
+        we_middle_intervals = []
         east_intervals = []
+
+        south_intervals = []
+        sn_middle_intervals = []
+        north_intervals = []
+
         for interval in flow_intervals_in_t:
             if interval.is_inside_edge_rectangle_green_sides(t.upper_edge):
-                middle_intervals.append(interval)
+                we_middle_intervals.append(interval)
+                interval.we_chunk_num = 1
             elif interval.is_inside_edge_rectangle_green_sides(west_edge):
                 west_intervals.append(interval)
+                interval.we_chunk_num = 0
             else:
                 assert interval.is_inside_edge_rectangle_green_sides(east_edge)
                 east_intervals.append(interval)
-        print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(middle_intervals), len(east_intervals)) 
-        chunks = [west_intervals, middle_intervals, east_intervals]
-        for j, chunk in enumerate(chunks):
-            print(j, chunk)
-            if len(chunk) > 1: ### sort within the chunk
-                chunk_W_cusp, chunk_E_cusp = horizontal_cusp_order[j], horizontal_cusp_order[j+1]
-                chunk.sort(key=cmp_to_key(chunk_W_cusp, chunk_E_cusp))
-            for k, interval in enumerate(chunk):
-                interval.name = str(i) + str(j) + str(k)
-        print('tet', i, 'chunks', chunks[0], chunks[1], chunks[2])
+                interval.we_chunk_num = 2
 
-        intervals_in_tetrahedra.append(chunks[0] + chunks[1] + chunks[2])
+            if interval.is_inside_edge_rectangle_purple_sides(t.lower_edge):
+                sn_middle_intervals.append(interval)
+                interval.sn_chunk_num = 1
+            elif interval.is_inside_edge_rectangle_purple_sides(south_edge):
+                south_intervals.append(interval)
+                interval.sn_chunk_num = 0
+            else:
+                assert interval.is_inside_edge_rectangle_purple_sides(north_edge)
+                north_intervals.append(interval)
+                interval.sn_chunk_num = 2            
+
+        print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(we_middle_intervals), len(east_intervals)) 
+        print('tet', i, 'contains south, middle, north intervals', len(south_intervals), len(sn_middle_intervals), len(north_intervals))
+        we_chunks = [west_intervals, we_middle_intervals, east_intervals]
+        for j, we_chunk in enumerate(we_chunks):
+            # print(j, we_chunk)
+            if len(we_chunk) > 1: ### sort within the chunk
+                chunk_W_cusp, chunk_E_cusp = horizontal_cusp_order[j], horizontal_cusp_order[j+1]
+                we_chunk.sort(key=cmp_to_key(chunk_W_cusp, chunk_E_cusp, is_horizontal = True))
+            # for k, interval in enumerate(we_chunk):
+            #     interval.name = str(i) + str(j) + str(k)
+        # print('tet', i, 'we_chunks', we_chunks[0], we_chunks[1], we_chunks[2])
+
+        sn_chunks = [south_intervals, sn_middle_intervals, north_intervals]
+        for j, sn_chunk in enumerate(sn_chunks):
+            # print(j, sn_chunk)
+            if len(sn_chunk) > 1: ### sort within the chunk
+                chunk_S_cusp, chunk_N_cusp = vertical_cusp_order[j], vertical_cusp_order[j+1]
+                sn_chunk.sort(key=cmp_to_key(chunk_S_cusp, chunk_N_cusp, is_horizontal = False))
+        # print('tet', i, 'sn_chunks', sn_chunks[0], sn_chunks[1], sn_chunks[2])
+
+        # horizontal_order = [horizontal_cusp_order[0]] + we_chunks[0] + [horizontal_cusp_order[1]] + we_chunks[1] + [horizontal_cusp_order[2]] + we_chunks[2] + [horizontal_cusp_order[3]]
+        # vertical_order = [vertical_cusp_order[0]] + sn_chunks[0] + [vertical_cusp_order[1]] + sn_chunks[1] + [vertical_cusp_order[2]] + sn_chunks[2] + [vertical_cusp_order[3]]
+        
+        tetrahedra_chunks.append([we_chunks, sn_chunks])
+
+        for interval in flow_intervals_in_t:
+            interval.we_in_chunk_index = we_chunks[interval.we_chunk_num].index(interval)
+            interval.sn_in_chunk_index = sn_chunks[interval.sn_chunk_num].index(interval)
+            interval.name = str(i) + str(interval.we_chunk_num) + str(interval.we_in_chunk_index) + str(interval.sn_chunk_num) + str(interval.sn_in_chunk_index) 
+
     all_intervals = []
-    for ints in intervals_in_tetrahedra:
+    for ints in intervals_inside_tet_rectangles:
         all_intervals.extend(ints)
     for interval in all_intervals:
         interval.extend_within_continent()
 
     con.build_boundary_data()
-    return con, all_intervals, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
+    return con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, all_intervals, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""

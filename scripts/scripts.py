@@ -208,13 +208,13 @@ def draw_continent_script():
 def draw_continent_circle_script():
     from draw_continent_circle import draw_continent_circle
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
-    
+    from draw_drilled_tetrahedra import draw_drilled_tetrahedra
     # veering_isosig = 'cPcbbbdxm_10' 
     # flow_cycle = [(0, 2)]
 
     veering_isosig = 'cPcbbbiht_12'
     # # flow_cycle = [(0, 0)]  ### boundary parallel
-    # # flow_cycle = [(0, 4), (1,2)]
+    # flow_cycle = [(0, 4), (1,2)]
     # flow_cycle = [(0, 0), (0, 5)] 
     flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
 
@@ -263,11 +263,12 @@ def draw_continent_circle_script():
     
     print(veering_isosig, flow_cycle)
 
-    con, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
     # print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
 
     # print('interval tet indices', [t.index for t in interval.tetrahedra])
     print('con size', len(con.tetrahedra), con.num_tetrahedra)
+
 
     # t1 = con.tetrahedra[-1]
     # t2 = con.tetrahedra[-11]
@@ -280,112 +281,49 @@ def draw_continent_circle_script():
     # for e in edge_rectangles_to_draw:
         # e.ensure_continent_contains_rectangle()
 
-    tetrahedra_to_draw = []
-    tetrahedron_rectangles_to_shade = []
-    tetrahedra_to_draw.extend(continent_fund_dom_tets)
-    # for interval in intervals_list:
-    #     tetrahedra_to_draw.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
-    #     tetrahedron_rectangles_to_shade.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
-    intervals_to_draw = intervals_list
+    # tetrahedra_to_draw = []
+    # tetrahedron_rectangles_to_shade = []
+    # tetrahedra_to_draw.extend(continent_fund_dom_tets)
+    # # for interval in intervals_list:
+    # #     tetrahedra_to_draw.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
+    # #     tetrahedron_rectangles_to_shade.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
+    # intervals_to_draw = intervals_list
 
-    for interval in intervals_to_draw:  ### important to do this before we start drawing!
-        for e in interval.tetrahedra[0].equatorial_edges:
-            e.ensure_continent_contains_rectangle()
-        for e in interval.tetrahedra[-1].equatorial_edges:
-            e.ensure_continent_contains_rectangle()
-    for t in tetrahedra_to_draw:
-        for e in t.equatorial_edges:
-            e.ensure_continent_contains_rectangle()
+    # for interval in intervals_to_draw:  ### important to do this before we start drawing!
+    #     for e in interval.tetrahedra[0].equatorial_edges:
+    #         e.ensure_continent_contains_rectangle()
+    #     for e in interval.tetrahedra[-1].equatorial_edges:
+    #         e.ensure_continent_contains_rectangle()
+    # for t in tetrahedra_to_draw:
+    #     for e in t.equatorial_edges:
+    #         e.ensure_continent_contains_rectangle()
 
-    # fund_dom_tets = get_fund_domain_tetrahedra(con)
-    # # complete_tetrahedron_rectangles(con, fund_dom_tets)
-    # print('len(interval.edges)', len(interval.edges), 'len(con.tetrahedra)', len(con.tetrahedra))
-    # name = veering_isosig + '' + str(flow_cycle) + '' + str(num_steps) + '_cusp_leaves'
     name = veering_isosig + '' + str(flow_cycle) + '_enough_interval'
 
-
-    # # tets_to_draw = [flow_tetrahedra[0], flow_tetrahedra[-1]]
-    # tets_to_draw = fund_dom_tets[0:]
-
-    # for i in range(14):
-    #     max_num_tetrahedra = i
-    # max_num_tetrahedra = 100
-    # # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    # con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    # for tet in continent_fund_dom_tets:
-    #     print(tet.index, [v.chronological_index() for v in tet.vertices])
-
-    # # name = veering_isosig + 'naive' + str(max_num_tetrahedra)
-    # name = veering_isosig + 'fund_dom' + str(max_num_tetrahedra)
-
-    # fund_dom_tets = []
-    #tets_to_draw = []
-    edge_rectangles_to_draw = []
-    draw_continent_circle(con, name = name, draw_labels = True,
-        # draw_upper_landscape = True, draw_lower_landscape = True, 
-        draw_upper_landscape = False, draw_lower_landscape = False, 
-        draw_coastal_edges = False, draw_all_edges = False,
-        draw_cusp_leaves = False,
-        shade_triangles = False, 
-        draw_fund_domain = False, fund_dom_tets = continent_fund_dom_tets,
-        draw_fund_domain_edges = False, 
-        #draw_tetrahedron_rectangles = tets_to_draw,
-        edge_rectangles_to_draw = edge_rectangles_to_draw,
-        tetrahedron_rectangles_to_draw = tetrahedra_to_draw,
-        tetrahedron_rectangles_to_shade = tetrahedron_rectangles_to_shade,
-        triangles_to_draw = triangles_to_draw,
-        tetrahedra_to_draw = tetrahedra_to_draw,
-        draw_edges_for_edge_rectangles = True,
-        leaves_to_draw = leaves_to_draw,
-        intervals_to_draw = intervals_to_draw,
-        edge_thickness = 0.02,
-        leaf_thickness = 0.02,
-        transparency = 0.8)
-        # edge_thickness = 0.001,
-        # leaf_thickness = 0.0005)
-
-    # veering_isosig = 'cPcbbbiht_12'
-    # veering_isosig = 'dLQacccjsnk_200'
-    # max_num_tetrahedra = 50
-    # con = make_continent_naive(veering_isosig, max_num_tetrahedra = max_num_tetrahedra)
-    # name = veering_isosig + '_' + str(max_num_tetrahedra) + '_cusp_leaves'
-    # draw_continent_circle(con, name = name,
+    # edge_rectangles_to_draw = []
+    # draw_continent_circle(con, name = name, draw_labels = True,
+    #     # draw_upper_landscape = True, draw_lower_landscape = True, 
     #     draw_upper_landscape = False, draw_lower_landscape = False, 
-    #     draw_upper_green = True, draw_lower_purple = True,
-    #     draw_train_tracks = False, draw_foliation = True,
-    #     foliation_style_old = False, foliation_style_split = False, 
-    #     foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
-    #     draw_fund_domain = True)
+    #     draw_coastal_edges = False, draw_all_edges = False,
+    #     draw_cusp_leaves = False,
+    #     shade_triangles = False, 
+    #     draw_fund_domain = False, fund_dom_tets = continent_fund_dom_tets,
+    #     draw_fund_domain_edges = False, 
+    #     #draw_tetrahedron_rectangles = tets_to_draw,
+    #     edge_rectangles_to_draw = edge_rectangles_to_draw,
+    #     tetrahedron_rectangles_to_draw = tetrahedra_to_draw,
+    #     tetrahedron_rectangles_to_shade = tetrahedron_rectangles_to_shade,
+    #     triangles_to_draw = triangles_to_draw,
+    #     tetrahedra_to_draw = tetrahedra_to_draw,
+    #     draw_edges_for_edge_rectangles = True,
+    #     leaves_to_draw = leaves_to_draw,
+    #     intervals_to_draw = intervals_to_draw,
+    #     edge_thickness = 0.02,
+    #     leaf_thickness = 0.02,
+    #     transparency = 0.8)
 
-    # veering_isosig = 'dLQacccjsnk_200'
-    # dual_cycle = [4,5]
-    # for num_steps in range(20):
-    # # num_steps = 7
-    #     con = make_continent_drill(veering_isosig, dual_cycle, num_steps)
-    #     name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
-    #     draw_continent_circle(con, name = name,
-    #         draw_upper_landscape = False, draw_lower_landscape = False, 
-    #         draw_upper_green = True, draw_lower_purple = True,
-    #         draw_train_tracks = False, draw_foliation = True, 
-    #         foliation_style_old = False, foliation_style_split = False, 
-    #         foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
-    #         shade_triangles = True, draw_fund_domain = True,
-    #         draw_fund_domain_edges = True)
-        
-    # veering_isosig = 'cPcbbbdxm_10' # example where after drilling we get an edge between the new cusp and itself
-    # dual_cycle = [1,2]
-    # for num_steps in range(20):
-    # # num_steps = 7
-    #     con = make_continent_drill_dual_cycle(veering_isosig, dual_cycle, num_steps)
-    #     name = veering_isosig + '_' + str(dual_cycle) + '_' + str(num_steps) + '_cusp_leaves'
-    #     draw_continent_circle(con, name = name,
-    #         draw_upper_landscape = False, draw_lower_landscape = False, 
-    #         draw_upper_green = True, draw_lower_purple = True,
-    #         draw_train_tracks = False, draw_foliation = True, 
-    #         foliation_style_old = False, foliation_style_split = False, 
-    #         foliation_style_cusp_leaves = True, foliation_style_boundary_leaves = False,
-    #         shade_triangles = True, draw_fund_domain = True,
-    #         draw_fund_domain_edges = True)
+    draw_drilled_tetrahedra(con, name = name, tetrahedra_cusp_orders = tetrahedra_cusp_orders, intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, tetrahedra_chunks = tetrahedra_chunks)
+
 
 def draw_veering_triangulation_and_mid_annuli_script():
     from draw_veering_triangulation_and_mid_annuli import draw_triangulation_from_veering_isosig
