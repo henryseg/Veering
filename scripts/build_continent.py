@@ -369,7 +369,9 @@ class flow_interval:
         """Assuming that W and E are cusps and self, other are between W and E, which is closer to which"""
         if self.equals(other):
             return 0  ## for use in sorting, we want answers of -1, 0, and 1.
+        print('making green comparable with')
         self.make_green_comparable_with(other)
+        print('done making green comparable with')
         ### find a leaf of self that separates W from E
         green_boundary = self.tetrahedra[-1].get_boundary_cusp_leaves()[0]
         test_leaf = None
@@ -746,6 +748,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         W, E = W_leaf.cusp, E_leaf.cusp
         if S_leaf.sees_to_its_left(E):
             W, E = E, W
+            W_leaf, E_leaf = E_leaf, W_leaf
         assert S_leaf.sees_to_its_left(W) and not S_leaf.sees_to_its_left(E)
         if S_leaf.sees_to_its_left(N):
             assert N_leaf.sees_to_its_left(S)
@@ -759,6 +762,19 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         else:
             assert not E_leaf.sees_to_its_left(W)
             vertical_cusp_order = [S, E, W, N]
+
+        ### Sanity check:
+        horiz_to_vert_perm = [vertical_cusp_order.index(horizontal_cusp_order[i]) for i in range(4)]
+        if t.upper_edge.is_red:
+            if t.lower_edge.is_red:
+                assert horiz_to_vert_perm == [1,0,3,2]
+            else:
+                assert horiz_to_vert_perm == [2,0,3,1]
+        else:
+            if t.lower_edge.is_red:
+                assert horiz_to_vert_perm == [1,3,0,2]
+            else:
+                assert horiz_to_vert_perm == [2,3,0,1]
 
         tetrahedra_cusp_orders.append([horizontal_cusp_order, vertical_cusp_order])
 
@@ -815,6 +831,11 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
         print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(we_middle_intervals), len(east_intervals)) 
         print('tet', i, 'contains south, middle, north intervals', len(south_intervals), len(sn_middle_intervals), len(north_intervals))
+        
+        # for k, interval in enumerate(west_intervals):
+        #     print('west interval ' + str(k), interval)
+        #     for tet in interval.tetrahedra:
+        #         print(tet)
         we_chunks = [west_intervals, we_middle_intervals, east_intervals]
         for j, we_chunk in enumerate(we_chunks):
             # print(j, we_chunk)
@@ -833,9 +854,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
                 sn_chunk.sort(key=cmp_to_key(chunk_S_cusp, chunk_N_cusp, is_horizontal = False))
         # print('tet', i, 'sn_chunks', sn_chunks[0], sn_chunks[1], sn_chunks[2])
 
-        # horizontal_order = [horizontal_cusp_order[0]] + we_chunks[0] + [horizontal_cusp_order[1]] + we_chunks[1] + [horizontal_cusp_order[2]] + we_chunks[2] + [horizontal_cusp_order[3]]
-        # vertical_order = [vertical_cusp_order[0]] + sn_chunks[0] + [vertical_cusp_order[1]] + sn_chunks[1] + [vertical_cusp_order[2]] + sn_chunks[2] + [vertical_cusp_order[3]]
-        
+
         tetrahedra_chunks.append([we_chunks, sn_chunks])
 
         for interval in flow_intervals_in_t:

@@ -43,7 +43,7 @@ class vertex:
 
     def __repr__(self):
         if self.pos == None:
-            return 'chron' + str(self.chronological_index())
+            return 'c' + str(self.chronological_index())
         elif not self.pos.is_infinity():
             return str(self.pos.complex())
         else:
@@ -582,7 +582,7 @@ class continent_tetrahedron:
 
     def __repr__(self):
         a, b, c, d = self.vertices
-        return '_'.join( [str(self.continent.tetrahedra.index(self)), 'tet', str(a), str(b), str(c), str(d)] )
+        return ','.join( ['tet', str(self.index), 'con ind', str(self.continent.tetrahedra.index(self)), 'verts', str(a), str(b), str(c), str(d)] )
 
     def set_upper_edge(self, e):
         self.upper_edge = e

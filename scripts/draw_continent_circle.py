@@ -272,7 +272,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     # check_edge.ensure_continent_contains_rectangle()
     # print(len(con.tetrahedra))
 
-    global_scale_up = 10.0
+    global_scale_up = 25.0
     red = color.rgb(0.9,0.3,0)
     blue = color.rgb(0,0.3,0.9)
     edge_colours = {True: red, False: blue}
