@@ -239,8 +239,11 @@ def draw_continent_circle_script():
     
     # flow cycle which is not boundary parallel but completely in a blue region 
     # veering_isosig = 'eLAkbbcdddhwqj_2102'
-    # flow_cycle = [(3, 2)]   ### this is an LMT "AB-cycle", so there will be distinct flow lines that fellow-travel, and we cannot separate them
-    
+    # flow_cycle = [(3, 2)]   ### this is isotopic to an LMT "AB-cycle", 
+    ### so there will be distinct flow lines that fellow-travel, and we cannot separate them
+    # flow_cycle = [(2, 5)] ### has same problem of being isotopic to a pi_1 translate
+    # flow_cycle = [(0, 3), (1, 1)]  ### goes straight up but does not stay in one colour so we can separate
+
     # short cycle in a large triangulation
     # veering_isosig = 'qLLALvQLwQMkcecdhkjilmmlnoppphqrwqqaqxhhxofhxq_2010222010122221'
     # flow_cycle = [(1, 0)]
@@ -290,6 +293,10 @@ def draw_continent_circle_script():
     #     tetrahedron_rectangles_to_shade.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
     intervals_to_draw = intervals_list
     # intervals_to_draw = intervals_inside_tet_rectangles[0]
+    for interval in intervals_to_draw:
+        g, p = interval.crossing_leaves() ### this function can grow the continent - do so before we start drawing
+        ### we should have flags for "do not change the continent, assert False if you need to" for drawing routines.
+
 
     # for interval in intervals_to_draw:  ### important to do this before we start drawing!
     #     for e in interval.tetrahedra[0].equatorial_edges:

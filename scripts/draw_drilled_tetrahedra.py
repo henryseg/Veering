@@ -52,9 +52,13 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None, inter
         we_chunks, sn_chunks = tetrahedra_chunks[i]
         widths = [len(chunk) + 1 for chunk in we_chunks]
         heights = [len(chunk) + 1 for chunk in sn_chunks]
+        # print('tet', i, 'widths', widths, 'heights', heights)
         tet_intervals = intervals_inside_tet_rectangles[i]
         for interval in tet_intervals:
-            coords = offset + complex(interval.we_chunk_num + (interval.we_in_chunk_index + 1)/widths[interval.we_chunk_num], interval.sn_chunk_num + (interval.sn_in_chunk_index + 1)/heights[interval.sn_chunk_num])
+            # print('we chunk num', interval.we_chunk_num, 'we_in_chunk_index', interval.we_in_chunk_index, 'sn chunk num', interval.sn_chunk_num, 'sn_in_chunk_index', interval.sn_in_chunk_index, 'interval', interval)
+            x = interval.we_chunk_num + (interval.we_in_chunk_index + 1)/widths[interval.we_chunk_num]
+            y = interval.sn_chunk_num + (interval.sn_in_chunk_index + 1)/heights[interval.sn_chunk_num]
+            coords = offset + complex(x, y)
             canv.stroke(path.circle(coords.real, coords.imag, 0.035), [deco.filled(), style.linewidth(0)])
 
 

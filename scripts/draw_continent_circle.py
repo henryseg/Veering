@@ -452,7 +452,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
             canv.stroke(polygon, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
 
     for interval in intervals_to_draw:
-        g, p = interval.crossing_leaves()
+        g, p = interval.crossing_leaves() ### careful, this can grow the continent. So we run it first outside the draw function, in scripts.py
         assert len(g) == 2 and len(p) == 2
 
         # for leaf in g:
@@ -499,7 +499,9 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         canv.stroke(polygon, [deco.filled([color.transparency(transparency)]), style.linewidth(0)])
 
         text_pos = intersections2[0][0]
-        text_pos = global_scale_up * text_pos
+
+        text_offset = 0.25
+        text_pos = global_scale_up * text_pos + complex(0, text_offset*interval.owning_tet_index) ### move labels off of each other 
         canv.text(text_pos.real, text_pos.imag, "$"+interval.name+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle])
 
 

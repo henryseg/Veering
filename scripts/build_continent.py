@@ -119,13 +119,18 @@ class flow_interval:
         self.init_flow_index = init_flow_index  ### never alter after initialization
         self.init_tet = init_flow_tetrahedron  ### never alter after initialization
         self.init_edge = init_flow_edge  ### never alter after initialization
-        self.name = 'interval_' + self.init_tet.__repr__()
+        self.name = 'int_' + self.init_tet.__repr__()
 
     def __repr__(self):
         return self.name
     
     def __str__(self):
         return self.__repr__()
+
+    def copy(self):
+        other = flow_interval(self.continent, self.flow_cycle, self.init_tet, self.init_flow_index)
+        other.extend_within_continent()
+        return other
 
     def equals(self, other):
         """assuming both intervals have been extended within the continent, checks if they are the same"""
@@ -369,9 +374,9 @@ class flow_interval:
         """Assuming that W and E are cusps and self, other are between W and E, which is closer to which"""
         if self.equals(other):
             return 0  ## for use in sorting, we want answers of -1, 0, and 1.
-        print('making green comparable with')
+        # print('making green comparable with')
         self.make_green_comparable_with(other)
-        print('done making green comparable with')
+        # print('done making green comparable with')
         ### find a leaf of self that separates W from E
         green_boundary = self.tetrahedra[-1].get_boundary_cusp_leaves()[0]
         test_leaf = None
@@ -718,7 +723,9 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     print(len(continent_fund_dom_tets))
     intervals_inside_tet_rectangles = []
     for i, t in enumerate(continent_fund_dom_tets):
-        flow_intervals_in_t = intervals_inside_edge_rectangles[i][:]  ### start with intervals in the lower edge of t
+        flow_intervals_in_t = []
+        for interval in intervals_inside_edge_rectangles[i]: ### start with intervals in the lower edge of t
+            flow_intervals_in_t.append(interval.copy())  ### we don't want the same interval showing up in multiple tetrahedra - naming them gets messy
         edges_to_add = t.equatorial_edges
         # edges_to_add.append(t.upper_edge)  ### for testing, this should already be covered by other tet rects
         for e_eq in edges_to_add:   ### then add intervals in equatorial edges
@@ -726,7 +733,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
             e = fund_dom_unique_edges[j]  
             flow_intervals_in_e = intervals_inside_edge_rectangles[j]
             for interval in flow_intervals_in_e:
-                new_interval = translate_of_interval_from_one_edge_rect_to_another(e, e_eq, interval)
+                new_interval = translate_of_interval_from_one_edge_rect_to_another(e, e_eq, interval) ### these are copies as well
                 flow_intervals_in_t.append(new_interval)
         for interval in flow_intervals_in_t:
             interval.extend_within_continent()
@@ -832,19 +839,33 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(we_middle_intervals), len(east_intervals)) 
         print('tet', i, 'contains south, middle, north intervals', len(south_intervals), len(sn_middle_intervals), len(north_intervals))
         
+        for interval in west_intervals:
+            assert interval.we_chunk_num == 0
+        for interval in we_middle_intervals:
+            assert interval.we_chunk_num == 1
+        for interval in east_intervals:
+            assert interval.we_chunk_num == 2
+        for interval in south_intervals:
+            assert interval.sn_chunk_num == 0
+        for interval in sn_middle_intervals:
+            assert interval.sn_chunk_num == 1
+        for interval in north_intervals:
+            assert interval.sn_chunk_num == 2
+
         # for k, interval in enumerate(west_intervals):
         #     print('west interval ' + str(k), interval)
         #     for tet in interval.tetrahedra:
         #         print(tet)
         we_chunks = [west_intervals, we_middle_intervals, east_intervals]
         for j, we_chunk in enumerate(we_chunks):
-            # print(j, we_chunk)
+            # print('we_chunk', j, we_chunk)
             if len(we_chunk) > 1: ### sort within the chunk
                 chunk_W_cusp, chunk_E_cusp = horizontal_cusp_order[j], horizontal_cusp_order[j+1]
                 we_chunk.sort(key=cmp_to_key(chunk_W_cusp, chunk_E_cusp, is_horizontal = True))
             # for k, interval in enumerate(we_chunk):
             #     interval.name = str(i) + str(j) + str(k)
         # print('tet', i, 'we_chunks', we_chunks[0], we_chunks[1], we_chunks[2])
+            # print('sorted_we_chunk', j, we_chunk)
 
         sn_chunks = [south_intervals, sn_middle_intervals, north_intervals]
         for j, sn_chunk in enumerate(sn_chunks):
@@ -860,6 +881,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         for interval in flow_intervals_in_t:
             interval.we_in_chunk_index = we_chunks[interval.we_chunk_num].index(interval)
             interval.sn_in_chunk_index = sn_chunks[interval.sn_chunk_num].index(interval)
+            # print('tet', i, 'wechn', interval.we_chunk_num, 'weind', interval.we_in_chunk_index, 'snchn', interval.sn_chunk_num, 'snind', interval.sn_in_chunk_index)
+            interval.owning_tet_index = i
             interval.name = str(i) + str(interval.we_chunk_num) + str(interval.we_in_chunk_index) + str(interval.sn_chunk_num) + str(interval.sn_in_chunk_index) 
 
     all_intervals = []
