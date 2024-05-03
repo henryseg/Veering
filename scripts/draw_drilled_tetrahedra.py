@@ -17,8 +17,8 @@ def draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple):
         p = make_line(complex(j,0) + offset, complex(j,3) + offset)
         p = p.transformed(scl)
         canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
-    text_pos = global_scale_up * (complex(1.5,-0.5) + offset)
-    canv.text(text_pos.real, text_pos.imag, "$"+str(i)+"$", textattrs=[text.size(2), text.halign.center, text.valign.middle])
+    text_pos = global_scale_up * (complex(1.5, 3.5) + offset)
+    canv.text(text_pos.real, text_pos.imag, "$"+str(i)+"$", textattrs=[text.size(3), text.halign.center, text.valign.middle])
 
 def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None, intervals_inside_tet_rectangles = None, tetrahedra_chunks = None,
     edge_thickness = 0.02,
@@ -36,18 +36,26 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None, inter
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
     # canv.stroke(path.circle(0,0,global_scale_up), [style.linewidth(edge_thickness)])
-
+    
     for i in range(len(tetrahedra_cusp_orders)):
         draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple)
 
         horizontal_cusp_order, vertical_cusp_order = tetrahedra_cusp_orders[i]
         offset = complex(4*i,0)
-        W_coords = complex(0, vertical_cusp_order.index(horizontal_cusp_order[0])) + offset 
-        E_coords = complex(3, vertical_cusp_order.index(horizontal_cusp_order[3])) + offset
-        S_coords = complex(horizontal_cusp_order.index(vertical_cusp_order[0]), 0) + offset
-        N_coords = complex(horizontal_cusp_order.index(vertical_cusp_order[3]), 3) + offset
-        for coords in [W_coords, E_coords, S_coords, N_coords]:
-            canv.stroke(path.circle(coords.real, coords.imag, 0.05), [deco.filled(), style.linewidth(0)])
+        W_coords = complex(0, vertical_cusp_order.index(horizontal_cusp_order[0])) 
+        E_coords = complex(3, vertical_cusp_order.index(horizontal_cusp_order[3])) 
+        S_coords = complex(horizontal_cusp_order.index(vertical_cusp_order[0]), 0) 
+        N_coords = complex(horizontal_cusp_order.index(vertical_cusp_order[3]), 3)
+        top_vertices, bottom_vertices = con.vt.tet_vert_posns[i] ### this is currently set in build_continent 
+        N_ind, S_ind = top_vertices
+        W_ind, E_ind = bottom_vertices
+
+        for coords, ind in [(W_coords, W_ind), (E_coords, E_ind), (S_coords, S_ind), (N_coords, N_ind)]:
+            
+            dot_coords = coords + offset
+            symbol_coords = 1.13*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset
+            canv.stroke(path.circle(dot_coords.real, dot_coords.imag, 0.05), [deco.filled(), style.linewidth(0)])
+            canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(ind)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle])
 
         we_chunks, sn_chunks = tetrahedra_chunks[i]
         widths = [len(chunk) + 1 for chunk in we_chunks]

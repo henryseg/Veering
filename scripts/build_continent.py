@@ -10,6 +10,7 @@ from veering.veering_tri import veering_triangulation
 
 from continent import continent, continent_tetrahedron
 from boundary_triangulation import tet_face
+from draw_veering_triangulation_and_mid_annuli import get_consistent_tet_vert_posns
 
 def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     tri, angle = isosig_to_tri_angle(veering_isosig)
@@ -746,17 +747,40 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
     ### Now start sorting the intervals inside the tet rectangles.
     ### Do horizontal order first. Start with positions of intervals relative to the S, N cusps
 
+    tet_vert_posns, _, _, _ = get_consistent_tet_vert_posns(vt.tri, vt.angle, vt.tet_types, vt.coorientations)
+    vt.tet_vert_posns = tet_vert_posns
+
+    ###           top[0]
+    ###          /   |   \
+    ### bottom[0]--- | ---bottom[1]
+    ###          \   |   /
+    ###           top[1]
+    
     tetrahedra_cusp_orders = []
     tetrahedra_chunks = []
     for i, t in enumerate(continent_fund_dom_tets):
+        top_vertices, bottom_vertices = tet_vert_posns[i]
+        N_ind, S_ind = top_vertices
+        W_ind, E_ind = bottom_vertices
+
         S_leaf, N_leaf = t.upper_edge.green_purple_rectangle_sides()[0] ## green sides are the cusp_leaves coming from S, N cusps
         S, N = S_leaf.cusp, N_leaf.cusp
+        if t.vertices[N_ind] != N:
+            assert t.vertices[N_ind] == S
+            S_leaf, N_leaf = N_leaf, S_leaf
+            S, N = N, S
+
         W_leaf, E_leaf = t.lower_edge.green_purple_rectangle_sides()[1] 
         W, E = W_leaf.cusp, E_leaf.cusp
         if S_leaf.sees_to_its_left(E):
             W, E = E, W
             W_leaf, E_leaf = E_leaf, W_leaf
         assert S_leaf.sees_to_its_left(W) and not S_leaf.sees_to_its_left(E)
+        assert t.vertices[S_ind] == S
+        assert t.vertices[N_ind] == N
+        assert t.vertices[W_ind] == W
+        assert t.vertices[E_ind] == E
+
         if S_leaf.sees_to_its_left(N):
             assert N_leaf.sees_to_its_left(S)
             horizontal_cusp_order = [W, N, S, E]

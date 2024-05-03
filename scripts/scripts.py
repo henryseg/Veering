@@ -310,26 +310,26 @@ def draw_continent_circle_script():
     name = veering_isosig + '' + str(flow_cycle) + '_enough_interval'
 
     edge_rectangles_to_draw = []
-    draw_continent_circle(con, name = name, draw_labels = True,
-        # draw_upper_landscape = True, draw_lower_landscape = True, 
-        draw_upper_landscape = False, draw_lower_landscape = False, 
-        draw_coastal_edges = False, draw_all_edges = False,
-        draw_cusp_leaves = False,
-        shade_triangles = False, 
-        draw_fund_domain = False, fund_dom_tets = continent_fund_dom_tets,
-        draw_fund_domain_edges = False, 
-        #draw_tetrahedron_rectangles = tets_to_draw,
-        edge_rectangles_to_draw = edge_rectangles_to_draw,
-        tetrahedron_rectangles_to_draw = tetrahedra_to_draw,
-        tetrahedron_rectangles_to_shade = tetrahedron_rectangles_to_shade,
-        triangles_to_draw = triangles_to_draw,
-        tetrahedra_to_draw = tetrahedra_to_draw,
-        draw_edges_for_edge_rectangles = True,
-        leaves_to_draw = leaves_to_draw,
-        intervals_to_draw = intervals_to_draw,
-        edge_thickness = 0.02,
-        leaf_thickness = 0.02,
-        transparency = 0.8)
+    # draw_continent_circle(con, name = name, draw_labels = True,
+    #     # draw_upper_landscape = True, draw_lower_landscape = True, 
+    #     draw_upper_landscape = False, draw_lower_landscape = False, 
+    #     draw_coastal_edges = False, draw_all_edges = False,
+    #     draw_cusp_leaves = False,
+    #     shade_triangles = False, 
+    #     draw_fund_domain = False, fund_dom_tets = continent_fund_dom_tets,
+    #     draw_fund_domain_edges = False, 
+    #     #draw_tetrahedron_rectangles = tets_to_draw,
+    #     edge_rectangles_to_draw = edge_rectangles_to_draw,
+    #     tetrahedron_rectangles_to_draw = tetrahedra_to_draw,
+    #     tetrahedron_rectangles_to_shade = tetrahedron_rectangles_to_shade,
+    #     triangles_to_draw = triangles_to_draw,
+    #     tetrahedra_to_draw = tetrahedra_to_draw,
+    #     draw_edges_for_edge_rectangles = True,
+    #     leaves_to_draw = leaves_to_draw,
+    #     intervals_to_draw = intervals_to_draw,
+    #     edge_thickness = 0.02,
+    #     leaf_thickness = 0.02,
+    #     transparency = 0.8)
 
     draw_drilled_tetrahedra(con, name = name, tetrahedra_cusp_orders = tetrahedra_cusp_orders, intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, tetrahedra_chunks = tetrahedra_chunks)
 
