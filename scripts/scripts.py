@@ -331,7 +331,7 @@ def draw_continent_circle_script():
     #     leaf_thickness = 0.02,
     #     transparency = 0.8)
 
-    draw_drilled_tetrahedra(con, name = name, tetrahedra_cusp_orders = tetrahedra_cusp_orders, intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, tetrahedra_chunks = tetrahedra_chunks)
+    draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, tetrahedra_cusp_orders = tetrahedra_cusp_orders, intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, tetrahedra_chunks = tetrahedra_chunks)
 
 
 def draw_veering_triangulation_and_mid_annuli_script():
