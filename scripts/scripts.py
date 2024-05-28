@@ -334,6 +334,82 @@ def draw_continent_circle_script():
     draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, tetrahedra_cusp_orders = tetrahedra_cusp_orders, intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, tetrahedra_chunks = tetrahedra_chunks)
 
 
+def drill_flow_cycle_script():
+    from draw_continent_circle import draw_continent_circle
+    from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
+    from draw_drilled_tetrahedra import draw_drilled_tetrahedra
+    from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check
+    # veering_isosig = 'cPcbbbdxm_10' 
+    # flow_cycle = [(0, 2)]
+
+    # veering_isosig = 'cPcbbbiht_12'
+    # # flow_cycle = [(0, 0)]  ### boundary parallel
+    # flow_cycle = [(0, 4), (1,2)]
+    # flow_cycle = [(0, 0), (0, 5)] 
+    # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
+
+    # veering_isosig = 'dLQacccjsnk_200'
+    # flow_cycle = [(1, 4)]
+    # flow_cycle = [(1, 0), (2, 5)]
+    # flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
+
+    # veering_isosig = 'eLAkaccddjsnak_2001'
+    # flow_cycle = [(0, 1), (2, 2), (3, 2)]
+
+    veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
+    # flow_cycle = [(0, 0)]
+    # flow_cycle = [(0, 4), (4, 0)]
+    flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
+    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
+    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
+    
+    # flow cycle which is not boundary parallel but completely in a blue region 
+    # veering_isosig = 'eLAkbbcdddhwqj_2102'
+    # flow_cycle = [(3, 2)]   ### this is isotopic to an LMT "AB-cycle", 
+    ### so there will be distinct flow lines that fellow-travel, and we cannot separate them
+    # flow_cycle = [(2, 5)] ### has same problem of being isotopic to a pi_1 translate
+    # flow_cycle = [(0, 3), (1, 1)]  ### goes straight up but does not stay in one colour so we can separate
+
+    # short cycle in a large triangulation
+    # veering_isosig = 'qLLALvQLwQMkcecdhkjilmmlnoppphqrwqqaqxhhxofhxq_2010222010122221'
+    # flow_cycle = [(1, 0)]
+    # # flow_cycle = [(3, 5)]
+    # # flow_cycle = [(4, 2)]
+    # flow_cycle = [(7, 5)]
+    # flow_cycle = [(9, 0)]
+    
+    print(veering_isosig, flow_cycle)
+
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
+
+    print('con size', len(con.tetrahedra), con.num_tetrahedra)
+
+    tetrahedra_to_draw = []
+    tetrahedron_rectangles_to_shade = []
+    # tetrahedra_to_draw.extend(continent_fund_dom_tets[:1])  ## only 0
+    tetrahedra_to_draw.extend(continent_fund_dom_tets)  ## only 0
+    # for interval in intervals_list:
+    #     tetrahedra_to_draw.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
+    #     tetrahedron_rectangles_to_shade.extend([interval.tetrahedra[0], interval.tetrahedra[-1]])
+    intervals_to_draw = intervals_list
+    # intervals_to_draw = intervals_inside_tet_rectangles[0]
+    for interval in intervals_to_draw:
+        g, p = interval.crossing_leaves() ### this function can grow the continent - do so before we start drawing
+        ### we should have flags for "do not change the continent, assert False if you need to" for drawing routines.
+
+    name = veering_isosig + '' + str(flow_cycle) + '_drill'
+
+    draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, tetrahedra_cusp_orders = tetrahedra_cusp_orders, intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, tetrahedra_chunks = tetrahedra_chunks)
+    old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, intervals_inside_tet_rectangles, tetrahedra_chunks)
+    sanity_check(old_tet_rectangles)
+    # for i, r in enumerate(old_tet_rectangles):
+    #     print('old tet rect', i, r)
+    #     for j in range(4):
+    #         face_rect = r.face(j)
+    #         print(j, 'face index', face_rect.face_index, face_rect)
+
+
+
 def draw_veering_triangulation_and_mid_annuli_script():
     from draw_veering_triangulation_and_mid_annuli import draw_triangulation_from_veering_isosig
     # draw_triangulations_from_veering_isosigs_file('Veering_census/veering_census_up_to_12.txt', '../Veering_mid-annuli', '../Veering_tetrahedra')

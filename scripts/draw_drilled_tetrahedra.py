@@ -72,7 +72,6 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None, inter
             canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(tri_num)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle])
 
 
-
         we_chunks, sn_chunks = tetrahedra_chunks[i]
         widths = [len(chunk) + 1 for chunk in we_chunks]
         heights = [len(chunk) + 1 for chunk in sn_chunks]
