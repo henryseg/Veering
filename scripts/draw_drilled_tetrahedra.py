@@ -7,13 +7,17 @@ def make_line(a, b):
     p.append( path.lineto(b.real, b.imag) )
     return p
 
-def draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple):
+def draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple, draw_inner_lines = True):
     offset = complex(4*i,0)
-    for j in range(4):
+    if draw_inner_lines:
+        indices = [0,1,2,3]
+    else:
+        indices = [0,3]
+    for j in indices:
         p = make_line(complex(0,j) + offset, complex(3,j) + offset)
         p = p.transformed(scl)
         canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, purple])
-    for j in range(4):
+    for j in indices:
         p = make_line(complex(j,0) + offset, complex(j,3) + offset)
         p = p.transformed(scl)
         canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
@@ -38,10 +42,15 @@ def draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_
     p = p.transformed(scl)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
 
+def draw_rectangle(canv, x_interval, y_interval, scl, edge_thickness, green, purple, rect_scale_in = 0.9):
+    corners = [complex(x_interval[i], y_interval[i]) for i in range(2)]
+    draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_scale_in = rect_scale_in)
+
 def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None, 
     intervals_inside_tet_rectangles = None, 
     tetrahedra_chunks = None,
     old_tet_rectangles = [],
+    draw_square_inner_lines = False,
     draw_vertex_numbers = False, 
     edge_thickness = 0.02,
     leaf_thickness = 0.03,
@@ -60,7 +69,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
     canv = canvas.canvas()
     
     for i in range(len(tetrahedra_cusp_orders)):
-        draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple)
+        draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple, draw_inner_lines = draw_square_inner_lines)
         old_tet_rect = old_tet_rectangles[i]
         tet_rect_coords = [None] * len(old_tet_rect.horiz_ordering)
 
@@ -115,9 +124,18 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
 
         edge_rects = old_tet_rect.edge_rectangles()
         print('tet', i, 'num edge rects', len(edge_rects))
-        for edge_rect in edge_rects:
-            corners = [tet_rect_coords[j] for j in edge_rect]
-            draw_edge_rectangle(canv, corners, scl, 0.4*edge_thickness, green, purple)
+        # for edge_rect in edge_rects:
+        #     corners = [tet_rect_coords[j] for j in edge_rect]
+        #     draw_edge_rectangle(canv, corners, scl, 0.4*edge_thickness, green, purple)
+        face_rects = old_tet_rect.face_rectangles()
+        print('tet', i, 'num face rects', len(face_rects))
+        for face_rect in face_rects:
+            verts = [tet_rect_coords[j] for j in face_rect]
+            x_coords = [v.real for v in verts]
+            y_coords = [v.imag for v in verts]
+            x_interval = (min(x_coords), max(x_coords))
+            y_interval = (min(y_coords), max(y_coords))
+            draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple)
 
     output_filename = 'Images/DrilledTetrahedra/' + name + '.pdf'
     print(output_filename)

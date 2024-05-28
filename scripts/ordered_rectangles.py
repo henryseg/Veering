@@ -11,6 +11,8 @@ class ordered_rectangle:
         assert len(horiz_ordering) == len(vert_ordering)
         self.horiz_ordering = horiz_ordering
         self.vert_ordering = vert_ordering
+        self.edge_rectangle_indices = None
+        self.face_rectangle_indices = None
 
     def horiz_to_vert_perm(self):
         return [self.vert_ordering.index(x) for x in self.horiz_ordering]
@@ -43,7 +45,22 @@ class ordered_rectangle:
                 pj = perm[j]
                 if rect_is_empty(j, i, pj, pi, perm):
                     out.append((j, i))
+        self.edge_rectangle_indices = out
         return out
+
+    def face_rectangles(self):
+        if self.edge_rectangle_indices == None:
+            self.edge_rectangles()
+        out = []
+        for i in range(len(self.horiz_ordering)):
+            for j in range(i):
+                if (j,i) in self.edge_rectangle_indices:
+                    for k in range(j):
+                        if (k,i) in self.edge_rectangle_indices and (k,j) in self.edge_rectangle_indices:
+                            out.append((k,j,i))
+        self.face_rectangle_indices = out
+        return out
+
 
 class ordered_face_rectangle(ordered_rectangle):
     def __init__(self, con, face_index, horiz_ordering, vert_ordering):

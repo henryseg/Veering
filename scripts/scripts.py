@@ -348,13 +348,13 @@ def drill_flow_cycle_script():
     # flow_cycle = [(0, 0), (0, 5)] 
     # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
 
-    veering_isosig = 'dLQacccjsnk_200'
+    # veering_isosig = 'dLQacccjsnk_200'
     # flow_cycle = [(1, 4)]
     # flow_cycle = [(1, 0), (2, 5)]
-    flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
+    # flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
 
-    # veering_isosig = 'eLAkaccddjsnak_2001'
-    # flow_cycle = [(0, 1), (2, 2), (3, 2)]
+    veering_isosig = 'eLAkaccddjsnak_2001'
+    flow_cycle = [(0, 1), (2, 2), (3, 2)]
 
     # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # flow_cycle = [(0, 0)]
