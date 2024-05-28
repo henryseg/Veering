@@ -1,5 +1,10 @@
 
-
+def rect_is_empty(j, i, pj, pi, perm):
+    for k in range(j+1, i):
+        pk = perm[k]
+        if (pj - pk) * (pk - pi) > 0: ### pk is between pi and pj
+            return False ### k breaks apart the edge rectangle
+    return True
 
 class ordered_rectangle:
     def __init__(self, horiz_ordering, vert_ordering):
@@ -9,6 +14,9 @@ class ordered_rectangle:
 
     def horiz_to_vert_perm(self):
         return [self.vert_ordering.index(x) for x in self.horiz_ordering]
+
+    def vert_to_horiz_perm(self):
+        return [self.horiz_ordering.index(x) for x in self.vert_ordering]
 
     def __repr__(self):
         return str(self.horiz_to_vert_perm())
@@ -25,6 +33,17 @@ class ordered_rectangle:
         other = self.copy()
         other.rotate()
         return other
+
+    def edge_rectangles(self):
+        perm = self.horiz_to_vert_perm()
+        out = []
+        for i in range(len(self.horiz_ordering)):
+            pi = perm[i]
+            for j in range(i):
+                pj = perm[j]
+                if rect_is_empty(j, i, pj, pi, perm):
+                    out.append((j, i))
+        return out
 
 class ordered_face_rectangle(ordered_rectangle):
     def __init__(self, con, face_index, horiz_ordering, vert_ordering):

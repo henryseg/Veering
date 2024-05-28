@@ -348,18 +348,18 @@ def drill_flow_cycle_script():
     # flow_cycle = [(0, 0), (0, 5)] 
     # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
 
-    # veering_isosig = 'dLQacccjsnk_200'
+    veering_isosig = 'dLQacccjsnk_200'
     # flow_cycle = [(1, 4)]
     # flow_cycle = [(1, 0), (2, 5)]
-    # flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
+    flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
 
     # veering_isosig = 'eLAkaccddjsnak_2001'
     # flow_cycle = [(0, 1), (2, 2), (3, 2)]
 
-    veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
+    # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # flow_cycle = [(0, 0)]
     # flow_cycle = [(0, 4), (4, 0)]
-    flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
+    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
     
@@ -399,7 +399,6 @@ def drill_flow_cycle_script():
 
     name = veering_isosig + '' + str(flow_cycle) + '_drill'
 
-    draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, tetrahedra_cusp_orders = tetrahedra_cusp_orders, intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, tetrahedra_chunks = tetrahedra_chunks)
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, intervals_inside_tet_rectangles, tetrahedra_chunks)
     sanity_check(old_tet_rectangles)
     # for i, r in enumerate(old_tet_rectangles):
@@ -407,6 +406,13 @@ def drill_flow_cycle_script():
     #     for j in range(4):
     #         face_rect = r.face(j)
     #         print(j, 'face index', face_rect.face_index, face_rect)
+
+    draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
+        tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
+        intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 
+        tetrahedra_chunks = tetrahedra_chunks,
+        old_tet_rectangles = old_tet_rectangles)
+
 
 
 
