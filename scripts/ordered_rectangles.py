@@ -1,8 +1,13 @@
+from veering.taut import edge_num_to_vert_pair
+
+def is_between(i, j, k): ### is j between i and k inclusive
+    return (i - j) * (j - k) >= 0
 
 def rect_is_empty(j, i, pj, pi, perm):
-    for k in range(j+1, i):
+    for k in range(j + 1, i):
         pk = perm[k]
-        if (pj - pk) * (pk - pi) > 0: ### pk is between pi and pj
+        if is_between(pj, pk, pi):
+        # if (pj - pk) * (pk - pi) > 0: ### pk is between pi and pj
             return False ### k breaks apart the edge rectangle
     return True
 
@@ -13,6 +18,7 @@ class ordered_rectangle:
         self.vert_ordering = vert_ordering
         self.edge_rectangle_indices = None
         self.face_rectangle_indices = None
+        self.tetrahedron_rectangle_indices = None
 
     def horiz_to_vert_perm(self):
         return [self.vert_ordering.index(x) for x in self.horiz_ordering]
@@ -61,6 +67,21 @@ class ordered_rectangle:
         self.face_rectangle_indices = out
         return out
 
+    def tetrahedron_rectangles(self):
+        if self.face_rectangle_indices == None:
+            self.face_rectangles()
+        out = []
+        for i in range(len(self.horiz_ordering)):
+            for j in range(i):
+                if (j,i) in self.edge_rectangle_indices:
+                    for k in range(j):
+                        if (k,j,i) in self.face_rectangle_indices:
+                            for l in range(k): ### three triangles means the fourth automatically exists
+                                if (l,k,j) in self.face_rectangle_indices and (l,k,i) in self.face_rectangle_indices:
+                                    out.append((l,k,j,i))
+        self.tetrahedron_rectangle_indices = out
+        return out
+
 
 class ordered_face_rectangle(ordered_rectangle):
     def __init__(self, con, face_index, horiz_ordering, vert_ordering):
@@ -81,6 +102,12 @@ class ordered_face_rectangle(ordered_rectangle):
             return (0, -1)
         assert False # should not get here
 
+class ordered_edge_rectangle(ordered_rectangle):
+    def __init__(self, con, edge_index, horiz_ordering, vert_ordering):
+        self.con = con
+        self.edge_index = edge_index
+        ordered_rectangle.__init__(self, horiz_ordering, vert_ordering)
+
 class ordered_tetrahedron_rectangle(ordered_rectangle):
     def __init__(self, con, tet_index, horiz_ordering, vert_ordering):
         self.con = con
@@ -88,10 +115,11 @@ class ordered_tetrahedron_rectangle(ordered_rectangle):
         self.Regina_tet = con.vt.tri.tetrahedron(tet_index)
         ordered_rectangle.__init__(self, horiz_ordering, vert_ordering)
         top_vertices, bottom_vertices = con.vt.tet_vert_posns[tet_index] ### this is currently set in build_continent 
-        self.N_ind, self.S_ind = top_vertices
+        self.N_ind, self.S_ind = top_vertices ### Regina vertex indices
         self.W_ind, self.E_ind = bottom_vertices
         self.W, self.E = self.horiz_ordering[0], self.horiz_ordering[-1] 
         self.S, self.N = self.vert_ordering[0], self.vert_ordering[-1] 
+        self.Regina2cusp = {self.W_ind: self.W, self.E_ind: self.E, self.S_ind: self.S, self.N_ind: self.N}
 
     def face(self, ind):
         face_index = self.Regina_tet.face(2, ind).index()
@@ -113,6 +141,18 @@ class ordered_tetrahedron_rectangle(ordered_rectangle):
             face_vert_ordering = [x for x in self.vert_ordering if x in face_horiz_ordering]
         face_rect = ordered_face_rectangle(self.con, face_index, face_horiz_ordering, face_vert_ordering)
         return face_rect
+
+    def edge(self, ind):
+        edge_index = self.Regina_tet.face(1, ind).index()
+        cusps = [self.Regina2cusp[i] for i in edge_num_to_vert_pair[ind]]
+        cusps.sort(key = self.horiz_ordering.index)
+        cusp_horiz_indices = [self.horiz_ordering.index(c) for c in cusps]
+        cusp_vert_indices = [self.vert_ordering.index(c) for c in cusps]
+        cusp_vert_indices.sort()
+        edge_horiz_ordering = self.horiz_ordering[cusp_horiz_indices[0]: cusp_horiz_indices[1] + 1]
+        edge_horiz_ordering = [x for x in edge_horiz_ordering if is_between(cusp_vert_indices[0], self.vert_ordering.index(x), cusp_vert_indices[1])]
+        edge_vert_ordering = [x for x in self.vert_ordering if x in edge_horiz_ordering]
+        edge_rect = ordered_edge_rectangle(self.con, edge_index, face_horiz_ordering, face_vert_ordering)
 
 def build_cardinal_ordering(cusp_order, chunks):
     ordering = [cusp_order[0]]
