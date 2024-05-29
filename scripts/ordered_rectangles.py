@@ -84,10 +84,14 @@ class ordered_rectangle:
 
 
 class ordered_face_rectangle(ordered_rectangle):
-    def __init__(self, con, face_index, horiz_ordering, vert_ordering):
+    def __init__(self, con, face_index, horiz_ordering, vert_ordering, canonise_orientation = True):
         self.con = con
         self.face_index = face_index
         ordered_rectangle.__init__(self, horiz_ordering, vert_ordering)
+        if canonise_orientation:
+            if self.corner_location()[0] != 0:
+                self.rotate() ### make sure that the corner cusp is on the western side
+                assert self.corner_location()[0] == 0
 
     def corner_location(self):
         W, E = self.horiz_ordering[0], self.horiz_ordering[-1]
@@ -122,7 +126,7 @@ class ordered_tetrahedron_rectangle(ordered_rectangle):
         self.Regina2cusp = {self.W_ind: self.W, self.E_ind: self.E, self.S_ind: self.S, self.N_ind: self.N}
 
     def face(self, ind):
-        face_index = self.Regina_tet.face(2, ind).index()
+        face_index = self.Regina_tet.triangle(ind).index()
         if ind == self.S_ind:
             southern_ind = min(self.vert_ordering.index(self.W), self.vert_ordering.index(self.E))
             face_vert_ordering = self.vert_ordering[southern_ind:]
@@ -143,16 +147,25 @@ class ordered_tetrahedron_rectangle(ordered_rectangle):
         return face_rect
 
     def edge(self, ind):
-        edge_index = self.Regina_tet.face(1, ind).index()
+        Regina_edge = self.Regina_tet.edge(ind)
+        edge_index = Regina_edge.index()
         cusps = [self.Regina2cusp[i] for i in edge_num_to_vert_pair[ind]]
-        cusps.sort(key = self.horiz_ordering.index)
         cusp_horiz_indices = [self.horiz_ordering.index(c) for c in cusps]
+        cusp_horiz_indices.sort()
         cusp_vert_indices = [self.vert_ordering.index(c) for c in cusps]
         cusp_vert_indices.sort()
         edge_horiz_ordering = self.horiz_ordering[cusp_horiz_indices[0]: cusp_horiz_indices[1] + 1]
         edge_horiz_ordering = [x for x in edge_horiz_ordering if is_between(cusp_vert_indices[0], self.vert_ordering.index(x), cusp_vert_indices[1])]
         edge_vert_ordering = [x for x in self.vert_ordering if x in edge_horiz_ordering]
-        edge_rect = ordered_edge_rectangle(self.con, edge_index, face_horiz_ordering, face_vert_ordering)
+        edge_rect = ordered_edge_rectangle(self.con, edge_index, edge_horiz_ordering, edge_vert_ordering)
+
+        ### Unlike for faces, which have a way to canonise the orientation of their face rectangles with only local data,
+        ### we have to canonise the orientation of the edge rectangle based on the Regina ordering of its vertices.
+        perm = self.Regina_tet.edgeMapping(ind)
+        if edge_horiz_ordering.index(self.Regina2cusp[perm[0]]) != 0:
+            assert edge_horiz_ordering.index(self.Regina2cusp[perm[1]]) == 0
+            edge_rect.rotate()
+        return edge_rect
 
 def build_cardinal_ordering(cusp_order, chunks):
     ordering = [cusp_order[0]]
@@ -187,8 +200,8 @@ def sanity_check(old_tet_rectangles):
         # print(f)
         face_rect0 = face_rect_from_face(f, 0, old_tet_rectangles)
         face_rect1 = face_rect_from_face(f, 1, old_tet_rectangles)
-        if face_rect0.corner_location() != face_rect1.corner_location():
-            face_rect1.rotate()
+        # if face_rect0.corner_location() != face_rect1.corner_location(): 
+        #     face_rect1.rotate()    ### unnecessary because we canonise_orientation 
         assert face_rect0.corner_location() == face_rect1.corner_location()
         assert face_rect0.horiz_to_vert_perm() == face_rect1.horiz_to_vert_perm()
 

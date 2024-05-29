@@ -348,13 +348,13 @@ def drill_flow_cycle_script():
     # flow_cycle = [(0, 0), (0, 5)] 
     # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
 
-    # veering_isosig = 'dLQacccjsnk_200'
+    veering_isosig = 'dLQacccjsnk_200'
     # flow_cycle = [(1, 4)]
     # flow_cycle = [(1, 0), (2, 5)]
-    # flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
+    flow_cycle = [(0, 1), (2, 5), (1, 1)]  ## sideways and up
 
-    veering_isosig = 'eLAkaccddjsnak_2001'
-    flow_cycle = [(0, 1), (2, 2), (3, 2)]
+    # veering_isosig = 'eLAkaccddjsnak_2001'
+    # flow_cycle = [(0, 1), (2, 2), (3, 2)]
 
     # veering_isosig = 'gLLAQbecdfffhhnkqnc_120012'
     # flow_cycle = [(0, 0)]
@@ -401,11 +401,14 @@ def drill_flow_cycle_script():
 
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, intervals_inside_tet_rectangles, tetrahedra_chunks)
     sanity_check(old_tet_rectangles)
-    # for i, r in enumerate(old_tet_rectangles):
-    #     print('old tet rect', i, r)
-    #     for j in range(4):
-    #         face_rect = r.face(j)
-    #         print(j, 'face index', face_rect.face_index, face_rect)
+    for i, r in enumerate(old_tet_rectangles):
+        print('old tet rect', i, r)
+        # for j in range(4):
+        #     face_rect = r.face(j)
+        #     print(j, 'face index', face_rect.face_index, face_rect)
+        for j in range(6):
+            edge_rect = r.edge(j)
+            print(j, 'edge index', edge_rect.edge_index, edge_rect)
 
     draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
         tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
