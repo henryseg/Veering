@@ -43,6 +43,8 @@ class ordered_rectangle:
         return other
 
     def edge_rectangles(self):
+        if self.edge_rectangle_indices != None:
+            return self.edge_rectangle_indices
         perm = self.horiz_to_vert_perm()
         out = []
         for i in range(len(self.horiz_ordering)):
@@ -55,6 +57,8 @@ class ordered_rectangle:
         return out
 
     def face_rectangles(self):
+        if self.face_rectangle_indices != None:
+            return self.face_rectangle_indices
         if self.edge_rectangle_indices == None:
             self.edge_rectangles()
         out = []
@@ -68,6 +72,8 @@ class ordered_rectangle:
         return out
 
     def tetrahedron_rectangles(self):
+        if self.tetrahedron_rectangle_indices != None:
+            return self.tetrahedron_rectangle_indices
         if self.face_rectangle_indices == None:
             self.face_rectangles()
         out = []
@@ -82,6 +88,11 @@ class ordered_rectangle:
         self.tetrahedron_rectangle_indices = out
         return out
 
+class ordered_edge_rectangle(ordered_rectangle):
+    def __init__(self, con, edge_index, horiz_ordering, vert_ordering):
+        self.con = con
+        self.edge_index = edge_index
+        ordered_rectangle.__init__(self, horiz_ordering, vert_ordering)
 
 class ordered_face_rectangle(ordered_rectangle):
     def __init__(self, con, face_index, horiz_ordering, vert_ordering, canonise_orientation = True):
@@ -106,12 +117,6 @@ class ordered_face_rectangle(ordered_rectangle):
             return (0, -1)
         assert False # should not get here
 
-class ordered_edge_rectangle(ordered_rectangle):
-    def __init__(self, con, edge_index, horiz_ordering, vert_ordering):
-        self.con = con
-        self.edge_index = edge_index
-        ordered_rectangle.__init__(self, horiz_ordering, vert_ordering)
-
 class ordered_tetrahedron_rectangle(ordered_rectangle):
     def __init__(self, con, tet_index, horiz_ordering, vert_ordering):
         self.con = con
@@ -124,6 +129,7 @@ class ordered_tetrahedron_rectangle(ordered_rectangle):
         self.W, self.E = self.horiz_ordering[0], self.horiz_ordering[-1] 
         self.S, self.N = self.vert_ordering[0], self.vert_ordering[-1] 
         self.Regina2cusp = {self.W_ind: self.W, self.E_ind: self.E, self.S_ind: self.S, self.N_ind: self.N}
+        self.generate_sub_cells()
 
     def face(self, ind):
         face_index = self.Regina_tet.triangle(ind).index()
@@ -167,6 +173,33 @@ class ordered_tetrahedron_rectangle(ordered_rectangle):
             edge_rect.rotate()
         return edge_rect
 
+    def generate_sub_cells(self):
+        self.faces = [self.face(ind) for ind in range(4)]
+        self.edges = [self.edge(ind) for ind in range(6)]
+
+    def sub_cell_image(self, sub_cell_dim, sub_cell_ind, new_rectangle_indices):
+        """Tries to map new_rectangle_indices into the sub cell (an edge or face of the tet). 
+        Returns False if the new rectangle is not contained in the sub cell.
+        Otherwise returns the indices for the new rectangle in the sub cell."""
+        verts = [self.horiz_ordering[i] for i in new_rectangle_indices]
+        if sub_cell_dim == 1:
+            sub_cell = self.edges[sub_cell_ind]
+        elif sub_cell_dim == 2:
+            sub_cell = self.faces[sub_cell_ind]
+        else:
+            assert sub_cell_dim == 3
+            sub_cell = self
+        if not all([v in sub_cell.horiz_ordering for v in verts]):
+            return False
+        else:
+            horiz_indices = [sub_cell.horiz_ordering.index(v) for v in verts]
+            ### is either ascending or descending list of integers
+            vert_indices = [sub_cell.vert_ordering.index(v) for v in verts]
+            if horiz_indices[0] > horiz_indices[1]:
+                horiz_indices.reverse() ### make increasing
+                vert_indices.reverse()
+            return (tuple(horiz_indices), tuple(vert_indices))
+
 def build_cardinal_ordering(cusp_order, chunks):
     ordering = [cusp_order[0]]
     for j in range(3):
@@ -174,7 +207,7 @@ def build_cardinal_ordering(cusp_order, chunks):
         ordering.append(cusp_order[j+1])
     return ordering
 
-def build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, intervals_inside_tet_rectangles, tetrahedra_chunks):
+def build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks):
     old_tet_rectangles = []
     for i in range(len(tetrahedra_cusp_orders)):
         horizontal_cusp_order, vertical_cusp_order = tetrahedra_cusp_orders[i]
@@ -204,6 +237,155 @@ def sanity_check(old_tet_rectangles):
         #     face_rect1.rotate()    ### unnecessary because we canonise_orientation 
         assert face_rect0.corner_location() == face_rect1.corner_location()
         assert face_rect0.horiz_to_vert_perm() == face_rect1.horiz_to_vert_perm()
+
+def new_rectangle_equiv_class(new_rect, containing_old_tet_rect):
+    this_rect_equiv_class = set([])
+    ### edges
+    for i in range(6):
+        im = containing_old_tet_rect.sub_cell_image(1, i, new_rect)
+        if im != False: ### the rect fits inside the edge
+            Regina_edge = containing_old_tet_rect.Regina_tet.edge(i)
+            edge_index = Regina_edge.index()
+            new_rect_sig = (1, edge_index, im)  ### 1 means edge
+            this_rect_equiv_class.add(new_rect_sig)
+    ### faces
+    for j in range(4):
+        im = containing_old_tet_rect.sub_cell_image(2, j, new_rect)
+        if im != False: ### the rect fits inside the face
+            Regina_face = containing_old_tet_rect.Regina_tet.triangle(j)
+            face_index = Regina_face.index()
+            new_rect_sig = (2, face_index, im)  ### 2 means face
+            this_rect_equiv_class.add(new_rect_sig)      
+    ### the tet itself
+    im = containing_old_tet_rect.sub_cell_image(3, 0, new_rect)
+    new_rect_sig = (3, containing_old_tet_rect.tet_index, im) 
+    this_rect_equiv_class.add(new_rect_sig)  
+    return this_rect_equiv_class 
+
+class new_tetrahedron:
+    def __init__(self, equiv_class):
+        self.equiv_class = list(equiv_class)
+        self.equiv_class.sort()
+        self.representative = self.equiv_class[0]
+        self.index = None
+        self.faces = [None, None, None, None]
+        self.face_special_corner = [None, None, None, None] ### which of four positions is the special corner of the face
+        self.adjTets = [None, None, None, None]
+        self.adjGluings = [None, None, None, None]
+
+    def face_rep(self, i):
+        dim, ind, verts = self.representative
+        horiz_verts, vertical_verts = verts
+        horiz_verts = list(horiz_verts)
+        vertical_verts = list(vertical_verts)
+        horiz_verts.pop(i)
+        vertical_verts.pop(i)
+        a, b = min(vertical_verts), max(vertical_verts)
+        if vertical_verts[0] == a:
+            self.face_special_corner[i] = (0, 0)
+        elif vertical_verts[0] == b:
+            self.face_special_corner[i] = (0, -1)
+        elif vertical_verts[-1] == a:
+            self.face_special_corner[i] = (-1, 0)
+        elif vertical_verts[-1] == b:
+            self.face_special_corner[i] = (0, -1)
+
+        return (dim, ind, (tuple(horiz_verts), tuple(vertical_verts)))
+
+class new_triangle:
+    def __init__(self, equiv_class):
+        self.equiv_class = equiv_class
+        self.tetrahedra = []
+
+def build_drilled_triangulation(con, tetrahedra_cusp_orders, tetrahedra_chunks):
+    old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+    sanity_check(old_tet_rectangles)
+    new_face_equiv_classes = []
+    new_tet_equiv_classes = []
+    
+    for old_tet_rect in old_tet_rectangles:
+        this_tet_new_face_rects = old_tet_rect.face_rectangles()
+        for new_face_rect in this_tet_new_face_rects:
+            ### find which sub cell(s) it belongs to. Could be in multiple edges.
+            this_face_rect_equiv_class = new_rectangle_equiv_class(new_face_rect, old_tet_rect)
+            # print('this_face_rect_equiv_class', this_face_rect_equiv_class)
+            ### now check if we already have this equivalence class
+            intersecting_equiv_classes = []
+            for equiv_class in new_face_equiv_classes:
+                # print('check against equiv_class', equiv_class)
+                if not this_face_rect_equiv_class.isdisjoint(equiv_class):
+                    # print('not disjoint')
+                    intersecting_equiv_classes.append(equiv_class)
+            for equiv_class in intersecting_equiv_classes:
+                this_face_rect_equiv_class.update(equiv_class) ### union and update
+                new_face_equiv_classes.remove(equiv_class)
+            new_face_equiv_classes.append(this_face_rect_equiv_class)
+
+        this_tet_new_tet_rects = old_tet_rect.tetrahedron_rectangles()
+        for new_tet_rect in this_tet_new_tet_rects:
+            ### find which sub cell(s) it belongs to. Could be in multiple edges.
+            this_tet_rect_equiv_class = new_rectangle_equiv_class(new_tet_rect, old_tet_rect)
+            ### now check if we already have this equivalence class
+            intersecting_equiv_classes = []
+            for equiv_class in new_tet_equiv_classes:
+                if not this_tet_rect_equiv_class.isdisjoint(equiv_class):
+                    intersecting_equiv_classes.append(equiv_class)
+            for equiv_class in intersecting_equiv_classes:
+                this_tet_rect_equiv_class.update(equiv_class) ### union and update
+                new_tet_equiv_classes.remove(equiv_class)
+            new_tet_equiv_classes.append(this_tet_rect_equiv_class)
+
+
+    print('num new faces', len(new_face_equiv_classes))
+    for x in new_face_equiv_classes:
+        print(x)
+    print('num new tetrahedra', len(new_tet_equiv_classes))
+    for x in new_tet_equiv_classes:
+        print(x)
+    assert len(new_face_equiv_classes) == 2 * len(new_tet_equiv_classes)
+
+
+    new_tetrahedra = []
+    new_faces = []
+    for equiv_class in new_tet_equiv_classes:
+        new_tetrahedra.append(new_tetrahedron(equiv_class))
+    for equiv_class in new_face_equiv_classes:
+        new_faces.append(new_triangle(equiv_class))
+    for i, new_tet in enumerate(new_tetrahedra):
+        new_tet.index = i
+        for j in range(4):
+            rep = new_tet.face_rep(j)
+            for new_face in new_faces:
+                if rep in new_face.equiv_class:
+                    new_tet.faces[j] = new_face
+                    new_face.tetrahedra.append(new_tet)
+                    break
+                
+    # for i, new_tet in enumerate(new_tetrahedra):
+    #     print('new_tet', i, new_tet.faces)
+    # for i, new_face in enumerate(new_faces):
+    #     print('new_face', i, new_face.tetrahedra)
+
+    for new_face in new_faces:
+        assert len(new_face.tetrahedra) == 2
+        new_face.other_tetrahedron = {new_face.tetrahedra[0]: new_face.tetrahedra[1], new_face.tetrahedra[1] : new_face.tetrahedra[0]}
+    for new_tet in new_tetrahedra:
+        for j in range(4):
+            face = new_tet.faces[j]
+            new_tet.adjTets[j] = face.other_tetrahedron[new_tet]
+
+    for new_tet in new_tetrahedra:
+        print('new_tet', new_tet.index, [t.index for t in new_tet.adjTets])
+
+
+
+
+
+
+
+
+
+
 
 
 
