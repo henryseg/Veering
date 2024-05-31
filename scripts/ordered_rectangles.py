@@ -226,7 +226,7 @@ def face_rect_from_face(f, ind, old_tet_rectangles):
     return old_tet_rectangles[tet_num].face(tet_face_num)
 
 def sanity_check(old_tet_rectangles):
-    print('sanity check')
+    # print('sanity check')
     r = old_tet_rectangles[0]
     tri = r.con.vt.tri
     for f in tri.triangles():
@@ -262,42 +262,80 @@ def new_rectangle_equiv_class(new_rect, containing_old_tet_rect):
     this_rect_equiv_class.add(new_rect_sig)  
     return this_rect_equiv_class 
 
+# def anticlockwise_ordering(horiz_verts, vertical_verts):
+#     W = 0
+#     E = 3
+#     if vertical_verts[1] < vertical_verts[2]:
+#         S = 1
+#         N = 2
+#     else:
+#         S = 2
+#         N = 1
+#     return [E, N, W, S]
+
 class new_tetrahedron:
     def __init__(self, equiv_class):
         self.equiv_class = list(equiv_class)
         self.equiv_class.sort()
         self.representative = self.equiv_class[0]
+        self.dim, self.ind, verts = self.representative
+        self.horiz_verts, self.vertical_verts = verts
+        self.anticlockwise_ordering = None
+        self.set_anticlockwise_ordering()
         self.index = None
         self.faces = [None, None, None, None]
         self.face_special_corner = [None, None, None, None] ### which of four positions is the special corner of the face
-        self.adjTets = [None, None, None, None]
-        self.adjGluings = [None, None, None, None]
+        self.special_vertex_index_in_face = [None, None, None, None]
+        self.adjTetFace = [None, None, None, None]
+        self.adjGluing = []
+        for i in range(4):
+            self.adjGluing.append([None, None, None, None])  ### permutation for each gluing
+
+    def set_anticlockwise_ordering(self):
+        W, E = 0, 3
+        if self.vertical_verts[1] < self.vertical_verts[2]:
+            S, N = 1, 2
+        else:
+            S, N = 2, 1
+        self.anticlockwise_to_horiz = [E, N, W, S]
+        self.horiz_to_anticlockwise = [self.anticlockwise_to_horiz.index(i) for i in range(4)]  
 
     def face_rep(self, i):
-        dim, ind, verts = self.representative
-        horiz_verts, vertical_verts = verts
-        horiz_verts = list(horiz_verts)
-        vertical_verts = list(vertical_verts)
-        horiz_verts.pop(i)
-        vertical_verts.pop(i)
-        a, b = min(vertical_verts), max(vertical_verts)
-        if vertical_verts[0] == a:
-            self.face_special_corner[i] = (0, 0)
-        elif vertical_verts[0] == b:
-            self.face_special_corner[i] = (0, -1)
-        elif vertical_verts[-1] == a:
-            self.face_special_corner[i] = (-1, 0)
-        elif vertical_verts[-1] == b:
-            self.face_special_corner[i] = (0, -1)
+        horiz_verts = list(self.horiz_verts)
+        vertical_verts = list(self.vertical_verts)
+        j = self.anticlockwise_to_horiz[i]
+        popped_horiz_verts = horiz_verts[:]
+        popped_horiz_verts.pop(j)
+        popped_vertical_verts = vertical_verts[:]
+        popped_vertical_verts.pop(j)
+        a, b = min(popped_vertical_verts), max(popped_vertical_verts)
+        special_vert_in_tet = None
+        if popped_vertical_verts[0] == a:
+            self.face_special_corner[i] = (0, 0) ### WS corner
+            special_vert_in_tet = self.horiz_to_anticlockwise[vertical_verts.index(a)]
+        elif popped_vertical_verts[0] == b:
+            self.face_special_corner[i] = (0, -1) ### WN corner
+            special_vert_in_tet = self.horiz_to_anticlockwise[vertical_verts.index(b)]
+        elif popped_vertical_verts[-1] == a:
+            self.face_special_corner[i] = (-1, 0) ### ES corner
+            special_vert_in_tet = self.horiz_to_anticlockwise[vertical_verts.index(a)]
+        elif popped_vertical_verts[-1] == b:
+            self.face_special_corner[i] = (-1, -1) ### EN corner
+            special_vert_in_tet = self.horiz_to_anticlockwise[vertical_verts.index(b)]
+        assert i != special_vert_in_tet
+        if i < special_vert_in_tet:
+            self.special_vertex_index_in_face[i] = special_vert_in_tet - 1
+        else:
+            self.special_vertex_index_in_face[i] = special_vert_in_tet
 
-        return (dim, ind, (tuple(horiz_verts), tuple(vertical_verts)))
+        return (self.dim, self.ind, (tuple(popped_horiz_verts), tuple(popped_vertical_verts)))
 
 class new_triangle:
     def __init__(self, equiv_class):
         self.equiv_class = equiv_class
-        self.tetrahedra = []
+        self.tet_face = []
 
-def build_drilled_triangulation(con, tetrahedra_cusp_orders, tetrahedra_chunks):
+def build_drilled_triangulation_data(con, tetrahedra_cusp_orders, tetrahedra_chunks):
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
     sanity_check(old_tet_rectangles)
     new_face_equiv_classes = []
@@ -308,13 +346,11 @@ def build_drilled_triangulation(con, tetrahedra_cusp_orders, tetrahedra_chunks):
         for new_face_rect in this_tet_new_face_rects:
             ### find which sub cell(s) it belongs to. Could be in multiple edges.
             this_face_rect_equiv_class = new_rectangle_equiv_class(new_face_rect, old_tet_rect)
-            # print('this_face_rect_equiv_class', this_face_rect_equiv_class)
             ### now check if we already have this equivalence class
             intersecting_equiv_classes = []
             for equiv_class in new_face_equiv_classes:
                 # print('check against equiv_class', equiv_class)
                 if not this_face_rect_equiv_class.isdisjoint(equiv_class):
-                    # print('not disjoint')
                     intersecting_equiv_classes.append(equiv_class)
             for equiv_class in intersecting_equiv_classes:
                 this_face_rect_equiv_class.update(equiv_class) ### union and update
@@ -336,14 +372,13 @@ def build_drilled_triangulation(con, tetrahedra_cusp_orders, tetrahedra_chunks):
             new_tet_equiv_classes.append(this_tet_rect_equiv_class)
 
 
-    print('num new faces', len(new_face_equiv_classes))
-    for x in new_face_equiv_classes:
-        print(x)
-    print('num new tetrahedra', len(new_tet_equiv_classes))
-    for x in new_tet_equiv_classes:
-        print(x)
+    # print('num new faces', len(new_face_equiv_classes))
+    # for x in new_face_equiv_classes:
+    #     print(x)
+    # print('num new tetrahedra', len(new_tet_equiv_classes))
+    # for x in new_tet_equiv_classes:
+    #     print(x)
     assert len(new_face_equiv_classes) == 2 * len(new_tet_equiv_classes)
-
 
     new_tetrahedra = []
     new_faces = []
@@ -358,26 +393,37 @@ def build_drilled_triangulation(con, tetrahedra_cusp_orders, tetrahedra_chunks):
             for new_face in new_faces:
                 if rep in new_face.equiv_class:
                     new_tet.faces[j] = new_face
-                    new_face.tetrahedra.append(new_tet)
+                    new_face.tet_face.append((new_tet, j))
                     break
-                
-    # for i, new_tet in enumerate(new_tetrahedra):
-    #     print('new_tet', i, new_tet.faces)
-    # for i, new_face in enumerate(new_faces):
-    #     print('new_face', i, new_face.tetrahedra)
 
     for new_face in new_faces:
-        assert len(new_face.tetrahedra) == 2
-        new_face.other_tetrahedron = {new_face.tetrahedra[0]: new_face.tetrahedra[1], new_face.tetrahedra[1] : new_face.tetrahedra[0]}
+        assert len(new_face.tet_face) == 2
+        new_face.other_tet_ind = {new_face.tet_face[0]: new_face.tet_face[1], new_face.tet_face[1]: new_face.tet_face[0]}
     for new_tet in new_tetrahedra:
-        for j in range(4):
-            face = new_tet.faces[j]
-            new_tet.adjTets[j] = face.other_tetrahedron[new_tet]
+        for i in range(4):
+            face = new_tet.faces[i]
+            new_tet.adjTetFace[i] = face.other_tet_ind[(new_tet, i)]
+            other_tet, other_i = new_tet.adjTetFace[i]
+            this_tet_face_indices = [0,1,2,3] ### anticlockwise order
+            this_tet_face_indices.remove(i)
+            other_tet_face_indices = [0,1,2,3]
+            other_tet_face_indices.remove(other_i)
+            # if new_tet.face_special_corner[i] != other_tet.face_special_corner[other_i]:
+            #     other_tet_face_indices.reverse()
+            this_special = new_tet.special_vertex_index_in_face[i]
+            other_special = other_tet.special_vertex_index_in_face[other_i]
+            this_tet_face_indices = [this_tet_face_indices[(k + this_special)%3] for k in range(3)]
+            other_tet_face_indices = [other_tet_face_indices[(k + other_special)%3] for k in range(3)]
 
-    for new_tet in new_tetrahedra:
-        print('new_tet', new_tet.index, [t.index for t in new_tet.adjTets])
+            perm = [None, None, None, None]
+            perm[i] = other_i
+            for k in range(3):
+                perm[this_tet_face_indices[k]] = other_tet_face_indices[k]
+            new_tet.adjGluing[i] = perm
 
-
+    # for new_tet in new_tetrahedra:
+    #     print('new_tet', new_tet.index, [(tf[0].index, tf[1]) for tf in new_tet.adjTetFace], new_tet.adjGluing)
+    return (new_tetrahedra, new_faces)
 
 
 

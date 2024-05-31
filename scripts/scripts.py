@@ -338,15 +338,18 @@ def drill_flow_cycle_script():
     from draw_continent_circle import draw_continent_circle
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
     from draw_drilled_tetrahedra import draw_drilled_tetrahedra
-    from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation
-    # veering_isosig = 'cPcbbbdxm_10' 
-    # flow_cycle = [(0, 2)]
+    from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
+    from drill_flow_cycle import triangulation_data_to_tri_angle
+    from veering.taut import isosig_from_tri_angle
 
-    veering_isosig = 'cPcbbbiht_12'
+    veering_isosig = 'cPcbbbdxm_10' 
+    flow_cycle = [(0, 2)]
+
+    # veering_isosig = 'cPcbbbiht_12'
     # # flow_cycle = [(0, 0)]  ### boundary parallel
     # flow_cycle = [(0, 4), (1, 2)]
     # flow_cycle = [(0, 0), (0, 5)] 
-    flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
+    # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
 
     # veering_isosig = 'dLQacccjsnk_200'
     # flow_cycle = [(1, 4)]
@@ -380,9 +383,10 @@ def drill_flow_cycle_script():
     
     print(veering_isosig, flow_cycle)
 
-    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
 
-    print('con size', len(con.tetrahedra), con.num_tetrahedra)
+    assert len(con.tetrahedra) == con.num_tetrahedra
+    print('con size', con.num_tetrahedra)
 
     tetrahedra_to_draw = []
     tetrahedron_rectangles_to_shade = []
@@ -409,16 +413,17 @@ def drill_flow_cycle_script():
         #     edge_rect = r.edge(j)
         #     print(j, 'edge index', edge_rect.edge_index, edge_rect)
 
-    build_drilled_triangulation(con, tetrahedra_cusp_orders, tetrahedra_chunks)
-    
-    old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
-    draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
-        tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
-        intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 
-        tetrahedra_chunks = tetrahedra_chunks,
-        old_tet_rectangles = old_tet_rectangles)
+    # old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+    # draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
+    #     tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
+    #     intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 
+    #     tetrahedra_chunks = tetrahedra_chunks,
+    #     old_tet_rectangles = old_tet_rectangles)
 
-
+    new_tetrahedra, new_faces = build_drilled_triangulation_data(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+    tri, angle = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
+    sig = isosig_from_tri_angle(tri, angle)
+    print(sig)
 
 
 def draw_veering_triangulation_and_mid_annuli_script():

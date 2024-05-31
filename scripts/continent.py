@@ -1558,7 +1558,7 @@ class continent:
            tree_faces of fundamental_domain.spanning_dual_tree"""
         initial_tet_num = self.tet_face.tet_num
         tree_faces, non_tree_faces, distances_to_root = spanning_dual_tree(self.vt.tri, initial_tet_num = initial_tet_num)
-        print('tree_faces of fund dom', tree_faces)
+        # print('tree_faces of fund dom', tree_faces)
         initial_continent_tet = self.tetrahedra[0]
         continent_fund_dom_tets = [initial_continent_tet]
         initial_regina_tet = self.vt.tri.tetrahedron(initial_tet_num)

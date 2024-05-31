@@ -544,7 +544,7 @@ def translate_of_interval_from_one_edge_rect_to_another(e1, e2, interval):
     assert new_interval.is_inside_edge_rectangle(e2)
     return new_interval
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 10):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
@@ -559,7 +559,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
 
     # print([t.index for t in continent_fund_dom_tets])
     init_tetrahedron = continent_fund_dom_tets[flow_cycle[0][0]]
-    print('init tet index, flow cycle', init_tetrahedron.index, flow_cycle)
+    # print('init tet index, flow cycle', init_tetrahedron.index, flow_cycle)
     assert init_tetrahedron.index == flow_cycle[0][0]
 
     main_interval = flow_interval(con, flow_cycle, init_tetrahedron, 0)
@@ -702,7 +702,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         interval.extend_within_continent()
 
     flow_intervals = uniquify_list_of_flow_intervals(flow_intervals)
-    print('num unique flow_intervals', len(flow_intervals))
+    if verbose > 1:
+        print('num unique flow_intervals', len(flow_intervals))
 
     fund_dom_unique_edges = [t.lower_edge for t in continent_fund_dom_tets]
     fund_dom_unique_edge_indices = [e.index for e in fund_dom_unique_edges]
@@ -717,11 +718,12 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
         intervals_inside_edge_rectangles.append(flow_intervals_in_e)
     for i, intervals in enumerate(intervals_inside_edge_rectangles):
         e = fund_dom_unique_edges[i]
-        print('edge below tet', i, 'is index', e.index, 'is red', e.is_red, 'contains intervals', len(intervals))
+        if verbose > 1:
+            print('edge below tet', i, 'is index', e.index, 'is red', e.is_red, 'contains intervals', len(intervals))
 
     ### copy punctures around to get all punctures going through a tet rect of fund dom
 
-    print(len(continent_fund_dom_tets))
+    # print(len(continent_fund_dom_tets))
     intervals_inside_tet_rectangles = []
     for i, t in enumerate(continent_fund_dom_tets):
         flow_intervals_in_t = []
@@ -860,8 +862,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10):
                 north_intervals.append(interval)
                 interval.sn_chunk_num = 2            
 
-        print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(we_middle_intervals), len(east_intervals)) 
-        print('tet', i, 'contains south, middle, north intervals', len(south_intervals), len(sn_middle_intervals), len(north_intervals))
+        # print('tet', i, 'contains west, middle, east intervals', len(west_intervals), len(we_middle_intervals), len(east_intervals)) 
+        # print('tet', i, 'contains south, middle, north intervals', len(south_intervals), len(sn_middle_intervals), len(north_intervals))
         
         for interval in west_intervals:
             assert interval.we_chunk_num == 0
