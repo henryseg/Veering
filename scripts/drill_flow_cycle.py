@@ -3,7 +3,7 @@ from build_continent import make_continent_drill_flow_cycle
 # from draw_drilled_tetrahedra import draw_drilled_tetrahedra
 from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
 
-from veering.taut import is_taut, fix_orientations, isosig_from_tri_angle
+from veering.taut import is_taut, isosig_from_tri_angle
 from veering.veering_tri import is_veering
 import regina 
 
@@ -23,13 +23,10 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
                 Regina_tet.join(j, other_Regina_tet, Regina_perm)                
     assert tri.isValid()
     assert tri.isIdeal()
+    assert tri.isOriented()
     angle = [1] * len(Regina_tets)
-    # fix_orientations(tri, angle)
     # print('angle struct', angle)
     # print('countBoundaryComponents', tri.countBoundaryComponents())
-    # print('isOriented', tri.isOriented())
-    # print('is_taut', is_taut(tri, angle))
-    # print('is_veering', is_veering(tri, angle))
     assert is_veering(tri, angle)
     return tri, angle
     # 
