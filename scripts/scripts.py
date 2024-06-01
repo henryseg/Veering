@@ -342,13 +342,13 @@ def drill_flow_cycle_script():
     from drill_flow_cycle import triangulation_data_to_tri_angle
     from veering.taut import isosig_from_tri_angle
 
-    veering_isosig = 'cPcbbbdxm_10' 
-    flow_cycle = [(0, 2)]
+    # veering_isosig = 'cPcbbbdxm_10' 
+    # flow_cycle = [(0, 2)]
 
     # veering_isosig = 'cPcbbbiht_12'
     # # flow_cycle = [(0, 0)]  ### boundary parallel
     # flow_cycle = [(0, 4), (1, 2)]
-    # flow_cycle = [(0, 0), (0, 5)] 
+    # flow_cycle = [(0, 0), (0, 5)]  
     # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
 
     # veering_isosig = 'dLQacccjsnk_200'
@@ -367,10 +367,10 @@ def drill_flow_cycle_script():
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
     
     # flow cycle which is not boundary parallel but completely in a blue region 
-    # veering_isosig = 'eLAkbbcdddhwqj_2102'
+    veering_isosig = 'eLAkbbcdddhwqj_2102'
     # flow_cycle = [(3, 2)]   ### this is isotopic to an LMT "AB-cycle", 
-    ### so there will be distinct flow lines that fellow-travel, and we cannot separate them
-    # flow_cycle = [(2, 5)] ### has same problem of being isotopic to a pi_1 translate
+    ### so there will be distinct flow lines that fellow-travel
+    flow_cycle = [(2, 5)] ### has same problem of being isotopic to a pi_1 translate
     # flow_cycle = [(0, 3), (1, 1)]  ### goes straight up but does not stay in one colour so we can separate
 
     # short cycle in a large triangulation

@@ -688,7 +688,6 @@ class continent_tetrahedron:
                     break
             path1 = path1[i:]
             path2 = path2[i:]
-
         path1.reverse()        
         return path1 + path2
 

@@ -147,9 +147,27 @@ class flow_interval:
             assert self.down_index == other.down_index
         return out
 
+    def fellow_travels(self, other):
+        """Do the two flow cycles bound an annulus?"""
+        while len(self.tetrahedra) < len(self.flow_cycle):
+            self.go_up()
+            self.go_down()  ### make longer, we don't really care how.
+        while len(other.tetrahedra) < len(other.flow_cycle):
+            other.go_up()
+            other.go_down()  ### make longer, we don't really care how.
+        this_lowest = self.tetrahedra[0]
+        this_one_cycle_up = self.tetrahedra[len(self.flow_cycle)]
+        other_lowest = other.tetrahedra[0]
+        other_one_cycle_up = other.tetrahedra[len(other.flow_cycle)]
+        path = this_lowest.face_num_path_to_other_tet(other_lowest)
+        return this_one_cycle_up.follow_face_num_path(path) == other_one_cycle_up
+
     def is_in_list(self, intervals_list):
         for other in intervals_list:
             if self.equals(other):
+                return True
+            if self.fellow_travels(other):
+                # print('found fellow travelling flow intervals')
                 return True
         return False
 
