@@ -335,8 +335,7 @@ class new_triangle:
         self.equiv_class = equiv_class
         self.tet_face = []
 
-def build_drilled_triangulation_data(con, tetrahedra_cusp_orders, tetrahedra_chunks):
-    old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+def build_drilled_triangulation_data(old_tet_rectangles):
     sanity_check(old_tet_rectangles)
     new_face_equiv_classes = []
     new_tet_equiv_classes = []

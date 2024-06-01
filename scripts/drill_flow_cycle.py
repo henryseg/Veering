@@ -1,6 +1,5 @@
-# from draw_continent_circle import draw_continent_circle
 from build_continent import make_continent_drill_flow_cycle
-# from draw_drilled_tetrahedra import draw_drilled_tetrahedra
+from draw_drilled_tetrahedra import draw_drilled_tetrahedra
 from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
 
 from veering.taut import is_taut, isosig_from_tri_angle
@@ -29,14 +28,24 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
     # print('countBoundaryComponents', tri.countBoundaryComponents())
     assert is_veering(tri, angle)
     return tri, angle
-    # 
-    # print(sig)
 
-def drill_flow_cycle(veering_isosig, flow_cycle):
-    con, tetrahedra_cusp_orders, tetrahedra_chunks, _, _, _, _, _ = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
-    new_tetrahedra, new_faces = build_drilled_triangulation_data(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False):
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _ = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
+    old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+    new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
+    
+    if draw_drilled_tetrahedra:
+        draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
+        tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
+        intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 
+        tetrahedra_chunks = tetrahedra_chunks,
+        old_tet_rectangles = old_tet_rectangles)
+    
     tri, angle = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
-    sig = isosig_from_tri_angle(tri, angle)
-    return sig
+
+    if return_tri_angle:
+        return (tri, angle)
+    else:
+        return isosig_from_tri_angle(tri, angle)
 
 

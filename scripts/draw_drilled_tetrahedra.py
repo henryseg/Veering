@@ -50,10 +50,12 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
     intervals_inside_tet_rectangles = None, 
     tetrahedra_chunks = None,
     old_tet_rectangles = [],
+    draw_edge_rectangles = False,
+    draw_face_rectangles = False, 
+    draw_tetrahedron_rectangles = True,
     draw_square_inner_lines = True,
     draw_vertex_numbers = False, 
     edge_thickness = 0.02,
-    leaf_thickness = 0.03,
     transparency = 0.9):
 
     global_scale_up = 1.0
@@ -122,32 +124,34 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
             tet_rect_coords[old_tet_rect.horiz_ordering.index(interval)] = coords
             canv.stroke(path.circle(coords.real, coords.imag, 0.035), [deco.filled(), style.linewidth(0)])
 
-        edge_rects = old_tet_rect.edge_rectangles()
-        # print('tet', i, 'num edge rects', len(edge_rects))
-        # for edge_rect in edge_rects:
-        #     corners = [tet_rect_coords[j] for j in edge_rect]
-        #     draw_edge_rectangle(canv, corners, scl, 0.4*edge_thickness, green, purple)
+        if draw_edge_rectangles:
+            edge_rects = old_tet_rect.edge_rectangles()
+            print('tet', i, 'num edge rects', len(edge_rects))
+            for edge_rect in edge_rects:
+                corners = [tet_rect_coords[j] for j in edge_rect]
+                draw_edge_rectangle(canv, corners, scl, 0.4*edge_thickness, green, purple)
 
-        face_rects = old_tet_rect.face_rectangles()
-        # print('tet', i, 'num face rects', len(face_rects))
-        # for rect in face_rects:
-        #     verts = [tet_rect_coords[j] for j in rect]
-        #     x_coords = [v.real for v in verts]
-        #     y_coords = [v.imag for v in verts]
-        #     x_interval = (min(x_coords), max(x_coords))
-        #     y_interval = (min(y_coords), max(y_coords))
-        #     draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple)
+        if draw_face_rectangles:
+            face_rects = old_tet_rect.face_rectangles()
+            print('tet', i, 'num face rects', len(face_rects))
+            for rect in face_rects:
+                verts = [tet_rect_coords[j] for j in rect]
+                x_coords = [v.real for v in verts]
+                y_coords = [v.imag for v in verts]
+                x_interval = (min(x_coords), max(x_coords))
+                y_interval = (min(y_coords), max(y_coords))
+                draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple)
 
-        tet_rects = old_tet_rect.tetrahedron_rectangles()
-        # print('tet', i, 'num tet rects', len(tet_rects))
-
-        for rect in tet_rects:
-            verts = [tet_rect_coords[j] for j in rect]
-            x_coords = [v.real for v in verts]
-            y_coords = [v.imag for v in verts]
-            x_interval = (min(x_coords), max(x_coords))
-            y_interval = (min(y_coords), max(y_coords))
-            draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple)
+        if draw_tetrahedron_rectangles:
+            tet_rects = old_tet_rect.tetrahedron_rectangles()
+            print('tet', i, 'num tet rects', len(tet_rects))
+            for rect in tet_rects:
+                verts = [tet_rect_coords[j] for j in rect]
+                x_coords = [v.real for v in verts]
+                y_coords = [v.imag for v in verts]
+                x_interval = (min(x_coords), max(x_coords))
+                y_interval = (min(y_coords), max(y_coords))
+                draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple)
 
 
     output_filename = 'Images/DrilledTetrahedra/' + name + '_tet_rects' + '.pdf'

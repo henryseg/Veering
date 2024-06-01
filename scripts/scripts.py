@@ -370,7 +370,7 @@ def drill_flow_cycle_script():
     veering_isosig = 'eLAkbbcdddhwqj_2102'
     # flow_cycle = [(3, 2)]   ### this is isotopic to an LMT "AB-cycle", 
     ### so there will be distinct flow lines that fellow-travel
-    flow_cycle = [(2, 5)] ### has same problem of being isotopic to a pi_1 translate
+    flow_cycle = [(2, 5)] ### has same issue of being isotopic to a pi_1 translate
     # flow_cycle = [(0, 3), (1, 1)]  ### goes straight up but does not stay in one colour so we can separate
 
     # short cycle in a large triangulation
@@ -413,14 +413,14 @@ def drill_flow_cycle_script():
         #     edge_rect = r.edge(j)
         #     print(j, 'edge index', edge_rect.edge_index, edge_rect)
 
-    # old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
-    # draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
-    #     tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
-    #     intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 
-    #     tetrahedra_chunks = tetrahedra_chunks,
-    #     old_tet_rectangles = old_tet_rectangles)
+    old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+    draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
+        tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
+        intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 
+        tetrahedra_chunks = tetrahedra_chunks,
+        old_tet_rectangles = old_tet_rectangles)
 
-    new_tetrahedra, new_faces = build_drilled_triangulation_data(con, tetrahedra_cusp_orders, tetrahedra_chunks)
+    new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
     tri, angle = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
     sig = isosig_from_tri_angle(tri, angle)
     print(sig)
