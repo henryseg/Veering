@@ -185,6 +185,10 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 10):
     ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
     main_interval.ensure_contains_one_cycle_up()
     main_interval.ensure_contains_one_cycle_down()
+    if main_interval.is_boundary_parallel():
+        if verbose > 1:
+            print('flow cycle is boundary parallel')
+        return None
     up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
     up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
     down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))
@@ -289,7 +293,6 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 10):
     candidate_drilled_edges = con.edges[:] # shallow copy
     drilled_continent_edges = []
             
-
     ### find edges in continent that have a puncture
     for e in candidate_drilled_edges:
         if main_interval.is_inside_edge_rectangle(e):
@@ -509,7 +512,6 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 10):
                 chunk_S_cusp, chunk_N_cusp = vertical_cusp_order[j], vertical_cusp_order[j+1]
                 sn_chunk.sort(key=cmp_to_key(chunk_S_cusp, chunk_N_cusp, is_horizontal = False))
         # print('tet', i, 'sn_chunks', sn_chunks[0], sn_chunks[1], sn_chunks[2])
-
 
         tetrahedra_chunks.append([we_chunks, sn_chunks])
 

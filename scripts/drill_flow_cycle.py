@@ -30,7 +30,11 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
     return tri, angle
 
 def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False):
-    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _ = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
+    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
+    if out == None:  ### flow cycle is boundary parallel
+        print('flow_cycle is boundary parallel')
+        return None
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _ = out
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
     new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
     

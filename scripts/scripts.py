@@ -266,7 +266,7 @@ def draw_continent_circle_script():
     
     print(veering_isosig, flow_cycle)
 
-    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, num_steps = 10)
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle)
     # print('interval.down_index, interval.up_index, len(interval.edges)', interval.down_index, interval.up_index, len(interval.edges))
 
     # print('interval tet indices', [t.index for t in interval.tetrahedra])
@@ -345,8 +345,8 @@ def drill_flow_cycle_script():
     # veering_isosig = 'cPcbbbdxm_10' 
     # flow_cycle = [(0, 2)]
 
-    # veering_isosig = 'cPcbbbiht_12'
-    # # flow_cycle = [(0, 0)]  ### boundary parallel
+    veering_isosig = 'cPcbbbiht_12'
+    flow_cycle = [(0, 0)]  ### boundary parallel
     # flow_cycle = [(0, 4), (1, 2)]
     # flow_cycle = [(0, 0), (0, 5)]  
     # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
@@ -367,10 +367,10 @@ def drill_flow_cycle_script():
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
     
     # flow cycle which is not boundary parallel but completely in a blue region 
-    veering_isosig = 'eLAkbbcdddhwqj_2102'
+    # veering_isosig = 'eLAkbbcdddhwqj_2102'
     # flow_cycle = [(3, 2)]   ### this is isotopic to an LMT "AB-cycle", 
     ### so there will be distinct flow lines that fellow-travel
-    flow_cycle = [(2, 5)] ### has same issue of being isotopic to a pi_1 translate
+    # flow_cycle = [(2, 5)] ### has same issue of being isotopic to a pi_1 translate
     # flow_cycle = [(0, 3), (1, 1)]  ### goes straight up but does not stay in one colour so we can separate
 
     # short cycle in a large triangulation
@@ -383,7 +383,11 @@ def drill_flow_cycle_script():
     
     print(veering_isosig, flow_cycle)
 
-    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
+    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
+    if out == None:
+        print('flow cycle is boundary parallel')
+        return None
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, intervals_list, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw = out
 
     assert len(con.tetrahedra) == con.num_tetrahedra
     print('con size', con.num_tetrahedra)

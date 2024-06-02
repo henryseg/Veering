@@ -80,9 +80,13 @@ class flow_interval:
         return False
 
     def is_boundary_parallel(self):
-        self.ensure_contains_one_cycle()
+        self.ensure_contains_one_cycle_up()
+        self.ensure_contains_one_cycle_down() ### two cycles should be enough to separate the vertices if not boundary parallel. 
+        ### One might not be enough if there is a rotation by pi as we go up
         lowest = self.tetrahedra[0]
-        one_cycle_up = self.tetrahedra[len(self.flow_cycle)]
+        one_cycle_up = self.tetrahedra[2 * len(self.flow_cycle)]
+        # print(lowest.vertices, one_cycle_up.vertices)
+        # print(not set(lowest.vertices).isdisjoint(set(one_cycle_up.vertices)))
         return not set(lowest.vertices).isdisjoint(set(one_cycle_up.vertices))
 
     def how_far_down(self):
@@ -419,4 +423,3 @@ def translate_of_interval_from_one_edge_rect_to_another(e1, e2, interval):
     return new_interval
 
 
-    
