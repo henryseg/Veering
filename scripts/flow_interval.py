@@ -289,7 +289,7 @@ class flow_interval:
         else:
             return False
 
-    def is_purple_comparable_with(self, other): ### check if upper tets do not overlap horizontally
+    def is_purple_comparable_with(self, other): ### check if upper tets do not overlap vertically
         self.extend_within_continent()
         other.extend_within_continent()
         purple_boundary = self.tetrahedra[0].get_boundary_cusp_leaves()[1]
