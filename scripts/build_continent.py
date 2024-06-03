@@ -9,7 +9,7 @@ from veering.veering_tri import veering_triangulation
 
 from continent import continent, continent_tetrahedron
 from boundary_triangulation import tet_face
-from flow_interval import flow_interval, uniquify_list_of_flow_intervals, translate_of_interval_from_one_edge_rect_to_another
+from flow_interval import flow_interval, uniquify_list_of_flow_intervals, translate_of_interval_from_one_edge_rect_to_another, cmp_to_key
 
 from draw_veering_triangulation_and_mid_annuli import get_consistent_tet_vert_posns
 
@@ -185,10 +185,10 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 10):
     ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
     main_interval.ensure_contains_one_cycle_up()
     main_interval.ensure_contains_one_cycle_down()
-    if main_interval.is_boundary_parallel():
-        if verbose > 1:
-            print('flow cycle is boundary parallel')
-        return None
+    # if main_interval.is_boundary_parallel():  ### FIX
+    #     if verbose > 1:
+    #         print('flow cycle is boundary parallel')
+    #     return None
     up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
     up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
     down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))

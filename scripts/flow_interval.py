@@ -55,12 +55,13 @@ class flow_interval:
         return out
 
     def ensure_contains_one_cycle(self):
-        while len(self.tetrahedra) < len(self.flow_cycle):
+        while len(self.tetrahedra) <= len(self.flow_cycle):
             self.go_up()
             self.go_down()  ### make longer, we don't really care how.
 
     def fellow_travels(self, other):
         """Do the two flow cycles bound an annulus?"""
+        ### Might not work with 
         self.ensure_contains_one_cycle()
         other.ensure_contains_one_cycle()
         this_lowest = self.tetrahedra[0]
@@ -79,15 +80,19 @@ class flow_interval:
                 return True
         return False
 
-    def is_boundary_parallel(self):
-        self.ensure_contains_one_cycle_up()
-        self.ensure_contains_one_cycle_down() ### two cycles should be enough to separate the vertices if not boundary parallel. 
-        ### One might not be enough if there is a rotation by pi as we go up
-        lowest = self.tetrahedra[0]
-        one_cycle_up = self.tetrahedra[2 * len(self.flow_cycle)]
-        # print(lowest.vertices, one_cycle_up.vertices)
-        # print(not set(lowest.vertices).isdisjoint(set(one_cycle_up.vertices)))
-        return not set(lowest.vertices).isdisjoint(set(one_cycle_up.vertices))
+    # def is_boundary_parallel(self):  ### FIX we should prove that this works... or better check it before building continents
+    #     ### use def tri_loop_is_boundary_parallel(tri_loop, tri)?? from veering.flow_cycles
+    #     ### if you go straight up through a tetrahedron you do so infinitely many times so you are not boundary parallel
+    #     ### if you are boundary parallel then you are trapped inside one ladder of the boundary triangulation, so you 
+    #     ### follow the ladder pole slope.
+    #     self.ensure_contains_one_cycle_up()
+    #     self.ensure_contains_one_cycle_down() ### two cycles should be enough to separate the vertices if not boundary parallel. 
+    #     ### One might not be enough if there is a rotation by pi as we go up
+    #     lowest = self.tetrahedra[0]
+    #     two_cycles_up = self.tetrahedra[2 * len(self.flow_cycle)]
+    #     # print(lowest.vertices, one_cycle_up.vertices)
+    #     # print(not set(lowest.vertices).isdisjoint(set(one_cycle_up.vertices)))
+    #     return not set(lowest.vertices).isdisjoint(set(two_cycles_up.vertices))
 
     def how_far_down(self):
         """how far down have we built the interval from the init tet"""
@@ -278,9 +283,9 @@ class flow_interval:
         other.extend_within_continent()
         green_boundary = self.tetrahedra[-1].get_boundary_cusp_leaves()[0]
         if all([leaf.is_entirely_to_one_side_of(other.tetrahedra[-1]) for leaf in green_boundary]):
-            green_boundary2 = other.tetrahedra[-1].get_boundary_cusp_leaves()[0]
-            assert all([leaf.is_entirely_to_one_side_of(self.tetrahedra[-1]) for leaf in green_boundary2]) # check symmetry
-            return True
+            green_boundary_other = other.tetrahedra[-1].get_boundary_cusp_leaves()[0]
+            if all([leaf.is_entirely_to_one_side_of(self.tetrahedra[-1]) for leaf in green_boundary_other]): 
+                return True ### both checks necessary. If one tet spans the other then each leaf of the outer tet sees the inner tet verts all to one side
         else:
             return False
 
@@ -289,9 +294,9 @@ class flow_interval:
         other.extend_within_continent()
         purple_boundary = self.tetrahedra[0].get_boundary_cusp_leaves()[1]
         if all([leaf.is_entirely_to_one_side_of(other.tetrahedra[0]) for leaf in purple_boundary]):
-            purple_boundary2 = other.tetrahedra[0].get_boundary_cusp_leaves()[1]
-            assert all([leaf.is_entirely_to_one_side_of(self.tetrahedra[0]) for leaf in purple_boundary2]) # check symmetry
-            return True
+            purple_boundary_other = other.tetrahedra[0].get_boundary_cusp_leaves()[1]
+            if all([leaf.is_entirely_to_one_side_of(self.tetrahedra[0]) for leaf in purple_boundary_other]):
+                return True ### both checks are necessary - for an example see drill_flow_cycle.drill_flow_cycle('gLLAQbecdfffhhnkqnc_120012', [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
         else:
             return False
 
@@ -399,7 +404,6 @@ def cmp_to_key(small_cusp, big_cusp, is_horizontal = True):  ### see https://sta
         return K
 
 def uniquify_list_of_flow_intervals(flow_intervals):
-    # print('num flow intervals', len(flow_intervals))
     unique_flow_intervals = []
     for interval in flow_intervals:
         if not interval.is_in_list(unique_flow_intervals):

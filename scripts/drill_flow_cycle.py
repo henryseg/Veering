@@ -38,7 +38,8 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
     new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
     
-    if draw_drilled_tetrahedra:
+    if draw_rectangles:
+        name = veering_isosig + '' + str(flow_cycle) + '_drill'
         draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = False, 
         tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
         intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 

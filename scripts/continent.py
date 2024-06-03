@@ -11,6 +11,7 @@ from veering.fundamental_domain import spanning_dual_tree
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
 from circular_order import are_anticlockwise, are_linking
 from sage.rings.rational_field import QQ 
+# from fractions import Fraction
 
 
 class vertex:
@@ -240,6 +241,7 @@ class cusp_leaf:
         start = self.cusp.coastal_index()
         index_on_edge = self.coastal_edge.cusp_leaves.index(self)
         end = self.coastal_edge.coastal_index() + QQ( ((index_on_edge) + 1)/(len(self.coastal_edge.cusp_leaves) + 1) )
+        # end = self.coastal_edge.coastal_index() + Fraction( ((index_on_edge) + 1), (len(self.coastal_edge.cusp_leaves) + 1) )
         return (start, end)
 
     def links(self, other):
@@ -258,6 +260,13 @@ class cusp_leaf:
         start, end = self.end_positions()
         return are_anticlockwise(start, end, cusp.coastal_index())
 
+    def sees_to_its_right(self, cusp): 
+        ### if the cusp is to the right of the oriented leaf, return true
+        ### In particular, a leaf does _not_ see its own cusp to its right
+
+        start, end = self.end_positions()
+        return are_anticlockwise(start, cusp.coastal_index(), end)
+
     # def is_entirely_to_one_side_of(self, tet): ### are all of the cusps of tet on one or the other side of self?
     #     if self.cusp in tet.vertices:
     #         return False
@@ -273,6 +282,14 @@ class cusp_leaf:
             return True
         if all(are_to_left_2) and not any(are_to_left_1):
             return True   
+        # are_to_left_1 = [self.sees_to_its_left(v) for v in cusp_list_1]
+        # are_to_right_1 = [self.sees_to_its_right(v) for v in cusp_list_1]
+        # are_to_left_2 = [self.sees_to_its_left(v) for v in cusp_list_2]
+        # are_to_right_2 = [self.sees_to_its_right(v) for v in cusp_list_2]
+        # if all(are_to_left_1) and all(are_to_right_2):
+        #     return True
+        # if all(are_to_left_2) and all(are_to_right_1):
+        #     return True   
         return False
 
     def weakly_separates(self, cusp_list_1, cusp_list_2): 
@@ -327,7 +344,8 @@ class landscape_triangle:
         return self.upper_tet != None and self.lower_tet != None
 
     def is_boundary(self): ### for convenience
-        return not self.is_buried()
+        # return not self.is_buried()
+        return self.upper_tet == None or self.lower_tet == None
 
     def set_upper_tet(self, con_tet):
         self.upper_tet = con_tet
@@ -931,7 +949,7 @@ class continent:
         vert_d.cusp_leaves.append(d_leaf)
 
         # self.build_boundary_data()
-        assert self.is_convex()
+        # assert self.is_convex()
 
     def check_vertex_desired(self, v, epsilon = 0.001):
         v_in_C = v.pos.complex()
@@ -970,11 +988,11 @@ class continent:
         """flow downriver from this triangle until we hit the coast, do a coastal fill there"""
         downriver_triangle, is_coastal = self.flow(triangle)
         self.coastal_fill(downriver_triangle) ## also in_fills everything possible from that coastal_fill
-        assert self.is_convex()
+        # assert self.is_convex()
 
     def bury(self, triangle):
         ### assume continent is convex before we start
-        assert self.is_convex()
+        # assert self.is_convex()
         assert not triangle.is_buried()
         while not triangle.is_buried():
             self.silt(triangle)

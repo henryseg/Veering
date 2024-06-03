@@ -342,11 +342,11 @@ def drill_flow_cycle_script():
     from drill_flow_cycle import triangulation_data_to_tri_angle
     from veering.taut import isosig_from_tri_angle
 
-    # veering_isosig = 'cPcbbbdxm_10' 
-    # flow_cycle = [(0, 2)]
+    veering_isosig = 'cPcbbbdxm_10' 
+    flow_cycle = [(0, 2)]
 
-    veering_isosig = 'cPcbbbiht_12'
-    flow_cycle = [(0, 0)]  ### boundary parallel
+    # veering_isosig = 'cPcbbbiht_12'
+    # flow_cycle = [(0, 0)]  ### boundary parallel
     # flow_cycle = [(0, 4), (1, 2)]
     # flow_cycle = [(0, 0), (0, 5)]  
     # flow_cycle = [(1, 0), (1, 5)]  ### blue edge rectangle has two punctures, red has none.
@@ -364,7 +364,7 @@ def drill_flow_cycle_script():
     # flow_cycle = [(0, 4), (4, 0)]
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  
     # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0)]  ### non simple cycle example
-    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
+    # flow_cycle = [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]  ### a strange assert fails? 
     
     # flow cycle which is not boundary parallel but completely in a blue region 
     # veering_isosig = 'eLAkbbcdddhwqj_2102'
