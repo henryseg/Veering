@@ -9,7 +9,7 @@ from veering.veering_tri import veering_triangulation
 from veering.fundamental_domain import spanning_dual_tree
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
-from circular_order import are_anticlockwise, are_linking
+from circular_order import are_anticlockwise, are_linking, are_anticlockwise_pairs
 from sage.rings.rational_field import QQ 
 # from fractions import Fraction
 
@@ -26,12 +26,23 @@ class vertex:
         self.continent.vertices.append(self)
         self.circle_pos = None
         self.cusp_leaves = []
-    
+        # self.circular_ordering_triangle_towards_root = None
+        self.rational_position = None ### in the Farey triangulation
+
     def coastal_index(self):
         return self.continent.coast.index(self)
 
     def chronological_index(self):
         return self.continent.vertices.index(self)
+
+    def get_rational_position(self, other = None):
+        if self.rational_position != None: ### meaning this vertex is infty 
+            return self.rational_position   
+        else:
+            if other == None or other[0] > 0: ### used for calculating circular order with other == None. Also used for farey_sum with other == the rational position of the new vertex
+                return (1,0) ### infty defaults to return this rather than (-1,0) but it doesn't matter
+            else:
+                return (-1,0)
 
     def is_ladderpole_descendant(self):
         return len(self.ladderpole_ancestors) != 0
@@ -69,6 +80,8 @@ class landscape_edge:
         self.is_red = is_red
         self.cusp_leaves = [] ### should be empty if not a coastal edge
         self.rectangle_sides_data = [None, None, None, None]
+        # self.circular_ordering_triangle_towards_root = None ### coastal edges or edges that were coastal know which incident triangle is in the circular ordering tree
+        self.rational_position = None
         # try:
         #     assert self.length() > 0.0001
         # except:
@@ -117,26 +130,32 @@ class landscape_edge:
         leaves = u.cusp_leaves
         first_leaf = leaves[0]
         last_leaf = leaves[-1]
-        if are_anticlockwise(u.coastal_index(), first_leaf.end_positions()[1], v.coastal_index()):
+        # if are_anticlockwise(u.coastal_index(), first_leaf.end_positions()[1], v.coastal_index()):
+        if are_anticlockwise_pairs(u.get_rational_position(), first_leaf.end_positions()[1], v.get_rational_position()):
             self.rectangle_sides_data[1] = first_leaf
-        elif are_anticlockwise(u.coastal_index(), v.coastal_index(), last_leaf.end_positions()[1]):
+        # elif are_anticlockwise(u.coastal_index(), v.coastal_index(), last_leaf.end_positions()[1]):
+        elif are_anticlockwise_pairs(u.get_rational_position(), v.get_rational_position(), last_leaf.end_positions()[1]):
             self.rectangle_sides_data[0] = last_leaf
         else:      
             for i, leaf in enumerate(leaves):
-                if are_anticlockwise(u.coastal_index(), leaf.end_positions()[1], v.coastal_index()):
+                # if are_anticlockwise(u.coastal_index(), leaf.end_positions()[1], v.coastal_index()):
+                if are_anticlockwise_pairs(u.get_rational_position(), leaf.end_positions()[1], v.get_rational_position()):
                     self.rectangle_sides_data[0] = leaves[i-1]
                     self.rectangle_sides_data[1] = leaf
                     break
         leaves = v.cusp_leaves
         first_leaf = leaves[0]
         last_leaf = leaves[-1]
-        if are_anticlockwise(v.coastal_index(), first_leaf.end_positions()[1], u.coastal_index()):
+        # if are_anticlockwise(v.coastal_index(), first_leaf.end_positions()[1], u.coastal_index()):
+        if are_anticlockwise_pairs(v.get_rational_position(), first_leaf.end_positions()[1], u.get_rational_position()):
             self.rectangle_sides_data[3] = first_leaf
-        elif are_anticlockwise(v.coastal_index(), u.coastal_index(), last_leaf.end_positions()[1]):
+        # elif are_anticlockwise(v.coastal_index(), u.coastal_index(), last_leaf.end_positions()[1]):
+        elif are_anticlockwise_pairs(v.get_rational_position(), u.get_rational_position(), last_leaf.end_positions()[1]):
             self.rectangle_sides_data[2] = last_leaf
         else:      
             for i, leaf in enumerate(leaves):
-                if are_anticlockwise(v.coastal_index(), leaf.end_positions()[1], u.coastal_index()):
+                # if are_anticlockwise(v.coastal_index(), leaf.end_positions()[1], u.coastal_index()):
+                if are_anticlockwise_pairs(v.get_rational_position(), leaf.end_positions()[1], u.get_rational_position()):
                     self.rectangle_sides_data[2] = leaves[i-1]
                     self.rectangle_sides_data[3] = leaf
                     break
@@ -238,7 +257,7 @@ class cusp_leaf:
         self.is_upper = is_upper 
 
     def end_positions(self):
-        start = self.cusp.coastal_index()
+        # start = self.cusp.coastal_index()
         # index_on_edge = self.coastal_edge.cusp_leaves.index(self)
 
         # v1:
@@ -252,14 +271,18 @@ class cusp_leaf:
         # end = (numer, denom)
 
         # v4:  ### This is ok because we never compare two thorns when testing 
-        end = self.coastal_edge.coastal_index() + 0.5
+        # end = self.coastal_edge.coastal_index() + 0.5
+
+        # v5: 
+        start = self.cusp.get_rational_position()
+        end = self.coastal_edge.rational_position ### This is ok because we never compare two thorns when testing 
         return (start, end)
 
     def links(self, other):
         """Returns True if this cusp leaf links other (could be leaf or edge)"""
         a1, a2 = self.end_positions()
         b1, b2 = other.end_positions()
-        return are_linking(a1, a2, b1, b2)
+        return are_linking(a1, a2, b1, b2)  ### will break if two leaves end on the same edge 
 
         ### have faces know about the cusp leaves that start there, and vice versa?
         ### leave until we need it
@@ -269,7 +292,8 @@ class cusp_leaf:
         ### In particular, a leaf does _not_ see its own cusp to its left 
 
         start, end = self.end_positions()
-        return are_anticlockwise(start, end, cusp.coastal_index())
+        # return are_anticlockwise(start, end, cusp.coastal_index())
+        return are_anticlockwise_pairs(start, end, cusp.get_rational_position())
 
     # def sees_to_its_right(self, cusp): 
     #     ### if the cusp is to the right of the oriented leaf, return true
@@ -331,6 +355,7 @@ class landscape_triangle:
         self.upper_tet = None
         self.lower_tet = None
         self.neighbours = [] ## list of three triangles incident to this one, opposite corresponding vertices
+        # self.circular_ordering_triangle_towards_root = None ### Some triangles are part of a rooted tree that spans the continent and allows for fast circular ordering calculations
         self.continent.triangles.append(self)
 
     def __str__(self):
@@ -573,7 +598,6 @@ class landscape_triangle:
             out[v] = {'internal':internal_leaf_at_v[0], 'boundary':boundary_leaves_at_v}
         return out
 
-
     # def dist_from_lox(self, edge):
     #     vt = self.continent.vt
     #     edge_index = self.edges.index(edge)
@@ -757,6 +781,11 @@ class continent_tetrahedron:
         out_purple = [leaf for leaf in purple_leaves if leaf.cusp in self.upper_edge.vertices]
         return [out_green, out_purple]
 
+def farey_sum(a, b):
+    a1, a2 = a
+    b1, b2 = b
+    return (a1 + b1, a2 + b2)
+
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = []):
         # print 'initializing continent'
@@ -786,6 +815,8 @@ class continent:
         self.upper_landscape_edges = set([])
         self.lower_landscape_edges = set([])
         self.coastal_edges = None
+
+        # self.circular_ordering_triangles = []
 
         ###   c---R----b
         ###   |`d    ,'|     faces a, b on bottom, c, d on top
@@ -827,12 +858,21 @@ class continent:
         triangle_c = landscape_triangle(self, face_c_index, tris_cd_are_upper, tris_cd_are_red)
         triangle_d = landscape_triangle(self, face_d_index, tris_cd_are_upper, tris_cd_are_red)
 
+        # triangle_a.circular_ordering_triangle_towards_root = triangle_a ### this is how we record that it is the root
+        # triangle_b.circular_ordering_triangle_towards_root = triangle_a
+        # self.circular_ordering_triangles = [triangle_a, triangle_b]
+
         ## now for the vertices
 
         vert_a = self.vertices[face_a]
         vert_b = self.vertices[face_b]
         vert_c = self.vertices[face_c]
         vert_d = self.vertices[face_d]
+
+        vert_a.rational_position = (0,1)
+        vert_b.rational_position = None ### this one is infinity
+        vert_c.rational_position = (-1,1)
+        vert_d.rational_position = (1,1)
 
         if tris_ab_are_red:
             triangle_a.update_vertices( [vert_c, vert_d, vert_b] )
@@ -847,6 +887,11 @@ class continent:
         else:
             triangle_c.update_vertices( [vert_b, vert_a, vert_d] )
             triangle_d.update_vertices( [vert_a, vert_b, vert_c] )
+
+        # vert_a.circular_ordering_triangle_towards_root = triangle_b
+        # vert_b.circular_ordering_triangle_towards_root = triangle_a
+        # vert_c.circular_ordering_triangle_towards_root = triangle_a
+        # vert_d.circular_ordering_triangle_towards_root = triangle_a
 
         ## add the edges
 
@@ -870,6 +915,16 @@ class continent:
         edge_bc = landscape_edge(self, [vert_b, vert_c], edge_bc_index, True)
         edge_bd = landscape_edge(self, [vert_b, vert_d], edge_bd_index, False)
         edge_cd = landscape_edge(self, [vert_c, vert_d], edge_cd_index, lower_edge_colour == "red")
+
+        # edge_bc.circular_ordering_triangle_towards_root = triangle_a
+        # edge_bd.circular_ordering_triangle_towards_root = triangle_a
+        # edge_ac.circular_ordering_triangle_towards_root = triangle_b
+        # edge_ad.circular_ordering_triangle_towards_root = triangle_b
+        edge_bc.rational_position = (-2,1)
+        edge_ac.rational_position = (-1,2)
+        edge_ad.rational_position = (1,2)
+        edge_bd.rational_position = (2,1)
+
 
         ### make the coast (vertices) and coastal edges
         self.coast = [vert_a, vert_d, vert_b, vert_c]
@@ -1364,6 +1419,19 @@ class continent:
         else:
             triangle_c.update_edges( [edge_bt, edge_ab, edge_at] )
 
+        vert_t.rational_position = edge_ab.rational_position
+        a_rational_position = vert_a.get_rational_position(other = vert_t.rational_position)
+        edge_at.rational_position = farey_sum(a_rational_position, vert_t.rational_position)
+        b_rational_position = vert_b.get_rational_position(other = vert_t.rational_position)
+        edge_bt.rational_position = farey_sum(b_rational_position, vert_t.rational_position)
+
+        # assert edge_ab.circular_ordering_triangle_towards_root != None
+        # triangle_c.circular_ordering_triangle_towards_root = edge_ab.circular_ordering_triangle_towards_root
+        # edge_at.circular_ordering_triangle_towards_root = triangle_c
+        # edge_bt.circular_ordering_triangle_towards_root = triangle_c
+        # vert_t.circular_ordering_triangle_towards_root = triangle_c
+        # self.circular_ordering_triangles.append(triangle_c)
+
         if triangle.is_upper:
             con_tet.set_upper_edge(edge_ct)
             con_tet.set_lower_edge(edge_ab)
@@ -1448,7 +1516,8 @@ class continent:
             insert_index = None # default at end 
         for i, leaf in enumerate(last_edge.cusp_leaves):
             if leaf.is_upper == t_leaf.is_upper: 
-                if are_anticlockwise(t_leaf.cusp.coastal_index(), leaf.cusp.coastal_index(), last_edge.coastal_index() + 0.5):
+                # if are_anticlockwise(t_leaf.cusp.coastal_index(), leaf.cusp.coastal_index(), last_edge.coastal_index() + 0.5):
+                if are_anticlockwise_pairs(t_leaf.cusp.get_rational_position(), leaf.cusp.get_rational_position(), last_edge.rational_position):
                     insert_index = i + 1 ## goes after this one, can repeat
                 else:
                     if insert_index == None:
@@ -1475,7 +1544,8 @@ class continent:
         before_cut = []
         after_cut = []
         for leaf in same_side_leaves:
-            if are_anticlockwise(vert_t.coastal_index(), last_edge.coastal_index() + 0.5, leaf.cusp.coastal_index()):
+            # if are_anticlockwise(vert_t.coastal_index(), last_edge.coastal_index() + 0.5, leaf.cusp.coastal_index()):
+            if are_anticlockwise_pairs(vert_t.get_rational_position(), last_edge.rational_position, leaf.cusp.get_rational_position()):
                 before_cut.append(leaf)
             else:
                 after_cut.append(leaf)
