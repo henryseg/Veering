@@ -80,7 +80,6 @@ class landscape_edge:
         self.is_red = is_red
         self.cusp_leaves = [] ### should be empty if not a coastal edge
         self.rectangle_sides_data = [None, None, None, None]
-        # self.circular_ordering_triangle_towards_root = None ### coastal edges or edges that were coastal know which incident triangle is in the circular ordering tree
         self.rational_position = None
         # try:
         #     assert self.length() > 0.0001
@@ -97,7 +96,8 @@ class landscape_edge:
         return self.continent.coastal_edges.index(self)
 
     def end_positions(self):
-        return [v.coastal_index() for v in self.vertices]
+        # return [v.coastal_index() for v in self.vertices]
+        return [v.get_rational_position() for v in self.vertices]
 
     def links(self, other):
         """Returns True if this edge links other (could be leaf or edge)"""
@@ -106,7 +106,7 @@ class landscape_edge:
         return are_linking(a1, a2, b1, b2)
 
     def is_coastal(self):
-        return self in self.continent.coastal_edges
+        return self in self.continent.coastal_edges ### need to make coast for this to work
 
     def boundary_triangles(self):
         out = []
@@ -1350,11 +1350,11 @@ class continent:
         else:
             vert_t = vertex( self, None)
 
-        ##### insert vert_t into self.coast
-        if vert_b == self.infinity:
-            self.coast.append( vert_t )
-        else:
-            self.coast.insert( self.coast.index(vert_b), vert_t )
+        ##### insert vert_t into self.coast ### commented out for speed in drilling:
+        # if vert_b == self.infinity:
+        #     self.coast.append( vert_t )
+        # else:
+        #     self.coast.insert( self.coast.index(vert_b), vert_t )
 
         if self.desired_vertices != []:
             if self.infinity in triangle.vertices:
@@ -1399,8 +1399,9 @@ class continent:
         edge_bt = landscape_edge(self, [vert_b, vert_t], edge_bt_index, triangle.is_upper) ## coastal
         edge_ct = landscape_edge(self, [vert_c, vert_t], edge_ct_index, far_edge_colour == "red") ## never coastal
 
-        coastal_index = self.coast.index(vert_a)
-        self.coastal_edges = self.coastal_edges[:coastal_index] + [edge_at, edge_bt] + self.coastal_edges[coastal_index + 1:]
+        ### commented out for speed in drilling
+        # coastal_index = self.coast.index(vert_a)
+        # self.coastal_edges = self.coastal_edges[:coastal_index] + [edge_at, edge_bt] + self.coastal_edges[coastal_index + 1:]
 
         if triangle.is_red == triangle.is_upper:
             edge_bc, edge_ca, edge_ab = triangle.edges 
@@ -1592,6 +1593,9 @@ class continent:
 
     def build_boundary_data(self):
         """Make data used when drawing so only called once"""
+
+        ### figure out coast here? Don't update it as we go...
+
         self.upper_landscape_triangles = set([])
         self.lower_landscape_triangles = set([])
         for tri in self.triangles:
@@ -1616,34 +1620,34 @@ class continent:
                 # e.boundary_triangles.append(tri)
                 self.lower_landscape_edges.add(e)
 
-    def old_coast(self):
-        old_coast = []
-        for tri in self.triangles:
-            if tri.is_boundary():
-                break  ## found an initial unburied tri 
-        vert_index = 0  
-        initial_vert = tri.vertices[vert_index]
-        vert = initial_vert   
-        while old_coast == [] or vert != initial_vert:
-            if tri.neighbours[(vert_index - 1) % 3].is_upper != tri.is_upper: ## we are coastal
-                vert_index = (vert_index + 1) % 3   
-                vert = tri.vertices[vert_index]
-                old_coast.append(vert)
-            else: # walk to the next triangle
-                tri = tri.neighbours[(vert_index - 1) % 3]  
-                vert_index = tri.vertices.index(vert) 
+    # def old_coast(self):
+    #     old_coast = []
+    #     for tri in self.triangles:
+    #         if tri.is_boundary():
+    #             break  ## found an initial unburied tri 
+    #     vert_index = 0  
+    #     initial_vert = tri.vertices[vert_index]
+    #     vert = initial_vert   
+    #     while old_coast == [] or vert != initial_vert:
+    #         if tri.neighbours[(vert_index - 1) % 3].is_upper != tri.is_upper: ## we are coastal
+    #             vert_index = (vert_index + 1) % 3   
+    #             vert = tri.vertices[vert_index]
+    #             old_coast.append(vert)
+    #         else: # walk to the next triangle
+    #             tri = tri.neighbours[(vert_index - 1) % 3]  
+    #             vert_index = tri.vertices.index(vert) 
 
-        #  i+1
-        #   *-------* i  
-        #    \     /
-        #     \   / 
-        #      \ /
-        #       * i-1 
+    #     #  i+1
+    #     #   *-------* i  
+    #     #    \     /
+    #     #     \   / 
+    #     #      \ /
+    #     #       * i-1 
 
-        # now rotate to put infinity first
-        inf_vert_index = old_coast.index( self.infinity )
-        old_coast = old_coast[inf_vert_index:] + old_coast[:inf_vert_index]
-        return old_coast
+    #     # now rotate to put infinity first
+    #     inf_vert_index = old_coast.index( self.infinity )
+    #     old_coast = old_coast[inf_vert_index:] + old_coast[:inf_vert_index]
+    #     return old_coast
 
     def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
         self.first_non_buried_index = 0
