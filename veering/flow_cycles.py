@@ -5,6 +5,7 @@
 # Given a veering triangulation, find all simple flow cycles
 
 import regina
+from functools import reduce
 
 from .branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num, isosig_from_tri_angle_branch, has_non_sing_semiflow
 from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
@@ -176,3 +177,71 @@ def find_tri_loops(sig):
     branch = upper_branched_surface(tri, angle)
     loops = find_flow_cycles(tri, branch)
     return [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+
+def ternary(n, num_digits):  ### modified from https://stackoverflow.com/questions/34559663/convert-decimal-to-ternarybase3-in-python
+    nums = []
+    for i in range(num_digits):
+        n, r = divmod(n, 3)
+        nums.append(r)
+    return nums
+
+def rotate_to_lex_smallest(inputs):
+    rotations = []
+    for i in range(len(inputs)):
+        rotations.append(inputs[i:] + inputs[:i])
+    return min(rotations)
+
+def factors(n): ### from https://stackoverflow.com/questions/6800193/what-is-the-most-efficient-way-of-finding-all-the-factors-of-a-number-in-python
+    facs = list(set(reduce(list.__add__, 
+                ([i, n//i] for i in range(1, int(n**0.5) + 1) if n % i == 0))))
+    facs.sort()
+    return facs
+
+def is_power(flow_cycle):
+    n = len(flow_cycle)
+    for f in factors(n)[:-1]: ### don't check full length for repeats
+        g, r = divmod(n, f)
+        assert r == 0 
+        sub_cycles = [flow_cycle[i*f:(i+1)*f] for i in range(g)]
+        if sub_cycles.count(sub_cycles[0]) == g: ### all the same as the first
+            return True
+    return False
+
+### new version generates non-simple cycles as well. Is not efficient, but we will not be able to drill long cycles quickly anyway
+def generate_flow_cycles(sig, max_length = 5):
+    tri, angle = isosig_to_tri_angle(sig)
+    branch = upper_branched_surface(tri, angle)
+    tet_with_this_edge_large = make_list_of_tet_with_this_edge_large(tri, branch)
+    exit_edges_for_each_tet = []
+    for i in range(tri.countTetrahedra()):
+        large_edge_num, mixed_edge_pair_num, small_edge_pair_num = branch_num_to_large_edge_and_mixed_edge_pair_num(branch[i], return_small = True)
+        exit_edges_for_each_tet.append([small_edge_pair_num, 5 - small_edge_pair_num, 5 - large_edge_num])
+
+    flow_cycles = set([])
+    for i in range(tri.countTetrahedra()):
+        original_tet_index = i
+        current_tet_index = original_tet_index
+        for n in range(3**max_length):
+            digits = ternary(n, max_length)
+            path = []
+            for j in digits:    
+                exit_edge_num = exit_edges_for_each_tet[current_tet_index][j]
+                path.append((current_tet_index, exit_edge_num))
+
+                current_tet = tri.tetrahedron(current_tet_index)
+                next_edge_index = current_tet.edge(exit_edge_num).index()
+                current_tet_index = tet_with_this_edge_large[next_edge_index]
+                if current_tet_index == original_tet_index:
+                    if not is_power(path):
+                        flow_cycles.add(tuple(rotate_to_lex_smallest(path)))
+    flow_cycles = list(flow_cycles)
+    flow_cycles.sort()
+    return flow_cycles
+
+
+
+
+
+
+
+
