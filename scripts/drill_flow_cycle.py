@@ -4,6 +4,7 @@ from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_che
 
 from veering.taut import is_taut, isosig_from_tri_angle
 from veering.veering_tri import is_veering
+from veering.flow_cycles import generate_flow_cycles
 import regina 
 
 def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
@@ -32,7 +33,7 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
 def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False):
     out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
     if out == None:  ### flow cycle is boundary parallel
-        print('flow_cycle is boundary parallel')
+        # print('flow_cycle is boundary parallel')
         return None
     con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _ = out
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
@@ -53,4 +54,7 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
     else:
         return isosig_from_tri_angle(tri, angle)
 
-
+def drill_flow_cycles(veering_isosig, max_length = 2):
+    cycles = generate_flow_cycles(veering_isosig, max_length = max_length)
+    for cycle, num_steps_up in cycles:
+        print(veering_isosig, num_steps_up, cycle, drill_flow_cycle(veering_isosig, cycle)) 

@@ -61,7 +61,7 @@ class flow_interval:
 
     def fellow_travels(self, other):
         """Do the two flow cycles bound an annulus?"""
-        ### Might not work with 
+        ### Might not work with intervals made from different flow cycles
         self.ensure_contains_one_cycle()
         other.ensure_contains_one_cycle()
         this_lowest = self.tetrahedra[0]

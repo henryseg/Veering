@@ -208,7 +208,7 @@ def is_power(flow_cycle):
     return False
 
 ### new version generates non-simple cycles as well. Is not efficient, but we will not be able to drill long cycles quickly anyway
-def generate_flow_cycles(sig, max_length = 5):
+def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = True):
     tri, angle = isosig_to_tri_angle(sig)
     branch = upper_branched_surface(tri, angle)
     tet_with_this_edge_large = make_list_of_tet_with_this_edge_large(tri, branch)
@@ -229,10 +229,13 @@ def generate_flow_cycles(sig, max_length = 5):
             digits = ternary(n, max_length)
             # print(digits)
             path = []
+            num_steps_straight_up = 0
             for j in digits:    
                 # print('path', path, 'j', j, 'current tet index', current_tet_index)
                 exit_edge_num = exit_edges_for_each_tet[current_tet_index][j]
                 path.append((current_tet_index, exit_edge_num))
+                if j == 2:
+                    num_steps_straight_up += 1
 
                 current_tet = tri.tetrahedron(current_tet_index)
                 next_edge_index = current_tet.edge(exit_edge_num).index()
@@ -242,7 +245,10 @@ def generate_flow_cycles(sig, max_length = 5):
                 if next_tet_index == original_tet_index:
                     if not is_power(path):
                         # print('add path', path)
-                        flow_cycles.add(tuple(rotate_to_lex_smallest(path)))
+                        if include_num_steps_up:
+                            flow_cycles.add( (tuple(rotate_to_lex_smallest(path)), num_steps_straight_up))
+                        else:
+                            flow_cycles.add(tuple(rotate_to_lex_smallest(path)))
                 current_tet_index = next_tet_index
     flow_cycles = list(flow_cycles)
     flow_cycles.sort()

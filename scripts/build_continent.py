@@ -153,7 +153,7 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # print('did not find strip vertex')
     # return (None, None, candidate_triangles) ### testing
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 10):
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
