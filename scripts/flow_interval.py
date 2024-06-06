@@ -80,7 +80,7 @@ class flow_interval:
                 return True
         return False
 
-    # def is_boundary_parallel(self):  ### FIX we should prove that this works... or better check it before building continents
+    def is_boundary_parallel(self):  ### FIX we should prove that this works... or better check it before building continents
     #     ### use def tri_loop_is_boundary_parallel(tri_loop, tri)?? from veering.flow_cycles
     #     ### if you go straight up through a tetrahedron you do so infinitely many times so you are not boundary parallel
     #     ### if you are boundary parallel then you are trapped inside one ladder of the boundary triangulation, so you 
@@ -93,6 +93,14 @@ class flow_interval:
     #     # print(lowest.vertices, one_cycle_up.vertices)
     #     # print(not set(lowest.vertices).isdisjoint(set(one_cycle_up.vertices)))
     #     return not set(lowest.vertices).isdisjoint(set(two_cycles_up.vertices))
+
+        self.ensure_contains_one_cycle()
+        lowest = self.tetrahedra[0]
+        one_cycle_up = self.tetrahedra[len(self.flow_cycle)]
+        for i in range(4):
+            if lowest.vertices[i] == one_cycle_up.vertices[i]:
+                return True
+        return False
 
     def how_far_down(self):
         """how far down have we built the interval from the init tet"""

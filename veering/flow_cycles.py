@@ -212,28 +212,38 @@ def generate_flow_cycles(sig, max_length = 5):
     tri, angle = isosig_to_tri_angle(sig)
     branch = upper_branched_surface(tri, angle)
     tet_with_this_edge_large = make_list_of_tet_with_this_edge_large(tri, branch)
+    # print('tet_with_this_edge_large', tet_with_this_edge_large)
     exit_edges_for_each_tet = []
     for i in range(tri.countTetrahedra()):
         large_edge_num, mixed_edge_pair_num, small_edge_pair_num = branch_num_to_large_edge_and_mixed_edge_pair_num(branch[i], return_small = True)
         exit_edges_for_each_tet.append([small_edge_pair_num, 5 - small_edge_pair_num, 5 - large_edge_num])
 
+    # print('exit_edges_for_each_tet', exit_edges_for_each_tet)
+
     flow_cycles = set([])
     for i in range(tri.countTetrahedra()):
         original_tet_index = i
-        current_tet_index = original_tet_index
+        # print('original_tet_index', original_tet_index)
         for n in range(3**max_length):
+            current_tet_index = original_tet_index
             digits = ternary(n, max_length)
+            # print(digits)
             path = []
             for j in digits:    
+                # print('path', path, 'j', j, 'current tet index', current_tet_index)
                 exit_edge_num = exit_edges_for_each_tet[current_tet_index][j]
                 path.append((current_tet_index, exit_edge_num))
 
                 current_tet = tri.tetrahedron(current_tet_index)
                 next_edge_index = current_tet.edge(exit_edge_num).index()
-                current_tet_index = tet_with_this_edge_large[next_edge_index]
-                if current_tet_index == original_tet_index:
+                # print('next edge index', next_edge_index)
+                next_tet_index = tet_with_this_edge_large[next_edge_index]
+                # print('next_tet_index', next_tet_index)
+                if next_tet_index == original_tet_index:
                     if not is_power(path):
+                        # print('add path', path)
                         flow_cycles.add(tuple(rotate_to_lex_smallest(path)))
+                current_tet_index = next_tet_index
     flow_cycles = list(flow_cycles)
     flow_cycles.sort()
     return flow_cycles
