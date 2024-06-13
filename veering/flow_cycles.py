@@ -10,6 +10,7 @@ from functools import reduce
 from .branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num, isosig_from_tri_angle_branch, has_non_sing_semiflow
 from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
 from .taut import isosig_to_tri_angle, edge_num_to_vert_pair
+from .veering_tri import is_veering
 from .drill import drill
 
 ### format for loops: it is a list of tuples, 
@@ -65,13 +66,18 @@ def add_flow_edge(tri, branch, tet_with_this_edge_large, loop_so_far, current_te
                 else:
                     add_flow_edge(tri, branch, tet_with_this_edge_large, loop_so_far2, tet_with_this_edge_large[new_edge.index()], start_edge_index, available_edge_indices2, found_loops)
 
-def make_list_of_tet_with_this_edge_large(tri, branch):
+def make_list_of_tet_with_this_edge_large(tri, branch, return_reverse_map = False):
     out = [None] * tri.countEdges()
+    out2 = []
     for i in range(tri.countTetrahedra()):
         large_edge, _ = branch_num_to_large_edge_and_mixed_edge_pair_num(branch[i])
         large_edge_index = tri.tetrahedron(i).edge(large_edge).index()
+        out2.append(large_edge_index)
         out[large_edge_index] = i
-    return out
+    if return_reverse_map:
+        return (out, out2)
+    else:
+        return out
 
 def find_flow_cycles(tri, branch):
     """Given a branched surface dual to a triangulation, find all simple flow cycles in the upper flow graph"""
@@ -208,10 +214,11 @@ def is_power(flow_cycle):
     return False
 
 ### new version generates non-simple cycles as well. Is not efficient, but we will not be able to drill long cycles quickly anyway
-def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = True):
+def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = True, monochromatic_only = False, max_length_only = False):
     tri, angle = isosig_to_tri_angle(sig)
+    edge_colours = is_veering(tri, angle, return_type = "veering_colours")
     branch = upper_branched_surface(tri, angle)
-    tet_with_this_edge_large = make_list_of_tet_with_this_edge_large(tri, branch)
+    tet_with_this_edge_large, edge_at_bottom_of_tet = make_list_of_tet_with_this_edge_large(tri, branch, return_reverse_map = True)
     # print('tet_with_this_edge_large', tet_with_this_edge_large)
     exit_edges_for_each_tet = []
     for i in range(tri.countTetrahedra()):
@@ -226,6 +233,7 @@ def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = True):
         # print('original_tet_index', original_tet_index)
         for n in range(3**max_length):
             current_tet_index = original_tet_index
+            first_edge_colour = edge_colours[edge_at_bottom_of_tet[i]]
             digits = ternary(n, max_length)
             # print(digits)
             path = []
@@ -239,6 +247,9 @@ def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = True):
 
                 current_tet = tri.tetrahedron(current_tet_index)
                 next_edge_index = current_tet.edge(exit_edge_num).index()
+                if monochromatic_only:
+                    if edge_colours[next_edge_index] != first_edge_colour:
+                        break
                 # print('next edge index', next_edge_index)
                 next_tet_index = tet_with_this_edge_large[next_edge_index]
                 # print('next_tet_index', next_tet_index)
@@ -252,6 +263,14 @@ def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = True):
                 current_tet_index = next_tet_index
     flow_cycles = list(flow_cycles)
     flow_cycles.sort()
+    if include_num_steps_up:
+        flow_cycles.sort(key = lambda x: len(x[0]))
+        if max_length_only:
+            flow_cycles = [c for c in flow_cycles if len(c[0]) == max_length]
+    else:
+        flow_cycles.sort(key = lambda x: len(x))
+        if max_length_only:
+            flow_cycles = [c for c in flow_cycles if len(c) == max_length]
     return flow_cycles
 
 

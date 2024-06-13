@@ -10,7 +10,7 @@ from veering.fundamental_domain import spanning_dual_tree
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
 from circular_order import are_anticlockwise, are_linking, are_anticlockwise_pairs
-from sage.rings.rational_field import QQ 
+# from sage.rings.rational_field import QQ 
 # from fractions import Fraction
 
 
