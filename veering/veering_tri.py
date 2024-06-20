@@ -153,43 +153,44 @@ class veering_triangulation():
         from .edge_orientability import is_edge_orientable as is_eo
         return is_eo(self.tri, self.angle, return_type = return_type)
 
-    def is_AB_turn(vt, face0, face1, face0_dir, face1_dir):
-        """
-        For the "turn" (face0, face1, face0_dir, face1_dir) in the veering
-        triangulation vt, we decide if it is an "anti-branching" (AB) turn
-        as defined at the top of page 16 of arxiv:2008.04836.  In more
-        detail: we travel along face0 in direction face0_dir (+1 if with
-        the coorientation) into a tet t. We then leave through face1 in
-        direction face1_dir.  We return True if this turn is an AB turn:
-        the triangles are adjacent along an equatorial edge of t of the
-        same colour as the top diagonal of the edge.
-        """
-        top, bottom = top_bottom_embeddings_of_faces(vt.tri, vt.angle)
-        if face0_dir == 1:
-            embed0 = bottom[face0]
-        else:
-            embed0 = top[face0]
-        if face1_dir == -1:
-            embed1 = bottom[face1]
-        else:
-            embed1 = top[face1]
-        t0 = embed0.tetrahedron()
-        t1 = embed1.tetrahedron()
-        # print(t0.index(), t1.index())
-        assert(t0 == t1)
-        t = t0
 
-        if face0_dir != face1_dir:
-            return False
-        f0 = embed0.face()
-        f1 = embed1.face()
-        equatorial_nums = [0,1,2,3]
-        equatorial_nums.remove(f0)
-        equatorial_nums.remove(f1)
-        equatorial_colour = vt.get_edge_between_verts_colour(t.index(), equatorial_nums)
-        top_vert_nums = get_tet_top_vert_nums(vt.coorientations, t.index())
-        top_colour = vt.get_edge_between_verts_colour(t.index(), top_vert_nums)
-        return top_colour == equatorial_colour
+def is_AB_turn(vt, face0, face1, face0_dir, face1_dir):
+    """
+    For the "turn" (face0, face1, face0_dir, face1_dir) in the veering
+    triangulation vt, we decide if it is an "anti-branching" (AB) turn
+    as defined at the top of page 16 of arxiv:2008.04836.  In more
+    detail: we travel along face0 in direction face0_dir (+1 if with
+    the coorientation) into a tet t. We then leave through face1 in
+    direction face1_dir.  We return True if this turn is an AB turn:
+    the triangles are adjacent along an equatorial edge of t of the
+    same colour as the top diagonal of the edge.
+    """
+    top, bottom = top_bottom_embeddings_of_faces(vt.tri, vt.angle)
+    if face0_dir == 1:
+        embed0 = bottom[face0]
+    else:
+        embed0 = top[face0]
+    if face1_dir == -1:
+        embed1 = bottom[face1]
+    else:
+        embed1 = top[face1]
+    t0 = embed0.tetrahedron()
+    t1 = embed1.tetrahedron()
+    # print(t0.index(), t1.index())
+    assert(t0 == t1)
+    t = t0
+
+    if face0_dir != face1_dir:
+        return False
+    f0 = embed0.face()
+    f1 = embed1.face()
+    equatorial_nums = [0,1,2,3]
+    equatorial_nums.remove(f0)
+    equatorial_nums.remove(f1)
+    equatorial_colour = vt.get_edge_between_verts_colour(t.index(), equatorial_nums)
+    top_vert_nums = get_tet_top_vert_nums(vt.coorientations, t.index())
+    top_colour = vt.get_edge_between_verts_colour(t.index(), top_vert_nums)
+    return top_colour == equatorial_colour
 
 
 def loop_twistednesses(tri, angle):
@@ -212,7 +213,7 @@ def loop_twistednesses(tri, angle):
         for j in range(len(loop)):
             f0, f1 = loop[j], loop[(j+1)%len(loop)]
             f0d, f1d = signs[j], signs[(j+1)%len(loop)]
-            if vt.is_AB_turn(f0, f1, f0d, f1d):
+            if is_AB_turn(vt, f0, f1, f0d, f1d):
                 count += 1
         twistednesses_dict[loop[0]] = (-1)**(count % 2)  # first in loop is the non-tree face
     for i in range(tri.countTriangles()):
