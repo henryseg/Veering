@@ -8,9 +8,9 @@ import regina
 from functools import reduce
 
 from .branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num, isosig_from_tri_angle_branch, has_non_sing_semiflow
-from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut
+from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut, edge_side_face_collections
 from .taut import isosig_to_tri_angle, edge_num_to_vert_pair
-from .veering_tri import is_veering
+from .veering_tri import is_veering, is_AB_turn
 from .drill import drill
 
 ### format for loops: it is a list of tuples, 
@@ -183,6 +183,53 @@ def find_tri_loops(sig):
     branch = upper_branched_surface(tri, angle)
     loops = find_flow_cycles(tri, branch)
     return [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
+
+def is_twisted(vt, flow_cycle):
+    """Is this flow cycle in the veering triangulation twisted?"""
+
+    triangles = edge_side_face_collections(vt.tri, vt.angle, tet_vert_coorientations = vt.coorientations)
+
+    ### Go through the list of edges in the flow_cycle and write down entering/exiting faces around that edge.
+    ### These are the top face of the entering tet and the bottom face of the exiting tet
+
+    ### Then calculate AB_turning for each tet
+
+    entering_face_nums = []
+    exiting_face_nums = []
+    for tet_num, edge_index in flow_cycle:
+
+        ### find a face on top of the tet that is next to the edge we are exiting through
+        neighbouring_faces = [i for i in [0,1,2,3] if i not in edge_num_to_vert_pair[edge_index]]
+        tet = vt.tri.tetrahedron(tet_num)
+        e = tet.edge(edge_index)
+        left_triangles_for_e, right_triangles_for_e = triangles[e.index()]
+
+        for k, i in enumerate(neighbouring_faces):
+            if vt.coorientations[tet_num][i] == +1: ### must be at least one, just pick the first one
+                j = neighbouring_faces[1 - k] ### the other neighbouring face num
+                f = tet.triangle(i)
+                f_index = f.index()
+                entering_face_nums.append(f_index)
+                ### now find the exiting face num
+                fmapping = tet.faceMapping(2, i)
+                index_of_opposite_vert_in_f = fmapping.inverse()[j]
+                triangle_in_list = (f_index, index_of_opposite_vert_in_f)
+
+                if triangle_in_list in left_triangles_for_e:
+                    correct_triangle_list = left_triangles_for_e
+                else:
+                    assert triangle_in_list in right_triangles_for_e
+                    correct_triangle_list = right_triangles_for_e
+                exiting_face_nums.append(correct_triangle_list[-1][0])      
+                break
+
+    # print('entering_face_nums', entering_face_nums)
+    # print('exiting_face_nums', exiting_face_nums)
+    num_AB_turns = len(flow_cycle)
+    for i in range(len(entering_face_nums)):
+        if is_AB_turn(vt, exiting_face_nums[i], entering_face_nums[(i+1)%len(entering_face_nums)], +1, +1): ## always go up so +1, +1
+            num_AB_turns += 1
+    return num_AB_turns % 2 == 1
 
 def ternary(n, num_digits):  ### modified from https://stackoverflow.com/questions/34559663/convert-decimal-to-ternarybase3-in-python
     nums = []
