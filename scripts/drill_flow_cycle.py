@@ -30,12 +30,12 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
     assert is_veering(tri, angle)
     return tri, angle
 
-def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False):
+def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False, return_found_parallel = False):
     out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
     if out == None:  ### flow cycle is boundary parallel
         # print('flow_cycle is boundary parallel')
         return None
-    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _ = out
+    con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _, found_parallel = out
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
     new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
     
@@ -50,9 +50,16 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
     tri, angle = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
 
     if return_tri_angle:
-        return (tri, angle)
+        if return_found_parallel:
+            return (tri, angle, found_parallel)
+        else:
+            return (tri, angle)
     else:
-        return isosig_from_tri_angle(tri, angle)
+        if return_found_parallel:
+            return (isosig_from_tri_angle(tri, angle), found_parallel)
+        else:
+            return isosig_from_tri_angle(tri, angle)
+    
 
 def drill_flow_cycles(veering_isosig, max_length = 2, monochromatic_only = False, max_length_only = False):
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length, monochromatic_only = monochromatic_only, max_length_only = max_length_only)

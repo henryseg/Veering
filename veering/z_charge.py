@@ -121,8 +121,8 @@ def has_pi_triple(u):
 def reduced_charges(M):
     """
     Given a snappy manifold M, we find all reduced charges so that:
-    (1) no loop in the triangulation passes an odd number of pi's.
-    (2) no tetrahedron has three pi's and 
+    (1) no loop in the triangulation passes an odd number of pi's and
+    (2) no tetrahedron has three pi's.
     """
     out = sol_and_kernel(M)
     x, A = out

@@ -159,6 +159,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
 
     con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig)
     vt = con.vt
+    found_parallel = False ### in building the continent, do we find fellow-travelling flow_cycles (if so then drilling naively will not give a hyperbolic manifold)
 
     ## install into vt:
     # vt.side_face_collections, vt.side_tet_collections = edge_side_face_collections(vt.tri, vt.angle, tet_vert_coorientations = vt.coorientations, return_tets = True, order_bottom_to_top = False)
@@ -313,7 +314,9 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
     for interval in flow_intervals:
         interval.extend_within_continent()
 
-    flow_intervals = uniquify_list_of_flow_intervals(flow_intervals)
+    flow_intervals, found_parallel_this_time = uniquify_list_of_flow_intervals(flow_intervals)
+    if not found_parallel and found_parallel_this_time:
+        found_parallel = True
     if verbose > 1:
         print('num unique flow_intervals', len(flow_intervals))
 
@@ -352,7 +355,9 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
                 flow_intervals_in_t.append(new_interval)
         for interval in flow_intervals_in_t:
             interval.extend_within_continent()
-        flow_intervals_in_t = uniquify_list_of_flow_intervals(flow_intervals_in_t)
+        flow_intervals_in_t, found_parallel_this_time = uniquify_list_of_flow_intervals(flow_intervals_in_t)
+        if not found_parallel and found_parallel_this_time:
+            found_parallel = True
         intervals_inside_tet_rectangles.append(flow_intervals_in_t)
 
     # for i, intervals in enumerate(intervals_inside_tet_rectangles):
@@ -529,7 +534,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
         interval.extend_within_continent()
 
     con.build_boundary_data()
-    return con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, all_intervals, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw
+    return con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, all_intervals, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw, found_parallel
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
     """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""

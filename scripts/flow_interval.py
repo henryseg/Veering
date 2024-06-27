@@ -74,11 +74,11 @@ class flow_interval:
     def is_in_list(self, intervals_list):
         for other in intervals_list:
             if self.equals(other):
-                return True
+                return True, False  ### first is the result, second is whether or not we found a parallel interval
             if self.fellow_travels(other):
                 # print('found fellow travelling flow intervals')
-                return True
-        return False
+                return True, True
+        return False, False
 
     def is_boundary_parallel(self):  ### FIX we should prove that this works... or better check it before building continents
     #     ### use def tri_loop_is_boundary_parallel(tri_loop, tri)?? from veering.flow_cycles
@@ -413,10 +413,14 @@ def cmp_to_key(small_cusp, big_cusp, is_horizontal = True):  ### see https://sta
 
 def uniquify_list_of_flow_intervals(flow_intervals):
     unique_flow_intervals = []
+    found_parallel = False
     for interval in flow_intervals:
-        if not interval.is_in_list(unique_flow_intervals):
+        result, found_parallel_here = interval.is_in_list(unique_flow_intervals)
+        if not found_parallel and found_parallel_here:
+            found_parallel = True
+        if not result:
             unique_flow_intervals.append(interval)
-    return unique_flow_intervals
+    return unique_flow_intervals, found_parallel
 
 def translate_of_interval_from_one_edge_rect_to_another(e1, e2, interval):
     assert interval.is_inside_edge_rectangle(e1)
