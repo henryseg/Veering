@@ -15,11 +15,11 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
     from drill_flow_cycle import drill_flow_cycle
     from pachner_graph_path import search_Pachner_graph_for_shortest_path
 
-    for sig in random.sample(veering_isosigs[100:200], num_to_check): ### only try small examples
+    for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
         tri, angle = isosig_to_tri_angle(sig)
         branch = upper_branched_surface(tri, angle)   
         simple_flow_cycles = find_flow_cycles(tri, branch) ### only simple flow cycles
-        for fc in simple_flow_cycles:
+        for fc in random.sample(simple_flow_cycles, min(num_to_check, len(simple_flow_cycles))):
         	tri_copy = regina.Triangulation3(tri)
         	angle_copy = angle[:]
         	branch_copy = branch[:]
@@ -39,13 +39,28 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
 	        			# ceiling = 2 + max(tri_copy.countTetrahedra(), tri_2.countTetrahedra())
 	        			# search_Pachner_graph_for_shortest_path(sig1, sig2, search_depth = 10, ceiling = ceiling)
 
-	        			### but snappy often fails to find an isometry, or canonize the tri_copy triangulation.
 	        			M1 = snappy.Manifold(tri_copy.snapPea())
 	        			M2 = snappy.Manifold(tri_2.snapPea())
 	        			M1.simplify()
 	        			M2.simplify()
 	        			# print('volumes', M1.volume(), M2.volume())
-	        			assert M1.is_isometric_to(M2), sig
+	        			found_isometry = False
+	        			for i in range(10):
+	        				if M1.is_isometric_to(M2):  ### from the docstring for is_isometric_to:
+	        				### The answer True is rigorous, but the answer False may
+							### not be as there could be numerical errors resulting in finding
+							### an incorrect canonical triangulation.
+	        					found_isometry = True
+	        					break
+	        			if not found_isometry:
+	        				print('checking with verified isometry_signature', sig, fc)
+	        				isomsig1 = M1.isometry_signature(verified = True)
+	        				isomsig2 = M2.isometry_signature(verified = True)
+	        				assert not isomsig1 == None, 'isom signature failed ' + sig + ' ' + fc
+	        				assert not isomsig2 == None, 'isom signature failed ' + sig + ' ' + fc
+	        				assert isomsig1 == isomsig2, sig + '_' + fc
+
+
 
 #### is_isometric failed on hvLPQkcdegffggfsshqqho_0221100 flow cycle [(1, 2)]??
 
