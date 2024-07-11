@@ -279,12 +279,12 @@ class flow_interval:
     def is_inside_edge_rectangle(self, con_edge):
         return self.is_inside_edge_rectangle_green_sides(con_edge) and self.is_inside_edge_rectangle_purple_sides(con_edge)
 
-    def find_edge_rectangle_we_are_inside(self, tet):
-        """Given tet in the fund dom and in our flow cycle, find an edge of tet whose rectangle contains the flow interval's point"""  
-        for e in tet.edges():
-            if self.is_inside_edge_rectangle(e):
-                return e
-        assert False
+    # def find_edge_rectangle_we_are_inside(self, tet):
+    #     """Given tet in the fund dom and in our flow cycle, find an edge of tet whose rectangle contains the flow interval's point"""  
+    #     for e in tet.edges():
+    #         if self.is_inside_edge_rectangle(e):
+    #             return e
+    #     assert False
 
     def is_green_comparable_with(self, other): ### check if upper tets do not overlap horizontally
         self.extend_within_continent()

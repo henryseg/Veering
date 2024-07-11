@@ -202,10 +202,10 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
     ### choose a vertex of top edge of up_translate_tet
     up_v = up_translate_tet.upper_edge.vertices[0] ### this is gamma^2c in the notes
     if up_v not in up_translate_edge.vertices or (up_translate_edge == up_translate_tet.upper_edge):
-        ### then quadrant starts at v and contains edge rect for up_translate_tet.upper_edge
+        ### then quadrant starts at up_v and contains edge rect for up_translate_tet.upper_edge
         up_quadrant_edge = up_translate_tet.upper_edge
     else:
-        ### then quadrant starts at v and contains edge rect for up_translate_edge
+        ### then quadrant starts at up_v and contains edge rect for up_translate_edge
         up_quadrant_edge = up_translate_edge
 
     v_num = up_translate_tet.vertices.index(up_v)

@@ -61,9 +61,6 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
 	        				assert isomsig1 == isomsig2, sig + '_' + fc
 
 
-
-#### is_isometric failed on hvLPQkcdegffggfsshqqho_0221100 flow cycle [(1, 2)]??
-
 # def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 #     veering_isosigs = veering_census()
 
