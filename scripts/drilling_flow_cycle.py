@@ -30,8 +30,8 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
     assert is_veering(tri, angle)
     return tri, angle
 
-def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False, return_found_parallel = False):
-    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0)
+def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False, return_found_parallel = False, verbose = 0):
+    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = verbose)
     if out == None:  ### flow cycle is boundary parallel
         # print('flow_cycle is boundary parallel')
         return None

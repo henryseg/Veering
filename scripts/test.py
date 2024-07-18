@@ -21,4 +21,4 @@ cycle2 = [(0, 4),
  (1, 0),
  (0, 4)]
 
-profile.run("drill_flow_cycle.drill_flow_cycle('dLQbccchhfo_122', cycle2)")   
+profile.run("drilling_flow_cycle.drill_flow_cycle('dLQbccchhfo_122', cycle2)")   

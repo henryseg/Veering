@@ -157,6 +157,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
+    if verbose > 0:
+        print('drill', veering_isosig, flow_cycle)
     con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig)
     vt = con.vt
     found_parallel = False ### in building the continent, do we find fellow-travelling flow_cycles (if so then drilling naively will not give a hyperbolic manifold)
@@ -185,6 +187,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
 
     ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
     main_interval.ensure_contains_one_cycle_up()
+    ### check if twisted before doing this
     main_interval.ensure_contains_one_cycle_down()
     if main_interval.is_boundary_parallel():  ### FIX?
         if verbose > 1:
@@ -192,6 +195,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
         return None
     up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
     up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
+    ### check if twisted - if not then just use 0.
     down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))
 
 

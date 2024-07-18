@@ -10,15 +10,15 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
     import snappy
     from veering.taut import isosig_to_tri_angle
     from veering.branched_surface import upper_branched_surface    
-    from veering.flow_cycles import find_flow_cycles, flow_cycle_to_triangle_loop, tri_loop_is_boundary_parallel, generate_flow_cycles 
+    from veering.flow_cycles import generate_simple_flow_cycles, flow_cycle_to_triangle_loop, tri_loop_is_boundary_parallel, generate_flow_cycles 
     from veering.drill import drill
-    from drill_flow_cycle import drill_flow_cycle
+    from drilling_flow_cycle import drill_flow_cycle
     from pachner_graph_path import search_Pachner_graph_for_shortest_path
 
     for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
         tri, angle = isosig_to_tri_angle(sig)
         branch = upper_branched_surface(tri, angle)   
-        simple_flow_cycles = find_flow_cycles(tri, branch) ### only simple flow cycles
+        simple_flow_cycles = generate_simple_flow_cycles(tri, branch) ### only simple flow cycles
         for fc in random.sample(simple_flow_cycles, min(num_to_check, len(simple_flow_cycles))):
         	tri_copy = regina.Triangulation3(tri)
         	angle_copy = angle[:]
