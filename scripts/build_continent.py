@@ -6,6 +6,7 @@
 
 from veering.taut import isosig_to_tri_angle
 from veering.veering_tri import veering_triangulation
+from veering.flow_cycles import is_twisted
 
 from continent import continent, continent_tetrahedron
 from boundary_triangulation import tet_face
@@ -153,14 +154,16 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # print('did not find strip vertex')
     # return (None, None, candidate_triangles) ### testing
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = True, verbose = 0):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
-    if verbose > 0:
-        print('drill', veering_isosig, flow_cycle)
     con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig)
     vt = con.vt
+    flow_cycle_is_twisted = is_twisted(vt, flow_cycle)
+    if verbose > 0:
+        print('drill', veering_isosig, flow_cycle, 'is_twisted:', flow_cycle_is_twisted, 'use_untwisted_speed_up:', use_untwisted_speed_up)
+
     found_parallel = False ### in building the continent, do we find fellow-travelling flow_cycles (if so then drilling naively will not give a hyperbolic manifold)
 
     ## install into vt:
@@ -182,25 +185,25 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
             fund_dom_edges.append(e)
     for e in fund_dom_edges:
         e.ensure_continent_contains_rectangle()
-    max_steps = 100
-    step = 0
 
     ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
     main_interval.ensure_contains_one_cycle_up()
-    ### check if twisted before doing this
-    main_interval.ensure_contains_one_cycle_down()
+    if flow_cycle_is_twisted or not use_untwisted_speed_up:
+        main_interval.ensure_contains_one_cycle_down()  ### does not make much difference experimentally
+
     if main_interval.is_boundary_parallel():  ### FIX?
-        if verbose > 1:
+        if verbose >= 1:
             print('flow cycle is boundary parallel')
         return None
     up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
     up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
-    ### check if twisted - if not then just use 0.
-    down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))
-
-
+    if flow_cycle_is_twisted or not use_untwisted_speed_up:
+        down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))
+    else:
+        down_translate_tet = main_interval.get_tet_at_position(0)
 
     ### c and gamma^2c are corresponding cusps of up_translate_tet, down_translate_tet
+    ### (or just gamma c if the flow cycle is not twisted)
 
     ### next determine a quadrant that contains the puncture p.
     ### choose a vertex of top edge of up_translate_tet
@@ -321,7 +324,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
     flow_intervals, found_parallel_this_time = uniquify_list_of_flow_intervals(flow_intervals)
     if not found_parallel and found_parallel_this_time:
         found_parallel = True
-    if verbose > 1:
+    if verbose >= 2:
         print('num unique flow_intervals', len(flow_intervals))
 
     fund_dom_unique_edges = [t.lower_edge for t in continent_fund_dom_tets]
@@ -337,7 +340,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
         intervals_inside_edge_rectangles.append(flow_intervals_in_e)
     for i, intervals in enumerate(intervals_inside_edge_rectangles):
         e = fund_dom_unique_edges[i]
-        if verbose > 1:
+        if verbose >= 2:
             print('edge below tet', i, 'is index', e.index, 'is red', e.is_red, 'contains intervals', len(intervals))
 
     ### copy punctures around to get all punctures going through a tet rect of fund dom
@@ -538,6 +541,8 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0):
         interval.extend_within_continent()
 
     con.build_boundary_data()
+    if verbose >= 1:
+        print('continent num tetrahedra:', len(con.tetrahedra))
     return con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, all_intervals, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw, found_parallel
 
 def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):

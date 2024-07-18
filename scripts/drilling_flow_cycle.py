@@ -30,8 +30,8 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
     assert is_veering(tri, angle)
     return tri, angle
 
-def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False, return_found_parallel = False, verbose = 0):
-    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = verbose)
+def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False, return_found_parallel = False, use_untwisted_speed_up = True, verbose = 0):
+    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
     if out == None:  ### flow cycle is boundary parallel
         # print('flow_cycle is boundary parallel')
         return None
@@ -49,17 +49,16 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
     
     tri, angle = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
 
+    out_sig = isosig_from_tri_angle(tri, angle)
+    if verbose >= 1:
+        print('drilled sig:', out_sig)
+
+    out = [out_sig]
     if return_tri_angle:
-        if return_found_parallel:
-            return (tri, angle, found_parallel)
-        else:
-            return (tri, angle)
-    else:
-        if return_found_parallel:
-            return (isosig_from_tri_angle(tri, angle), found_parallel)
-        else:
-            return isosig_from_tri_angle(tri, angle)
-    
+        out.extend([tri, angle])
+    if return_found_parallel:
+        out.append(found_parallel)
+    return out
 
 def drill_flow_cycles(veering_isosig, max_length = 2, monochromatic_only = False, max_length_only = False):
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length, monochromatic_only = monochromatic_only, max_length_only = max_length_only)
