@@ -1,9 +1,9 @@
 #
-# z_charge.py
+# winding.py
 #
 
-# Goal - generate z_charges, following [BB] and use them to prove that
-# some manifolds have finitely many veering structures. 
+# Goal - generate windings (called \ZZ--charges by [BB]) and use them
+# to prove that some manifolds have finitely many veering structures.
 
 
 from sage.rings.integer_ring import ZZ
@@ -19,7 +19,7 @@ import flipper
 
 from snappy.snap import t3mlite as t3m
 
-from .taut import is_taut, charge_to_angle, angle_to_charge, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair
+from .taut import is_taut, winding_to_angle, angle_to_winding, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair
 from .taut_polytope import dot_prod, extract_solution, is_layered
 from .veering_tri import is_veering
 from .z2_taut import is_trivial_in_cohomology
@@ -50,7 +50,7 @@ def solution_vector(M):
     sol.extend([0]*2*num_cusps) # zero
     return vector(ZZ, sol)
 
-def angle_equations(M):
+def tet_edge_cusp_equations(M):
     """
     Given a snappy manifold M, returns the matrix of left-hand-sides
     of angle equations (that is, the tet, edge, and cusp equations).
@@ -60,12 +60,14 @@ def angle_equations(M):
     T = Matrix(ZZ, [tet_vector(i, num_tet) for i in range(num_tet)])
     return T.transpose().augment(G.transpose()).transpose() # sigh
 
-def sol_and_kernel(M):
+def windings_vanishing_on_bdy(M):
     """
     Given a snappy manifold M, returns an integer solution to the
-    angle equations, as well as an integer basis for the kernel.
+    tet_edge_cusp_equations, as well as an integer basis for the
+    kernel.  The resulting lattice is the set of windings with trivial
+    boundary cohomology.
     """
-    A = angle_equations(M)
+    A = tet_edge_cusp_equations(M)
     b = solution_vector(M)
     D, U, V = A.smith_form() 
     # UAV = D so Uinv D Vinv = A
@@ -109,43 +111,46 @@ def leading_trailing_deformations(M):
         out.append(vector(defm))
     return out
 
-def has_pi_triple(u):
+def is_flat(u):
+    """
+    Given a (possibly reduced) winding u, decide if it is flat.
+    Note that this is not an affine condition.
+    """
     n = len(u)
     assert n % 3 == 0
-    one = vector([1, 1, 1])
+    v = (a % 2 for a in u)
     for i in range(int(n/3)):
-        if u[3*i:3*i + 3] == one: 
-            return True
-    return False
+        a, b, c = v[3*i:3*i + 3]
+        if a == b == c:  # at least one is odd...
+            return False
+    return True
 
-def reduced_charges(M):
+def flat_reduced_windings(M):
     """
-    Given a snappy manifold M, we find all reduced charges so that:
-    (1) no loop in the triangulation passes an odd number of pi's and
-    (2) no tetrahedron has three pi's.
+    Given a snappy manifold M, we reduce (mod 2) the windings given by
+    windings_vanishing_on_bdy and eliminate the non-flat ones.
     """
-    out = sol_and_kernel(M)
-    x, A = out
-    nt = M.num_tetrahedra()
-    dim = 3*nt
+    x, A = windings_vanishing_on_bdy(M)
+    dim = 3*M.num_tetrahedra()
     V = VectorSpace(ZZ2, dim)
-    AA = V.subspace(A) # the reduced kernel
-    xx = V(x) # the reduced solution
-    
-    charges = [xx + sum(B) for B in powerset(AA.basis())]    
-    charges = [c for c in charges if not has_pi_triple(c)] # reject if there are three pi's in any tet.
-    return charges
+    AA = V.subspace(A)  # the reduced kernel
+    xx = V(x)  # the reduced solution
+
+    diffs = set(sum(B) for B in powerset(AA.basis()))
+    windings = [xx + v for v in diffs]
+    windings = [c for c in windings if is_flat(c)]
+    return windings
 
 def reduced_angles(M):
     """
-    Given a snappy manifold M, compute the reduced charges, convert to
-    angle structures, remove repeated structures (using symmetries of
-    the triangulation), remove non-trivial structures (in cohomology),
-    and return what remains.
+    Given a snappy manifold M, compute the flat reduced charges,
+    convert to angle structures, remove repeated structures (using
+    symmetries of the triangulation), remove non-trivial structures
+    (in cohomology), and return what remains.
     """
-    charges = reduced_charges(M)    
+    windings = flat_reduced_windings(M)    
     tri = regina.Triangulation3(M)
-    angles = [charge_to_angle(c) for c in charges] 
+    angles = [winding_to_angle(c) for c in winding] 
 
     # remove symmetries
     lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]

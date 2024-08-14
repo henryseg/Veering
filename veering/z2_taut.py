@@ -2,7 +2,7 @@
 # taut.py
 #
 
-# functions for working with Z2 taut ideal tris.  
+# functions for working with ZZ2 taut ideal tris.  
 
 import regina
 from copy import deepcopy
@@ -11,7 +11,7 @@ from .taut import liberal, edge_pair_to_edge_numbers, vert_pair_to_edge_pair
 from .fundamental_domain import non_tree_face_loops
 
 
-# check Z2 tautness
+# check ZZ2 tautness
 
 
 @liberal
@@ -78,8 +78,10 @@ def try_add_z2_taut_tet(tri, partial_taut_structure, num_pis_at_edges, remaining
 
 
 def is_trivial_in_cohomology(tri, angle):
-    """Test all loops in this triangulation, do any of them pass an odd number
-    of pi's. If so, return False"""
+    """
+    Test all loops in this triangulation, do any of them pass an odd number
+    of pi's. If so, return False
+    """
     # print('angle', angle)
     loops = non_tree_face_loops(tri, include_tetrahedra = True)
     for (face_inds, tets) in loops:
