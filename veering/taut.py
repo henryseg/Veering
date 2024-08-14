@@ -331,39 +331,6 @@ def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
 pi_edgepair_dict = { (1,0,0) : 0, (0,1,0) : 1, (0,0,1) : 2 }
 
 
-def winding_to_angle(w):
-    """
-    Given a list of 3*n integers with each triple of the form (1,0,0),
-    (0,1,0), or (0,0,1), convert to our angle structure format.
-    """
-    assert len(w) % 3 == 0
-    n = int(round(len(w)/3))
-    out = []
-    for i in range(n):
-        tet = w[ 3*i : 3*i+3 ]
-        out.append( pi_edgepair_dict[tuple(tet)] )
-    return out
-
-
-def angle_to_winding(angle, flipper_format = False):
-    """
-    Given a list of n integers in [0,2], convert to winding format.
-    """
-    if flipper_format:
-        # The veering code uses "vertex with 0 (minus one)". On the
-        # other hand, flipper and t3m use "vertex with 3".
-        # See line 25 of
-        # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
-        angle = [2 - a for a in angle]
-    out = [0] * (3*len(angle))
-    for i, a in enumerate(angle):
-        out[3*i + a] = 1
-    if flipper_format:
-        # flipper adds a variable to homogenise, so we do the same.
-        out.append(-1)
-    return out
-
-
 def there_is_a_pi_here(angle_struct, embed):
     """
     Given an embedding of an edge in a tetrahedron, tells us if there

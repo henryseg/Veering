@@ -19,12 +19,47 @@ import flipper
 
 from snappy.snap import t3mlite as t3m
 
-from .taut import is_taut, winding_to_angle, angle_to_winding, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair
+from .taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair
 from .taut_polytope import dot_prod, extract_solution, is_layered
 from .veering_tri import is_veering
 from .z2_taut import is_trivial_in_cohomology
 
 ZZ2 = ZZ.quotient(ZZ(2))
+
+
+def winding_to_preangle(w):
+    """
+    Given a list of 3*n integers with each triple of the form (1,0,0),
+    (0,1,0), or (0,0,1), convert it to our angle structure format.
+    Note that we may obtain a "preangle" structure as we may not have
+    the edge condition.
+    """
+    assert len(w) % 3 == 0
+    n = int(round(len(w)/3))
+    out = []
+    for i in range(n):
+        tet = w[ 3*i : 3*i+3 ]
+        out.append( pi_edgepair_dict[tuple(tet)] )
+    return out
+
+
+def preangle_to_winding(angle, flipper_format = False):
+    """
+    Given a list of n integers in [0,2], convert to winding format.
+    """
+    if flipper_format:
+        # The veering code uses "vertex with 0 (minus one)". On the
+        # other hand, flipper and t3m use "vertex with 3".
+        # See line 25 of
+        # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
+        angle = [2 - a for a in angle]
+    out = [0] * (3*len(angle))
+    for i, a in enumerate(angle):
+        out[3*i + a] = 1
+    if flipper_format:
+        # flipper adds a variable to homogenise, so we do the same.
+        out.append(-1)
+    return out
 
 
 def tet_vector(i, num_tet):
@@ -36,6 +71,7 @@ def tet_vector(i, num_tet):
         if i == j: out.extend([1]*3)
         else: out.extend([0]*3)
     return out
+
 
 def solution_vector(M):
     """
@@ -50,6 +86,7 @@ def solution_vector(M):
     sol.extend([0]*2*num_cusps) # zero
     return vector(ZZ, sol)
 
+
 def tet_edge_cusp_equations(M):
     """
     Given a snappy manifold M, returns the matrix of left-hand-sides
@@ -59,6 +96,7 @@ def tet_edge_cusp_equations(M):
     G = M.gluing_equations()
     T = Matrix(ZZ, [tet_vector(i, num_tet) for i in range(num_tet)])
     return T.transpose().augment(G.transpose()).transpose() # sigh
+
 
 def windings_vanishing_on_bdy(M):
     """
@@ -94,6 +132,7 @@ def windings_vanishing_on_bdy(M):
     assert A*x == b
     return x, A.right_kernel().basis()
 
+
 def leading_trailing_deformations(M):
     tri = regina.Triangulation3(M)
     num_tet = tri.countTetrahedra()
@@ -111,6 +150,7 @@ def leading_trailing_deformations(M):
         out.append(vector(defm))
     return out
 
+
 def is_flat(u):
     """
     Given a (possibly reduced) winding u, decide if it is flat.
@@ -124,6 +164,7 @@ def is_flat(u):
         if a == b == c:  # at least one is odd...
             return False
     return True
+
 
 def flat_reduced_windings(M):
     """
@@ -141,16 +182,18 @@ def flat_reduced_windings(M):
     windings = [c for c in windings if is_flat(c)]
     return windings
 
-def reduced_angles(M):
+
+def preangles_from_frws(M):
     """
-    Given a snappy manifold M, compute the flat reduced charges,
-    convert to angle structures, remove repeated structures (using
-    symmetries of the triangulation), remove non-trivial structures
-    (in cohomology), and return what remains.
+    Given a snappy manifold M, compute the flat reduced windings,
+    convert to pre-angle structures (as the edge equations may be
+    violated), remove repeated structures (using symmetries of the
+    triangulation), remove non-trivial structures (in ZZ2 cohomology),
+    and return what remains.
     """
-    windings = flat_reduced_windings(M)    
+    windings = flat_reduced_windings(M)
     tri = regina.Triangulation3(M)
-    angles = [winding_to_angle(c) for c in winding] 
+    angles = [winding_to_preangle(c) for c in winding] 
 
     # remove symmetries
     lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]
@@ -186,7 +229,7 @@ def can_deal_with_reduced_angles(M, report = False):
         nv = num_veering_structs(M, angles = angles, use_flipper = False)
         return all(can_deal_with_reduced_angle(tri, angle) for angle in angles), len(angles), nv
     else: 
-        return all(can_deal_with_reduced_angle(tri, angle) for angle in angles) 
+        return all(can_deal_with_reduced_angle(tri, angle) for angle in angles), len(angles)
 
 def num_veering_structs(M, angles = None, use_flipper = True):
     """
