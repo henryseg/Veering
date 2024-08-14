@@ -79,7 +79,7 @@ def make_list_of_tet_with_this_edge_large(tri, branch, return_reverse_map = Fals
     else:
         return out
 
-def find_flow_cycles(tri, branch):
+def generate_simple_flow_cycles(tri, branch):
     """Given a branched surface dual to a triangulation, find all simple flow cycles in the upper flow graph"""
     tet_with_this_edge_large = make_list_of_tet_with_this_edge_large(tri, branch)
     found_loops = []
@@ -181,7 +181,7 @@ def tri_loop_is_boundary_parallel(tri_loop, tri):
 def find_tri_loops(sig):
     tri, angle = isosig_to_tri_angle(sig)
     branch = upper_branched_surface(tri, angle)
-    loops = find_flow_cycles(tri, branch)
+    loops = generate_simple_flow_cycles(tri, branch)
     return [flow_cycle_to_triangle_loop(tri, branch, loop) for loop in loops]
 
 def is_twisted(vt, flow_cycle):

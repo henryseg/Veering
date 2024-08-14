@@ -339,7 +339,7 @@ def drill_flow_cycle_script():
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, complete_tetrahedron_rectangles, make_continent_naive, make_continent_fund_dom
     from draw_drilled_tetrahedra import draw_drilled_tetrahedra
     from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
-    from drill_flow_cycle import triangulation_data_to_tri_angle
+    from drilling_flow_cycle import triangulation_data_to_tri_angle
     from veering.taut import isosig_from_tri_angle
 
     veering_isosig = 'cPcbbbdxm_10' 

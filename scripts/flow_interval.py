@@ -279,12 +279,12 @@ class flow_interval:
     def is_inside_edge_rectangle(self, con_edge):
         return self.is_inside_edge_rectangle_green_sides(con_edge) and self.is_inside_edge_rectangle_purple_sides(con_edge)
 
-    def find_edge_rectangle_we_are_inside(self, tet):
-        """Given tet in the fund dom and in our flow cycle, find an edge of tet whose rectangle contains the flow interval's point"""  
-        for e in tet.edges():
-            if self.is_inside_edge_rectangle(e):
-                return e
-        assert False
+    # def find_edge_rectangle_we_are_inside(self, tet):
+    #     """Given tet in the fund dom and in our flow cycle, find an edge of tet whose rectangle contains the flow interval's point"""  
+    #     for e in tet.edges():
+    #         if self.is_inside_edge_rectangle(e):
+    #             return e
+    #     assert False
 
     def is_green_comparable_with(self, other): ### check if upper tets do not overlap horizontally
         self.extend_within_continent()
@@ -304,7 +304,7 @@ class flow_interval:
         if all([leaf.is_entirely_to_one_side_of(other.tetrahedra[0]) for leaf in purple_boundary]):
             purple_boundary_other = other.tetrahedra[0].get_boundary_cusp_leaves()[1]
             if all([leaf.is_entirely_to_one_side_of(self.tetrahedra[0]) for leaf in purple_boundary_other]):
-                return True ### both checks are necessary - for an example see drill_flow_cycle.drill_flow_cycle('gLLAQbecdfffhhnkqnc_120012', [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
+                return True ### both checks are necessary - for an example see drilling_flow_cycle.drill_flow_cycle('gLLAQbecdfffhhnkqnc_120012', [(0, 4), (4, 5), (2, 4), (1, 2), (5, 1), (0, 4), (4, 0), (0, 4), (4, 5), (2, 4), (1, 2), (5, 1)]
         else:
             return False
 
