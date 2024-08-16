@@ -258,10 +258,11 @@ def check_some_sigs(sigs):
     return (False, None, None)
 
 
-def checking_snappy_manifold(M):
+def check_snappy_manifold(M):
     b, r = can_deal_with_reduced_angles(M)
+    s = M.triangulation_isosig()
     if b:
-        print("can deal with", M, r)
+        print("can deal with", M, s, r)
     else:
         sigs = get_some_sigs(M)
         b, s, r = check_some_sigs(sigs)
@@ -269,19 +270,12 @@ def checking_snappy_manifold(M):
             print("can deal with", M, s, r)
 
             
-def checking_veering_manifold(veering_sig):
-    print(veering_sig)
+def check_veering_sig(veering_sig):
     tri, angle = isosig_to_tri_angle(veering_sig)
     M = snappy.Manifold(tri)
-    if can_deal_with_reduced_angles(M)[0]:
-        print("can deal with", veering_sig)
-    else:
-        sigs = get_some_sigs(M)
-        b, n = check_some_sigs(sigs)
-        if b:
-            print("can deal with", M, b)
+    check_snappy_manifold(M)
 
-    
+
 def num_veering_structs(M, angles = None, use_flipper = True):
     """
     Tries to count them (in a very naive way). 
