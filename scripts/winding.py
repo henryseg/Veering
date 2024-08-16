@@ -19,10 +19,10 @@ import flipper
 
 from snappy.snap import t3mlite as t3m
 
-from .taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair
-from .taut_polytope import dot_prod, extract_solution, is_layered
-from .veering_tri import is_veering
-from .z2_taut import is_trivial_in_cohomology
+from veering.taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair, isosig_to_tri_angle
+from veering.taut_polytope import dot_prod, extract_solution, is_layered, is_torus_bundle
+from veering.veering_tri import is_veering
+from veering.z2_taut import is_trivial_in_cohomology
 
 ZZ2 = ZZ.quotient(ZZ(2))
 
@@ -158,7 +158,7 @@ def is_flat(u):
     """
     n = len(u)
     assert n % 3 == 0
-    v = (a % 2 for a in u)
+    v = [a % 2 for a in u]
     for i in range(int(n/3)):
         a, b, c = v[3*i:3*i + 3]
         if a == b == c:  # at least one is odd...
@@ -177,7 +177,7 @@ def flat_reduced_windings(M):
     AA = V.subspace(A)  # the reduced kernel
     xx = V(x)  # the reduced solution
 
-    diffs = set(sum(B) for B in powerset(AA.basis()))
+    diffs = [sum(B) for B in powerset(AA.basis())]
     windings = [xx + v for v in diffs]
     windings = [c for c in windings if is_flat(c)]
     return windings
@@ -193,7 +193,7 @@ def preangles_from_frws(M):
     """
     windings = flat_reduced_windings(M)
     tri = regina.Triangulation3(M)
-    angles = [winding_to_preangle(c) for c in winding] 
+    angles = [winding_to_preangle(w) for w in windings] 
 
     # remove symmetries
     lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]
@@ -206,41 +206,92 @@ def preangles_from_frws(M):
     angles = [angle for angle in angles if is_trivial_in_cohomology(tri, angle)] 
     return angles
 
+
 def can_deal_with_reduced_angle(tri, angle):
     """
     Returns True or False, as our techniques can recognise the given
     reduced angle structure.
     """
     if not is_taut(tri, angle):
-        return False  
+        return (False, "not taut")
+    if is_torus_bundle(tri, angle):
+        return (True, "torus bundle")
+    if is_veering(tri, angle) and is_layered(tri, angle):
+        return (True, "veering+layered")
     if is_veering(tri, angle):
-        return True
+        return (True, "veering")
     if is_layered(tri, angle):  # has_internal_singularities is not needed here.
-        return True
-    return False
+        return (True, "layered")
+    return (False, None)
 
-def can_deal_with_reduced_angles(M, report = False):
+
+def can_deal_with_reduced_angles(M):
     """
     Returns True if we can deal with all of the reduced angles. 
     """
-    angles = reduced_angles(M)
+    angles = preangles_from_frws(M)
     tri = regina.Triangulation3(M)
-    if report:
-        nv = num_veering_structs(M, angles = angles, use_flipper = False)
-        return all(can_deal_with_reduced_angle(tri, angle) for angle in angles), len(angles), nv
-    else: 
-        return all(can_deal_with_reduced_angle(tri, angle) for angle in angles), len(angles)
+    results = [can_deal_with_reduced_angle(tri, angle) for angle in angles]
+    if any(r[1] == "torus bundle" for r in results):
+        return (True, "torus bundle")
+    return (all(r[0] for r in results), None)
 
+
+def get_some_sigs(M, tries = 10):
+    sigs = set()
+    for i in range(tries):
+        sigs.add(M.triangulation_isosig())
+        M.randomize()
+    return sigs
+
+
+def check_some_sigs(sigs):
+    """
+    Given a list of sigs for a particular manifold, check if, for any
+    one of them, we can deal with all of its angle structures.
+    """
+    for sig in sigs:
+        M = snappy.Manifold(sig)
+        b, r = can_deal_with_reduced_angles(M)
+        if b:
+            return (True, sig, r)
+    return (False, None, None)
+
+
+def checking_snappy_manifold(M):
+    b, r = can_deal_with_reduced_angles(M)
+    if b:
+        print("can deal with", M, r)
+    else:
+        sigs = get_some_sigs(M)
+        b, s, r = check_some_sigs(sigs)
+        if b:
+            print("can deal with", M, s, r)
+
+            
+def checking_veering_manifold(veering_sig):
+    print(veering_sig)
+    tri, angle = isosig_to_tri_angle(veering_sig)
+    M = snappy.Manifold(tri)
+    if can_deal_with_reduced_angles(M)[0]:
+        print("can deal with", veering_sig)
+    else:
+        sigs = get_some_sigs(M)
+        b, n = check_some_sigs(sigs)
+        if b:
+            print("can deal with", M, b)
+
+    
 def num_veering_structs(M, angles = None, use_flipper = True):
     """
     Tries to count them (in a very naive way). 
-    Tries to eliminate overcounting due to symmetries (in reduced_angles)
+    Tries to eliminate overcounting due to symmetries (in preangles_from_frws)
     but will fail if one of the symmetries is hidden by retriangulation. 
     If use_flipper = False then we get a (true) lower bound, since then it only
     counts veering structures on the given triangulation.
     """
     if angles == None:
-        angles = reduced_angles(M)
+        angles = preangles_from_frws(M)
     tri = regina.Triangulation3(M)
     for angle in angles:
         if not is_taut(tri, angle):
