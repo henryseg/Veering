@@ -259,15 +259,16 @@ def check_some_sigs(sigs):
 
 
 def check_snappy_manifold(M):
-    b, r = can_deal_with_reduced_angles(M)
+    ids = M.identify()
     s = M.triangulation_isosig()
+    b, r = can_deal_with_reduced_angles(M)
     if b:
-        print("can deal with", M, s, r)
+        print("can deal with", ids, s, r)
     else:
         sigs = get_some_sigs(M)
         b, s, r = check_some_sigs(sigs)
         if b:
-            print("can deal with", M, s, r)
+            print("can deal with", ids, s, r)
 
             
 def check_veering_sig(veering_sig):
