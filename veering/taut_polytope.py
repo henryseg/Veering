@@ -18,7 +18,7 @@ from sage.modules.free_module_element import vector
 from sage.rings.integer_ring import ZZ
 from sage.geometry.cone import Cone
 
-from .taut import liberal
+from .taut import liberal, taut_regina_angle_struct_to_taut_struct
 from .transverse_taut import is_transverse_taut
 from .taut_homology import edge_equation_matrix_taut, elem_vector, faces_in_smith, rank_of_quotient
 from .fundamental_domain import non_tree_face_cycles
@@ -417,7 +417,7 @@ def cone_in_homology(tri, angle):
 @liberal
 def analyse_many_angles(tri):
     angles = regina.AngleStructures.enumerate(tri, True)
-    angles = [regina_taut_struct_to_ints(angles.structure(i)) for i in range(angles.size())]
+    angles = [taut_regina_angle_struct_to_taut_struct(angles.structure(i)) for i in range(angles.size())]
     dict_of_dimensions = {}
     for angle in angles:
         angle_str = "".join(str(a) for a in angle)
