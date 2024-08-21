@@ -22,7 +22,7 @@ from snappy.snap import t3mlite as t3m
 from veering.taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair, isosig_to_tri_angle
 from veering.taut_polytope import dot_prod, extract_solution, is_layered, is_torus_bundle
 from veering.veering_tri import is_veering
-from veering.z2_taut import is_trivial_in_cohomology
+from veering.z2_taut import is_trivial_in_z2_cohomology
 
 ZZ2 = ZZ.quotient(ZZ(2))
 
@@ -202,8 +202,8 @@ def preangles_from_frws(M):
         if angle not in angles:
             angles.append(angle) 
 
-    # remove the angles that flip a triangle over 
-    angles = [angle for angle in angles if is_trivial_in_cohomology(tri, angle)] 
+    # remove the angles that flip a triangle over
+    angles = [angle for angle in angles if is_trivial_in_z2_cohomology(tri, angle)] 
     return angles
 
 
