@@ -77,7 +77,7 @@ def try_add_z2_taut_tet(tri, partial_taut_structure, num_pis_at_edges, remaining
     try_build_z2_taut_struct(tri, new_partial_taut_structure, new_num_pis_at_edges, new_remaining_edge_degrees, pass_back_structures)
 
 
-def is_trivial_in_cohomology(tri, angle):
+def is_trivial_in_z2_cohomology(tri, angle):
     """
     Test all loops in this triangulation, do any of them pass an odd number
     of pi's. If so, return False
@@ -133,7 +133,7 @@ def cohomology_loops(tri):
 
 def find_cohomology_trivial_z2_taut_structures(tri):
     structs = find_z2_taut_structures(tri)
-    return [s for s in structs if is_trivial_in_cohomology(tri, s)]
+    return [s for s in structs if is_trivial_in_z2_cohomology(tri, s)]
 
 
 def test():
