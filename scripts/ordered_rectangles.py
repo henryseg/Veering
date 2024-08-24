@@ -1,4 +1,6 @@
 from veering.taut import edge_num_to_vert_pair
+import continent
+import flow_interval
 
 def is_between(i, j, k): ### is j between i and k inclusive
     return (i - j) * (j - k) >= 0
@@ -128,7 +130,7 @@ class ordered_tetrahedron_rectangle(ordered_rectangle):
         self.W_ind, self.E_ind = bottom_vertices
         self.W, self.E = self.horiz_ordering[0], self.horiz_ordering[-1] 
         self.S, self.N = self.vert_ordering[0], self.vert_ordering[-1] 
-        self.Regina2cusp = {self.W_ind: self.W, self.E_ind: self.E, self.S_ind: self.S, self.N_ind: self.N}
+        self.Regina2cusp = [{self.W_ind: self.W, self.E_ind: self.E, self.S_ind: self.S, self.N_ind: self.N}[i] for i in range(4)]
         self.generate_sub_cells()
 
     def face(self, ind):
@@ -260,7 +262,7 @@ def new_rectangle_equiv_class(new_rect, containing_old_tet_rect):
     im = containing_old_tet_rect.sub_cell_image(3, 0, new_rect)
     new_rect_sig = (3, containing_old_tet_rect.tet_index, im) 
     this_rect_equiv_class.add(new_rect_sig)  
-    return this_rect_equiv_class 
+    return this_rect_equiv_class
 
 # def anticlockwise_ordering(horiz_verts, vertical_verts):
 #     W = 0
@@ -273,12 +275,15 @@ def new_rectangle_equiv_class(new_rect, containing_old_tet_rect):
 #         N = 1
 #     return [E, N, W, S]
 
+
+
 class new_tetrahedron:
-    def __init__(self, equiv_class):
+    def __init__(self, equiv_class, old_tet_rectangles):
         self.equiv_class = list(equiv_class)
         self.equiv_class.sort()
-        self.representative = self.equiv_class[0]
+        self.representative = self.equiv_class[-1]
         self.dim, self.ind, verts = self.representative
+        assert self.dim == 3 ### must be in some old tet rect. We want this for the rep for the cusp indices
         self.horiz_verts, self.vertical_verts = verts
         self.anticlockwise_ordering = None
         self.set_anticlockwise_ordering()
@@ -290,6 +295,19 @@ class new_tetrahedron:
         self.adjGluing = []
         for i in range(4):
             self.adjGluing.append([None, None, None, None])  ### permutation for each gluing
+        self.cusp_index = [] ### what is the cusp index in the manifold for this vertex. n for the newly drilled cusp
+        
+        ### fix
+        old_tet_rectangle = old_tet_rectangles[self.ind]
+        for i in range(4):
+            j = self.anticlockwise_to_horiz[i]
+            ind = self.horiz_verts[j]
+            if type(old_tet_rectangle.horiz_ordering[ind]) == continent.vertex:
+                self.cusp_index.append(old_tet_rectangle.horiz_ordering[ind].Regina_cusp_num)
+            else:
+                assert type(old_tet_rectangle.horiz_ordering[ind]) == flow_interval.flow_interval
+                self.cusp_index.append(old_tet_rectangle.con.vt.tri.countVertices()) ### new cusp
+        # print('self.cusp_index', self.cusp_index)
 
     def set_anticlockwise_ordering(self):
         W, E = 0, 3
@@ -382,7 +400,7 @@ def build_drilled_triangulation_data(old_tet_rectangles):
     new_tetrahedra = []
     new_faces = []
     for equiv_class in new_tet_equiv_classes:
-        new_tetrahedra.append(new_tetrahedron(equiv_class))
+        new_tetrahedra.append(new_tetrahedron(equiv_class, old_tet_rectangles))
     for equiv_class in new_face_equiv_classes:
         new_faces.append(new_triangle(equiv_class))
     for i, new_tet in enumerate(new_tetrahedra):
@@ -399,6 +417,7 @@ def build_drilled_triangulation_data(old_tet_rectangles):
         assert len(new_face.tet_face) == 2
         new_face.other_tet_ind = {new_face.tet_face[0]: new_face.tet_face[1], new_face.tet_face[1]: new_face.tet_face[0]}
     for new_tet in new_tetrahedra:
+        # print(new_tet.cusp_index)
         for i in range(4):
             face = new_tet.faces[i]
             new_tet.adjTetFace[i] = face.other_tet_ind[(new_tet, i)]

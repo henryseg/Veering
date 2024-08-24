@@ -9,7 +9,7 @@ from veering.veering_tri import veering_triangulation
 from veering.fundamental_domain import spanning_dual_tree
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
-from circular_order import are_anticlockwise, are_linking, are_anticlockwise_pairs
+from circular_order import are_anticlockwise, are_linking, are_anticlockwise_pairs, are_linking_pairs
 # from sage.rings.rational_field import QQ 
 # from fractions import Fraction
 
@@ -24,10 +24,11 @@ class vertex:
         self.pos = pos  ### complex position, not used for circular pictures
         self.ladderpole_ancestors = set() ## which ladderpole edges did you come from
         self.continent.vertices.append(self)
-        self.circle_pos = None
         self.cusp_leaves = []
         # self.circular_ordering_triangle_towards_root = None
         self.rational_position = None ### in the Farey triangulation
+        self.Regina_cusp_num = None ### which cusp of the manifold is this
+        self.circle_pos = None
 
     def coastal_index(self):
         return self.continent.coast.index(self)
@@ -95,15 +96,17 @@ class landscape_edge:
     def coastal_index(self):
         return self.continent.coastal_edges.index(self)
 
-    def end_positions(self):
-        # return [v.coastal_index() for v in self.vertices]
+    def drawing_end_positions(self):  ### only used for drawing, rational is faster
+        return [v.coastal_index() for v in self.vertices]
+
+    def rational_end_positions(self):
         return [v.get_rational_position() for v in self.vertices]
 
     def links(self, other):
         """Returns True if this edge links other (could be leaf or edge)"""
-        a1, a2 = self.end_positions()
-        b1, b2 = other.end_positions()
-        return are_linking(a1, a2, b1, b2)
+        a1, a2 = self.rational_end_positions()
+        b1, b2 = other.rational_end_positions()
+        return are_linking_pairs(a1, a2, b1, b2)
 
     def is_coastal(self):
         return self in self.continent.coastal_edges ### need to make coast for this to work
@@ -131,15 +134,15 @@ class landscape_edge:
         first_leaf = leaves[0]
         last_leaf = leaves[-1]
         # if are_anticlockwise(u.coastal_index(), first_leaf.end_positions()[1], v.coastal_index()):
-        if are_anticlockwise_pairs(u.get_rational_position(), first_leaf.end_positions()[1], v.get_rational_position()):
+        if are_anticlockwise_pairs(u.get_rational_position(), first_leaf.rational_end_positions()[1], v.get_rational_position()):
             self.rectangle_sides_data[1] = first_leaf
         # elif are_anticlockwise(u.coastal_index(), v.coastal_index(), last_leaf.end_positions()[1]):
-        elif are_anticlockwise_pairs(u.get_rational_position(), v.get_rational_position(), last_leaf.end_positions()[1]):
+        elif are_anticlockwise_pairs(u.get_rational_position(), v.get_rational_position(), last_leaf.rational_end_positions()[1]):
             self.rectangle_sides_data[0] = last_leaf
         else:      
             for i, leaf in enumerate(leaves):
                 # if are_anticlockwise(u.coastal_index(), leaf.end_positions()[1], v.coastal_index()):
-                if are_anticlockwise_pairs(u.get_rational_position(), leaf.end_positions()[1], v.get_rational_position()):
+                if are_anticlockwise_pairs(u.get_rational_position(), leaf.rational_end_positions()[1], v.get_rational_position()):
                     self.rectangle_sides_data[0] = leaves[i-1]
                     self.rectangle_sides_data[1] = leaf
                     break
@@ -147,15 +150,15 @@ class landscape_edge:
         first_leaf = leaves[0]
         last_leaf = leaves[-1]
         # if are_anticlockwise(v.coastal_index(), first_leaf.end_positions()[1], u.coastal_index()):
-        if are_anticlockwise_pairs(v.get_rational_position(), first_leaf.end_positions()[1], u.get_rational_position()):
+        if are_anticlockwise_pairs(v.get_rational_position(), first_leaf.rational_end_positions()[1], u.get_rational_position()):
             self.rectangle_sides_data[3] = first_leaf
         # elif are_anticlockwise(v.coastal_index(), u.coastal_index(), last_leaf.end_positions()[1]):
-        elif are_anticlockwise_pairs(v.get_rational_position(), u.get_rational_position(), last_leaf.end_positions()[1]):
+        elif are_anticlockwise_pairs(v.get_rational_position(), u.get_rational_position(), last_leaf.rational_end_positions()[1]):
             self.rectangle_sides_data[2] = last_leaf
         else:      
             for i, leaf in enumerate(leaves):
                 # if are_anticlockwise(v.coastal_index(), leaf.end_positions()[1], u.coastal_index()):
-                if are_anticlockwise_pairs(v.get_rational_position(), leaf.end_positions()[1], u.get_rational_position()):
+                if are_anticlockwise_pairs(v.get_rational_position(), leaf.rational_end_positions()[1], u.get_rational_position()):
                     self.rectangle_sides_data[2] = leaves[i-1]
                     self.rectangle_sides_data[3] = leaf
                     break
@@ -256,7 +259,14 @@ class cusp_leaf:
         self.coastal_edge = coastal_edge
         self.is_upper = is_upper 
 
-    def end_positions(self):
+    def drawing_end_positions(self):
+        start = self.cusp.coastal_index()
+        index_on_edge = self.coastal_edge.cusp_leaves.index(self)
+        end = self.coastal_edge.coastal_index() + ((index_on_edge) + 1)/(len(self.coastal_edge.cusp_leaves) + 1)
+        ### float is ok for drawing, we don't use this for rigorous calculations
+        return (start, end)
+
+    def rational_end_positions(self):
         # start = self.cusp.coastal_index()
         # index_on_edge = self.coastal_edge.cusp_leaves.index(self)
 
@@ -280,9 +290,9 @@ class cusp_leaf:
 
     def links(self, other):
         """Returns True if this cusp leaf links other (could be leaf or edge)"""
-        a1, a2 = self.end_positions()
-        b1, b2 = other.end_positions()
-        return are_linking(a1, a2, b1, b2)  ### will break if two leaves end on the same edge 
+        a1, a2 = self.rational_end_positions()
+        b1, b2 = other.rational_end_positions()
+        return are_linking_pairs(a1, a2, b1, b2)  ### will break if two leaves end on the same edge 
 
         ### have faces know about the cusp leaves that start there, and vice versa?
         ### leave until we need it
@@ -291,7 +301,7 @@ class cusp_leaf:
         ### if the cusp is to the left of the oriented leaf, return true
         ### In particular, a leaf does _not_ see its own cusp to its left 
 
-        start, end = self.end_positions()
+        start, end = self.rational_end_positions()
         # return are_anticlockwise(start, end, cusp.coastal_index())
         return are_anticlockwise_pairs(start, end, cusp.get_rational_position())
 
@@ -299,7 +309,7 @@ class cusp_leaf:
     #     ### if the cusp is to the right of the oriented leaf, return true
     #     ### In particular, a leaf does _not_ see its own cusp to its right
 
-    #     start, end = self.end_positions()
+    #     start, end = self.rational_end_positions()
     #     return are_anticlockwise(start, cusp.coastal_index(), end)
 
     # def is_entirely_to_one_side_of(self, tet): ### are all of the cusps of tet on one or the other side of self?
@@ -787,7 +797,7 @@ def farey_sum(a, b):
     return (a1 + b1, a2 + b2)
 
 class continent:
-    def __init__(self, vt, initial_tet_face, desired_vertices = []):
+    def __init__(self, vt, initial_tet_face, desired_vertices = [], for_drawing = False):
         # print 'initializing continent'
         self.vt = vt
         self.triangles = [] 
@@ -815,6 +825,8 @@ class continent:
         self.upper_landscape_edges = set([])
         self.lower_landscape_edges = set([])
         self.coastal_edges = None
+
+        self.for_drawing = for_drawing ### if True, do extra work that makes things a bit slower
 
         # self.circular_ordering_triangles = []
 
@@ -868,6 +880,11 @@ class continent:
         vert_b = self.vertices[face_b]
         vert_c = self.vertices[face_c]
         vert_d = self.vertices[face_d]
+
+        vert_a.Regina_cusp_num = tet.vertex(face_a).index()
+        vert_b.Regina_cusp_num = tet.vertex(face_b).index()
+        vert_c.Regina_cusp_num = tet.vertex(face_c).index()
+        vert_d.Regina_cusp_num = tet.vertex(face_d).index()
 
         vert_a.rational_position = (0,1)
         vert_b.rational_position = None ### this one is infinity
@@ -1350,11 +1367,13 @@ class continent:
         else:
             vert_t = vertex( self, None)
 
-        ##### insert vert_t into self.coast ### commented out for speed in drilling:
-        # if vert_b == self.infinity:
-        #     self.coast.append( vert_t )
-        # else:
-        #     self.coast.insert( self.coast.index(vert_b), vert_t )
+        ##### insert vert_t into self.coast 
+        ### do not do if we are not drawing pictures: is slow
+        if self.for_drawing:
+            if vert_b == self.infinity:
+                self.coast.append( vert_t )
+            else:
+                self.coast.insert( self.coast.index(vert_b), vert_t )
 
         if self.desired_vertices != []:
             if self.infinity in triangle.vertices:
@@ -1400,8 +1419,9 @@ class continent:
         edge_ct = landscape_edge(self, [vert_c, vert_t], edge_ct_index, far_edge_colour == "red") ## never coastal
 
         ### commented out for speed in drilling
-        # coastal_index = self.coast.index(vert_a)
-        # self.coastal_edges = self.coastal_edges[:coastal_index] + [edge_at, edge_bt] + self.coastal_edges[coastal_index + 1:]
+        if self.for_drawing:
+            coastal_index = self.coast.index(vert_a)
+            self.coastal_edges = self.coastal_edges[:coastal_index] + [edge_at, edge_bt] + self.coastal_edges[coastal_index + 1:]
 
         if triangle.is_red == triangle.is_upper:
             edge_bc, edge_ca, edge_ab = triangle.edges 
@@ -1420,6 +1440,7 @@ class continent:
         else:
             triangle_c.update_edges( [edge_bt, edge_ab, edge_at] )
 
+        vert_t.Regina_cusp_num = tet.vertex(face_t).index()
         vert_t.rational_position = edge_ab.rational_position
         a_rational_position = vert_a.get_rational_position(other = vert_t.rational_position)
         edge_at.rational_position = farey_sum(a_rational_position, vert_t.rational_position)

@@ -24,11 +24,11 @@ def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
     return con
 
-def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50):
+def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50, for_drawing = False):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
     initial_tet_face = tet_face(vt, 0, 0, verts_pos = [None, None, None, None])
-    con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
+    con = continent( vt, initial_tet_face, for_drawing = for_drawing) #, desired_vertices = desired_vertices )
     continent_fund_dom_tets = con.build_triangulation_fundamental_domain(max_num_tetrahedra = max_num_tetrahedra)
     con.build_boundary_data()
     # print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
@@ -154,11 +154,12 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # print('did not find strip vertex')
     # return (None, None, candidate_triangles) ### testing
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = True, verbose = 0):
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = True, verbose = 0, for_drawing = False):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
-    con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig)
+    con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig, for_drawing = for_drawing)
+    con.for_drawing = for_drawing
     vt = con.vt
     flow_cycle_is_twisted = is_twisted(vt, flow_cycle)
     if verbose > 0:
@@ -544,32 +545,6 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_sp
     if verbose >= 1:
         print('continent num tetrahedra:', len(con.tetrahedra))
     return con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, all_intervals, continent_fund_dom_tets, leaves_to_draw, triangles_to_draw, found_parallel
-
-def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
-    """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""
-    k = 0
-    for tet in tetrahedra_to_complete:
-        for v in tet.vertices:
-            # print('tet vert age', con.vertices.index(v))
-            # con.build_boundary_data()
-            # con.install_thorn_ends()
-            sides = tet_rectangle_sides(tet, v)
-            for direction in range(2):
-                while sides[direction] == None:
-                    # print('direction, k', direction, k)
-                    e = con.coastal_edges[(v.coastal_index() - direction)%len(con.coast)] 
-                    triangles = e.boundary_triangles()  ### grow around this edge
-                    if triangles[0].is_upper != (k % 2 == 0): ### xor, alternate which one we add to
-                        con.bury(triangles[0])
-                    else:
-                        con.bury(triangles[1])
-                    # con.build_boundary_data()
-                    # con.install_thorn_ends()
-                    sides = tet_rectangle_sides(tet, v)
-                    k += 1
-                    if k > 50:
-                        print('bail')
-                        return None
 
 def get_fund_domain_tetrahedra(con):
     num_tet = con.vt.tri.countTetrahedra()

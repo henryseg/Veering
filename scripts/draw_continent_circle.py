@@ -153,14 +153,14 @@ def tet_rectangle_sides(tet, v):
     ### a side is a pair (v, thorn_end), where v is the cusp and thorn_end is (coastal_arc, index_on_that_arc)
     ### we are looking for at most two cusp leaves to form the sides
 
-    if v in tet.upper_edge().vertices:
-        b = tet.upper_edge().other_end[v]
-        c, d = tet.lower_edge().vertices
+    if v in tet.upper_edge.vertices:
+        b = tet.upper_edge.other_end[v]
+        c, d = tet.lower_edge.vertices      ### FIX, this is old...
         thorn_ends = v.green_thorn_ends
         other_colour_thorn_ends = v.purple_thorn_ends
     else:
-        b = tet.lower_edge().other_end[v]
-        c, d = tet.upper_edge().vertices
+        b = tet.lower_edge.other_end[v]
+        c, d = tet.upper_edge.vertices
         thorn_ends = v.purple_thorn_ends
         other_colour_thorn_ends = v.green_thorn_ends
     
@@ -185,6 +185,32 @@ def tet_rectangle_sides(tet, v):
             # print('sn')
             return [ (v, other_colour_thorn_ends[-1]), None ]
 
+def complete_tetrahedron_rectangles(con, tetrahedra_to_complete):
+    """grow the continent so that the given tetrahedra have full tetrahedron rectangles within the continent"""
+    k = 0
+    for tet in tetrahedra_to_complete:
+        for v in tet.vertices:
+            # print('tet vert age', con.vertices.index(v))
+            # con.build_boundary_data()
+            # con.install_thorn_ends()
+            sides = tet_rectangle_sides(tet, v)
+            for direction in range(2):
+                while sides[direction] == None:
+                    # print('direction, k', direction, k)
+                    e = con.coastal_edges[(v.coastal_index() - direction)%len(con.coast)] 
+                    triangles = e.boundary_triangles()  ### grow around this edge
+                    if triangles[0].is_upper != (k % 2 == 0): ### xor, alternate which one we add to
+                        con.bury(triangles[0])
+                    else:
+                        con.bury(triangles[1])
+                    # con.build_boundary_data()
+                    # con.install_thorn_ends()
+                    sides = tet_rectangle_sides(tet, v)
+                    k += 1
+                    if k > 50:
+                        print('bail')
+                        return None
+
 def tet_purple_rectangle_sides(tet, actually_do_green = False):
     out = []
     if not actually_do_green:
@@ -197,8 +223,10 @@ def tet_purple_rectangle_sides(tet, actually_do_green = False):
 
 def draw_edge(e, edge_thickness, edge_colours, scl, canv):
     col = edge_colours[e.is_red]
-    u, v = e.vertices
-    p = make_arc(u.circle_pos, v.circle_pos)
+    start, end = e.drawing_end_positions()
+    start = circle_position(start, len(e.continent.coast))
+    end = circle_position(end, len(e.continent.coast))
+    p = make_arc(start, end)
     p = p.transformed(scl)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, col])
 
@@ -214,7 +242,7 @@ def draw_tetrahedron(t, edge_thickness, edge_colours, scl, canv):
 
 def draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv):
     col = leaf_colours[leaf.is_upper]
-    start, end = leaf.end_positions()
+    start, end = leaf.drawing_end_positions()
     start = circle_position(start, len(leaf.continent.coast))
     end = circle_position(end, len(leaf.continent.coast))
     p = make_arc(start, end)
@@ -224,13 +252,14 @@ def draw_leaf(leaf, leaf_thickness, leaf_colours, scl, canv):
 def draw_edge_rectangle_half(l, m, leaf_thickness, leaf_colours, scl, canv):
     if l == None and m != None:
         draw_leaf(m, leaf_thickness, leaf_colours, scl, canv)
+        ### doesnt return anything, can make other things break...
     elif m == None and l != None:
         draw_leaf(l, leaf_thickness, leaf_colours, scl, canv)
     elif l != None and m != None:
-        l_start, l_end = l.end_positions()
+        l_start, l_end = l.drawing_end_positions()
         l_start = circle_position(l_start, len(l.continent.coast))
         l_end = circle_position(l_end, len(l.continent.coast))
-        m_start, m_end = m.end_positions()
+        m_start, m_end = m.drawing_end_positions()
         m_start = circle_position(m_start, len(m.continent.coast))
         m_end = circle_position(m_end, len(m.continent.coast))
 
@@ -264,7 +293,8 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     intervals_to_draw = [],
     edge_thickness = 0.02,
     leaf_thickness = 0.03,
-    transparency = 0.9):
+    transparency = 0.9,
+    text_size = -4):
     
     # ### check edge rectangle
     # check_edge = con.edges[240]
@@ -293,7 +323,9 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         v.circle_pos = complex(cos(t), sin(t))
         vert_pos = v.circle_pos * 1.01 * global_scale_up
         if draw_labels:
-            canv.text(vert_pos.real, vert_pos.imag, "$"+str(con.vertices.index(v))+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
+            # label = "$"+str(con.vertices.index(v))+"$"
+            label = "$"+str(v.Regina_cusp_num)+"$"
+            canv.text(vert_pos.real, vert_pos.imag, label, textattrs=[text.size(text_size), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
 
         # vert_pos2 = v.circle_pos * 1.2 * global_scale_up
         # p = path.path(path.moveto(vert_pos.real, vert_pos.imag), path.lineto(vert_pos2.real, vert_pos2.imag))
@@ -322,7 +354,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         for v in [v for v in con.coast if v.fund_dom_tet_nums != []]:
             vert_pos = v.circle_pos * 1.03 * global_scale_up
             if draw_labels:
-                canv.text(vert_pos.real, vert_pos.imag, "$"+str(v.fund_dom_tet_nums)+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
+                canv.text(vert_pos.real, vert_pos.imag, "$"+str(v.fund_dom_tet_nums)+"$", textattrs=[text.size(text_size), text.halign.left, text.valign.middle,trafo.rotate((180/pi) * atan2(vert_pos.imag, vert_pos.real))])
 
 
     # lower_colours = {True: color.rgb(0.5,0.3,0), False: color.rgb(0,0.3,0.5)}
@@ -398,7 +430,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         #             leaves[purple].append(leaf)
         # for col in [purple, green]:
         #     for leaf in leaves[col]:
-        #         start, end = leaf.end_positions()
+        #         start, end = leaf.drawing_end_positions()
         #         start = circle_position(start, len(con.coast))
         #         end = circle_position(end, len(con.coast))
         #         p = make_arc(start, end)
@@ -463,11 +495,11 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
         intersections2 = []
         for l in g:
             intersections1 = []
-            l_start, l_end = l.end_positions()
+            l_start, l_end = l.drawing_end_positions()
             l_start = circle_position(l_start, len(l.continent.coast))
             l_end = circle_position(l_end, len(l.continent.coast))
             for m in p:
-                m_start, m_end = m.end_positions()
+                m_start, m_end = m.drawing_end_positions()
                 m_start = circle_position(m_start, len(m.continent.coast))
                 m_end = circle_position(m_end, len(m.continent.coast))
 
@@ -502,7 +534,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
 
         text_offset = 0.25
         text_pos = global_scale_up * text_pos + complex(0, text_offset*interval.owning_tet_index) ### move labels off of each other 
-        canv.text(text_pos.real, text_pos.imag, "$"+interval.name+"$", textattrs=[text.size(-4), text.halign.left, text.valign.middle])
+        canv.text(text_pos.real, text_pos.imag, "$"+interval.name+"$", textattrs=[text.size(text_size), text.halign.left, text.valign.middle])
 
 
 
@@ -522,7 +554,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
                 #     col = green
                 # else:
                 #     col = purple
-                # start, end = leaf.end_positions()
+                # start, end = leaf.drawing_end_positions()
                 # start = circle_position(start, len(con.coast))
                 # end = circle_position(end, len(con.coast))
                 # p = make_arc(start, end)
@@ -543,7 +575,7 @@ def draw_continent_circle(con, name = "", draw_labels = True, draw_upper_landsca
     #             col = green
     #         else:
     #             col = purple
-    #         start, end = leaf.end_positions()
+    #         start, end = leaf.drawing_end_positions()
     #         start = circle_position(start, len(con.coast))
     #         end = circle_position(end, len(con.coast))
     #         p = make_arc(start, end)

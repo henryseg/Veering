@@ -237,7 +237,7 @@ def can_deal_with_reduced_angles(M):
     return (all(r[0] for r in results), None)
 
 
-def get_some_sigs(M, tries = 10):
+def get_some_sigs(M, tries = 20):
     sigs = set()
     for i in range(tries):
         sigs.add(M.triangulation_isosig())

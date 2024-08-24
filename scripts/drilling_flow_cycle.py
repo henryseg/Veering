@@ -28,7 +28,23 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
     # print('angle struct', angle)
     # print('countBoundaryComponents', tri.countBoundaryComponents())
     assert is_veering(tri, angle)
-    return tri, angle
+    cusp_mapping = []
+    # print('tri.countVertices()', tri.countVertices())
+    for i in range(tri.countVertices()):
+        # print('vertex', i)
+        v = tri.vertex(i)
+        cusp_ind_measurements = []
+        for embed in v.embeddings():
+            tet_index = embed.simplex().index()
+            vert_num = embed.face()
+            # print(tet_index, vert_num)
+            cusp_ind_measurements.append(new_tetrahedra[tet_index].cusp_index[vert_num])
+        cusp_ind = cusp_ind_measurements[0]
+        # print(cusp_ind_measurements)
+        assert all([cusp_ind == cusp_ind_m for cusp_ind_m in cusp_ind_measurements]) 
+        cusp_mapping.append(cusp_ind)
+
+    return tri, angle, cusp_mapping
 
 def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False, return_found_parallel = False, use_untwisted_speed_up = True, verbose = 0):
     out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
@@ -37,7 +53,7 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
         return None
     con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _, found_parallel = out
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
-    new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
+    new_tetrahedra, new_faces = build_drilled_triangulation_data(con, old_tet_rectangles)
     
     if draw_rectangles:
         name = veering_isosig + '' + str(flow_cycle) + '_drill'
@@ -47,7 +63,7 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
         tetrahedra_chunks = tetrahedra_chunks,
         old_tet_rectangles = old_tet_rectangles)
     
-    tri, angle = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
+    tri, angle, cusp_mapping = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
 
     out_sig = isosig_from_tri_angle(tri, angle)
     if verbose >= 1:
