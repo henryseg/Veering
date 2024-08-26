@@ -63,14 +63,14 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
         tetrahedra_chunks = tetrahedra_chunks,
         old_tet_rectangles = old_tet_rectangles)
     
-    tri, angle, cusp_mapping = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
+    built_tri, built_angle, built_to_original_cusp_mapping = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
 
-    new_sig, isom, isosig_tri = isosig_from_tri_angle(tri, angle, return_isom = True, return_Regina_tri = True)
+    new_sig, isom, isosig_tri = isosig_from_tri_angle(built_tri, built_angle, return_isom = True, return_Regina_tri = True)
 
     if return_cusp_mapping:
-        cusp_mapping_isosig = []
-        for i in range(tri.countVertices()):
-            v = tri.vertex(i)
+        isosig_to_built_cusp_mapping = [None] * isosig_tri.countVertices()
+        for i in range(built_tri.countVertices()):
+            v = built_tri.vertex(i)
             mapped_cusp_indices = []
             for embed in v.embeddings():
                 tet_index = embed.simplex().index()
@@ -81,18 +81,20 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
                 mapped_cusp_indices.append(mapped_v.index())
             cusp_ind = mapped_cusp_indices[0]
             assert all([cusp_ind == cusp_ind_m for cusp_ind_m in mapped_cusp_indices])
-            cusp_mapping_isosig.append(cusp_ind)
+            isosig_to_built_cusp_mapping[cusp_ind] = i
+
+        isosig_to_original_cusp_mapping = [built_to_original_cusp_mapping[ind] for ind in isosig_to_built_cusp_mapping]
 
     if verbose >= 1:
         print('drilled sig:', new_sig)
 
     out = [new_sig]
     if return_tri_angle:
-        out.extend([tri, angle])
+        out.extend([built_tri, built_angle])
     if return_found_parallel:
         out.append(found_parallel)
     if return_cusp_mapping:
-        out.append(cusp_mapping_isosig)
+        out.append(isosig_to_original_cusp_mapping)
     return out
 
 def drill_flow_cycles(veering_isosig, max_length = 2, monochromatic_only = False, max_length_only = False):
