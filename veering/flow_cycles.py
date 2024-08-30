@@ -261,7 +261,7 @@ def is_power(flow_cycle):
     return False
 
 ### new version generates non-simple cycles as well. Is not efficient, but we will not be able to drill long cycles quickly anyway
-def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = False, monochromatic_only = False, max_length_only = False):
+def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = False, monochromatic_only = False, min_length = None):
     tri, angle = isosig_to_tri_angle(sig)
     edge_colours = is_veering(tri, angle, return_type = "veering_colours")
     branch = upper_branched_surface(tri, angle)
@@ -312,12 +312,12 @@ def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = False, mono
     flow_cycles.sort()
     if include_num_steps_up:
         flow_cycles.sort(key = lambda x: len(x[0]))
-        if max_length_only:
-            flow_cycles = [c for c in flow_cycles if len(c[0]) == max_length]
+        if min_length != None:
+            flow_cycles = [c for c in flow_cycles if len(c[0]) >= min_length]
     else:
         flow_cycles.sort(key = lambda x: len(x))
-        if max_length_only:
-            flow_cycles = [c for c in flow_cycles if len(c) == max_length]
+        if min_length != None:
+            flow_cycles = [c for c in flow_cycles if len(c) >= min_length]
     return flow_cycles
 
 

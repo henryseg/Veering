@@ -97,7 +97,7 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
         out.append(isosig_to_original_cusp_mapping)
     return out
 
-def drill_flow_cycles(veering_isosig, max_length = 2, monochromatic_only = False, max_length_only = False):
+def drill_flow_cycles(veering_isosig, max_length = 2, monochromatic_only = False, min_length = None):
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length, monochromatic_only = monochromatic_only, max_length_only = max_length_only)
     for cycle, num_steps_up in cycles:
         print(veering_isosig, num_steps_up, cycle, drill_flow_cycle(veering_isosig, cycle)) 
