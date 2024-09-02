@@ -126,7 +126,7 @@ def get_tet_top_and_bottom_edges(tet_vert_coorientations, tet):
     bottom_edge_num = vert_pair_to_edge_num[tuple(bottom_vert_nums)]
     return [tet.edge(top_edge_num), tet.edge(bottom_edge_num)]
 
-def get_top_and_bottom_nums(tet_vert_coors, tet_num):
+def get_top_and_bottom_vert_nums(tet_vert_coors, tet_num):
     t0, t1 = get_tet_top_vert_nums(tet_vert_coors, tet_num)
     bottom_vert_nums = [0,1,2,3]
     bottom_vert_nums.remove(t0)

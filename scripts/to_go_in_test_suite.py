@@ -115,14 +115,14 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
                 for i in range(drilled_tri.countVertices()):
                     corresponding_original_cusp_index = isosig_to_original_cusp_mapping[i]
                     if corresponding_original_cusp_index == tri.countVertices(): ### this is the new cusp
-                        if not found_parallel:
+                        if not found_parallel: 
                             if fc_is_twisted:
                                 assert drilled_ladder_counts[i] == 2, 'drilled ladder count wrong, twisted'
                             else:
                                 assert drilled_ladder_counts[i] == 4, 'drilled ladder count wrong, untwisted'
                         else: ### we drill along the core of a Mobius strip. Example: dLQacccjsnk_200 flow cycle ((0, 3),)
                             assert drilled_ladder_counts[i] == 2, 'drilled ladder count wrong, Mobius strip core'
-                    else:
+                    else:  ### means that fc is the boundary of a Mobius strip, and we actually drill the core of the strip
                         # print('i', i, 'corresponding_original_cusp_index', corresponding_original_cusp_index)
                         assert drilled_ladder_counts[i] == original_ladder_counts[corresponding_original_cusp_index], 'cusp ' + str(corresponding_original_cusp_index) + ' changed number of ladders when we drilled'
                     

@@ -8,8 +8,8 @@ import regina
 from functools import reduce
 
 from .branched_surface import upper_branched_surface, branch_num_to_large_edge_and_mixed_edge_pair_num, isosig_from_tri_angle_branch, has_non_sing_semiflow
-from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut, edge_side_face_collections
-from .taut import isosig_to_tri_angle, edge_num_to_vert_pair
+from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut, edge_side_face_collections, get_top_and_bottom_vert_nums
+from .taut import isosig_to_tri_angle, edge_num_to_vert_pair, vert_pair_to_edge_num
 from .veering_tri import is_veering, is_AB_turn
 from .drill import drill
 
@@ -320,7 +320,63 @@ def generate_flow_cycles(sig, max_length = 5, include_num_steps_up = False, mono
             flow_cycles = [c for c in flow_cycles if len(c) >= min_length]
     return flow_cycles
 
+def go_up_around_edge(tet_vert_coorientations, tet, face_num, verts, fc_next_tet_index):
+    around_edge = []
+    while True:
+        next_tet = tet.adjacentTetrahedron(face_num)
+        perm = tet.adjacentGluing(face_num)
+        next_verts = [perm[v] for v in verts]
+        [(t0,t1), (b0,b1)] = get_top_and_bottom_vert_nums(tet_vert_coorientations, next_tet.index()) ### always sorted
+        # next_edge_num = vert_pair_to_edge_num[tuple(next_verts)]
+        next_verts.sort()
+        # print(tuple(next_verts), (b0, b1))
+        if tuple(next_verts) == (b0, b1): ### the edge is now the bottom edge of the tet
+            assert next_tet.index() == fc_next_tet_index, 'did not get to the correct tetrahedron above edge'
+            break
+        if b0 in verts:
+            face_num = b1      
+        else:
+            assert b1 in verts
+            face_num = b0
+        tet = next_tet
+        verts = next_verts
+        around_edge.append((tet.index(), face_num))
+    return around_edge
 
+def flow_cycle_to_dual_edge_loop(tri, angle, flow_cycle): 
+    """Convert flow cycle into a list of (tet_index, face_num) to describe the flow cycle up to homotopy"""
+    branch = upper_branched_surface(tri, angle)
+    tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    out = []
+    for i, (tet_index, edge_num) in enumerate(flow_cycle):
+        # print('tet_index, edge_num', tet_index, edge_num)
+        large_edge_num, mixed_edge_pair_num, small_edge_pair_num = branch_num_to_large_edge_and_mixed_edge_pair_num(branch[tet_index], return_small = True)
+        # print('large_edge_num, mixed_edge_pair_num, small_edge_pair_num', large_edge_num, mixed_edge_pair_num, small_edge_pair_num)
+        assert edge_num != large_edge_num ### should be leaving large edge and going to the edge_num
+        assert edge_num != mixed_edge_pair_num
+        assert 5 - edge_num != mixed_edge_pair_num
+        
+        tet = tri.tetrahedron(tet_index)
+        [(t0,t1), (b0,b1)] = get_top_and_bottom_vert_nums(tet_vert_coorientations, tet_index)
+
+        if edge_num == small_edge_pair_num or edge_num == 5 - small_edge_pair_num:  ### out one of the equatorial edges
+            verts = edge_num_to_vert_pair[edge_num]
+            if b0 in verts:
+                face_num = b1      
+            else:
+                assert b1 in verts
+                face_num = b0
+            out.append((tet_index, face_num))       
+            out.extend(go_up_around_edge(tet_vert_coorientations, tet, face_num, verts, flow_cycle[(i+1) % len(flow_cycle)][0]))
+
+        elif edge_num == 5 - large_edge_num: ### straight up
+            verts = edge_num_to_vert_pair[edge_num]
+            face_num = b0 ### arbitrarily choose one of the two upper faces
+            out.append((tet_index, face_num)) 
+            out.extend(go_up_around_edge(tet_vert_coorientations, tet, face_num, verts, flow_cycle[(i+1) % len(flow_cycle)][0]))
+        else:
+            assert False, 'not a flow cycle'
+    return out
 
 
 
