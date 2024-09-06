@@ -98,6 +98,17 @@ def tet_edge_cusp_equations(M):
     return T.transpose().augment(G.transpose()).transpose() # sigh
 
 
+def is_trivial_in_bdy_cohomology(M, w):
+    """
+    Given a snappy manifold M and a winding w, decides if w induces
+    the trivial cohomology class on the boundary.  (In fact we also
+    check that w is a winding over ZZ.)
+    """
+    A = tet_edge_cusp_equations(M)
+    b = solution_vector(M)
+    return A*x == b
+
+
 def windings_vanishing_on_bdy(M):
     """
     Given a snappy manifold M, returns an integer solution to the
