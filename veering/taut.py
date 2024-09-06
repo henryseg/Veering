@@ -334,6 +334,14 @@ def taut_regina_angle_struct_to_taut_struct(regina_angle_struct):
     return out
 
 
+def get_taut_structures(tri):
+    """
+    A wrapper for the regina function.
+    """
+    regina_angles = regina.AngleStructures(tri, True)
+    return [taut_regina_angle_struct_to_taut_struct(angle) for angle in regina_angles]
+
+
 pi_edgepair_dict = { (1,0,0) : 0, (0,1,0) : 1, (0,0,1) : 2 }
 
 
