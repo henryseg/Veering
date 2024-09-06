@@ -26,7 +26,7 @@ def count_quad_types(surf):
 def analyze_sig(sig):
     # print(sig)
     tri, angle = isosig_to_tri_angle(sig)
-    surfs = regina.NormalSurfaces.enumerate(tri, regina.NS_QUAD_CLOSED, regina.NS_FUNDAMENTAL)
+    surfs = regina.NormalSurfaces(tri, regina.NS_QUAD_CLOSED, regina.NS_FUNDAMENTAL)
     if surfs != None:
         two_quad_type_surfs = []
         for i in range(surfs.size()):
