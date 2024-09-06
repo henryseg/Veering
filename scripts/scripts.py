@@ -469,10 +469,16 @@ def compare_flow_and_geodesic_drilling_script():
     from snappy_drill_homotopic import drill_tet_and_face_indices
     import snappy
 
-    sig = 'cPcbbbiht_12'
+    # sig = 'cPcbbbdxm_10'
+    # sig = 'cPcbbbiht_12'
+    # sig = 'dLQacccjsnk_200' ### geodesic not simple?
+    sig = 'dLQbccchhfo_122'
+    # sig = 'dLQbccchhsj_122'
+    
     cycles = generate_flow_cycles(sig, max_length = 5)
 
     for fc in cycles:  
+        print(fc)
         out = drill_flow_cycle(sig, fc, return_tri_angle = True) 
         if out != None: 
             tri, angle = isosig_to_tri_angle(sig) 

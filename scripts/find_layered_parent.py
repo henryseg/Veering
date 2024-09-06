@@ -61,8 +61,16 @@ def search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 5, flow_
 def run():
     # veering_isosigs = veering_census()
     # search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 5, flow_cycle_min_length = 0)
-    veering_isosigs = parse_data_file('data/could_not_find_layered_parents_5_0.txt')
-    search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 8, flow_cycle_min_length = 6, verbose = 3)
+    # veering_isosigs = parse_data_file('data/could_not_find_layered_parents_5_0.txt')
+    # search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 8, flow_cycle_min_length = 6, verbose = 3)
+    # veering_isosigs = parse_data_file('data/could_not_find_layered_parents_8_6.txt')
+    # search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 9, flow_cycle_min_length = 9, verbose = 3)
+    # veering_isosigs = parse_data_file('data/could_not_find_layered_parents_9_9.txt')
+    # search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 10, flow_cycle_min_length = 10, verbose = 3)
+    veering_isosigs = parse_data_file('data/could_not_find_layered_parents_10_10.txt')
+    search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 11, flow_cycle_min_length = 11, verbose = 3)
+
+
 
 
 
