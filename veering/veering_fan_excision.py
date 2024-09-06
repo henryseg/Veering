@@ -4,7 +4,7 @@
 
 import regina #needed inside of imported files
 
-from .transverse_taut import get_top_and_bottom_nums
+from .transverse_taut import get_top_and_bottom_vert_nums
 from .taut import liberal, isosig_to_tri_angle
 from .veering_tri import veering_triangulation
 
@@ -19,7 +19,7 @@ def fan_stacks(tri, angle):
     
     out = []
     for toggle_num in toggle_nums:
-        tops, bottoms = get_top_and_bottom_nums(tet_vert_coors, toggle_num)
+        tops, bottoms = get_top_and_bottom_vert_nums(tet_vert_coors, toggle_num)
         for i in range(2):
 
             tet_nums = [toggle_num]
@@ -59,7 +59,7 @@ def excise_fans(tri, angle, fan_nums = None):
     minority_edge_pairs = []
     for fan_num in fan_nums:
         assert tet_types[fan_num] != "toggle"
-        tops, bottoms = get_top_and_bottom_nums(tet_vert_coors, fan_num)
+        tops, bottoms = get_top_and_bottom_vert_nums(tet_vert_coors, fan_num)
         if 0 in tops:
             pi_pair = list(tops)
         else:

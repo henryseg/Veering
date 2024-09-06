@@ -65,7 +65,7 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
     
     built_tri, built_angle, built_to_original_cusp_mapping = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
 
-    new_sig, isom, isosig_tri = isosig_from_tri_angle(built_tri, built_angle, return_isom = True, return_Regina_tri = True)
+    new_sig, isom, isosig_tri, isosig_angle = isosig_from_tri_angle(built_tri, built_angle, return_isom = True, return_Regina_tri = True, return_isosig_angle = True)
 
     if return_cusp_mapping:
         isosig_to_built_cusp_mapping = [None] * isosig_tri.countVertices()
@@ -90,14 +90,14 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
 
     out = [new_sig]
     if return_tri_angle:
-        out.extend([built_tri, built_angle])
+        out.extend([isosig_tri, isosig_angle])
     if return_found_parallel:
         out.append(found_parallel)
     if return_cusp_mapping:
         out.append(isosig_to_original_cusp_mapping)
     return out
 
-def drill_flow_cycles(veering_isosig, max_length = 2, monochromatic_only = False, max_length_only = False):
+def drill_flow_cycles(veering_isosig, max_length = 2, monochromatic_only = False, min_length = None):
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length, monochromatic_only = monochromatic_only, max_length_only = max_length_only)
     for cycle, num_steps_up in cycles:
         print(veering_isosig, num_steps_up, cycle, drill_flow_cycle(veering_isosig, cycle)) 

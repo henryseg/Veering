@@ -89,7 +89,7 @@ def isoms_move_tetrahedra_to_same_tetrahedra(isom1, isom2):
     return True
 
 
-def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False):
+def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False, return_isosig_angle = False):
     """
     Given a triangulation and taut angle structure, generate the taut
     isosig. If return_isom, give the isom from the original triang to 
@@ -109,6 +109,8 @@ def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = F
         out.append(isom2 * isosig_isom)   ### should work in regina 7
     if return_Regina_tri:
         out.append(isosig_tri)
+    if return_isosig_angle:
+        out.append(smallest_angle)
 
     return out
 

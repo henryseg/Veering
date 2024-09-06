@@ -462,6 +462,50 @@ def drill_flow_cycle_script():
     drilled_b = generate_boundary_triangulation(drilled_sig, draw = False)
     print(drilled_b.ladder_counts())
 
+def compare_flow_and_geodesic_drilling_script():  
+    from veering.taut import isosig_from_tri_angle
+    from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
+    from drilling_flow_cycle import drill_flow_cycle
+    from snappy_drill_homotopic import drill_tet_and_face_indices
+    import snappy
+
+    sig = 'cPcbbbiht_12'
+    cycles = generate_flow_cycles(sig, max_length = 5)
+
+    for fc in cycles:  
+        out = drill_flow_cycle(sig, fc, return_tri_angle = True) 
+        if out != None: 
+            tri, angle = isosig_to_tri_angle(sig) 
+            
+            drilled_sig, drilled_tri, drilled_angle = out     
+            drilled_M = snappy.Manifold(drilled_tri) 
+
+            orig_M = snappy.Manifold(tri) 
+            dual_loop = flow_cycle_to_dual_edge_loop(tri, angle, fc) 
+            # print(fc, dual_loop) 
+            snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop) 
+
+            snappy_drilled_M.simplify()
+            drilled_M.simplify()
+            found_isometry = False
+            for i in range(10):
+                if drilled_M.is_isometric_to(snappy_drilled_M):  ### from the docstring for is_isometric_to:
+                ### The answer True is rigorous, but the answer False may
+                ### not be as there could be numerical errors resulting in finding
+                ### an incorrect canonical triangulation.
+                    found_isometry = True
+                    break
+            if not found_isometry:
+                # print('checking with verified isometry_signature', sig, fc)
+                isomsig1 = drilled_M.isometry_signature(verified = True)
+                isomsig2 = snappy_drilled_M.isometry_signature(verified = True)
+                assert not isomsig1 == None, 'isom signature failed ' + sig + ' ' + fc
+                assert not isomsig2 == None, 'isom signature failed ' + sig + ' ' + fc
+                # assert isomsig1 == isomsig2, sig + '_' + fc
+                if isomsig1 != isomsig2:
+                    print('drilling', sig, 'along', fc, 'gives different results', drilled_M.identify(), snappy_drilled_M.identify())
+
+
 
 def draw_veering_triangulation_and_mid_annuli_script():
     from draw_veering_triangulation_and_mid_annuli import draw_triangulation_from_veering_isosig
