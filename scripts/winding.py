@@ -106,7 +106,7 @@ def is_trivial_in_bdy_cohomology(M, w):
     """
     A = tet_edge_cusp_equations(M)
     b = solution_vector(M)
-    return A*w == b
+    return A*vector(w) == b
 
 
 def windings_vanishing_on_bdy(M):
