@@ -1,6 +1,7 @@
 #
 # fibered.py
 #
+# Goal: Best effort to detect fibered manifolds
 
 import regina
 import snappy
@@ -9,7 +10,6 @@ from .taut import taut_regina_angle_struct_to_taut_struct
 from .taut_polytope import is_layered
 from .transverse_taut import is_transverse_taut
 
-# Best effort attempt to detect fibered manifolds
 
 def get_many_sigs(snappy_name, tries):
     """
@@ -24,6 +24,7 @@ def get_many_sigs(snappy_name, tries):
         M.randomize()
     return sigs
         
+
 def is_fibered(snappy_name, tries = 1000, with_data = False):
     """
     Given an snappy_name, tries to find a layered transverse taut
@@ -32,15 +33,14 @@ def is_fibered(snappy_name, tries = 1000, with_data = False):
     """
     sigs = get_many_sigs(snappy_name, tries)
     for sig in sigs:
-        T = regina.Triangulation3(sig)
-        T.orient()
-        angle_strs = list(regina.AngleStructures.enumerate(T, True))
+        tri = regina.Triangulation3(sig)
+        tri.orient()
+        angle_strs = regina.AngleStructures(tri, True)
         angle_strs = [taut_regina_angle_struct_to_taut_struct(angle_str) for angle_str in angle_strs]
         for angle in angle_strs:
             # we are not interested in semi-fibered manifolds so:
-            if is_transverse_taut(T, angle) and is_layered(T, angle):
+            if is_transverse_taut(tri, angle) and is_layered(tri, angle):
                 if with_data:
-                    return (True, T.isoSig(), angle)
+                    return (True, tri.isoSig(), angle)
                 return True
-
     return False

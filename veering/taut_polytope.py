@@ -416,7 +416,7 @@ def cone_in_homology(tri, angle):
 
 @liberal
 def analyse_many_angles(tri):
-    angles = regina.AngleStructures.enumerate(tri, True)
+    angles = regina.AngleStructures(tri, True)
     angles = [taut_regina_angle_struct_to_taut_struct(angles.structure(i)) for i in range(angles.size())]
     dict_of_dimensions = {}
     for angle in angles:
