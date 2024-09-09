@@ -467,14 +467,15 @@ def compare_flow_and_geodesic_drilling_script():
     from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
     from drilling_flow_cycle import drill_flow_cycle
     from snappy_drill_homotopic import drill_tet_and_face_indices
+    from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
     import snappy
-
+# 
     # sig = 'cPcbbbdxm_10'
-    # sig = 'cPcbbbiht_12'
-    # sig = 'dLQacccjsnk_200' ### geodesic not simple?
-    sig = 'dLQbccchhfo_122'
+    sig = 'cPcbbbiht_12'
+    # sig = 'dLQacccjsnk_200' 
+    # sig = 'dLQbccchhfo_122'
     # sig = 'dLQbccchhsj_122'
-    
+
     cycles = generate_flow_cycles(sig, max_length = 5)
 
     for fc in cycles:  
@@ -489,8 +490,12 @@ def compare_flow_and_geodesic_drilling_script():
             orig_M = snappy.Manifold(tri) 
             dual_loop = flow_cycle_to_dual_edge_loop(tri, angle, fc) 
             # print(fc, dual_loop) 
-            snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop) 
-
+            try:
+                ### May need to sys.setrecursionlimit(1000000) to make this work
+                snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 200) 
+            except GeodesicSystemNotSimpleError as e:
+                print(e)
+                continue
             snappy_drilled_M.simplify()
             drilled_M.simplify()
             found_isometry = False
@@ -509,7 +514,7 @@ def compare_flow_and_geodesic_drilling_script():
                 assert not isomsig2 == None, 'isom signature failed ' + sig + ' ' + fc
                 # assert isomsig1 == isomsig2, sig + '_' + fc
                 if isomsig1 != isomsig2:
-                    print('drilling', sig, 'along', fc, 'gives different results', drilled_M.identify(), snappy_drilled_M.identify())
+                    print('drilling', sig, 'along', fc, 'gives different results', isomsig1, drilled_M.identify(), isomsig2, snappy_drilled_M.identify())
 
 
 
