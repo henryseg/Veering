@@ -30,7 +30,7 @@ def num_print(a):
         return str(x) + ' + ' + str(y) + 'i'
 
 
-# permutations
+# permutations - this is the only thing we use - perhaps delete everything else?
 
 
 def sign(perm):
