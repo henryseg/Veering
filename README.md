@@ -132,7 +132,7 @@ Stephen Frankel, Saul Schleimer, and Henry Segerman, https://arxiv.org/abs/1911.
 Flows, growth rates, and the veering polynomial, \
 Michael Landry, Yair Minsky, and Samuel Taylor, https://arxiv.org/abs/2107.04066
 
-A polynomial invariant for veering triangulations, \ 
+A polynomial invariant for veering triangulations, \
 Michael Landry, Yair Minsky, and Samuel Taylor, https://arxiv.org/abs/2008.04836
 
 Endperiodic maps, splitting sequences, and branched surfaces, \
