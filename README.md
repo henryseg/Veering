@@ -101,9 +101,18 @@ https://math.okstate.edu/people/segerman/veering.html
 
 ### Citation
 
-When citing the codebase, please use the following (updating the 
-version number and the year). 
+When citing the census, please use a version of following (updating the 
+version number and the year).
+```
+@Misc{VeeringCensus,
+        author = {Giannopoulos, Andreas and Schleimer, Saul and Segerman, Henry},
+        title = {A census of veering structures},
+        howpublished = {\url{https://math.okstate.edu/people/segerman/veering.html} {YYYY/MM/DD}}
+}
+```
 
+When citing the codebase, please use a version of the following (updating the 
+version number and the year). 
 ```
 @Misc{Veering,
     author = {Anna Parlak and Saul Schleimer and Henry Segerman},
@@ -112,6 +121,45 @@ version number and the year).
     year = {20zz},
 }
 ```
+
+The census and/or code base have been cited in the following works. 
+
+Dynamics of veering triangulations: infinitesimal components of their
+flow graphs and applications
+- Ian Agol, Chi Cheuk Tsang
+
+Flows, growth rates, and the veering polynomial
+- Michael P. Landry, Yair N. Minsky, And Samuel J. Taylor
+
+A polynomial invariant for veering triangulations
+- Michael Landry, Yair N. Minsky, And Samuel J. Taylor
+
+Endperiodic maps, splitting sequences, and branched surfaces
+- Michael P. Landry And Chi Cheuk Tsang
+
+Geometric triangulations of a family of hyperbolic 3–braids
+- Barbara Nimershiem
+
+Computation of the taut, the veering and the Teichmüller polynomials
+- Anna Parlak
+
+Arbitrarily large veering triangulations with a vanishing taut polynomial
+- Anna Parlak
+
+The taut polynomial and the Alexander polynomial
+- Anna Parlak
+
+Obstructing Anosov flows on cusped 3-manifolds
+- Misha Schmalian
+
+From veering triangulations to link spaces and back again
+- Saul Schleimer and Henry Segerman
+
+Veering branched surfaces, surgeries, and geodesic flows
+- Chi Cheuk Tsang
+
+Veering triangulations and transverse foliations
+- Jonathan Zung
 
 ### Contact
 
