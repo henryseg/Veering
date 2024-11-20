@@ -271,3 +271,67 @@ def edge_side_face_collections(triangulation, angle_struct, tet_vert_coorientati
         return out_triangles
     else:
         return out_triangles, out_tets
+
+def rotate_tet(tet, tet_vert_coorientation):
+    """
+    Reglues tet into triangulation rotated so that the lower edge (according to
+    the transverse taut structure) is the edge with vertices 0 and 1.  Returns
+    which permutation of the tetrahedron was used.
+    """
+
+    ### get the positions of the +1 coorientations 
+    p = tet_vert_coorientation.index(+1)
+    q = tet_vert_coorientation.index(+1, p + 1) ### finds index of +1 in the remainder after p
+    verts = [0, 1, 2, 3]
+    verts.remove(p)
+    verts.remove(q)
+    r, s = verts
+    rotate_inv = regina.Perm4(p, q, r, s)   ### this sends 0, 1 to p, q
+    if rotate_inv.sign() == -1:
+        rotate_inv = regina.Perm4(p, q, s, r)
+    assert rotate_inv.sign() == 1
+    rotate = rotate_inv.inverse()  ### now we send p, q to 0, 1
+    adjtets = []
+    oldadjgluings = []
+    adjgluings = []
+    self_faces = []
+    other_faces = []
+    for face in range(4):
+        adjtet = tet.adjacentTetrahedron(face)
+        adjtets.append(adjtet)
+        oldadjgluing = tet.adjacentGluing(face)
+        oldadjgluings.append(tet.adjacentGluing(face))
+        if adjtet != tet:
+            adjgluings.append(oldadjgluing * rotate_inv)  # rotates in this tet, not the other tet
+            other_faces.append(face)
+        else:
+            adjgluings.append(rotate * oldadjgluing * rotate_inv)
+            self_faces.append(face)
+    tet.isolate()  # undo all gluings
+    for face in other_faces:
+        tet.join(rotate[face], adjtets[face], adjgluings[face])
+    if len(self_faces) > 0:  # assume it must be two
+        assert len(self_faces) == 2, "4 self faces, must be an error..."
+        face = self_faces[0]  # only need to make one of the identifications
+        tet.join(rotate[face], adjtets[face], adjgluings[face])
+    return rotate
+
+def lower_labelling(tri, angle):
+    """
+    Given a tri angle for a transverse taut triangulation, relabel the vertices of each tetrahedron 
+    to make the lower edge of each tetrahedron edge 0 (connecting vertices 0 and 1)
+    """
+    orig_tri = regina.Triangulation3(tri)
+    tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
+    for i, coor in enumerate(tet_vert_coorientations):
+        tet = tri.tetrahedron(i)
+        rotate_tet(tet, coor)
+    new_angle = [0] * tri.countTetrahedra()
+    new_tet_vert_coorientations = is_transverse_taut(tri, new_angle, return_type = "tet_vert_coorientations")
+    assert all([coor == [1, 1, -1, -1] for coor in new_tet_vert_coorientations])
+    return (tri, new_angle)
+
+
+
+
+

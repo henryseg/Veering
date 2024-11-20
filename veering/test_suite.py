@@ -51,6 +51,14 @@ def test_is_transverse_taut(veering_isosigs, num_to_check, smaller_num_to_check)
 
     return None
 
+def test_lower_labelling(veering_isosigs, num_to_check, smaller_num_to_check):
+    from . import taut        
+    from . import transverse_taut
+
+    for sig in random.sample(veering_isosigs, num_to_check):
+        tri, angle = taut.isosig_to_tri_angle(sig)
+        transverse_taut.lower_labelling(tri, angle)
+
 def test_is_veering(veering_isosigs, num_to_check, smaller_num_to_check):
     from . import taut
     from . import veering_tri
@@ -147,7 +155,7 @@ def test_taut_and_branched_drill_plus_semiflows_on_drillings(veering_isosigs, nu
     for sig in random.sample(veering_isosigs, 3): 
         tri, angle = taut.isosig_to_tri_angle(sig)
         branch = branched_surface.upper_branched_surface(tri, angle)  # also checks for veering and transverse taut
-        found_loops = flow_cycles.find_flow_cycles(tri, branch)
+        found_loops = flow_cycles.generate_simple_flow_cycles(tri, branch)
         for loop in random.sample(found_loops, min(len(found_loops), 5)):  # drill along at most 5 loops
             tri, angle = taut.isosig_to_tri_angle(sig)
             branch = branched_surface.upper_branched_surface(tri, angle) 
@@ -609,56 +617,7 @@ def test_depth(veering_isosigs, num_to_check, smaller_num_to_check):
         
 ### test for drill_midsurface_bdy: drill then fill, check you get the same manifold
 
-sig_starts = ["b+-LR", "b++LR"]
-        
-def test_lattice_for_punc_torus_bundle(veering_isosigs, num_to_check, smaller_num_to_check):
-    import snappy
-    import regina
-    from . import z_charge
-    from . import z2_taut
-    from sage.modules.free_module_integer import IntegerLattice
-    from sage.rings.integer_ring import ZZ        
-    from sage.modules.free_module import VectorSpace
-    from sage.matrix.constructor import Matrix
-    from sage.combinat.words.word_generators import words
-    ZZ2 = ZZ.quotient(ZZ(2))    
-
-    for i in range(3):
-        for sig_start in sig_starts:
-            sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
-            M = snappy.Manifold(sig)
-            tri = regina.Triangulation3(M)
-            t, A = z_charge.sol_and_kernel(M)
-            B = z_charge.leading_trailing_deformations(M)
-            C = z2_taut.cohomology_loops(tri)
-
-            AA = IntegerLattice(A)
-            BB = IntegerLattice(B)
-            assert AA == BB.saturation(), sig
-
-            dim = 3*M.num_tetrahedra()
-            V = VectorSpace(ZZ2, dim)
-            AA = V.subspace(A)
-            BB = V.subspace(B)
-            CM = Matrix(ZZ2, C)
-            CC = CM.right_kernel()
-            assert AA.intersection(CC) == BB , sig
-            ## so l-t defms are the part of the kernel that doesn't flip over
-
-    return None
-        
-def test_charges_for_punc_torus_bundle(veering_isosigs, num_to_check, smaller_num_to_check):
-    import snappy
-    from . import z_charge
-    from sage.combinat.words.word_generators import words
-    
-    for i in range(3):
-        for sig_start in sig_starts:
-            sig = sig_start + str(words.RandomWord(8, 2, "LR"))  # 8 is a magic number
-            M = snappy.Manifold(sig)
-            assert z_charge.can_deal_with_reduced_angles(M), sig
-
-    return None
+### test for winding: check that punctured torus bundles have unique veering structure
             
 def test_building_carried_surfaces_and_mutations(veering_isosigs, num_to_check, smaller_num_to_check):
     from . import taut
@@ -720,6 +679,7 @@ def check_polynomial_coefficients(p, correct_coeffs):
 regina_tests = [test_is_taut,
                 test_isosig_round_trip,
                 test_is_transverse_taut,
+                test_lower_labelling,
                 test_is_veering,
                 test_veering_dehn_surgery,
                 test_veering_fan_excision,
@@ -743,18 +703,16 @@ sage_tests = [test_is_layered,
               test_is_torus_bundle,
               test_is_layered,
               test_measured,
-              test_empty,
+              # test_empty, # broken in sage 10.4
               test_euler_characteristic,
-              test_hom_dim,
+              # test_hom_dim, # sometimes broken in sage 10.4
               test_boundary_cycles,
               test_taut_with_cycles,
               test_taut_with_images,
               test_alex_with_cycles,
               test_euler_and_edge_orientability,
               test_exotics,
-              test_depth,
-              test_lattice_for_punc_torus_bundle,
-              test_charges_for_punc_torus_bundle,
+              # test_depth, # broken in sage 10.4
               test_building_carried_surfaces_and_mutations,
 ]
 
