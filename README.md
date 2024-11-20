@@ -94,24 +94,70 @@ basis of H_1 used to compute the taut and veering polynomials.
 
 ### Webpage
 
-For references, for information about the census, and for many diagrams, 
-please see:
+You can find the census of veering structures (including diagrams and references) here: 
 
 https://math.okstate.edu/people/segerman/veering.html
 
 ### Citation
 
-When citing the codebase, please use the following (updating the 
-version number and the year). 
-
+When citing the census, please use a version of following (updating the 
+version number and the year).
 ```
-@Misc{Veering,
-    author = {Anna Parlak and Saul Schleimer and Henry Segerman},
+@Misc{VeeringCensus,
+        author = {Giannopoulos, Andreas and Schleimer, Saul and Segerman, Henry},
+        title = {A census of veering structures},
+        howpublished = {\url{https://math.okstate.edu/people/segerman/veering.html} {YYYY/MM/DD}}
+}
+```
+
+When citing the codebase, please use a version of the following (updating the 
+version number and the year). 
+```
+@Misc{VeeringCodebase,
+    author = {Parlak, Anna and Schleimer, Saul and Segerman, Henry},
     title = {veering x.y, code for studying taut and veering ideal triangulations},
     howpublished = {\url{https://github.com/henryseg/Veering}},
     year = {20zz},
 }
 ```
+
+The veering census and/or veering codebase have been cited in the following works. 
+
+Dynamics of veering triangulations: infinitesimal components of their flow graphs and applications, \
+Ian Agol, Chi Cheuk Tsang, https://arxiv.org/abs/2201.02706
+
+From veering triangulations to link spaces and back again, \
+Stephen Frankel, Saul Schleimer, and Henry Segerman, https://arxiv.org/abs/1911.00006
+
+Flows, growth rates, and the veering polynomial, \
+Michael Landry, Yair Minsky, and Samuel Taylor, https://arxiv.org/abs/2107.04066
+
+A polynomial invariant for veering triangulations, \
+Michael Landry, Yair Minsky, and Samuel Taylor, https://arxiv.org/abs/2008.04836
+
+Endperiodic maps, splitting sequences, and branched surfaces, \
+Michael Landry and Chi Cheuk Tsang, https://arxiv.org/abs/2304.14481
+
+Geometric triangulations of a family of hyperbolic 3–braids, \
+Barbara Nimershiem, https://arxiv.org/abs/2108.09349
+
+Computation of the taut, the veering and the Teichmüller polynomials, \
+Anna Parlak, https://arxiv.org/abs/2009.13558
+
+Arbitrarily large veering triangulations with a vanishing taut polynomial, \
+Anna Parlak, https://arxiv.org/abs/2309.01752
+
+The taut polynomial and the Alexander polynomial, \
+Anna Parlak, https://arxiv.org/abs/2101.12162
+
+Obstructing Anosov flows on cusped 3-manifolds, \
+Misha Schmalian, https://arxiv.org/abs/2403.17060
+
+Veering branched surfaces, surgeries, and geodesic flows, \
+Chi Cheuk Tsang, https://arxiv.org/abs/2203.02874
+
+Veering triangulations and transverse foliations, \
+Jonathan Zung, https://arxiv.org/abs/2411.00227
 
 ### Contact
 
