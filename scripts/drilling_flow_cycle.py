@@ -123,6 +123,9 @@ def main():
     drilled = drill_tet_and_face_indices(mfd, tet_and_face_indices)
     print(drilled.identify())
 
+    # output: cPcbbbiht_12 ((0, 0), (0, 0), (0, 5), (0, 0), (0, 5)) bbCabCa
+    #         [L14n33639(0,0)(0,0)]
+
 
 
 
