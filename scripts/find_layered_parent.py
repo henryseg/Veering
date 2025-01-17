@@ -1,7 +1,8 @@
 from veering.file_io import veering_census, parse_data_file, read_from_pickle
 from veering.taut import isosig_to_tri_angle  
 from veering.flow_cycles import generate_flow_cycles
-from veering.taut_polytope import is_layered
+from veering.taut_polytope import is_layered, taut_rays
+from veering.carried_surface import genus_punctures
 from drilling_flow_cycle import drill_flow_cycle
 
 def try_to_find_layered_parent(sig, flow_cycle_max_length = 5, flow_cycle_min_length = None, verbose = 0):
@@ -72,7 +73,39 @@ def run():
     veering_isosigs = parse_data_file('data/could_not_find_layered_parents_11_11.txt')
     search_for_layered_parents(veering_isosigs, flow_cycle_max_length = 12, flow_cycle_min_length = 12, verbose = 3)
 
+def find_genus_bound(sig, num_rays_to_try = 10):
+    """Given a sig for a fibered veering triangulation, get upper bound on the minimal genus of the fiber"""
+    tri, angle = isosig_to_tri_angle(sig)
+    rays = taut_rays(tri, angle)
+    rays_with_num_tris = [(ray, sum(ray)) for ray in rays]
+    rays_with_num_tris.sort(key = lambda x: x[1])
+    rays_to_try = rays_with_num_tris[:num_rays_to_try]
+    rays_to_try = [ray for (ray, num) in rays_to_try]
+    # print(rays_to_try)
+    outputs = []
+    for ray in rays_to_try:
+        g, p = genus_punctures(tri, angle, ray)
+        outputs.append((g,p))
+    if len(outputs) == 0:
+        return None
+    else:
+        outputs.sort(key = lambda x: x[0])
+        return outputs[0]
 
+def add_genus_bounds_to_layered_parents_file():
+    data = parse_data_file('data/layered_parents.txt')
+    out_filename = 'data/layered_parents_g_p.txt'
+    out_file = open(out_filename, 'w')  #write mode, clear any existing file
+    out_file.close()
+
+    for line in data[-10:]:
+        parent_sig = line.split(' ')[-1]
+        # print(parent_sig)
+        g_p = find_genus_bound(parent_sig)
+        new_line = line + " " + str(g_p)
+        print(new_line)
+        append_to_file(out_filename, new_line)
+    print('done')
 
 
 
