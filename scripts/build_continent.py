@@ -297,7 +297,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_sp
 
     # print('up_v', up_v, 'down_v', down_v, 'up_w', up_w, 'down_w', down_w, 'lower_strip_vertex', lower_strip_vertex, 'upper_strip_vertex2', upper_strip_vertex2, 'lower_strip_vertex2', lower_strip_vertex2)
 
-    ### Continent is now big enough to contain a translate of any edge whose rectangle contains the puncture.
+    ### Continent is now big enough to contain a gamma-translate of any edge whose rectangle contains the puncture.
 
     candidate_drilled_edges = con.edges[:] # shallow copy
     drilled_continent_edges = []

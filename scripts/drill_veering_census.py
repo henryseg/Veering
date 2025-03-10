@@ -25,14 +25,15 @@ def printlock(lock, string):
 #     global lock
 #     lock = l
 
-def make_many_drillings(lock, output_filename, instructions_packet):
-    veering_isosig, max_length = instructions_packet
+def make_many_drillings(veering_isosig, desired_ladder_count, edge_orientable, max_length):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle)
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length)
     drillings = {}
     for cycle in cycles:
-        assert not is_twisted(vt, cycle)
+        if edge_orientable:
+            assert not is_twisted(vt, cycle) ### edge orientable should be preserved
+        ### We could check that the ladder counts for the different cusps are consistent
         drilled = drill_flow_cycle(veering_isosig, cycle, return_found_parallel = True)
         if drilled != None:
             drilled_sig, found_parallel = drilled
@@ -44,27 +45,33 @@ def make_many_drillings(lock, output_filename, instructions_packet):
                     drillings[drilled_sig] = cycle
     drillings_list = [(sig, drillings[sig]) for sig in drillings.keys()]
     drillings_list.sort()
+    return drillings_list
+
+def make_many_drillings_with_lock(lock, output_filename, instructions_packet):
+    veering_isosig, desired_ladder_count, edge_orientable, max_length = instructions_packet
+    drillings_list = make_many_drillings(veering_isosig, desired_ladder_count, edge_orientable, max_length)
     result_string = veering_isosig + '_' + str(drillings_list)
-    printlock(lock, result_string)
+    # printlock(lock, result_string)
     append_to_file(lock, output_filename, result_string)
     return (veering_isosig, drillings_list)
 
-def worker_func(lock, request_queue):
-    while True:
-        instructions_packet = request_queue.get()
-        if instructions_packet != None:
-            make_many_drillings(lock, instructions_packet)
-            # result = do_the_big_math(file_name_to_process)
-            # result_queue.put(result)
-        else: # None means that there are no more files to process
-            # result_queue.put(None)
-            break
+# def worker_func(lock, request_queue):
+#     while True:
+#         instructions_packet = request_queue.get()
+#         if instructions_packet != None:
+#             make_many_drillings_with_lock(lock, ..., instructions_packet)
+#             # result = do_the_big_math(file_name_to_process)
+#             # result_queue.put(result)
+#         else: # None means that there are no more files to process
+#             # result_queue.put(None)
+#             break
 
-def generate_drillings_census(max_length = 2, parallel = 0):
-    output_filename = 'data/drillings_census.txt'
+def generate_drillings_census(desired_ladder_count = 4, edge_orientable = True, max_length = 2, census_cap = 100, output_filename_base = 'data/drillings_census', parallel = 0):
+    output_filename = output_filename_base + '_ladders_' + str(desired_ladder_count) + '_edge_orientable_' + str(edge_orientable) + '_max_len_' + str(max_length) + '.txt'
     census_data = parse_data_file('veering_census.txt') 
     instructions_packets = []
-    census = census_data[:50]
+    if census_cap != None:
+        census = census_data[:census_cap]
     output_file = open(output_filename, 'w') 
     for i, veering_isosig in enumerate(census):
         if i % 50 == 0:
@@ -72,16 +79,16 @@ def generate_drillings_census(max_length = 2, parallel = 0):
         tri, angle = isosig_to_tri_angle(veering_isosig)
         bdry_triang = generate_boundary_triangulation(veering_isosig, draw = False)
         ladder_counts = bdry_triang.ladder_counts()
-        if is_edge_orientable(tri, angle):
-            if all(count == 4 for count in ladder_counts):
-                instructions_packet = (veering_isosig, max_length)
+        if is_edge_orientable(tri, angle) == edge_orientable:
+            if all(count == desired_ladder_count for count in ladder_counts):
+                instructions_packet = (veering_isosig, desired_ladder_count, edge_orientable, max_length)
                 instructions_packets.append(instructions_packet)
     print('instructions_packets done')
     
     lock = Lock()
     if parallel == 0:
         for instructions_packet in instructions_packets:            
-            sig, drillings_list = make_many_drillings(lock, output_filename, instructions_packet)
+            sig, drillings_list = make_many_drillings_with_lock(lock, output_filename, instructions_packet)
             print(sig, drillings_list)
     else:
         pass ### multiprocessing seems to be broken... ModuleNotFoundError.
@@ -101,6 +108,39 @@ def generate_drillings_census(max_length = 2, parallel = 0):
         # pool.map_async(make_many_drillings, instructions_packets, chunksize = 1)
         # pool.close()
         # pool.join()  
+
+def tri_size_from_sig(sig):
+    return len(sig.split('_')[1])
+
+def min_size_tri(collection):
+    return min(collection, key = tri_size_from_sig)
+
+def recursive_drilling_search(starting_sig_list, target_sig_class, drilling_pattern = (2,2)):
+    starting_sig_list = list(starting_sig_list)
+    frontier_sigs = starting_sig_list[:]
+    visited_sigs_and_paths = {}
+    for sig in starting_sig_list:
+        # print(sig)
+        # assert type(sig) == str, type(sig)
+        visited_sigs_and_paths[sig] = [sig] ### path starts with initial sig. Will add list of drilling flow cycles
+    for i, length in enumerate(drilling_pattern):
+        print('pattern step', i, 'of', len(drilling_pattern), 'length', length, 'size of frontier', len(frontier_sigs))
+        new_frontier = []
+        for sig in frontier_sigs:
+            print(sig, visited_sigs_and_paths[sig])
+            drillings_list = make_many_drillings(sig, length)
+            for new_sig, cycle in drillings_list:
+                if new_sig not in visited_sigs_and_paths.keys():
+                    path = visited_sigs_and_paths[sig] + [cycle]
+                    visited_sigs_and_paths[new_sig] = path
+                    if new_sig in target_sig_class:
+                        print('found connection', (new_sig, path))
+                        return (new_sig, path)
+                    new_frontier.append(new_sig)
+        frontier_sigs = new_frontier
+        # print(visited_sigs_and_paths)
+    print('no connection found')
+
 
 
 
