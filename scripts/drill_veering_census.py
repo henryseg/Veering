@@ -67,11 +67,13 @@ def make_many_drillings_with_lock(lock, output_filename, instructions_packet):
 #             break
 
 def generate_drillings_census(desired_ladder_count = 4, edge_orientable = True, max_length = 2, census_cap = 100, output_filename_base = 'data/drillings_census', parallel = 0):
-    output_filename = output_filename_base + '_ladders_' + str(desired_ladder_count) + '_edge_orientable_' + str(edge_orientable) + '_max_len_' + str(max_length) + '.txt'
+    output_filename = output_filename_base + 'drillings_census_ladders_' + str(desired_ladder_count) + '_edge_orientable_' + str(edge_orientable) + '_max_len_' + str(max_length) + '.txt'
     census_data = parse_data_file('veering_census.txt') 
     instructions_packets = []
     if census_cap != None:
         census = census_data[:census_cap]
+    else:
+        census = census_data
     output_file = open(output_filename, 'w') 
     for i, veering_isosig in enumerate(census):
         if i % 50 == 0:
@@ -80,7 +82,7 @@ def generate_drillings_census(desired_ladder_count = 4, edge_orientable = True, 
         bdry_triang = generate_boundary_triangulation(veering_isosig, draw = False)
         ladder_counts = bdry_triang.ladder_counts()
         if is_edge_orientable(tri, angle) == edge_orientable:
-            if all(count == desired_ladder_count for count in ladder_counts):
+            if all(((count == desired_ladder_count) or (count == 4)) for count in ladder_counts):
                 instructions_packet = (veering_isosig, desired_ladder_count, edge_orientable, max_length)
                 instructions_packets.append(instructions_packet)
     print('instructions_packets done')
