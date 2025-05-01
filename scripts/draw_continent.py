@@ -66,7 +66,7 @@ def special_vertex_in_and_out(divider_list, v, v_inds):
 def lightning_curve_from_dividers(dividers, a, b, special_vertices = [], spiky = True):
     #### give it only upper dividers, or only lower dividers
     #### result is oriented not in terms of order of a and b, but in order of the dividers
-    print(len(dividers))
+    # print(len(dividers))
     curve = []
     for divider_list in dividers:
         ### check if both s and e are endpoints of this divider list
@@ -185,7 +185,7 @@ def lightning_curve_for_ladder_unit(dividers, lu, offset):
     T = lu.ladder.torus_triangulation
     ladder_parity = T.ladder_list.index(lu.ladder) % 2
     lightning_curve = lightning_curve_from_dividers(dividers[ladder_parity], s, e, special_vertices = [], spiky = False)  ### no need for extra ladderpole vertices - there are none between these two
-    print('len lightning_curve', len(lightning_curve))
+    # print('len lightning_curve', len(lightning_curve))
     lightning_curve = [c + offset for c in lightning_curve]
     return lightning_curve
     # lightning_curve_scaled = [ T.drawing_scale * (c + offset) for c in lightning_curve ]
@@ -273,12 +273,15 @@ def assign_continent_vertices_to_tet_faces(T, con):
             lu.con_verts = [v.complex() for v in lu.verts_pos]
             replace_with_continent_vertices(lu.con_verts, con)
 
-def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, output_filename = None, draw_args = None, build_type = None ):
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, output_filename = None, draw_args = None, build_type = None ):
     draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
     draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
     draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
 
+    print('drawing', veering_isosig)
     tri, angle = isosig_to_tri_angle(veering_isosig)
+    if tet_shapes == None:
+        tet_shapes = shapes(tri)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
     B = boundary_triangulation(vt)
     B.generate_canvases(args = draw_args)
@@ -286,11 +289,12 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, 
     out_data = []
 
     for i,T in enumerate(B.torus_triangulation_list):
-        print(T.sideways_index_shift)
-        print(T.sideways_once_holonomy)
-        print(T.sideways_holonomy)
-        print(T.ladder_holonomy)
-        # print(('cusp', i))
+        print('cusp', i)
+        print('T.sideways_index_shift', T.sideways_index_shift)
+        print('T.sideways_once_holonomy', T.sideways_once_holonomy)
+        print('T.sideways_holonomy', T.sideways_holonomy)
+        print('T.ladder_holonomy', T.ladder_holonomy)
+        
         ### make initial_tet_face be in the lower left of the fundamental domain
         # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
         
@@ -357,7 +361,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, 
         else:
             desired_vertices = [v for L in ladderpoles_vertices for v in L]
 
-        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
+        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, for_drawing = True )
         
         con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
@@ -453,7 +457,7 @@ def draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, 
                         else:
                             s, e = lu.con_verts[lu.right_vertices[0]], lu.con_verts[lu.right_vertices[1]]
                         CT_ladderpole = con.segment_between(s, e)
-                        print(lu, T)
+                        # print(lu, T)
                         curves = lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T)
                         if CT_ladderpole[0] != e:
                             CT_ladderpole.reverse()
@@ -763,35 +767,27 @@ def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, out
     else:
         to_draw = veering_isosigs_list
 
-    # shapes_data = read_from_pickle('Data/veering_shapes.pkl')
     for veering_isosig in to_draw:
         print(veering_isosig)
-        # tet_shapes = shapes_data[veering_isosig]
         tri, angle = isosig_to_tri_angle(veering_sig)
-        tet_shapes = shapes(tri)
         filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
         try:
-            draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+            draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
         except: 
             print('failed to draw ' + veering_isosig)
 
 def draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, output_dirname, jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = 0.2, draw_args = None):
     build_type = 'build_long_and_mid'
-    # shapes_data = read_from_pickle('Data/shapes_jig_no_symm.pkl')
-
     data_for_cohom_fracs = {}
     for i, veering_isosig in enumerate(veering_isosigs_list):
         # print(veering_isosig)
         if i%25 == 0:
             print(i)
-        # tet_shapes = shapes_data[veering_isosig]
         tri, angle = isosig_to_tri_angle(veering_sig)
-        tet_shapes = shapes(tri)
-        # print 'tet_shapes', tet_shapes
 
         filename = output_dirname + '/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
         expand_fund_dom = True
-        out = draw_continent( veering_isosig, tet_shapes, max_num_tetrahedra, max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+        out = draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
 
         if out != False:
             data_for_cohom_fracs[out[0]] = out[1:]
