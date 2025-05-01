@@ -102,7 +102,19 @@ def generate_drillings_census(desired_ladder_count = 4, edge_orientable = True, 
     output_filename = output_filename_base + 'drillings_census_ladders_' + str(desired_ladder_count) + '_edge_orientable_' + str(edge_orientable) + '_max_len_' + str(max_length) + '_min_len_' + str(min_length) + '.txt'
     # census_data = parse_data_file('veering_census.txt') 
     census_data = parse_data_file('veering_census_with_data.txt') 
-    subset = get_census_subset(desired_ladder_count = desired_ladder_count, edge_orientable = edge_orientable, census_cap = census_cap)
+    # subset = get_census_subset(desired_ladder_count = desired_ladder_count, edge_orientable = edge_orientable, census_cap = census_cap)
+
+    ### hack: get the remaining ones done
+    subset1 = get_census_subset(desired_ladder_count = 4, edge_orientable = True, census_cap = None)
+    subset2 = get_census_subset(desired_ladder_count = 2, edge_orientable = False, census_cap = None)
+    print(len(subset1), len(subset2))
+    census = parse_data_file('veering_census.txt') 
+    subset = set(census)
+    subset.difference_update(set(subset1))
+    subset.difference_update(set(subset2))
+    subset = list(subset)
+    subset.sort()
+
     instructions_packets = []
     for veering_isosig in subset:
         instructions_packet = (veering_isosig, max_length, min_length)
@@ -113,6 +125,8 @@ def generate_drillings_census(desired_ladder_count = 4, edge_orientable = True, 
         ind = instructions_packets.index((start_after, max_length, min_length))
         instructions_packets = instructions_packets[ind+1:]
         print('start after instructions_packets length', len(instructions_packets))
+
+
 
     lock = Lock()
     if parallel == 0:
