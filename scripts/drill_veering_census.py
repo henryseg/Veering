@@ -25,14 +25,15 @@ def printlock(lock, string):
 #     global lock
 #     lock = l
 
-def make_many_drillings(veering_isosig, desired_ladder_count, edge_orientable, max_length):
+def make_many_drillings(veering_isosig, max_length, min_length):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle)
-    cycles = generate_flow_cycles(veering_isosig, max_length = max_length)
+    cycles = generate_flow_cycles(veering_isosig, max_length = max_length, min_length = min_length)
     drillings = {}
     for cycle in cycles:
-        if edge_orientable:
-            assert not is_twisted(vt, cycle) ### edge orientable should be preserved
+        ### We could check that edge orientablility is preserved
+        # if edge_orientable:
+        #     assert not is_twisted(vt, cycle) ### edge orientable should be preserved
         ### We could check that the ladder counts for the different cusps are consistent
         drilled = drill_flow_cycle(veering_isosig, cycle, return_found_parallel = True)
         if drilled != None:
@@ -48,8 +49,8 @@ def make_many_drillings(veering_isosig, desired_ladder_count, edge_orientable, m
     return drillings_list
 
 def make_many_drillings_with_lock(lock, output_filename, instructions_packet):
-    veering_isosig, desired_ladder_count, edge_orientable, max_length = instructions_packet
-    drillings_list = make_many_drillings(veering_isosig, desired_ladder_count, edge_orientable, max_length)
+    veering_isosig, max_length, min_length = instructions_packet
+    drillings_list = make_many_drillings(veering_isosig, max_length, min_length)
     result_string = veering_isosig + '_' + str(drillings_list)
     # printlock(lock, result_string)
     append_to_file(lock, output_filename, result_string)
@@ -66,27 +67,67 @@ def make_many_drillings_with_lock(lock, output_filename, instructions_packet):
 #             # result_queue.put(None)
 #             break
 
-def generate_drillings_census(desired_ladder_count = 4, edge_orientable = True, max_length = 2, census_cap = 100, output_filename_base = 'data/drillings_census', parallel = 0):
-    output_filename = output_filename_base + 'drillings_census_ladders_' + str(desired_ladder_count) + '_edge_orientable_' + str(edge_orientable) + '_max_len_' + str(max_length) + '.txt'
-    census_data = parse_data_file('veering_census.txt') 
-    instructions_packets = []
+def get_census_subset(desired_ladder_count = 4, edge_orientable = True, census_cap = None):
+    census_data = parse_data_file('veering_census_with_data.txt') 
     if census_cap != None:
         census = census_data[:census_cap]
     else:
         census = census_data
-    output_file = open(output_filename, 'w') 
-    for i, veering_isosig in enumerate(census):
-        if i % 50 == 0:
-            print(float(i)/float(len(census)))
-        tri, angle = isosig_to_tri_angle(veering_isosig)
-        bdry_triang = generate_boundary_triangulation(veering_isosig, draw = False)
-        ladder_counts = bdry_triang.ladder_counts()
-        if is_edge_orientable(tri, angle) == edge_orientable:
+    subset = []
+    for i, line in enumerate(census):
+        # if i % 50 == 0:
+        #     print(float(i)/float(len(census)))
+        line = line.split(' ')
+        veering_isosig = line[0]
+        if line[5] == 'E':
+            is_edge_ori = True
+        else:
+            assert line[5] == 'N'
+            is_edge_ori = False
+        ladder_counts = line[7]
+        ladder_counts = ladder_counts[1:-1]
+        ladder_counts = ladder_counts.split(',')
+        ladder_counts = [int(c) for c in ladder_counts]
+        # tri, angle = isosig_to_tri_angle(veering_isosig)
+        # bdry_triang = generate_boundary_triangulation(veering_isosig, draw = False)
+        # ladder_counts = bdry_triang.ladder_counts()
+        # if is_edge_orientable(tri, angle) == edge_orientable:
+        if is_edge_ori == edge_orientable:
             if all(((count == desired_ladder_count) or (count == 4)) for count in ladder_counts):
-                instructions_packet = (veering_isosig, desired_ladder_count, edge_orientable, max_length)
-                instructions_packets.append(instructions_packet)
-    print('instructions_packets done')
+                subset.append(veering_isosig)
+    return subset
+
+
+def generate_drillings_census(desired_ladder_count = 4, edge_orientable = True, max_length = 2, min_length = 1, census_cap = 100, start_after = None, output_filename_base = 'data/drillings_census', parallel = 0):
+    output_filename = output_filename_base + 'drillings_census_ladders_' + str(desired_ladder_count) + '_edge_orientable_' + str(edge_orientable) + '_max_len_' + str(max_length) + '_min_len_' + str(min_length) + '.txt'
+    # census_data = parse_data_file('veering_census.txt') 
+    census_data = parse_data_file('veering_census_with_data.txt') 
+    # subset = get_census_subset(desired_ladder_count = desired_ladder_count, edge_orientable = edge_orientable, census_cap = census_cap)
+
+    ### hack: get the remaining ones done
+    subset1 = get_census_subset(desired_ladder_count = 4, edge_orientable = True, census_cap = None)
+    subset2 = get_census_subset(desired_ladder_count = 2, edge_orientable = False, census_cap = None)
+    print(len(subset1), len(subset2))
+    census = parse_data_file('veering_census.txt') 
+    subset = set(census)
+    subset.difference_update(set(subset1))
+    subset.difference_update(set(subset2))
+    subset = list(subset)
+    subset.sort()
+
+    instructions_packets = []
+    for veering_isosig in subset:
+        instructions_packet = (veering_isosig, max_length, min_length)
+        instructions_packets.append(instructions_packet)
+    print('full instructions_packets length', len(instructions_packets))
     
+    if start_after != None:
+        ind = instructions_packets.index((start_after, max_length, min_length))
+        instructions_packets = instructions_packets[ind+1:]
+        print('start after instructions_packets length', len(instructions_packets))
+
+
+
     lock = Lock()
     if parallel == 0:
         for instructions_packet in instructions_packets:            
@@ -130,7 +171,7 @@ def recursive_drilling_search(starting_sig_list, target_sig_class, drilling_patt
         new_frontier = []
         for sig in frontier_sigs:
             print(sig, visited_sigs_and_paths[sig])
-            drillings_list = make_many_drillings(sig, length)
+            drillings_list = make_many_drillings(sig, length, 1)
             for new_sig, cycle in drillings_list:
                 if new_sig not in visited_sigs_and_paths.keys():
                     path = visited_sigs_and_paths[sig] + [cycle]
