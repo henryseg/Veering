@@ -47,9 +47,13 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
     output_to_pickle(shapes, filename)
     return None
 
+# Cusp areas
+
+def cusp_areas(tri):
+    N = snappy.Manifold(tri)
+    return N.cusp_areas()
 
 # Peripheral intersection numbers
-
 
 def triangle_sum(x, y):
     x0, x1, x2 = x

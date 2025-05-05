@@ -1772,7 +1772,7 @@ class continent:
         # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
-    def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+    def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  
         self.max_length = max_length
         # print(('max_length', max_length))
 
@@ -1794,7 +1794,7 @@ class continent:
         # print(('max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()))
         return hit_max_tetrahedra
 
-    def build_explore_prongs(self, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+    def build_explore_prongs(self, max_length = 0.1, max_num_tetrahedra = 50000):  
         self.max_length = max_length
         # print(('max_length', max_length))
 
@@ -1802,15 +1802,15 @@ class continent:
 
         while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
             tri = self.triangles[self.first_non_buried_index]  
+            u = tri.vertices[tri.downriver_index()]
 
             crossing_edges = tri.all_river_crossing_edges()
             for e in crossing_edges:   ### previously only used the last edge
             # for e in crossing_edges[-1:]:   ### only the last edge
                 if e.is_under_ladderpole():
-                    u = tri.vertices[tri.downriver_index()]
                     m = e.midpoint()
-                    distance_to_prong = abs(u.pos.complex() - m)
-                    if distance_to_prong > max_length:
+                    distance_of_e_to_cusp = abs(u.pos.complex() - m)
+                    if distance_of_e_to_cusp > max_length:
                         self.bury(tri)
                         break
                 # dist_to_v = abs(u.pos.complex() - v.pos.complex())
@@ -1851,25 +1851,25 @@ class continent:
     #     print 'num_long_edges_direct_count', self.count_long_edges()
     #     print 'max_coastal_edge_length', self.calculate_max_ladderpole_descendant_coast_edge_length()
 
-    def build_long_and_mid(self, max_length = 0.1, max_num_tetrahedra = 50000):  
+    def build_long_and_mid(self, max_length = 0.1, mid_scaling = 1.0, max_num_tetrahedra = 50000):   ### fills out a bit better than build_long alone, though not near the obvious cusps
         self.max_length = max_length
         # print(('max_length', max_length))
 
         ## now build
-
+        ### self.first_non_buried_index is also skipping triangles that are already small enough on the picture
         while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
             tri = self.triangles[self.first_non_buried_index]  
+            u = tri.vertices[tri.downriver_index()]  ### this is the upriver vertex (opposite downriver triangle)
 
             is_long = any( (edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges )
             
             mid_is_far = False
-            crossing_edges = tri.all_river_crossing_edges()
-            for e in crossing_edges:   ### previously only used the last edge
+            crossing_edges = tri.all_river_crossing_edges() ### the edges that the river starting from this triangle crosses
+            for e in crossing_edges:  
                 if e.is_under_ladderpole():
-                    u = tri.vertices[tri.downriver_index()]
-                    m = e.midpoint()
-                    distance_to_prong = abs(u.pos.complex() - m)
-                    if distance_to_prong > max_length: 
+                    m = e.midpoint()  
+                    distance_of_e_to_cusp = abs(u.pos.complex() - m)
+                    if distance_of_e_to_cusp > mid_scaling*max_length: 
                         mid_is_far = True
                         break
 

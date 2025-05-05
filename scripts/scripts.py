@@ -99,8 +99,8 @@ def draw_continent_script():
     # max_num_tetrahedra = 40
     # max_num_tetrahedra = 5000
     # max_num_tetrahedra = 50000
-    max_num_tetrahedra = 100000
-    # max_num_tetrahedra = 400000
+    # max_num_tetrahedra = 100000
+    max_num_tetrahedra = 400000
     # max_num_tetrahedra = 2000000
     # max_num_tetrahedra = 50000000
     # max_length = 0.4
@@ -118,7 +118,7 @@ def draw_continent_script():
     # max_length = 0.01
     # max_length = 0.005
 
-    draw_args['ct_lw'] = 0.2 * max_length 
+    # draw_args['ct_lw'] = 0.2 * max_length 
 
     # build_type = 'build_naive'
     # build_type = 'build_on_coast'
@@ -183,7 +183,7 @@ def draw_continent_script():
     elif draw_args['draw_jordan_curve']:
         draw_type = 'CT_jordan'
 
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '_' + draw_type + '.pdf'
+    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_length) + '_' + build_type + '_' + draw_type + '.pdf'
     # filename = 'Images/Jigsaw/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
 
 
@@ -204,16 +204,17 @@ def draw_continent_script():
     # draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = max_length, draw_args = draw_args)
 
 
-def draw_continent_from_isosig(veering_isosig):
+def draw_continent_from_isosig(veering_isosig, max_length = 0.1):
     from draw_continent import draw_continent
     draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    # build_type = 'build_make_long_descendant_edges_internal'
     build_type = 'build_long_and_mid'
 
     # max_num_tetrahedra = 40
     # max_num_tetrahedra = 5000
     # max_num_tetrahedra = 50000
-    max_num_tetrahedra = 100000
-    # max_num_tetrahedra = 400000
+    # max_num_tetrahedra = 100000
+    max_num_tetrahedra = 400000
     # max_num_tetrahedra = 2000000
     # max_num_tetrahedra = 50000000
     # max_length = 0.4
@@ -221,7 +222,7 @@ def draw_continent_from_isosig(veering_isosig):
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
-    max_length = 0.1
+    # max_length = 0.1
     # max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
@@ -231,7 +232,7 @@ def draw_continent_from_isosig(veering_isosig):
     # max_length = 0.01
     # max_length = 0.005
 
-    draw_args['ct_lw'] = 0.2 * max_length 
+    # draw_args['ct_lw'] = 0.2 * max_length 
     draw_args['draw_CT_curve'] = True
     draw_args['draw_lightning_curve'] = False
     draw_args['draw_jordan_curve'] = False
@@ -248,12 +249,12 @@ def draw_continent_from_isosig(veering_isosig):
     elif draw_args['draw_jordan_curve']:
         draw_type = 'CT_jordan'
 
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '_' + draw_type + '.pdf'
+    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + str(max_length) + 'hack' + '.pdf'
     draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
-def draw_census_continents():
+def draw_census_continents(census_cap = 10):
     census = parse_data_file('../veering/data/veering_census.txt')
-    for sig in census[:10]:
+    for sig in census[:census_cap]:
         draw_continent_from_isosig(sig)
 
 def draw_fund_dom_continent_circle_script():
