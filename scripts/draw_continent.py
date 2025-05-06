@@ -6,7 +6,7 @@ from math import sqrt
 from veering.file_io import parse_data_file, read_from_pickle, output_to_pickle
 from veering.taut import isosig_to_tri_angle
 from veering.veering_tri import veering_triangulation
-from veering.snappy_tools import shapes, cusp_areas
+from veering.snappy_tools import shapes, algebraic_shapes, cusp_areas
 
 from continent import continent
 from boundary_triangulation import boundary_triangulation, tet_face
@@ -274,7 +274,7 @@ def assign_continent_vertices_to_tet_faces(T, con):
             lu.con_verts = [v.complex() for v in lu.verts_pos]
             replace_with_continent_vertices(lu.con_verts, con)
 
-def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, scale_max_length_to_area = False, tet_shapes = None, output_filename = None, draw_args = None, build_type = None ):
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, scale_max_length_to_area = False, tet_shapes = None, use_algebraic_numbers = False, output_filename = None, draw_args = None, build_type = None ):
     draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
     draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
     draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
@@ -282,7 +282,11 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
     print('drawing', veering_isosig)
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if tet_shapes == None:
-        tet_shapes = shapes(tri)
+        if not use_algebraic_numbers:
+            tet_shapes = shapes(tri)
+        else:
+            tet_shapes = algebraic_shapes(tri)
+    print('tet_shapes', tet_shapes)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
     B = boundary_triangulation(vt)
     B.generate_canvases(args = draw_args)
@@ -370,7 +374,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         else:
             desired_vertices = [v for L in ladderpoles_vertices for v in L]
 
-        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, for_drawing = True )
+        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, maintain_coast = True )
         
         con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 

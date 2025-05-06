@@ -204,7 +204,7 @@ def draw_continent_script():
     # draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = max_length, draw_args = draw_args)
 
 
-def draw_continent_from_isosig(veering_isosig, max_length = 0.1):
+def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahedra = 500000):
     from draw_continent import draw_continent
     draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     # build_type = 'build_make_long_descendant_edges_internal'
@@ -214,7 +214,7 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1):
     # max_num_tetrahedra = 5000
     # max_num_tetrahedra = 50000
     # max_num_tetrahedra = 100000
-    max_num_tetrahedra = 400000
+    # max_num_tetrahedra = 400000
     # max_num_tetrahedra = 2000000
     # max_num_tetrahedra = 50000000
     # max_length = 0.4
@@ -249,8 +249,9 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1):
     elif draw_args['draw_jordan_curve']:
         draw_type = 'CT_jordan'
 
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + str(max_length) + 'hack' + '.pdf'
-    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+    use_algebraic_numbers = True
+    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + str(max_length) + '.pdf'
+    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
 def draw_census_continents(census_cap = 10):
     census = parse_data_file('../veering/data/veering_census.txt')
@@ -278,7 +279,7 @@ def draw_fund_dom_continent_circle_script():
     # veering_isosig = 'ivLLQQccdgffhghhvvaaaaavv_01111220'
     veering_isosig = 'ivvPQQcfhghgfghfaaaaaaaaa_01122000'
 
-    con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig, for_drawing = True)
+    con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig, maintain_coast = True, maintain_coastal_edges = True)
 
     print('con size', len(con.tetrahedra), con.num_tetrahedra)
 
@@ -381,7 +382,7 @@ def draw_drill_continent_circle_script():
     
     print(veering_isosig, flow_cycle)
 
-    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0, for_drawing = True)
+    out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, verbose = 0, maintain_coast = True, maintain_coastal_edges = True)
     if out == None:
         print('flow cycle is boundary parallel')
         return None

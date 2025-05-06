@@ -47,6 +47,20 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
     output_to_pickle(shapes, filename)
     return None
 
+# Algebraic shapes
+
+def algebraic_shapes(tri):
+    N = snappy.Manifold(tri)
+    L = N.tetrahedra_field_gens()
+    for i in range(5):
+        result = L.find_field(prec = (i+1)*100, degree = (i+1)*10, optimize = True)
+        if result != None:
+            break
+    if result == None:
+        return None
+    else:
+        return result[2]
+
 # Cusp areas
 
 def cusp_areas(tri):

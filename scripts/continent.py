@@ -797,7 +797,7 @@ def farey_sum(a, b):
     return (a1 + b1, a2 + b2)
 
 class continent:
-    def __init__(self, vt, initial_tet_face, desired_vertices = [], for_drawing = False):
+    def __init__(self, vt, initial_tet_face, desired_vertices = [], maintain_coast = False, maintain_coastal_edges = False):
         # print 'initializing continent'
         self.vt = vt
         self.triangles = [] 
@@ -826,8 +826,8 @@ class continent:
         self.lower_landscape_edges = set([])
         self.coastal_edges = None
 
-        self.for_drawing = for_drawing ### if True, do extra work that makes things a bit slower
-
+        self.maintain_coast = maintain_coast ### if True, do extra work that makes things a bit slower
+        self.maintain_coastal_edges = maintain_coastal_edges 
         # self.circular_ordering_triangles = []
 
         ###   c---R----b
@@ -1368,8 +1368,8 @@ class continent:
             vert_t = vertex( self, None)
 
         ##### insert vert_t into self.coast 
-        ### do not do if we are not drawing pictures: is slow
-        if self.for_drawing:
+        
+        if self.maintain_coast: ### do not do if we are not drawing pictures: is slow
             if vert_b == self.infinity:
                 self.coast.append( vert_t )
             else:
@@ -1419,8 +1419,9 @@ class continent:
         edge_ct = landscape_edge(self, [vert_c, vert_t], edge_ct_index, far_edge_colour == "red") ## never coastal
 
         ### commented out for speed in drilling
-        if self.for_drawing:
+        if self.maintain_coast:
             coastal_index = self.coast.index(vert_a)
+        if self.maintain_coastal_edges:
             self.coastal_edges = self.coastal_edges[:coastal_index] + [edge_at, edge_bt] + self.coastal_edges[coastal_index + 1:]
 
         if triangle.is_red == triangle.is_upper:

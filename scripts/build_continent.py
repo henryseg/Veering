@@ -24,11 +24,11 @@ def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
     return con
 
-def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50, for_drawing = False):
+def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
     initial_tet_face = tet_face(vt, 0, 0, verts_pos = [None, None, None, None])
-    con = continent( vt, initial_tet_face, for_drawing = for_drawing) #, desired_vertices = desired_vertices )
+    con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
     continent_fund_dom_tets = con.build_triangulation_fundamental_domain(max_num_tetrahedra = max_num_tetrahedra)
     con.build_boundary_data()
     # print(len(con.vertices), len(con.edges), len(con.triangles), len(con.tetrahedra))
@@ -154,12 +154,11 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # print('did not find strip vertex')
     # return (None, None, candidate_triangles) ### testing
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = True, verbose = 0, for_drawing = False):
+def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = True, verbose = 0):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
-    con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig, for_drawing = for_drawing)
-    con.for_drawing = for_drawing
+    con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig)
     vt = con.vt
     flow_cycle_is_twisted = is_twisted(vt, flow_cycle)
     if verbose > 0:
