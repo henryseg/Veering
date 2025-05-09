@@ -57,9 +57,9 @@ def algebraic_shapes(tri):
         if result != None:
             break
     if result == None:
-        return None
+        assert False, 'could not find algebraic shapes'
     else:
-        return result[2]
+        return (result[0], result[2]) ### the field and the shapes. 
 
 # Cusp areas
 

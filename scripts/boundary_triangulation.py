@@ -1,6 +1,6 @@
 
 from veering.file_io import parse_data_file, read_from_pickle
-from veering.basic_math import vector, matrix, CP1
+from veering.basic_math import vector, matrix, KP1
 from veering.taut import isosig_to_tri_angle, liberal
 from veering.veering_tri import veering_triangulation
 
@@ -23,8 +23,8 @@ class tet_face:
         self.vt = vt
         self.tet_num = tet_num
         self.face = face
-        self.verts_pos = verts_pos  ## in CP1
-        self.origin_in_C = complex(0,0)  ### used to move things around for drawing
+        self.verts_pos = verts_pos  ## in KP1
+        # self.origin_in_C = complex(0,0)  ### used to move things around for drawing
 
     def __eq__(self, other): ## don't care about verts_pos
         return self.tet_num == other.tet_num and self.face == other.face 
@@ -36,7 +36,7 @@ class tet_face:
         return '(' + str(self.tet_num) + ',' + str(self.face) + ')'
 
     def transform(self, mob_tsfm):
-        self.verts_pos = [ mob_tsfm * v for v in self.verts_pos]
+        self.verts_pos = [ mob_tsfm * v for v in self.verts_pos ]
 
     def vert_positions_around_corner(self, vert_num):
         assert vert_num != self.face
@@ -63,13 +63,13 @@ class tet_face:
             new_pivot_vertex = gluing[pivot_vertex]
             new_leading_vertex, new_trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
 
-            verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()])
+            verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()], field = self.vt.field)
             assert verts_pos[new_inf_vertex].is_infinity()
             tet = new_tet
             inf_vertex, pivot_vertex, leading_vertex, trailing_vertex = new_inf_vertex, new_pivot_vertex, new_leading_vertex, new_trailing_vertex
             if tet == original_tet and inf_vertex == original_inf_vertex and leading_vertex == original_leading_vertex:
                 break
-        return [p.complex() for p in out]
+        return [p.project_to_plane() for p in out]
 
 class ladder_unit(tet_face):
     """a triangle in a ladder, together with associated data"""
@@ -372,7 +372,7 @@ class ladder:
             else:
                 assert args['style'] == 'geometric'
                 posns_dict = {}
-                ladder_unit.gluing_offset = 0.0
+                ladder_unit.gluing_offset = 0
                 if args['draw_triangles_near_poles'] and self == self.torus_triangulation.ladder_list[-1] and ladder_unit.is_on_right():
                     ### when drawing Cannon-Thurston, put these triangles on the left, so the cannon-thurston paths have triangles on both sides
                     # print 'moving:', ladder_unit
@@ -386,12 +386,12 @@ class ladder:
 
                     back_vert = ladder_unit.right_vertices[0]
                     neighbour_back_vert = gluing[back_vert]
-                    ladder_unit.gluing_offset = neighbour.verts_pos[neighbour_back_vert].complex() - ladder_unit.verts_pos[back_vert].complex() 
+                    ladder_unit.gluing_offset = neighbour.verts_pos[neighbour_back_vert].project_to_plane() - ladder_unit.verts_pos[back_vert].project_to_plane() 
                     # neighbour.gluing_offset = -ladder_unit.gluing_offset
                     
                 for i in range(4):
                     if ladder_unit.face != i:  # don't include infinity vertex
-                        c = ladder_unit.verts_pos[i].complex() 
+                        c = ladder_unit.verts_pos[i].project_to_plane() 
                         c = self.torus_triangulation.drawing_scale * ( c + ladder_unit.gluing_offset ) 
                         posns_dict[i] = c
                 ladder_unit.verts_C = posns_dict
@@ -440,13 +440,13 @@ class ladder:
             current_tet = current_tet.adjacentTetrahedron(current_pi_vertex)
             verts_pos = None
             if current_tf.verts_pos != None:
-                verts_pos = develop_verts_pos(current_tf.verts_pos, gluing, current_pi_vertex, self.vt.tet_shapes[current_tet.index()])
+                verts_pos = develop_verts_pos(current_tf.verts_pos, gluing, current_pi_vertex, self.vt.tet_shapes[current_tet.index()], field = self.vt.field)
             current_inf_vert = gluing[current_inf_vert]
             current_tf = tet_face(self.vt, current_tet.index(), current_inf_vert, verts_pos = verts_pos )
             if current_tf == start_tf:
                 not_inf_vert = (start_tf.face + 1) % 4
                 if current_tf.verts_pos != None:
-                    self.holonomy = start_tf.verts_pos[not_inf_vert].complex() - current_tf.verts_pos[not_inf_vert].complex()
+                    self.holonomy = start_tf.verts_pos[not_inf_vert].project_to_plane() - current_tf.verts_pos[not_inf_vert].project_to_plane()
                     ### the first ladder has blue vertices on its left, which means that the ladder in convex down, which means this calculated holonomy
                     ### would be downwards, but we want it to be upwards. So, we do start - current
                 break
@@ -459,7 +459,7 @@ class ladder:
         out = []
         for lu in self.ladder_unit_list:
             if lu.is_on_left():
-                out.append( lu.verts_pos[ lu.left_vertices[0] ].complex() )
+                out.append( lu.verts_pos[ lu.left_vertices[0] ].project_to_plane() )
         out.append( out[0] + self.torus_triangulation.ladder_holonomy ) 
         return out
 
@@ -562,14 +562,21 @@ class torus_triangulation:
         current_tet_face = start_tet_face
 
         verts_pos = None
-        if self.vt.tet_shapes != None:  ### set up vertex positions on CP1 for first tetrahedron, so face is at infinity
+        if self.vt.tet_shapes != None:  ### set up vertex positions on KP1 for first tetrahedron, so face is at infinity
             verts_pos = [None, None, None, None]
-            verts_pos[face] = CP1((1,0))
-            verts_pos[3-face] = CP1((0,1))
-            verts_pos[(face+2)%4] = CP1((1,1))
-            last_vert = 3 - ((face+2)%4)
+            if self.vt.field == None:
+                one = 1
+                zero = 0
+            else:
+                one = self.vt.field.one()
+                zero = self.vt.field.zero()
+            verts_pos[face] = KP1((one, zero))
+            verts_pos[3 - face] = KP1((zero, one))
+            verts_pos[(face + 2) % 4] = KP1((one, one))
+
+            last_vert = 3 - ((face + 2) % 4)
             ordering = unknown_vert_to_known_verts_ordering[last_vert] 
-            verts_pos[last_vert] = developed_position(verts_pos[ordering[0]], verts_pos[ordering[1]], verts_pos[ordering[2]], self.vt.tet_shapes[tet_num])
+            verts_pos[last_vert] = developed_position(verts_pos[ordering[0]], verts_pos[ordering[1]], verts_pos[ordering[2]], self.vt.tet_shapes[tet_num], field = self.vt.field)
             # print 'tet, inf, shapes', tet_num, face, verts_pos
         current_tf = tet_face(self.vt, current_tet_face.tet_num, current_tet_face.face, verts_pos = verts_pos) 
         
@@ -604,7 +611,7 @@ class torus_triangulation:
                 new_pivot_vertex = gluing[pivot_vertex]
                 new_leading_vertex, new_trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
                 if self.vt.tet_shapes != None:
-                    verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()])
+                    verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()], field = self.vt.field)
                     # print 'tet, inf, shapes', new_tet.index(), new_inf_vert, verts_pos
                     assert verts_pos[new_inf_vert].is_infinity()
                 tet = new_tet
@@ -614,7 +621,8 @@ class torus_triangulation:
 
         not_inf_vert = (current_tf.face + 1) % 4
         if self.vt.tet_shapes != None:
-            self.sideways_holonomy = current_tf.verts_pos[not_inf_vert].complex() - sideways[0].verts_pos[not_inf_vert].complex() 
+            self.sideways_holonomy = current_tf.verts_pos[not_inf_vert].project_to_plane() - sideways[0].verts_pos[not_inf_vert].project_to_plane() 
+            print('self.sideways_holonomy', self.sideways_holonomy)
         ### in cases when i(sideways, ladderpole slope) > 1, this isn't what we want for moving things around. sideways_once_holonomy might be better
 
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
@@ -645,7 +653,7 @@ class torus_triangulation:
                 self.sideways_holonomy = -self.sideways_holonomy
         return sideways
 
-    def make_torus_triangulation(self, start_tet_face):
+    def make_torus_triangulation(self, start_tet_face, make_ladderpoles_vertical = True):
         """build a torus triangulation by building multiple ladders"""
         
         sideways = self.find_sideways(start_tet_face)
@@ -658,7 +666,7 @@ class torus_triangulation:
                     ind = self.ladder_list[0].ladder_unit_list.index(tf)
                     self.sideways_index_shift = self.ladder_list[0].ladder_unit_index_to_left_ladderpole_index(ind)
                     translate_tf = self.ladder_list[0].ladder_unit_list[ind]
-                    self.sideways_once_holonomy = tf.verts_pos[not_inf_vert].complex() - translate_tf.verts_pos[not_inf_vert].complex() 
+                    self.sideways_once_holonomy = tf.verts_pos[not_inf_vert].project_to_plane() - translate_tf.verts_pos[not_inf_vert].project_to_plane() 
                 break
             self.ladder_list.append(ladder(self, tf))
         if self.sideways_once_holonomy == None:
@@ -667,28 +675,36 @@ class torus_triangulation:
 
         self.ladder_holonomy = self.ladder_list[0].holonomy
 
-        if self.vt.tet_shapes != None:
+        print('self.ladder_holonomy', self.ladder_holonomy)
+        print(self.sideways_holonomy) ### breaks when we do self.transform(mob_tsfm)
+        #### make ladderpoles vertical...
+        if self.vt.tet_shapes != None and make_ladderpoles_vertical:
+            if type(self.ladder_holonomy) == complex or type(self.ladder_holonomy) == int:
+                zero, one = 0, 1
+            else:
+                field = self.ladder_holonomy.parent()
+                zero, one = field.zero(), field.one()
             for i, L in enumerate(self.ladder_list):
                 L.is_even = (i%2 == 0)
                 assert abs( (-1)**(i%2) * L.holonomy - self.ladder_holonomy ) < 0.001 ## all ladder holonomies the same
 
                 if L.is_even:  ## move them up 
-                    mob_tsfm = matrix(( 1, self.ladder_holonomy, 0, 1 ))
+                    mob_tsfm = matrix(( one, self.ladder_holonomy, zero, one ))
                     L.transform(mob_tsfm)
 
             # len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
 
-            average_ladderpole_length = sum( len(L.ladder_unit_list) for L in self.ladder_list ) / (2.0 * len(self.ladder_list))
+            # average_ladderpole_length = sum( len(L.ladder_unit_list) for L in self.ladder_list ) / (2 * len(self.ladder_list))
             
-            ### now rotate and scale everything so that ladder_holonomy is i * average_ladderpole_length
+            # ### now rotate and scale everything so that ladder_holonomy is i * average_ladderpole_length
 
-            mob_tsfm = matrix(( complex(0, average_ladderpole_length)/self.ladder_holonomy, 0, 0, 1 ))
-            self.transform(mob_tsfm)
-        if self.vt.tet_shapes != None:
-            assert self.sideways_holonomy.real > 0.0
-            assert abs(self.ladder_holonomy.real) < 0.001
-            assert self.sideways_once_holonomy.real > 0.0
-            assert self.ladder_holonomy.imag > 0.0
+            # mob_tsfm = matrix(( complex(0, average_ladderpole_length)/self.ladder_holonomy, zero, zero, one ))
+            # self.transform(mob_tsfm)
+
+            # assert self.sideways_holonomy.real > 0.0
+            # assert abs(self.ladder_holonomy.real) < 0.001
+            # assert self.sideways_once_holonomy.real > 0.0
+            # assert self.ladder_holonomy.imag > 0.0
 
         # print(self.sideways_index_shift)
         # print(self.sideways_holonomy)

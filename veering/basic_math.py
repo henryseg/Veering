@@ -119,9 +119,10 @@ class matrix(tuple):
         a, b, c, d = self
         return a*d - b*c
 
-    def unit(self):
-        D = self.det()
-        return self * intify(sqrt(D)**(-1))
+    ### This may not work nicely with algebraic numbers, and we don't use it anyway
+    # def unit(self):
+    #     D = self.det()
+    #     return self * intify(sqrt(D)**(-1))
 
     def eigenvalues(self):
         T = self.trace()
@@ -132,17 +133,26 @@ class matrix(tuple):
         
     def inverse(self, epsilon = 0.000001):
         D = self.det()
-        if abs(D) < epsilon:
-            raise ZeroDivisionError
         a, b, c, d = self
-        # [a b]*[ d -b] = [D 0]
-        # [c d] [-c  a]   [0 D]. 
-        # One way to remember the formula is to think about how you
-        # invert elliptic, parabolic, and hyperbolic elements.  
-        return intify(D**(-1)) * matrix((d, -b, -c, a))
-        # NB - I intified the inverse of the determinant because one
-        # use case is det == 1.  In that case using D**-1 (ie a float)
-        # will lose accuracy even for very modestly sized matrices.
+
+        if not type(a) == complex:
+            ### for algebraic numbers:
+            # assert D == 1, D ### do we need this?
+            return matrix((d, -b, -c, a))
+
+        else:
+            if abs(D) < epsilon:
+                raise ZeroDivisionError
+            # [a b]*[ d -b] = [D 0]
+            # [c d] [-c  a]   [0 D]. 
+            # One way to remember the formula is to think about how you
+            # invert elliptic, parabolic, and hyperbolic elements.  
+            return intify(D**(-1)) * matrix((d, -b, -c, a))
+            # NB - I intified the inverse of the determinant because one
+            # use case is det == 1.  In that case using D**-1 (ie a float)
+            # will lose accuracy even for very modestly sized matrices.
+
+
 
     def transpose(self):
         a, b, c, d = self
@@ -151,12 +161,15 @@ class matrix(tuple):
     def conjugate_transpose(self):
         return (self.conjugate()).transpose()
 
-    def __call__(self, z): # z is a number or an element of CP1
+    def __call__(self, z): # z is a number or an element of KP1
         if isinstance(z, Number):
-            v = vector((z, 1))
+            if type(z) == complex or type(z) == int:
+                v = vector((z, 1))
+            else: ### assume z is an element of a number field
+                v = vector((z, z.parent.one()))
             w = self * v
             return w[0]/w[1]
-        if isinstance(z, CP1):
+        if isinstance(z, KP1):
             return self * z
 
     def fixed_points(self, epsilon = 0.000001):
@@ -184,14 +197,13 @@ class matrix(tuple):
             Ls = [Lm, Lp]
             out = [zm, zp]  
         assert abs(Ls[0]) < 1 - epsilon and 1 + epsilon < abs(Ls[1])
-        return [CP1((z,1)) for z in out]
+        return [KP1((z,1)) for z in out]
 
 
 #   projective geometry   
 
 
-class CP1(tuple):
-
+class KP1(tuple):
     def __mul__(self, other):
         raise TypeError
 
@@ -202,37 +214,50 @@ class CP1(tuple):
             # [a b][p] = [ap + bq]
             # [c d][q]   [cp + dq]
             # return self.__class__((a*p + b*q, c*p + d*q)).preferred_rep_saul()
-            return self.__class__((a*p + b*q, c*p + d*q)).preferred_rep()
+            # return self.__class__((a*p + b*q, c*p + d*q)).preferred_rep()
+            # print(a,b,c,d,p,q,type(a),type(b), type(c), type(d), type(p), type(q))
+            # assert type(q) != float
+            return self.__class__((a*p + b*q, c*p + d*q))
         else: raise TypeError
 
     def is_infinity(self, epsilon = 0.000001):
-        return abs(self[1]) < epsilon * abs(self[0])
+        if type(self[0]) == complex or type(self[0]) == int:
+            return abs(self[1]) < epsilon * abs(self[0])
+        else: ### assume we are in a number field
+            return self[1].is_zero()
 
     def complex(self):
         if self.is_infinity():
             return complex(100,100) ### hack, useful for debugging
         else:
-            return self[0]/self[1]
+            if type(self[0]) == complex or type(self[0]) == int:
+                return complex(self[0]/self[1])
+            else: ### assume algebraic number
+                return complex((self[0]/self[1]).complex_embedding()) ### The outer complex converts from sage complex to python complex
+
+    def project_to_plane(self): ### similar to above but allows for algebraic number output
+        assert not self.is_infinity()
+        return self[0]/self[1]
+
 
     def is_close_to(self, other, epsilon =  0.000001):
         a, b = self
         c, d = other
         return abs(a*d - b*c) < epsilon
 
-    def preferred_rep(self):
-        if abs(self[1]) < 0.000001:
-            # print 'CP1 near infinity'
-            return self
-        else:
-            return CP1((self[0]/self[1], complex(1.0,0.0)))  
+    # def preferred_rep(self):
+    #     if abs(self[1]) < 0.000001:
+    #         # print 'KP1 near infinity'
+    #         return self
+    #     else:
+    #         return KP1((self[0]/self[1], complex(1.0,0.0)))  
 
-    def preferred_rep_saul(self):
-        if abs(self[1]) == 0.0:
-            return self
-        else:
-            denom = abs(sqrt(self[0]*self[1])) 
-            return CP1((self[0]/denom, self[1]/denom)) 
-
+    # def preferred_rep_saul(self):
+    #     if abs(self[1]) == 0.0:
+    #         return self
+    #     else:
+    #         denom = abs(sqrt(self[0]*self[1])) 
+    #         return KP1((self[0]/denom, self[1]/denom)) 
 
   ## g[p_,q_,r_,s_,t_,u_] is a matrix that takes p,q,r to s,t,u
 

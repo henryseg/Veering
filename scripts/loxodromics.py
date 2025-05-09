@@ -2,9 +2,9 @@
 # loxodromics.py
 #
 
-from veering.basic_math import CP1, move_in_PSL
+from veering.basic_math import KP1, move_in_PSL
 
-from develop_ideal_hyperbolic_tetrahedra import develop_verts_pos
+from develop_ideal_hyperbolic_tetrahedra import develop_verts_pos  ### Need to update to include field if using algebraic numbers
 
 
 def mob_tsfm_from_tets(init_verts_pos, final_verts_pos):
@@ -56,7 +56,7 @@ def loxodromic_from_tet(vt, init_tet_num, init_verts_pos = None):
     """
     current_tet_num = init_tet_num
     if init_verts_pos == None:
-        init_verts_pos = [CP1((1,0)), CP1((0,1)), CP1((1,1)), CP1((vt.tet_shapes[tet_num],1))]
+        init_verts_pos = [KP1((1,0)), KP1((0,1)), KP1((1,1)), KP1((vt.tet_shapes[tet_num],1))]
     current_verts_pos = init_verts_pos
     while True:
         current_tet_num, current_verts_pos = get_tet_above(vt, current_tet_num, current_verts_pos)
@@ -71,7 +71,7 @@ def loxodromic_from_flag(vt, tet_num, face_vert, edge_vert, init_verts_pos = Non
     coorientations = vt.coorientations
     tet_shapes = vt.tet_shapes
     if init_verts_pos == None:
-        verts_pos = [CP1((1,0)), CP1((0,1)), CP1((1,1)), CP1((vt.tet_shapes[tet_num],1))]
+        verts_pos = [KP1((1,0)), KP1((0,1)), KP1((1,1)), KP1((vt.tet_shapes[tet_num],1))]
     else:
         verts_pos = init_verts_pos
     leading_vert = face_vert

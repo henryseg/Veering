@@ -2,10 +2,11 @@
 # develop_ideal_hyperbolic_tetrahedra.py
 #
 
-from veering.basic_math import matrix, CP1
+from veering.basic_math import matrix, KP1
 
-def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations in a commutative ring"
+def developed_position(A1, A2, A3, z, field = None): #use Feng's "solving Thurston's equations in a commutative ring"
     # print A1, A2, A3, z
+    # print('field', field)
     epsilon = 0.00001  
     a1,b1 = A1 ## eg 1, 0
     a2,b2 = A2 ## eg 0, 1
@@ -35,8 +36,12 @@ def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations
         print(('A3', A3))
         raise
 
-    # B = CP1((-z/b3p, -1/a3p)).preferred_rep_saul()
-    B = CP1((-z/b3p, -1/a3p)).preferred_rep()
+    # B = KP1((-z/b3p, -1/a3p)).preferred_rep_saul()
+    # B = KP1((-z/b3p, -1/a3p)).preferred_rep()
+    if field == None:
+        B = KP1((-z/b3p, -1/a3p))   ### Danger: if a3p is an integer, the second coordinate is a float
+    else:
+        B = KP1((-z/b3p, -field.one()/a3p))
     A4 = Xinv * B
     a4, b4 = A4
 
@@ -65,6 +70,7 @@ def developed_position(A1, A2, A3, z): #use Feng's "solving Thurston's equations
         print(('A3', A3))
         raise 
 
+    # print('developed_position', A4)
     return A4
 
 unknown_vert_to_known_verts_ordering = {0:(3, 2, 1), 1:(2, 3, 0), 2:(1, 0, 3), 3:(0, 1, 2)}
@@ -79,7 +85,7 @@ unknown_vert_to_known_verts_ordering = {0:(3, 2, 1), 1:(2, 3, 0), 2:(1, 0, 3), 3
         ###   |,'    `.|     |,'    `.|
         ###   1--------z     2--------3   
 
-def develop_verts_pos(vertex_posns, gluing, face_vertex, tet_shape):
+def develop_verts_pos(vertex_posns, gluing, face_vertex, tet_shape, field = None):
     """Get vert posns for a new tetrahedron given vert posns for an existing tetrahedron and gluing info"""
     next_tet_vertex_posns = []
     current_vertex_nums = [0, 1, 2, 3]
@@ -90,7 +96,7 @@ def develop_verts_pos(vertex_posns, gluing, face_vertex, tet_shape):
     #get shape of next tet
     next_tet_new_vertex_num = gluing[face_vertex] #the number of the vertex we don't have the position of
     ordering = unknown_vert_to_known_verts_ordering[next_tet_new_vertex_num]
-    new_position = developed_position(next_tet_vertex_posns[ordering[0]], next_tet_vertex_posns[ordering[1]], next_tet_vertex_posns[ordering[2]], tet_shape)
+    new_position = developed_position(next_tet_vertex_posns[ordering[0]], next_tet_vertex_posns[ordering[1]], next_tet_vertex_posns[ordering[2]], tet_shape, field = field)
     next_tet_vertex_posns[next_tet_new_vertex_num] = new_position
     return next_tet_vertex_posns
 

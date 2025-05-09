@@ -57,12 +57,12 @@ def special_vertex_in_and_out(divider_list, v, v_inds):
     if len(v_inds) % 2 == 1:
         # print 'odd'
         ind = (v_inds[0] + v_inds[-1])//2
-        return ( [v.pos.complex()], ind, ind ) ### last midpoint is at ind, then we do the extra point in the list, then start midpoints up again with ind
+        return ( [v.pos.project_to_plane()], ind, ind ) ### last midpoint is at ind, then we do the extra point in the list, then start midpoints up again with ind
     else:
         # print 'even'
         ind = (v_inds[0] + v_inds[-1] + 1)//2
         mid_step = (divider_list[ind-1].midpoint() + divider_list[ind].midpoint()) * 0.5
-        return ( [mid_step, v.pos.complex(), mid_step], ind - 1, ind ) ### more complicated since we have an extra point on the midpoints curve
+        return ( [mid_step, v.pos.project_to_plane(), mid_step], ind - 1, ind ) ### more complicated since we have an extra point on the midpoints curve
 
 def lightning_curve_from_dividers(dividers, a, b, special_vertices = [], spiky = True):
     #### give it only upper dividers, or only lower dividers
@@ -89,19 +89,19 @@ def lightning_curve_from_dividers(dividers, a, b, special_vertices = [], spiky =
                     divider_list = divider_list[b_inds[-1]:a_inds[0]]
                 p, q = divider_list[:2]
                 x = p.shared_vertex(q)
-                lightning_curve = [x.pos.complex()]
+                lightning_curve = [x.pos.project_to_plane()]
                 for r in divider_list[2:]:
                     y = q.shared_vertex(r)
                     if x == y:
                         p, q = p, r
                     else:
-                        lightning_curve.append(y.pos.complex())
+                        lightning_curve.append(y.pos.project_to_plane())
                         p, q = q, r
                         x = y
                 if a_to_b:
-                    lightning_curve = [a.pos.complex()] + lightning_curve + [b.pos.complex()]
+                    lightning_curve = [a.pos.project_to_plane()] + lightning_curve + [b.pos.project_to_plane()]
                 else:
-                    lightning_curve = [b.pos.complex()] + lightning_curve + [a.pos.complex()]
+                    lightning_curve = [b.pos.project_to_plane()] + lightning_curve + [a.pos.project_to_plane()]
                 return lightning_curve
 
             else:     ### have to hit a, b, and any special vertices along the way
@@ -203,7 +203,7 @@ def lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T):
         opp_vert = lu.left_vertices[0]
         ladderpole_verts = lu.right_vertices
 
-    ladderpole_verts_complex = [lu.verts_pos[i].complex() for i in ladderpole_verts]
+    ladderpole_verts_complex = [lu.verts_pos[i].project_to_plane() for i in ladderpole_verts]
 
     ladderpole_colour = vt.get_edge_between_verts_colour(tet_num, ladderpole_verts)
     if (ladderpole_colour == "red" and lu.is_on_left()) or (ladderpole_colour == "blue" and lu.is_on_right()):
@@ -240,7 +240,7 @@ def lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T):
         full_crv = []
         for j, (tf, pivot_vert) in enumerate(all_tet_faces_pivots[k]):
             lu = T.bt.get_ladder_unit_from_tet_face(tf)
-            offset = ladderpole_verts_complex[k] - lu.verts_pos[pivot_vert].complex()
+            offset = ladderpole_verts_complex[k] - lu.verts_pos[pivot_vert].project_to_plane()
             crv = lightning_curve_for_ladder_unit(dividers, lu, offset)
             if j > 0:
                 crv = crv[1:]
@@ -264,14 +264,14 @@ def replace_with_continent_vertices(v_list, con, epsilon = 0.001):
     for i, w in enumerate(v_list):
         for v in con.boundary_triangulation_vertices:
             # print(type(v), type(w))
-            if abs(v.pos.complex() - w) < epsilon:
+            if abs(v.pos.project_to_plane() - w) < epsilon:
                 v_list[i] = v    
                 break    
 
 def assign_continent_vertices_to_tet_faces(T, con):
     for L in T.ladder_list:
         for lu in L.ladder_unit_list:
-            lu.con_verts = [v.complex() for v in lu.verts_pos]
+            lu.con_verts = [v.project_to_plane() for v in lu.verts_pos if not v.is_infinity()]
             replace_with_continent_vertices(lu.con_verts, con)
 
 def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, scale_max_length_to_area = False, tet_shapes = None, use_algebraic_numbers = False, output_filename = None, draw_args = None, build_type = None ):
@@ -283,11 +283,12 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if tet_shapes == None:
         if not use_algebraic_numbers:
+            field = None
             tet_shapes = shapes(tri)
         else:
-            tet_shapes = algebraic_shapes(tri)
+            field, tet_shapes = algebraic_shapes(tri)
     print('tet_shapes', tet_shapes)
-    vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
+    vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes, field = field)
     B = boundary_triangulation(vt)
     B.generate_canvases(args = draw_args)
 
@@ -419,7 +420,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
 
         # print 'important verts', important_vertices
         # for v in important_vertices:
-        #     z = T.drawing_scale * v.pos.complex()
+        #     z = T.drawing_scale * v.pos.project_to_plane()
         #     pyx_fill_col = pyx.deco.filled([pyx.color.rgb.black])
         #     T.canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
 
@@ -478,7 +479,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
                         assert CT_ladderpole[0] == e
                         assert CT_ladderpole[-1] == s
 
-                        CT_ladderpole_pos = [v.pos.complex() for v in CT_ladderpole ]
+                        CT_ladderpole_pos = [v.pos.project_to_plane() for v in CT_ladderpole ]
                         assert abs(CT_ladderpole_pos[0] - curves[0][-1]) < 0.0001
                         assert abs(CT_ladderpole_pos[-1] - curves[0][0]) < 0.0001
                         loop0 = curves[0] + CT_ladderpole_pos[1:-1]
@@ -502,7 +503,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
             #         assert CT_ladderpole[-1] == e
             #         for i in range(2):
             #             lightning_curve = lightning_curve_from_dividers(dividers[i], s, e, special_vertices = all_ladderpole_vertices, spiky = False)
-            #             CT_ladderpole_pos = [v.pos.complex() for v in CT_ladderpole ]
+            #             CT_ladderpole_pos = [v.pos.project_to_plane() for v in CT_ladderpole ]
             #             if CT_ladderpole_pos[0] == lightning_curve[0]:
             #                 lightning_curve.reverse() 
             #             assert CT_ladderpole_pos[0] == lightning_curve[-1] and CT_ladderpole_pos[-1] == lightning_curve[0]
@@ -527,7 +528,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
             for k in range(2):
                 for divider_list in dividers[k]:
                     for edge in divider_list:
-                        edgeC = [T.drawing_scale * v.pos.complex() for v in edge.vertices]
+                        edgeC = [T.drawing_scale * v.pos.project_to_plane() for v in edge.vertices]
                         draw_path(layer1, edgeC, [lightning_colours[k], pyx.style.linewidth(0.005)])
 
         ##### draw the Cannon-Thurston curve
@@ -545,6 +546,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
                         for v in path[:-1]:
                             assert v.is_ladderpole_descendant()
                         path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
+                        print('path_C', path_C)
                         draw_path(T.canv, path_C, draw_options)  
             else:
                 path = con.coast
@@ -560,13 +562,13 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         # lines for triangles meeting infinity
 
         # for endpoints, veering_colour in adj_edges:
-        #     z, w = [T.drawing_scale * v.pos.complex() for v in endpoints]
+        #     z, w = [T.drawing_scale * v.pos.project_to_plane() for v in endpoints]
         #     pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
         #     T.canv.stroke(pyx.path.line( z.real, z.imag, w.real, w.imag),  [pyx.style.linewidth(lw * 5), pyx_stroke_col]  )
 
         # # dots for edges from infinity
         # for v,veering_colour in adj_verts:
-        #     z = v.pos.complex()
+        #     z = v.pos.project_to_plane()
         #     pyx_fill_col = pyx.deco.filled([colours[veering_colour]])
         #     T.canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
 
@@ -597,12 +599,12 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
                     u, v = e.vertices
                     if u == con.infinity or v == con.infinity:
                         if u == con.infinity:
-                            z = T.drawing_scale * v.pos.complex()
+                            z = T.drawing_scale * v.pos.project_to_plane()
                         else:
-                            z = T.drawing_scale * u.pos.complex()
+                            z = T.drawing_scale * u.pos.project_to_plane()
                         T.canv.fill(pyx.path.circle(z.real, z.imag, 0.05), [col])
                     else:
-                        draw_path(T.canv, [T.drawing_scale * u.pos.complex(), T.drawing_scale * v.pos.complex()], [pyx.style.linewidth(0.5 * ct_lw), col])
+                        draw_path(T.canv, [T.drawing_scale * u.pos.project_to_plane(), T.drawing_scale * v.pos.project_to_plane()], [pyx.style.linewidth(0.5 * ct_lw), col])
 
         #### draw lightning curves
 
@@ -673,7 +675,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
             #         #         crv = []
             #         #     else:
             #         #         crv = crv[ladderpole_indices[0]:ladderpole_indices[-1] + 1]
-            #         crv = [ T.drawing_scale * c.pos.complex() for c in crv ]
+            #         crv = [ T.drawing_scale * c.pos.project_to_plane() for c in crv ]
             #         if len(crv) > 0:
             #             draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[i]])
             #         # ## trim to ladder poles
@@ -684,9 +686,9 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
             #         # if len(ladderpole_vertex_indices) > 0:
             #         #     crv = crv[ladderpole_vertex_indices[0]: ladderpole_vertex_indices[-1] + 1]
             #         #     # for e in crv:
-            #         #         # pts = [T.drawing_scale * v.pos.complex() for v in e.vertices]
+            #         #         # pts = [T.drawing_scale * v.pos.project_to_plane() for v in e.vertices]
             #         #         # draw_path(T.canv, pts, [pyx.style.linewidth(ct_lw)])  
-            #         #     crv = [ T.drawing_scale * c.pos.complex() for c in crv ]
+            #         #     crv = [ T.drawing_scale * c.pos.project_to_plane() for c in crv ]
             #         #     draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round]) 
 
 
@@ -706,8 +708,8 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
             zero_vert = inf_vert - ((inf_vert%2)*2 - 1)  ## swaps 0 with 1, 2 with 3
             one_vert = inf_vert - 2*(((inf_vert//2) % 2)*2 - 1) ## swaps 0 with 2, 1 with 3
 
-            zero_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[zero_vert].complex()
-            one_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[one_vert].complex()
+            zero_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[zero_vert].project_to_plane()
+            one_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[one_vert].project_to_plane()
 
             half_pos = 0.5 * (zero_vert_pos + one_vert_pos)  
             ### we must rotate, translate, and scale the cohom fractal picture to fit in the box
@@ -761,7 +763,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         ## circles around found vertices
         if draw_desired_vertices:
             for pos in desired_vertices:
-                # pos = v.pos.complex()
+                # pos = v.pos.project_to_plane()
                 pos *= T.drawing_scale
                 T.canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.3), [pyx.style.linewidth(0.1), pyx.color.rgb.green])
 

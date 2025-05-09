@@ -98,7 +98,7 @@ class veering_triangulation():
     Container class for a triangulation with transverse veering
     structure, possibly with hyperbolic shapes
     """
-    def __init__(self, tri, angle, tet_shapes = None):
+    def __init__(self, tri, angle, tet_shapes = None, field = None):
         self.tri = tri
         self.angle = angle
         assert is_taut(tri, angle)
@@ -108,6 +108,7 @@ class veering_triangulation():
         assert self.veering_colours != False
         self.tet_types = is_veering(tri, angle, return_type = "tet_types")
         self.tet_shapes = tet_shapes
+        self.field = field
 
     def get_edge_between_verts_index(self, tet_num, verts):
         ### the following dict turns a vert pair into index of edge within a tetrahedron

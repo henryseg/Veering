@@ -58,7 +58,7 @@ class vertex:
         if self.pos == None:
             return 'c' + str(self.chronological_index())
         elif not self.pos.is_infinity():
-            return str(self.pos.complex())
+            return str(self.pos.project_to_plane())
         else:
             return "inf"
     
@@ -92,6 +92,9 @@ class landscape_edge:
         u, v = self.vertices
         # return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
         return '_'.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v)] )
+
+    def has_infinity(self):
+        return self.vertices[0].pos.is_infinity() or self.vertices[1].pos.is_infinity()
 
     def coastal_index(self):
         return self.continent.coastal_edges.index(self)
@@ -235,17 +238,20 @@ class landscape_edge:
 
     def length(self):
         u, v = self.vertices
-        return abs(u.pos.complex() - v.pos.complex())
+        return abs(u.pos.project_to_plane() - v.pos.project_to_plane())
 
     def is_long(self):
-        return self.length() > self.continent.max_length
+        if self.has_infinity():
+            return True
+        else:
+            return self.length() > self.continent.max_length
 
     def is_under_ladderpole(self):
         return any( v.is_ladderpole_descendant() for v in self.vertices )
 
     def midpoint(self):
         u, v = self.vertices
-        return 0.5*(u.pos.complex() + v.pos.complex())
+        return 0.5*(u.pos.project_to_plane() + v.pos.project_to_plane())
 
     def shared_vertex(self, other):
         intersection = set(self.vertices) & set(other.vertices) 
@@ -1039,7 +1045,8 @@ class continent:
         # assert self.is_convex()
 
     def check_vertex_desired(self, v, epsilon = 0.001):
-        v_in_C = v.pos.complex()
+        assert not v.pos.is_infinity()
+        v_in_C = v.pos.project_to_plane()
         for w in self.desired_vertices:
             if abs(v_in_C - w) < epsilon:
                 self.desired_vertices.remove(w)
@@ -1340,7 +1347,7 @@ class continent:
 
         ## now for the vertices
 
-        ### let's find out vert_a, vert_b, vert_c, which are the vertices (with CP1 data) opposite faces.
+        ### let's find out vert_a, vert_b, vert_c, which are the vertices (with KP1 data) opposite faces.
         if triangle.is_red == triangle.is_upper:
             vert_a, vert_b, vert_c = triangle.vertices
         else:
@@ -1352,11 +1359,11 @@ class continent:
         tet_vert_posns[face_c] = vert_c.pos
 
         if self.vt.tet_shapes != None:
-            ### next: permute the triangle verts in CP1 into tet order. Then plug through tet_ordering so we can develop
+            ### next: permute the triangle verts in KP1 into tet order. Then plug through tet_ordering so we can develop
             tet_shape = self.vt.tet_shapes[tet.index()]
             # print tet_shape
             tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
-            pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape)
+            pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape, field = self.vt.field)
         
             # ancestors = [ a for a in vert_a.ladderpole_ancestors if a in vert_b.ladderpole_ancestors ]
             ancestors = vert_a.ladderpole_ancestors.intersection(vert_b.ladderpole_ancestors)
@@ -1809,13 +1816,20 @@ class continent:
             for e in crossing_edges:   ### previously only used the last edge
             # for e in crossing_edges[-1:]:   ### only the last edge
                 if e.is_under_ladderpole():
-                    m = e.midpoint()
-                    distance_of_e_to_cusp = abs(u.pos.complex() - m)
-                    if distance_of_e_to_cusp > max_length:
-                        self.bury(tri)
+                    if e.has_infinity() or u.pos.is_infinity():
+                        mid_is_far = True
                         break
-                # dist_to_v = abs(u.pos.complex() - v.pos.complex())
-                # dist_to_w = abs(u.pos.complex() - w.pos.complex())
+                    else:
+                        m = e.midpoint()  
+                        distance_of_e_to_cusp = abs(u.pos.project_to_plane() - m)
+                        if distance_of_e_to_cusp > mid_scaling*max_length: 
+                            mid_is_far = True
+                            break
+            if mid_is_far:
+                self.bury(tri)
+
+                # dist_to_v = abs(u.pos.project_to_plane() - v.pos.project_to_plane())
+                # dist_to_w = abs(u.pos.project_to_plane() - w.pos.project_to_plane())
                 # if dist_to_v > self.max_length or dist_to_w > self.max_length:
                 #     if 0.01 < dist_to_v/dist_to_w < 100:  ## ratio is not too weird
                 #         self.bury(tri)
@@ -1858,6 +1872,7 @@ class continent:
 
         ## now build
         ### self.first_non_buried_index is also skipping triangles that are already small enough on the picture
+        num_tet = len(self.tetrahedra)
         while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
             tri = self.triangles[self.first_non_buried_index]  
             u = tri.vertices[tri.downriver_index()]  ### this is the upriver vertex (opposite downriver triangle)
@@ -1868,14 +1883,23 @@ class continent:
             crossing_edges = tri.all_river_crossing_edges() ### the edges that the river starting from this triangle crosses
             for e in crossing_edges:  
                 if e.is_under_ladderpole():
-                    m = e.midpoint()  
-                    distance_of_e_to_cusp = abs(u.pos.complex() - m)
-                    if distance_of_e_to_cusp > mid_scaling*max_length: 
+                    if e.has_infinity() or u.pos.is_infinity():
                         mid_is_far = True
                         break
+                    else:
+                        m = e.midpoint()  
+                        distance_of_e_to_cusp = abs(u.pos.project_to_plane() - m)
+                        if distance_of_e_to_cusp > mid_scaling*max_length: 
+                            mid_is_far = True
+                            break
 
             if is_long or mid_is_far:
                 self.bury(tri)
+                current_num_tet = len(self.tetrahedra)
+                if  current_num_tet > num_tet + 50:
+                    num_tet = current_num_tet
+                    print(current_num_tet)
+
 
             self.first_non_buried_index += 1
             while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried():
@@ -1922,25 +1946,25 @@ class continent:
                     vertices.add( (vert, vertex_veering_colour) )
         return vertices, edges
 
-    def calculate_max_ladderpole_descendant_coast_edge_length(self):
-        m = 0.0
-        for i,v in enumerate(self.coast):
-            w = self.coast[(i+1)%len(self.coast)]
-            if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
-                edge_length = abs( v.pos.complex() - w.pos.complex() )
-                if edge_length > m:
-                    m = edge_length
-        return m
+    # def calculate_max_ladderpole_descendant_coast_edge_length(self):
+    #     m = 0.0
+    #     for i,v in enumerate(self.coast):
+    #         w = self.coast[(i+1)%len(self.coast)]
+    #         if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
+    #             edge_length = abs( v.pos.complex() - w.pos.complex() )
+    #             if edge_length > m:
+    #                 m = edge_length
+    #     return m
 
-    def count_long_edges(self):
-        out = 0
-        for i,v in enumerate(self.coast):
-            w = self.coast[(i+1)%len(self.coast)]
-            if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
-                edge_length = abs( v.pos.complex() - w.pos.complex() )
-                if edge_length > self.max_length:
-                    out += 1
-        return out
+    # def count_long_edges(self):
+    #     out = 0
+    #     for i,v in enumerate(self.coast):
+    #         w = self.coast[(i+1)%len(self.coast)]
+    #         if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
+    #             edge_length = abs( v.pos.complex() - w.pos.complex() )
+    #             if edge_length > self.max_length:
+    #                 out += 1
+    #     return out
 
     def lightning_dividers(self, special_vertices):
 
