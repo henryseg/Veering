@@ -249,7 +249,13 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
     elif draw_args['draw_jordan_curve']:
         draw_type = 'CT_jordan'
 
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + str(max_length) + '.pdf'
+    string_max_length = str(max_length)
+    string_max_length = string_max_length.strip('0')
+    if use_algebraic_numbers:
+        alg_status = 'algeb'
+    else:
+        alg_status = 'float'
+    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + string_max_length + '_' + alg_status + '.pdf'
     draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, output_filename = filename, draw_args = draw_args, build_type = build_type )
     
 def draw_census_continents(census_cap = 10):

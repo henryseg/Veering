@@ -274,12 +274,11 @@ def assign_continent_vertices_to_tet_faces(T, con):
             lu.con_verts = [v.project_to_plane() for v in lu.verts_pos if not v.is_infinity()]
             replace_with_continent_vertices(lu.con_verts, con)
 
-def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, scale_max_length_to_area = False, tet_shapes = None, use_algebraic_numbers = False, output_filename = None, draw_args = None, build_type = None ):
-    draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
-    draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
-    draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
+def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, use_algebraic_numbers = False, draw_args = None ):
+    expand_fund_dom = draw_args['expand_fund_dom']
+    ### one continent for each cusp
 
-    print('drawing', veering_isosig)
+    print('preparing for drawing', veering_isosig)
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if tet_shapes == None:
         if not use_algebraic_numbers:
@@ -293,21 +292,20 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
     B.generate_canvases(args = draw_args)
 
     ### Scale max_length so that the level of detail is proportional to the area of the picture
-    the_cusp_areas = cusp_areas(tri)
-    if scale_max_length_to_area:
-        total_cusp_area = sum(the_cusp_areas)
-        max_length = max_length * sqrt(total_cusp_area / 3.46410161513775) ### the cusp area for m004
-        print('modified max_length', max_length)
+    # the_cusp_areas = cusp_areas(tri)
+    # if scale_max_length_to_area:
+    #     total_cusp_area = sum(the_cusp_areas)
+    #     max_length = max_length * sqrt(total_cusp_area / 3.46410161513775) ### the cusp area for m004
+    #     print('modified max_length', max_length)
 
-    out_data = []
-
+    continents = []
     for i,T in enumerate(B.torus_triangulation_list):
         print('cusp', i)
         print('T.sideways_index_shift', T.sideways_index_shift)
         print('T.sideways_once_holonomy', T.sideways_once_holonomy)
         print('T.sideways_holonomy', T.sideways_holonomy)
         print('T.ladder_holonomy', T.ladder_holonomy)
-        print('cusp area', the_cusp_areas[i])
+        # print('cusp area', the_cusp_areas[i])
         
         ### make initial_tet_face be in the lower left of the fundamental domain
         # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
@@ -376,6 +374,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
             desired_vertices = [v for L in ladderpoles_vertices for v in L]
 
         con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, maintain_coast = True )
+        con.ladderpoles_vertices = ladderpoles_vertices ### store for later
         
         con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
@@ -424,6 +423,13 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         #     pyx_fill_col = pyx.deco.filled([pyx.color.rgb.black])
         #     T.canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
 
+        continents.append(con)
+
+    return continents, B
+
+def expand_continents_for_drawing( continents, build_type, max_length = 0.5, max_num_tetrahedra = 100 ):
+    for i, con in enumerate(continents):
+        print('expanding continent for cusp', i, build_type, 'max_length is', max_length, 'max_num_tetrahedra is', max_num_tetrahedra)
         hit_max_tetrahedra = False ### default assumption is that we had enough tetrahedra to get the max_length we want.
         # print(build_type)
         if build_type == 'build_naive':
@@ -437,24 +443,31 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         elif build_type == 'build_long_and_mid':
             mid_scaling = 1.0 ## less than this makes cusp circles not round...
             hit_max_tetrahedra = con.build_long_and_mid(max_length = max_length, mid_scaling = mid_scaling, max_num_tetrahedra = max_num_tetrahedra)
-
         print('con size', len(con.tetrahedra))
+    return hit_max_tetrahedra
+    #######
 
-        #######
+    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
+    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
 
-        # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
-        # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
+def draw_prepared_continents( continents, B, output_filename = None, max_length = 0.5, draw_args = None ):
+    draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
+    draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
+    draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
 
-        grad = pyx.color.gradient.Hue   
+    grad = pyx.color.gradient.Hue   
 
         # colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}  
-        colours = {"blue":pyx.color.rgb(0,0,0.5), "red":pyx.color.rgb(0.5,0,0)}
+    colours = {"blue":pyx.color.rgb(0,0,0.5), "red":pyx.color.rgb(0.5,0,0)}
 
-        # ct_lw = draw_args['ct_lw']
-        ct_lw = 0.2 * max_length ### modified by scaling to cusp area
+    # ct_lw = draw_args['ct_lw']
+    ct_lw = 0.2 * max_length 
 
-        draw_options = [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
+    draw_options = [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
+    out_data = []
 
+    for i, con in enumerate(continents):
+        T = B.torus_triangulation_list[i]
         assign_continent_vertices_to_tet_faces(T, con)
         dividers = con.lightning_dividers([])  ## only lightning curves for infinity
         layer1 = T.canv.layer("layer1")
@@ -535,7 +548,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
 
         if draw_CT_curve:
             if draw_args['only_draw_ladderpoles']:
-                for j, ladderpole_vertices in enumerate(ladderpoles_vertices):
+                for j, ladderpole_vertices in enumerate(con.ladderpoles_vertices):
                     # if j%2 == 0:
                     #     col = colours["red"]
                     # else:
@@ -546,7 +559,6 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
                         for v in path[:-1]:
                             assert v.is_ladderpole_descendant()
                         path_C = [ T.drawing_scale * v.pos.complex() for v in path ]
-                        print('path_C', path_C)
                         draw_path(T.canv, path_C, draw_options)  
             else:
                 path = con.coast
@@ -722,8 +734,6 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
 
             ### need to send zero_vert_pos to box_center, and half_pos to box_right_midpoint
 
-
-
             # print veering_isosig
             out_data.append(veering_isosig)
             # print 'tet face', initial_tet_face
@@ -774,13 +784,26 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         out_canvas.insert(c, attrs=[pyx.trafo.translate(-c.bbox().left(), height_offset - c.bbox().bottom())])
         height_offset += c.bbox().height() + 0.05 ### add a tiny bit to stop crashes due to line width
 
-    if hit_max_tetrahedra:
-        output_filename = output_filename[:-4] + '_hitmax.pdf'
-
-    output_filename = output_filename[:-4] + '_' + str(len(con.tetrahedra)) + '.pdf'
-
     out_canvas.writePDFfile(output_filename)
     return out_data
+
+### The following should really be called "draw_continents"
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, output_filename = None, draw_args = None, build_type = None ):
+    draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
+    draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
+    draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
+
+    continents, B = generate_initial_continents_for_drawing( veering_isosig, tet_shapes = tet_shapes, use_algebraic_numbers = use_algebraic_numbers, draw_args = draw_args )
+    hit_max_tetrahedra = expand_continents_for_drawing( continents, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra )
+
+    ### Then we can expand it again later
+    # hit_max_tetrahedra = expand_continents_for_drawing( continents, build_type, max_length = 0.25*max_length, max_num_tetrahedra = max_num_tetrahedra )
+
+    continent_sizes = [len(con.tetrahedra) for con in continents]
+    output_filename = output_filename[:-4] + '_' + str(continent_sizes) + '.pdf'
+    if hit_max_tetrahedra:
+        output_filename = output_filename[:-4] + '_hitmax.pdf'
+    draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
 
 def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_length = 0.1, interval_to_draw = None, draw_args = None, build_type = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)

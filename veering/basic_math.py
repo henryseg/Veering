@@ -233,7 +233,8 @@ class KP1(tuple):
             if type(self[0]) == complex or type(self[0]) == int:
                 return complex(self[0]/self[1])
             else: ### assume algebraic number
-                return complex((self[0]/self[1]).complex_embedding()) ### The outer complex converts from sage complex to python complex
+                c = complex((self[0]/self[1]).complex_embedding()) ### The outer complex converts from sage complex to python complex
+                return complex(c.real, -c.imag) ### some difference of conventions
 
     def project_to_plane(self): ### similar to above but allows for algebraic number output
         assert not self.is_infinity()

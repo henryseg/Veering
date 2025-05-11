@@ -1786,16 +1786,17 @@ class continent:
 
         ## now build
 
-        while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
-            tri = self.triangles[self.first_non_buried_index]  
+        ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
+        self.first_interesting_index = self.first_non_buried_index ### "interesting" means not buried and not already small enough.
+        while self.first_interesting_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
+            tri = self.triangles[self.first_interesting_index]  
+            if not tri.is_buried():
+                if any( [(edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges] ):
+                    self.bury(tri)
+            self.first_interesting_index += 1
 
-            if any( [(edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges] ):
-                self.bury(tri)
-            self.first_non_buried_index += 1
-            while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried():
-                self.first_non_buried_index += 1
         # print(('num_tetrahedra', self.num_tetrahedra))
-        hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
+        hit_max_tetrahedra = (self.num_tetrahedra >= max_num_tetrahedra)
         # print(('hit max tetrahedra', hit_max_tetrahedra))
         self.build_boundary_data()
         # print(('num_long_edges_direct_count', self.count_long_edges()))
@@ -1868,42 +1869,38 @@ class continent:
 
     def build_long_and_mid(self, max_length = 0.1, mid_scaling = 1.0, max_num_tetrahedra = 50000):   ### fills out a bit better than build_long alone, though not near the obvious cusps
         self.max_length = max_length
-        # print(('max_length', max_length))
-
-        ## now build
-        ### self.first_non_buried_index is also skipping triangles that are already small enough on the picture
+        print(('max_length', max_length))
         num_tet = len(self.tetrahedra)
-        while self.first_non_buried_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
-            tri = self.triangles[self.first_non_buried_index]  
-            u = tri.vertices[tri.downriver_index()]  ### this is the upriver vertex (opposite downriver triangle)
+        ## now build
 
-            is_long = any( (edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges )
-            
-            mid_is_far = False
-            crossing_edges = tri.all_river_crossing_edges() ### the edges that the river starting from this triangle crosses
-            for e in crossing_edges:  
-                if e.is_under_ladderpole():
-                    if e.has_infinity() or u.pos.is_infinity():
-                        mid_is_far = True
-                        break
-                    else:
-                        m = e.midpoint()  
-                        distance_of_e_to_cusp = abs(u.pos.project_to_plane() - m)
-                        if distance_of_e_to_cusp > mid_scaling*max_length: 
+        ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
+        self.first_interesting_index = self.first_non_buried_index ### "interesting" means not buried and not already small enough.
+        while self.first_interesting_index < len(self.triangles) and self.num_tetrahedra < max_num_tetrahedra: 
+            tri = self.triangles[self.first_interesting_index]  
+            if not tri.is_buried():
+                u = tri.vertices[tri.downriver_index()]  ### this is the upriver vertex (opposite downriver triangle)
+                is_long = any( (edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges )
+                mid_is_far = False
+                crossing_edges = tri.all_river_crossing_edges() ### the edges that the river starting from this triangle crosses
+                for e in crossing_edges:  
+                    if e.is_under_ladderpole():
+                        if e.has_infinity() or u.pos.is_infinity():
                             mid_is_far = True
                             break
+                        else:
+                            m = e.midpoint()  
+                            distance_of_e_to_cusp = abs(u.pos.project_to_plane() - m)
+                            if distance_of_e_to_cusp > mid_scaling*max_length: 
+                                mid_is_far = True
+                                break
+                if is_long or mid_is_far:
+                    self.bury(tri)
+                    current_num_tet = len(self.tetrahedra)
+                    if current_num_tet > num_tet + 200:
+                        num_tet = current_num_tet
+                        print(current_num_tet)
+            self.first_interesting_index += 1
 
-            if is_long or mid_is_far:
-                self.bury(tri)
-                current_num_tet = len(self.tetrahedra)
-                if  current_num_tet > num_tet + 50:
-                    num_tet = current_num_tet
-                    print(current_num_tet)
-
-
-            self.first_non_buried_index += 1
-            while self.first_non_buried_index < len(self.triangles) and self.triangles[self.first_non_buried_index].is_buried():
-                self.first_non_buried_index += 1
         # print(('num_tetrahedra', self.num_tetrahedra))
         hit_max_tetrahedra = self.num_tetrahedra >= max_num_tetrahedra
         # print(('hit max tetrahedra', hit_max_tetrahedra))
