@@ -679,7 +679,7 @@ class torus_triangulation:
         print(self.sideways_holonomy) ### breaks when we do self.transform(mob_tsfm)
         #### make ladderpoles vertical...
         if self.vt.tet_shapes != None and make_ladderpoles_vertical:
-            if type(self.ladder_holonomy) == complex or type(self.ladder_holonomy) == int:
+            if type(self.ladder_holonomy) == complex or type(self.ladder_holonomy) == float or type(self.ladder_holonomy) == int:
                 zero, one = 0, 1
             else:
                 field = self.ladder_holonomy.parent()

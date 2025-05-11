@@ -1896,7 +1896,7 @@ class continent:
                 if is_long or mid_is_far:
                     self.bury(tri)
                     current_num_tet = len(self.tetrahedra)
-                    if current_num_tet > num_tet + 200:
+                    if current_num_tet > num_tet + 2000:
                         num_tet = current_num_tet
                         print(current_num_tet)
             self.first_interesting_index += 1

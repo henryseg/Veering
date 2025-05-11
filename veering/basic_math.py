@@ -124,7 +124,7 @@ class matrix(tuple):
     #     D = self.det()
     #     return self * intify(sqrt(D)**(-1))
 
-    def eigenvalues(self):
+    def eigenvalues(self):  
         T = self.trace()
         D = self.det()
         e = (T + sqrt(T^2 - 4*D)) / 2
@@ -132,27 +132,9 @@ class matrix(tuple):
         return (e, f)
         
     def inverse(self, epsilon = 0.000001):
-        D = self.det()
+        # D = self.det()   ### For our use cases we don't bother dividing by the determinant - this is a Mobius transformation
         a, b, c, d = self
-
-        if not type(a) == complex:
-            ### for algebraic numbers:
-            # assert D == 1, D ### do we need this?
-            return matrix((d, -b, -c, a))
-
-        else:
-            if abs(D) < epsilon:
-                raise ZeroDivisionError
-            # [a b]*[ d -b] = [D 0]
-            # [c d] [-c  a]   [0 D]. 
-            # One way to remember the formula is to think about how you
-            # invert elliptic, parabolic, and hyperbolic elements.  
-            return intify(D**(-1)) * matrix((d, -b, -c, a))
-            # NB - I intified the inverse of the determinant because one
-            # use case is det == 1.  In that case using D**-1 (ie a float)
-            # will lose accuracy even for very modestly sized matrices.
-
-
+        return matrix((d, -b, -c, a))
 
     def transpose(self):
         a, b, c, d = self
@@ -163,7 +145,7 @@ class matrix(tuple):
 
     def __call__(self, z): # z is a number or an element of KP1
         if isinstance(z, Number):
-            if type(z) == complex or type(z) == int:
+            if type(z) == complex or type(z) == float or type(z) == int:
                 v = vector((z, 1))
             else: ### assume z is an element of a number field
                 v = vector((z, z.parent.one()))
@@ -221,7 +203,7 @@ class KP1(tuple):
         else: raise TypeError
 
     def is_infinity(self, epsilon = 0.000001):
-        if type(self[0]) == complex or type(self[0]) == int:
+        if type(self[0]) == complex or type(self[0]) == float or type(self[0]) == int:
             return abs(self[1]) < epsilon * abs(self[0])
         else: ### assume we are in a number field
             return self[1].is_zero()
@@ -230,11 +212,11 @@ class KP1(tuple):
         if self.is_infinity():
             return complex(100,100) ### hack, useful for debugging
         else:
-            if type(self[0]) == complex or type(self[0]) == int:
+            if type(self[0]) == complex or type(self[0]) == float or type(self[0]) == int:
                 return complex(self[0]/self[1])
             else: ### assume algebraic number
-                c = complex((self[0]/self[1]).complex_embedding()) ### The outer complex converts from sage complex to python complex
-                return complex(c.real, -c.imag) ### some difference of conventions
+                return complex((self[0]/self[1]).complex_embedding()).conjugate() ### The outer complex converts from sage complex to python complex
+                ### conjugate is some difference of conventions
 
     def project_to_plane(self): ### similar to above but allows for algebraic number output
         assert not self.is_infinity()
