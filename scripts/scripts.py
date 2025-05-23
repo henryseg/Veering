@@ -255,10 +255,11 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
         alg_status = 'algeb'
     else:
         alg_status = 'float'
-    filename_base = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + string_max_length + '_' + alg_status 
-    filename = filename_base + '.pdf'
-    load_continents_filename = None  ## don't load anything
-    save_continents_filename = filename_base + '.pkl'
+    filename_base = veering_isosig + '_' + build_type + '_' + draw_type + '_' + string_max_length + '_' + alg_status 
+    filename = 'Images/Cannon-Thurston/' + filename_base + '.pdf'
+    # load_continents_filename = None  ## don't load anything
+    load_continents_filename = "data/gLLAQbecdfffhhnkqnc_120012_build_long_and_mid_CT_spectrum_.5_float.pkl"
+    save_continents_filename = 'data/' + filename_base + '.pkl'
 
     draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, output_filename = filename, draw_args = draw_args, build_type = build_type, load_continents_filename = load_continents_filename, expand_continents = True, save_continents_filename = save_continents_filename )
     

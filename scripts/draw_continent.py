@@ -799,6 +799,19 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
 
     if load_continents_filename != None:
         continents, B = read_from_pickle(load_continents_filename)
+        ### reinstate the veering triangulation
+        tri, angle = isosig_to_tri_angle(veering_isosig)
+        if tet_shapes == None:
+            if not use_algebraic_numbers:
+                field = None
+                tet_shapes = shapes(tri)
+            else:
+                field, tet_shapes = algebraic_shapes(tri)
+        print('tet_shapes', tet_shapes)
+        vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes, field = field)
+        B.vt = vt
+        for con in continents:
+            con.vt = vt
     else:
         continents, B = generate_initial_continents_for_drawing( veering_isosig, tet_shapes = tet_shapes, use_algebraic_numbers = use_algebraic_numbers, draw_args = draw_args )
     
@@ -813,8 +826,8 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
             con.vt = None
             # for thing in con.tet_face.__dict__.items():
             #     print(thing[0], type(thing[1]))
-            
-        output_to_pickle(continents, save_continents_filename)
+        
+        output_to_pickle((continents, B), save_continents_filename)
 
     continent_sizes = [len(con.tetrahedra) for con in continents]
     output_filename = output_filename[:-4] + '_' + str(continent_sizes) + '.pdf'
