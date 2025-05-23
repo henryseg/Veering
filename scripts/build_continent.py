@@ -202,7 +202,7 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_sp
     else:
         down_translate_tet = main_interval.get_tet_at_position(0)
 
-    ### c and gamma^2c are corresponding cusps of up_translate_tet, down_translate_tet
+    ### c and gamma^2c are corresponding cusps of down_translate_tet, up_translate_tet 
     ### (or just gamma c if the flow cycle is not twisted)
 
     ### next determine a quadrant that contains the puncture p.

@@ -647,7 +647,7 @@ class continent_tetrahedron:
         self.ordered_faces_data = None
         self.continent.tetrahedra.append(self)
         self.vertices = [None, None, None, None] ## ordered according to the indices of the vertices downstairs in the manifold
-        self.gluings = [None, None, None, None] ## a gluing specifies another tetrahedron and the Perm4 from the downstairs manifold
+        # self.gluings = [None, None, None, None] ## a gluing specifies another tetrahedron and the Perm4 from the downstairs manifold
         self.came_from = came_from ### the landscape_triangle that we were glued onto. Initial continent_tetrahedron has None
 
     def __repr__(self):
@@ -1185,16 +1185,16 @@ class continent:
         ## add gluings and vertices to con_tet
 
         gluing = tet.adjacentGluing(face_t)
-        con_tet.gluings[face_t] = (other_tet, gluing)
-        other_face_t = gluing[face_t]
-        assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
-        other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
+        # con_tet.gluings[face_t] = (other_tet, gluing)
+        # other_face_t = gluing[face_t]
+        # assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
+        # other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
 
         n_gluing = n_tet.adjacentGluing(face_n)
-        con_tet.gluings[face_n] = (n_other_tet, n_gluing)
-        other_face_n = n_gluing[face_n]
-        assert n_other_con_tet.gluings[other_face_n] == None ### make sure it is not already glued to something
-        n_other_con_tet.gluings[other_face_n] = (n_tet, n_other_tet.adjacentGluing(other_face_n))
+        # con_tet.gluings[face_n] = (n_other_tet, n_gluing)
+        # other_face_n = n_gluing[face_n]
+        # assert n_other_con_tet.gluings[other_face_n] == None ### make sure it is not already glued to something
+        # n_other_con_tet.gluings[other_face_n] = (n_tet, n_other_tet.adjacentGluing(other_face_n))
 
         for vert_num in range(4):
             if vert_num != face_t and vert_num != face_n:
@@ -1401,10 +1401,10 @@ class continent:
         ## add gluings and vertices to con_tet
 
         gluing = tet.adjacentGluing(face_t)
-        con_tet.gluings[face_t] = (other_tet, gluing)
-        other_face_t = gluing[face_t]
-        assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
-        other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
+        # con_tet.gluings[face_t] = (other_tet, gluing)
+        # other_face_t = gluing[face_t]
+        # assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
+        # other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
 
         for vert_num in range(4):
             if vert_num != face_t:

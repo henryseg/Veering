@@ -3,6 +3,8 @@
 #
 
 import pickle
+import sys
+
 
 def parse_data_file(filename):
     """
@@ -41,6 +43,7 @@ def read_from_pickle(filename):
     return data
 
 def output_to_pickle(out, filename):
+    sys.setrecursionlimit(100000)
     f = open(filename, 'wb')
     pickle.dump(out, f)
     f.close()

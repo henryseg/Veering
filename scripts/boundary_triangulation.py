@@ -19,8 +19,8 @@ anglechoice_face2vert = {(0,0):1, (0,1):0, (0,2):3, (0,3):2,
 ### example usage: next_pi_vertex = anglechoice_face2vert[ (self.angle_structure[next_tet.index()], inf_vert) ]
 
 class tet_face:
-    def __init__(self, vt, tet_num, face, verts_pos = None):
-        self.vt = vt
+    def __init__(self, tet_num, face, verts_pos = None):
+        # self.vt = vt
         self.tet_num = tet_num
         self.face = face
         self.verts_pos = verts_pos  ## in KP1
@@ -38,10 +38,10 @@ class tet_face:
     def transform(self, mob_tsfm):
         self.verts_pos = [ mob_tsfm * v for v in self.verts_pos ]
 
-    def vert_positions_around_corner(self, vert_num):
+    def vert_positions_around_corner(self, vt, vert_num):
         assert vert_num != self.face
         out = []
-        tet = self.vt.tri.tetrahedron( self.tet_num )
+        tet = vt.tri.tetrahedron( self.tet_num )
         vert_nums = [0,1,2,3]
         vert_nums.remove(self.face)
         vert_nums.remove(vert_num)
@@ -63,7 +63,7 @@ class tet_face:
             new_pivot_vertex = gluing[pivot_vertex]
             new_leading_vertex, new_trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
 
-            verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()], field = self.vt.field)
+            verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, vt.tet_shapes[new_tet.index()], field = vt.field)
             assert verts_pos[new_inf_vertex].is_infinity()
             tet = new_tet
             inf_vertex, pivot_vertex, leading_vertex, trailing_vertex = new_inf_vertex, new_pivot_vertex, new_leading_vertex, new_trailing_vertex
@@ -76,12 +76,15 @@ class ladder_unit(tet_face):
 
     def __init__(self, tf, ladder):
         self.ladder = ladder
-        tet_face.__init__(self, tf.vt, tf.tet_num, tf.face, verts_pos = tf.verts_pos)
+        tet_face.__init__(self, tf.tet_num, tf.face, verts_pos = tf.verts_pos)
         self.left_vertices = []  # of the ladder, not in terms of veering colours
         self.right_vertices = []
         self.calculate_left_right_vertices()
         self.verts_C = {}
         self.gluing_offset = None  ## if this is on the right side of the rightmost ladder (or left side of leftmost ladder), this glues you to the other side
+
+    def vt(self):
+        return self.ladder.vt()
 
     # def __str__(self):
     #     return str(self.tet_face)
@@ -94,12 +97,12 @@ class ladder_unit(tet_face):
         red_vertices = []
         blue_vertices = []
         for v in verts:
-            if self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) == "red":
+            if self.vt().get_edge_between_verts_colour(tet_num, (inf_vert, v)) == "red":
                 red_vertices.append(v)
             else:
                 blue_vertices.append(v)
         ## make pi_vertex first on the side that it is on
-        pi_vertex = anglechoice_face2vert[(self.vt.angle[tet_num], inf_vert)]
+        pi_vertex = anglechoice_face2vert[(self.vt().angle[tet_num], inf_vert)]
         if pi_vertex in red_vertices:
             i = red_vertices.index(pi_vertex)
             red_vertices = red_vertices[i:] + red_vertices[:i]
@@ -107,7 +110,7 @@ class ladder_unit(tet_face):
             i = blue_vertices.index(pi_vertex)
             blue_vertices = blue_vertices[i:] + blue_vertices[:i]
         
-        if self.vt.coorientations[tet_num][inf_vert] == -1:  # flip ladder in this case
+        if self.vt().coorientations[tet_num][inf_vert] == -1:  # flip ladder in this case
             self.left_vertices = blue_vertices
             self.right_vertices = red_vertices
             self.left_vertices.reverse()
@@ -162,7 +165,7 @@ class ladder_unit(tet_face):
 
     def draw_vertex_dot(self, my_canvas, vertex):
         x,y = self.verts_C[vertex].real, self.verts_C[vertex].imag
-        colour = self.vt.get_edge_between_verts_colour(self.tet_num, (self.face, vertex))
+        colour = self.vt().get_edge_between_verts_colour(self.tet_num, (self.face, vertex))
         draw_vertex_colour(my_canvas, (x,y), colour)
 
     def draw_vertex_dots(self, my_canvas):
@@ -173,12 +176,12 @@ class ladder_unit(tet_face):
         colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
         vp0 = self.verts_C[v0]
         vp1 = self.verts_C[v1]
-        colour = colours[ self.vt.get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
+        colour = colours[ self.vt().get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
         if abs(vp0.real - vp1.real) < 0.01: ###hack, this is a vertical edge, directions depend on colour
             out_path = pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag)
             if draw: my_canvas.stroke(out_path, [pyx.deco.stroked([colour])])
             return out_path
-        elif (vp0.real < vp1.real) != (self.vt.get_edge_between_verts_colour(self.tet_num, (self.face, v0)) == "red"):
+        elif (vp0.real < vp1.real) != (self.vt().get_edge_between_verts_colour(self.tet_num, (self.face, v0)) == "red"):
             sign = +1
         else: ### if we are at a red dot and going right, we should be concave up
             sign = -1
@@ -191,11 +194,11 @@ class ladder_unit(tet_face):
         colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
         vp0 = self.verts_C[v0]
         vp1 = self.verts_C[v1]
-        colour = colours[ self.vt.get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
+        colour = colours[ self.vt().get_edge_between_verts_colour(self.tet_num, (v0, v1)) ]
         my_canvas.stroke(pyx.path.line( vp0.real, vp0.imag, vp1.real, vp1.imag),  [pyx.deco.stroked([colour])]  )
 
     def draw_face_label(self, my_canvas, face_num, ladder_width = None, curvy = True, delta = 0.2):  
-        tet = self.vt.tri.tetrahedron( self.tet_num )
+        tet = self.vt().tri.tetrahedron( self.tet_num )
         triangle = tet.triangle(face_num)
         triangle_num = triangle.index()
 
@@ -215,7 +218,7 @@ class ladder_unit(tet_face):
         delta = args['delta']
         vertex_names = list(self.verts_C.keys())
         tet_index, face = self.tet_num, self.face
-        angle_choice = self.vt.angle[tet_index]
+        angle_choice = self.vt().angle[tet_index]
         pi_vert = anglechoice_face2vert[(angle_choice, face)]  
         if pi_vert in self.left_vertices:
             singleton = self.right_vertices[0]
@@ -291,7 +294,7 @@ class ladder_unit(tet_face):
         else:
             edge_vertex = singleton
             face_vertex = self.face # inf vertex
-        self.ct_edge = get_ct_edge_above(self.vt.tri.tetrahedron(self.tet_num), self.verts_pos, edge_vertex, face_vertex, self.vt, 0, depth_increment = 0, verbose = 0.0)
+        self.ct_edge = get_ct_edge_above(self.vt().tri.tetrahedron(self.tet_num), self.verts_pos, edge_vertex, face_vertex, self.vt(), 0, depth_increment = 0, verbose = 0.0)
 
     def generate_ct(self, ladder_is_even = True, args = {}):
         #max_depth = 1, epsilon = 0.02, verbose = 0.0):
@@ -329,7 +332,6 @@ class ladder:
     def __init__(self, torus_triangulation, start_tf):
         self.torus_triangulation = torus_triangulation
         self.ladder_unit_list = []
-        self.vt = torus_triangulation.vt
         self.holonomy = None
         self.is_even = None
         self.ladder_origin = None
@@ -341,6 +343,9 @@ class ladder:
 
     def __repr__(self):
         return str(self)
+
+    def vt(self):
+        return self.torus_triangulation.vt()
 
     def count_vertices(self):
         left_length = sum([len(tri.left_vertices) for tri in self.ladder_unit_list]) - len(self.ladder_unit_list)
@@ -376,12 +381,12 @@ class ladder:
                 if args['draw_triangles_near_poles'] and self == self.torus_triangulation.ladder_list[-1] and ladder_unit.is_on_right():
                     ### when drawing Cannon-Thurston, put these triangles on the left, so the cannon-thurston paths have triangles on both sides
                     # print 'moving:', ladder_unit
-                    tet = self.vt.tri.tetrahedron(ladder_unit.tet_num)
+                    tet = self.vt().tri.tetrahedron(ladder_unit.tet_num)
                     left_vert = ladder_unit.left_vertices[0]
                     neighbour_tet = tet.adjacentTetrahedron(left_vert)
                     gluing = tet.adjacentGluing(left_vert)
                     neighbour_inf_vert = gluing[ladder_unit.face]
-                    neighbour_index_in_ladder_list = self.torus_triangulation.ladder_list[0].ladder_unit_list.index( tet_face(self.vt, neighbour_tet.index(), neighbour_inf_vert) )
+                    neighbour_index_in_ladder_list = self.torus_triangulation.ladder_list[0].ladder_unit_list.index( tet_face(neighbour_tet.index(), neighbour_inf_vert) )
                     neighbour = self.torus_triangulation.ladder_list[0].ladder_unit_list[neighbour_index_in_ladder_list]
 
                     back_vert = ladder_unit.right_vertices[0]
@@ -419,7 +424,7 @@ class ladder:
                     ladder_unit.draw_corner_and_face_labels(my_canvas, args = args)
                 if args['ct_depth'] >= 0:
                     if ladder_unit.is_on_left():
-                        veering_colour = self.vt.get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)
+                        veering_colour = self.vt().get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)
                         ladder_unit.generate_ct(ladder_is_even = self.is_even, args = args)
                         # print len(ladder_unit.ct_developed_edges)
                         # ladder_unit.draw_ct_path(my_canvas, origin, self.torus_triangulation.drawing_scale, veering_colour = veering_colour)
@@ -430,19 +435,19 @@ class ladder:
         
         (tet_index, inf_vert) = start_tf.tet_num, start_tf.face
 
-        current_tet = self.vt.tri.tetrahedron(tet_index)
+        current_tet = self.vt().tri.tetrahedron(tet_index)
         current_inf_vert = inf_vert
         current_tf = start_tf
         while True: 
             self.ladder_unit_list.append(ladder_unit(current_tf, self))   
-            current_pi_vertex = anglechoice_face2vert[ (self.vt.angle[current_tet.index()], current_inf_vert) ]
+            current_pi_vertex = anglechoice_face2vert[ (self.vt().angle[current_tet.index()], current_inf_vert) ]
             gluing = current_tet.adjacentGluing(current_pi_vertex)
             current_tet = current_tet.adjacentTetrahedron(current_pi_vertex)
             verts_pos = None
             if current_tf.verts_pos != None:
-                verts_pos = develop_verts_pos(current_tf.verts_pos, gluing, current_pi_vertex, self.vt.tet_shapes[current_tet.index()], field = self.vt.field)
+                verts_pos = develop_verts_pos(current_tf.verts_pos, gluing, current_pi_vertex, self.vt().tet_shapes[current_tet.index()], field = self.vt().field)
             current_inf_vert = gluing[current_inf_vert]
-            current_tf = tet_face(self.vt, current_tet.index(), current_inf_vert, verts_pos = verts_pos )
+            current_tf = tet_face(current_tet.index(), current_inf_vert, verts_pos = verts_pos )
             if current_tf == start_tf:
                 not_inf_vert = (start_tf.face + 1) % 4
                 if current_tf.verts_pos != None:
@@ -452,7 +457,7 @@ class ladder:
                 break
         ### if needed, flip ladder
         tet_num, inf_vert = self.ladder_unit_list[0].tet_num, self.ladder_unit_list[0].face
-        if self.vt.coorientations[tet_num][inf_vert] == -1: 
+        if self.vt().coorientations[tet_num][inf_vert] == -1: 
             self.ladder_unit_list.reverse()
 
     def left_ladder_pole_vertices(self):
@@ -516,10 +521,9 @@ def find_unit_index(new_tet_face, my_ladder):
 class torus_triangulation:
     """list of ladders stacked next to each other"""
 
-    def __init__(self, bt, vt, start_tet_face):
+    def __init__(self, bt, start_tet_face):
         self.bt = bt
         self.ladder_list = []
-        self.vt = vt
         self.ladder_holonomy = None
         self.sideways_holonomy = None
         self.sideways_once_holonomy = None  ### meets every ladder only once
@@ -534,6 +538,9 @@ class torus_triangulation:
                 self.tet_faces.append(lu)
         self.canv = None
         self.drawing_scale = None
+
+    def vt(self):
+        return self.bt.vt
 
     def generate_canvas(self, args = {}): #style = 'ladders', ladder_width = 5.0, height = 10.0, , ct_depth = 5):
         ### global_drawing_scale is just so that the text looks good
@@ -562,76 +569,76 @@ class torus_triangulation:
         current_tet_face = start_tet_face
 
         verts_pos = None
-        if self.vt.tet_shapes != None:  ### set up vertex positions on KP1 for first tetrahedron, so face is at infinity
+        if self.vt().tet_shapes != None:  ### set up vertex positions on KP1 for first tetrahedron, so face is at infinity
             verts_pos = [None, None, None, None]
-            if self.vt.field == None:
+            if self.vt().field == None:
                 one = 1
                 zero = 0
             else:
-                one = self.vt.field.one()
-                zero = self.vt.field.zero()
+                one = self.vt().field.one()
+                zero = self.vt().field.zero()
             verts_pos[face] = KP1((one, zero))
             verts_pos[3 - face] = KP1((zero, one))
             verts_pos[(face + 2) % 4] = KP1((one, one))
 
             last_vert = 3 - ((face + 2) % 4)
             ordering = unknown_vert_to_known_verts_ordering[last_vert] 
-            verts_pos[last_vert] = developed_position(verts_pos[ordering[0]], verts_pos[ordering[1]], verts_pos[ordering[2]], self.vt.tet_shapes[tet_num], field = self.vt.field)
+            verts_pos[last_vert] = developed_position(verts_pos[ordering[0]], verts_pos[ordering[1]], verts_pos[ordering[2]], self.vt().tet_shapes[tet_num], field = self.vt().field)
             # print 'tet, inf, shapes', tet_num, face, verts_pos
-        current_tf = tet_face(self.vt, current_tet_face.tet_num, current_tet_face.face, verts_pos = verts_pos) 
+        current_tf = tet_face(current_tet_face.tet_num, current_tet_face.face, verts_pos = verts_pos) 
         
         while current_tf not in rho:  ### ignoring the verts_pos information because of our equality definition for tet_faces
             rho.append(current_tf)
             tet_num, inf_vert = current_tf.tet_num, current_tf.face
-            pi_vertex = anglechoice_face2vert[ (self.vt.angle[tet_num], inf_vert) ]
+            pi_vertex = anglechoice_face2vert[ (self.vt().angle[tet_num], inf_vert) ]
             verts = get_triangle_vertex_order(inf_vert)
             ## find back vertex, is the other end of edge of this triangle of the minority colour from the pi vertex
             verts.remove(pi_vertex)
             u,v = verts
 
-            pi_colour = self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, pi_vertex))
+            pi_colour = self.vt().get_edge_between_verts_colour(tet_num, (inf_vert, pi_vertex))
             for w in verts:
-                if self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, w)) == pi_colour:
+                if self.vt().get_edge_between_verts_colour(tet_num, (inf_vert, w)) == pi_colour:
                     trailing_vertex = w
                     verts.remove(w)
                     pivot_vertex = verts[0]
                     break
             leading_vertex = pi_vertex
             ### now forget the pis, we pivot around pivot_vertex until the leading edge (opposite trailing vertex) colour changes:
-            start_leading_edge_colour = self.vt.get_edge_between_verts_colour(tet_num, (leading_vertex, pivot_vertex))
+            start_leading_edge_colour = self.vt().get_edge_between_verts_colour(tet_num, (leading_vertex, pivot_vertex))
             assert start_leading_edge_colour == pi_colour # for some reason...
-            tet = self.vt.tri.tetrahedron(tet_num)
-            if self.vt.tet_shapes != None:
+            tet = self.vt().tri.tetrahedron(tet_num)
+            if self.vt().tet_shapes != None:
                 verts_pos = current_tf.verts_pos
-            while self.vt.get_edge_between_verts_colour(tet.index(), (leading_vertex, pivot_vertex)) == start_leading_edge_colour:
+            while self.vt().get_edge_between_verts_colour(tet.index(), (leading_vertex, pivot_vertex)) == start_leading_edge_colour:
                 # print tet.index(), '|iplt|', inf_vert, pivot_vertex, leading_vertex, trailing_vertex
                 gluing = tet.adjacentGluing(trailing_vertex)
                 new_tet = tet.adjacentTetrahedron(trailing_vertex)
                 new_inf_vert = gluing[inf_vert]
                 new_pivot_vertex = gluing[pivot_vertex]
                 new_leading_vertex, new_trailing_vertex = gluing[trailing_vertex], gluing[leading_vertex]
-                if self.vt.tet_shapes != None:
-                    verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt.tet_shapes[new_tet.index()], field = self.vt.field)
+                if self.vt().tet_shapes != None:
+                    verts_pos = develop_verts_pos(verts_pos, gluing, trailing_vertex, self.vt().tet_shapes[new_tet.index()], field = self.vt().field)
                     # print 'tet, inf, shapes', new_tet.index(), new_inf_vert, verts_pos
                     assert verts_pos[new_inf_vert].is_infinity()
                 tet = new_tet
                 inf_vert, pivot_vertex, leading_vertex, trailing_vertex = new_inf_vert, new_pivot_vertex, new_leading_vertex, new_trailing_vertex
-            current_tf = tet_face( self.vt, tet.index(), inf_vert, verts_pos = verts_pos )
+            current_tf = tet_face( tet.index(), inf_vert, verts_pos = verts_pos )
         sideways = rho[rho.index(current_tf):]   ### remove initial tail. Here .index ignores the verts_pos data of a tet_face
 
         not_inf_vert = (current_tf.face + 1) % 4
-        if self.vt.tet_shapes != None:
+        if self.vt().tet_shapes != None:
             self.sideways_holonomy = current_tf.verts_pos[not_inf_vert].project_to_plane() - sideways[0].verts_pos[not_inf_vert].project_to_plane() 
             print('self.sideways_holonomy', self.sideways_holonomy)
         ### in cases when i(sideways, ladderpole slope) > 1, this isn't what we want for moving things around. sideways_once_holonomy might be better
 
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         
-        if self.vt.coorientations[tet_num][inf_vert] == 1: 
+        if self.vt().coorientations[tet_num][inf_vert] == 1: 
                 # print 'choice 1'
                 ## convention: 0th ladder is convex down, aka green. So:
                 ### move 0th ladder to the end
-            if self.vt.tet_shapes != None:
+            if self.vt().tet_shapes != None:
                 mob_tsfm = matrix((1, self.sideways_holonomy, 0, 1))
                 sideways[0].transform(mob_tsfm)
             sideways = sideways[1:] + sideways[:1] 
@@ -639,17 +646,17 @@ class torus_triangulation:
         ## make sideways go to the right rather than to the left
         tet_num, inf_vert = sideways[0].tet_num, sideways[0].face
         verts = get_triangle_vertex_order(inf_vert)
-        cols = [self.vt.get_edge_between_verts_colour(tet_num, (inf_vert, v)) for v in verts]
+        cols = [self.vt().get_edge_between_verts_colour(tet_num, (inf_vert, v)) for v in verts]
         if cols.count("red") == 2:  # pi is on the right, so sideways must be going left
             # print 'choice 2'
             # maintain first ladder convex down
             # move last ladder to start
-            if self.vt.tet_shapes != None:
+            if self.vt().tet_shapes != None:
                 mob_tsfm = matrix((1, -self.sideways_holonomy, 0, 1))
                 sideways[-1].transform(mob_tsfm)
             sideways = sideways[-1:] + sideways[:-1] 
             sideways.reverse()
-            if self.vt.tet_shapes != None:
+            if self.vt().tet_shapes != None:
                 self.sideways_holonomy = -self.sideways_holonomy
         return sideways
 
@@ -662,7 +669,7 @@ class torus_triangulation:
             if len(self.ladder_list) > 0 and tf in self.ladder_list[0].ladder_unit_list:
             # if self.is_tet_face_in_ladders(tf): ### sideways may wrap multiple times around the torus
                 not_inf_vert = (tf.face + 1) % 4
-                if self.vt.tet_shapes != None:
+                if self.vt().tet_shapes != None:
                     ind = self.ladder_list[0].ladder_unit_list.index(tf)
                     self.sideways_index_shift = self.ladder_list[0].ladder_unit_index_to_left_ladderpole_index(ind)
                     translate_tf = self.ladder_list[0].ladder_unit_list[ind]
@@ -678,7 +685,7 @@ class torus_triangulation:
         print('self.ladder_holonomy', self.ladder_holonomy)
         print(self.sideways_holonomy) ### breaks when we do self.transform(mob_tsfm)
         #### make ladderpoles vertical...
-        if self.vt.tet_shapes != None and make_ladderpoles_vertical:
+        if self.vt().tet_shapes != None and make_ladderpoles_vertical:
             if type(self.ladder_holonomy) == complex or type(self.ladder_holonomy) == float or type(self.ladder_holonomy) == int:
                 zero, one = 0, 1
             else:
@@ -763,12 +770,12 @@ class torus_triangulation:
     def find_edge_axis_unit_pair(self, ladder_index, unit_index): #explore the triangulation, see if the midpoint of the edge to the left of this triangle is a 180 deg rotation axis
         unit_posn_A = (ladder_index, unit_index)
         unit_A = self.ladder_list[ladder_index].ladder_unit_list[unit_index]
-        tet_B = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentTetrahedron(unit_A.right_vertices[0])
+        tet_B = self.vt().tri.tetrahedron(unit_A.tet_num).adjacentTetrahedron(unit_A.right_vertices[0])
         tet_B_index = tet_B.index()
-        gluing = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.right_vertices[0])
+        gluing = self.vt().tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.right_vertices[0])
         face_B = gluing[unit_A.face]
         ladder_B_index = (ladder_index - 1) % len(self.ladder_list)
-        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(self.vt, tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
+        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
         #print unit_posn_A, unit_A, tet_B_index, face_B
         return (unit_posn_A, unit_posn_B)
 
@@ -786,12 +793,12 @@ class torus_triangulation:
 
         ####edit next section to change unit_A to unit_temp
         
-        tet_B = self.vt.tri.tetrahedron(unit_temp.tet_num).adjacentTetrahedron(unit_temp.right_vertices[0])
+        tet_B = self.vt().tri.tetrahedron(unit_temp.tet_num).adjacentTetrahedron(unit_temp.right_vertices[0])
         tet_B_index = tet_B.index()
-        gluing = self.vt.tri.tetrahedron(unit_temp.tet_num).adjacentGluing(unit_temp.right_vertices[0])
+        gluing = self.vt().tri.tetrahedron(unit_temp.tet_num).adjacentGluing(unit_temp.right_vertices[0])
         face_B = gluing[unit_temp.face]
         ladder_B_index = (ladder_index - 1) % len(self.ladder_list)
-        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(self.vt, tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
+        unit_posn_B = (ladder_B_index, find_unit_index(tet_face(tet_B_index, face_B), self.ladder_list[ladder_B_index]) )
         #print unit_posn_A, unit_A, tet_B_index, face_B
         return (unit_posn_A, unit_posn_B)
         
@@ -848,20 +855,20 @@ class torus_triangulation:
             unit_B_index = (unit_B_index - 1) % len_B
         #now have the tris that we can move through to the next ladders
         unit_A = ladder_A.ladder_unit_list[unit_A_index]
-        new_tet_A = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentTetrahedron(unit_A.left_vertices[0])
+        new_tet_A = self.vt().tri.tetrahedron(unit_A.tet_num).adjacentTetrahedron(unit_A.left_vertices[0])
         new_tet_A_index = new_tet_A.index()
-        gluing = self.vt.tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.left_vertices[0])
+        gluing = self.vt().tri.tetrahedron(unit_A.tet_num).adjacentGluing(unit_A.left_vertices[0])
         new_face_A = gluing[unit_A.face]
         new_ladder_A_index = (ladder_A_index + 1) % len(self.ladder_list)
-        new_unit_posn_A = (new_ladder_A_index, find_unit_index(tet_face(self.vt, new_tet_A_index, new_face_A), self.ladder_list[new_ladder_A_index]) )
+        new_unit_posn_A = (new_ladder_A_index, find_unit_index(tet_face(new_tet_A_index, new_face_A), self.ladder_list[new_ladder_A_index]) )
 
         unit_B = ladder_B.ladder_unit_list[unit_B_index]
-        new_tet_B = self.vt.tri.tetrahedron(unit_B.tet_num).adjacentTetrahedron(unit_B.right_vertices[0])
+        new_tet_B = self.vt().tri.tetrahedron(unit_B.tet_num).adjacentTetrahedron(unit_B.right_vertices[0])
         new_tet_B_index = new_tet_B.index()
-        gluing = self.vt.tri.tetrahedron(unit_B.tet_num).adjacentGluing(unit_B.right_vertices[0])
+        gluing = self.vt().tri.tetrahedron(unit_B.tet_num).adjacentGluing(unit_B.right_vertices[0])
         new_face_B = gluing[unit_B.face]
         new_ladder_B_index = (ladder_B_index - 1) % len(self.ladder_list)
-        new_unit_posn_B = (new_ladder_B_index, find_unit_index(tet_face(self.vt, new_tet_B_index, new_face_B), self.ladder_list[new_ladder_B_index]) )
+        new_unit_posn_B = (new_ladder_B_index, find_unit_index(tet_face(new_tet_B_index, new_face_B), self.ladder_list[new_ladder_B_index]) )
 
         return (new_unit_posn_A, new_unit_posn_B)     
 
@@ -877,7 +884,7 @@ class boundary_triangulation:
             self.add_torus_triangulation(start_tet_face)
         
     def add_torus_triangulation(self, start_tet_face):
-        new_torus_triangulation = torus_triangulation(self, self.vt, start_tet_face)
+        new_torus_triangulation = torus_triangulation(self, start_tet_face)
         for tet_face in new_torus_triangulation.tet_faces:
             self.tet_face_list.remove(tet_face)
         self.torus_triangulation_list.append(new_torus_triangulation)
@@ -886,7 +893,7 @@ class boundary_triangulation:
         out = []
         for i in range(self.vt.tri.countTetrahedra()):
             for j in range(4):
-                out.append( tet_face(self.vt, i, j) )
+                out.append( tet_face(i, j) )
         return out
 
     def ladder_counts(self):

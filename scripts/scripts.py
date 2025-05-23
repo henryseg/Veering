@@ -255,8 +255,12 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
         alg_status = 'algeb'
     else:
         alg_status = 'float'
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + string_max_length + '_' + alg_status + '.pdf'
-    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, output_filename = filename, draw_args = draw_args, build_type = build_type )
+    filename_base = 'Images/Cannon-Thurston/' + veering_isosig + '_' + build_type + '_' + draw_type + '_' + string_max_length + '_' + alg_status 
+    filename = filename_base + '.pdf'
+    load_continents_filename = None  ## don't load anything
+    save_continents_filename = filename_base + '.pkl'
+
+    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, output_filename = filename, draw_args = draw_args, build_type = build_type, load_continents_filename = load_continents_filename, expand_continents = True, save_continents_filename = save_continents_filename )
     
 def draw_census_continents(census_cap = 10):
     census = parse_data_file('../veering/data/veering_census.txt')

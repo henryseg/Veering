@@ -161,7 +161,7 @@ def lightning_curve_from_dividers(dividers, a, b, special_vertices = [], spiky =
 def explore_side(vt, tet, face, pivot_vert, leading_vert, trailing_vert, ladderpole_colour):
     tet_faces_pivots = []
     while True:
-        tet_faces_pivots.append( (tet_face(vt, tet.index(), face), pivot_vert) )
+        tet_faces_pivots.append( (tet_face(tet.index(), face), pivot_vert) )
         if vt.get_edge_between_verts_colour(tet.index(), (pivot_vert, leading_vert)) != ladderpole_colour:
             break
         gluing = tet.adjacentGluing(trailing_vert)
@@ -327,19 +327,19 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
             for lu in left_ladder.ladder_unit_list:
                 if lu.is_on_left():
                     # print(lu, lu.left_vertices[0])
-                    left_ladder_nbd.extend( lu.vert_positions_around_corner( lu.left_vertices[0] ) )
+                    left_ladder_nbd.extend( lu.vert_positions_around_corner( vt, lu.left_vertices[0] ) )
             last = left_ladder.ladder_unit_list[-1]
             # print('extra', last, last.left_vertices[-1])
-            left_ladder_nbd.extend( last.vert_positions_around_corner( last.left_vertices[-1] ) )
+            left_ladder_nbd.extend( last.vert_positions_around_corner( vt, last.left_vertices[-1] ) )
             # print('right')
             right_ladder_nbd = []
             for lu in right_ladder.ladder_unit_list:
                 if lu.is_on_left():
                     # print(lu, lu.left_vertices[0])
-                    right_ladder_nbd.extend( lu.vert_positions_around_corner( lu.left_vertices[0] ) )
+                    right_ladder_nbd.extend( lu.vert_positions_around_corner( vt, lu.left_vertices[0] ) )
             last = right_ladder.ladder_unit_list[-1]
             # print('extra', last, last.left_vertices[-1])
-            right_ladder_nbd.extend( last.vert_positions_around_corner( last.left_vertices[-1] ) )
+            right_ladder_nbd.extend( last.vert_positions_around_corner( vt, last.left_vertices[-1] ) )
             
             left_ladder_nbd = uniquify_list(left_ladder_nbd)
             right_ladder_nbd = uniquify_list(right_ladder_nbd)
@@ -351,10 +351,10 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
                     lu_bottom = L.ladder_unit_list[0]
                     lu_top = L.ladder_unit_list[-1]
 
-                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner(lu_bottom.left_vertices[0]) )
-                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner(lu_bottom.right_vertices[0]) )
-                    top_nbd.extend( lu_top.vert_positions_around_corner(lu_top.left_vertices[-1]) )
-                    top_nbd.extend( lu_top.vert_positions_around_corner(lu_top.right_vertices[-1]) )
+                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.left_vertices[0]) )
+                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.right_vertices[0]) )
+                    top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.left_vertices[-1]) )
+                    top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.right_vertices[-1]) )
             bottom_nbd = uniquify_list(bottom_nbd)
             top_nbd = uniquify_list(top_nbd)
 
@@ -792,12 +792,12 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
     return out_data
 
 ### The following should really be called "draw_continents"
-def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, output_filename = None, draw_args = None, build_type = None, load_continents = False, load_continents_filename = None, expand_continents = True, save_continents = False, save_continents_filename = None ):
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, output_filename = None, draw_args = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None ):
     draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
     draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
     draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
 
-    if load_continents:
+    if load_continents_filename != None:
         continents, B = read_from_pickle(load_continents_filename)
     else:
         continents, B = generate_initial_continents_for_drawing( veering_isosig, tet_shapes = tet_shapes, use_algebraic_numbers = use_algebraic_numbers, draw_args = draw_args )
@@ -806,8 +806,15 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
     if expand_continents:
         hit_max_tetrahedra = expand_continents_for_drawing( continents, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra )
 
-    if save_continents:
-        output_to_pickle((continents, B), save_continents_filename)
+    if save_continents_filename != None:
+        ### remove Regina triangulations from the data because they cannot be pickled
+        B.vt = None
+        for con in continents:
+            con.vt = None
+            # for thing in con.tet_face.__dict__.items():
+            #     print(thing[0], type(thing[1]))
+            
+        output_to_pickle(continents, save_continents_filename)
 
     continent_sizes = [len(con.tetrahedra) for con in continents]
     output_filename = output_filename[:-4] + '_' + str(continent_sizes) + '.pdf'
