@@ -1,3 +1,4 @@
+from math import sqrt
 
 from veering.file_io import parse_data_file, read_from_pickle
 from veering.basic_math import vector, matrix, KP1
@@ -6,6 +7,7 @@ from veering.veering_tri import veering_triangulation
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
 from veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
+from veering.snappy_tools import shapes, algebraic_shapes
 
 # from scripts.develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
 # from scripts.veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
@@ -397,7 +399,7 @@ class ladder:
                 for i in range(4):
                     if ladder_unit.face != i:  # don't include infinity vertex
                         c = ladder_unit.verts_pos[i].project_to_plane() 
-                        c = self.torus_triangulation.drawing_scale * ( c + ladder_unit.gluing_offset ) 
+                        c = self.torus_triangulation.drawing_scale_and_rotate * ( c + ladder_unit.gluing_offset ) 
                         posns_dict[i] = c
                 ladder_unit.verts_C = posns_dict
         # if args['style'] == 'geometric' and args['draw_triangles_near_poles'] and self == self.torus_triangulation.ladder_list[-1]:
@@ -518,6 +520,11 @@ def find_unit_index(new_tet_face, my_ladder):
             assert False, 'error, couldnt find matching unit'
     return unit_index
 
+def our_cusp_area(u, v):
+    u = complex(u)
+    v = complex(v)
+    return abs(u.real*v.imag - u.imag*v.real)
+
 class torus_triangulation:
     """list of ladders stacked next to each other"""
 
@@ -529,6 +536,7 @@ class torus_triangulation:
         self.sideways_once_holonomy = None  ### meets every ladder only once
         self.sideways_index_shift = None  ### the top and bottom of the torus are glued in ladders - use ladder_holonomy
         ### the sides are glued by sideways_once_holonomy, or sideways_once_holonomy \pm ladder_holonomy depending on the index relative to sideways_index_shift 
+        self.drawing_scale_and_rotate = None
         self.make_torus_triangulation(start_tet_face)
         self.tet_faces = []
         for i,l in enumerate(self.ladder_list):
@@ -537,7 +545,6 @@ class torus_triangulation:
                 # print lu
                 self.tet_faces.append(lu)
         self.canv = None
-        self.drawing_scale = None
 
     def vt(self):
         return self.bt.vt
@@ -547,12 +554,12 @@ class torus_triangulation:
         self.canv = None
         # assert self.canv == None
         self.canv = pyx.canvas.canvas()
+        if args['style'] == 'geometric':
+            self.drawing_scale_and_rotate = self.drawing_scale_and_rotate * args['global_drawing_scale'] 
+            print('self.drawing_scale_and_rotate', self.drawing_scale_and_rotate)
         for i,L in enumerate(self.ladder_list):
             if args['style'] == 'ladders':
                 L.ladder_origin = complex(args['ladder_width'] * i, 0)  ## ignore any stuff already in ladder_origin
-            elif args['style'] == 'geometric':
-                ### we scale up if the ladders are long
-                self.drawing_scale = args['global_drawing_scale'] #*len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
             L.calc_verts_C(args = args)
         
         if args['draw_boundary_triangulation']:
@@ -577,9 +584,18 @@ class torus_triangulation:
             else:
                 one = self.vt().field.one()
                 zero = self.vt().field.zero()
+
             verts_pos[face] = KP1((one, zero))
             verts_pos[3 - face] = KP1((zero, one))
             verts_pos[(face + 2) % 4] = KP1((one, one))
+
+            # ### spinors for fig 8 knot 
+            # omega = complex(-0.5, 0.8660254038)
+            # omegaplusone = omega + one
+            # verts_pos[face] = KP1((one, zero))
+            # verts_pos[3 - face] = KP1((zero, omegaplusone))
+            # verts_pos[(face + 2) % 4] = KP1((omegaplusone, omegaplusone))
+            # #######
 
             last_vert = 3 - ((face + 2) % 4)
             ordering = unknown_vert_to_known_verts_ordering[last_vert] 
@@ -660,7 +676,7 @@ class torus_triangulation:
                 self.sideways_holonomy = -self.sideways_holonomy
         return sideways
 
-    def make_torus_triangulation(self, start_tet_face, make_ladderpoles_vertical = True):
+    def make_torus_triangulation(self, start_tet_face):
         """build a torus triangulation by building multiple ladders"""
         
         sideways = self.find_sideways(start_tet_face)
@@ -680,12 +696,17 @@ class torus_triangulation:
             self.sideways_index_shift = 0
             self.sideways_once_holonomy = self.sideways_holonomy
 
-        self.ladder_holonomy = self.ladder_list[0].holonomy
+        if self.vt().tet_shapes != None:
+            self.ladder_holonomy = self.ladder_list[0].holonomy
+            self.our_cusp_area = our_cusp_area(self.sideways_once_holonomy, self.ladder_holonomy)
+            ### scale and rotate. Will get multiplied by global drawing scale when we generate canvas
+            self.drawing_scale_and_rotate = 1.0/sqrt(self.our_cusp_area) * complex(0.0, 1.0) * abs(self.ladder_holonomy) / (self.ladder_holonomy)
+            # print('sclrot', sclrot)
 
-        print('self.ladder_holonomy', self.ladder_holonomy)
-        print(self.sideways_holonomy) ### breaks when we do self.transform(mob_tsfm)
-        #### make ladderpoles vertical...
-        if self.vt().tet_shapes != None and make_ladderpoles_vertical:
+            print('self.ladder_holonomy', self.ladder_holonomy)
+            print('self.sideways_holonomy', self.sideways_holonomy) ### breaks when we do self.transform(mob_tsfm)
+            print('our_cusp_area', self.our_cusp_area)
+
             if type(self.ladder_holonomy) == complex or type(self.ladder_holonomy) == float or type(self.ladder_holonomy) == int:
                 zero, one = 0, 1
             else:
@@ -925,8 +946,11 @@ class boundary_triangulation:
 @liberal
 def generate_boundary_triangulation(tri, angle, args = {}, output_filename = None, draw = True, ct_depth = 20):
     """make a picture of the boundary triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
-    if 'tet_shapes' in args:
-        ts = args['tet_shapes']
+    if args['style'] == 'geometric': 
+        if 'tet_shapes' in args:
+            ts = args['tet_shapes']
+        else:
+            ts = shapes(tri)
     else:
         ts = None
     vt = veering_triangulation(tri, angle, tet_shapes = ts)
@@ -937,6 +961,8 @@ def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, o
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if output_filename == None:
         output_filename = veering_isosig + '.pdf'
+    output_filename = 'Images/Boundary/' + output_filename
+    print('output_filename', output_filename)
     B = generate_boundary_triangulation(tri, angle, args = args, output_filename = output_filename)
     if args['draw_boundary_triangulation']:
         B.draw(output_filename, args = args) 

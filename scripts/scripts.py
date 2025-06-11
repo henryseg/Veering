@@ -12,25 +12,23 @@ from veering.snappy_tools import shapes
 from veering.taut_polynomial import taut_polynomial_via_fox_calculus
 from veering.taut_polytope import min_neg_euler_carried
 
-def boundary_triangulation_script():
+def boundary_triangulation_script(veering_isosig):
     from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
-    args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
+    args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 12, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     ### for standard ladder picture, set 'draw_triangles_near_poles' = False. Set True for CT pictures
 
     # num_to_draw = 87 ## up to 6 tet
     # # num_to_draw = 5699 ## up to 12 tet  
-    args['style'] = 'ladders'
-    # draw_triangulations_from_veering_isosigs_file('veering_census.txt', 'Images/Boundary_triangulations/Ladders', args = args, num_to_draw = num_to_draw)
-    # args['style'] = 'geometric'
-    # draw_triangulations_from_veering_isosigs_file('veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
-
+    # args['style'] = 'ladders'
+    args['style'] = 'geometric'
 
     # args = {'draw_boundary_triangulation':False, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     # args['style'] = 'geometric'
     # num_to_draw = 1000
     # draw_triangulations_from_veering_isosigs_file('veering_census.txt', 'Images/Boundary_triangulations/Geometric', args = args, num_to_draw = num_to_draw)
 
+    name = veering_isosig
 
     # name = 'cPcbbbdxm_10'
     # name = 'cPcbbbiht_12'
@@ -48,14 +46,14 @@ def boundary_triangulation_script():
     # name = 'gLvQQadfedefjaaajkk_200211'
 
     # name = 'gLPLQbcdfeffhrraarw_120011'
-    name = 'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200'
+    # name = 'qvvLPQMvQLQkfgfhhgfknlmoppopohahhaaahaqqaqqaaa_1222211100222200'
 
     # shapes_data = read_from_pickle('veering_shapes_up_to_ten_tetrahedra.pkl')
     # args['style'] = 'geometric'
     # args['tet_shapes'] = shapes_data[name]
     # # args['tet_shapes'] = None
 
-    draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_ladders.pdf', args = args) 
+    draw_triangulation_boundary_from_veering_isosig(name, output_filename = name + '_' + args['style'] + '.pdf', args = args) 
 
     # B = generate_boundary_triangulation(name)
     # print(B.ladder_counts())
@@ -206,9 +204,11 @@ def draw_continent_script():
 
 def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahedra = 500000, use_algebraic_numbers = True):
     from draw_continent import draw_continent
-    draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 12, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    # draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': False, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     # build_type = 'build_make_long_descendant_edges_internal'
     build_type = 'build_long_and_mid'
+    # build_type = 'build_naive'
 
     # max_num_tetrahedra = 40
     # max_num_tetrahedra = 5000
@@ -233,9 +233,9 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
     # max_length = 0.005
 
     # draw_args['ct_lw'] = 0.2 * max_length 
-    draw_args['draw_CT_curve'] = True
+    draw_args['draw_CT_curve'] = False
     draw_args['draw_lightning_curve'] = False
-    draw_args['draw_jordan_curve'] = False
+    draw_args['draw_jordan_curve'] = True
     draw_args['draw_dividers'] = False
     draw_args['draw_landscapes'] = False
     draw_args['draw_box_for_cohom_frac'] = False
@@ -257,9 +257,10 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
         alg_status = 'float'
     filename_base = veering_isosig + '_' + build_type + '_' + draw_type + '_' + string_max_length + '_' + alg_status 
     filename = 'Images/Cannon-Thurston/' + filename_base + '.pdf'
-    # load_continents_filename = None  ## don't load anything
-    load_continents_filename = "data/gLLAQbecdfffhhnkqnc_120012_build_long_and_mid_CT_spectrum_.5_float.pkl"
-    save_continents_filename = 'data/' + filename_base + '.pkl'
+    load_continents_filename = None  ## don't load anything
+    # load_continents_filename = "data/gLLAQbecdfffhhnkqnc_120012_build_long_and_mid_CT_spectrum_.5_float.pkl"
+    # save_continents_filename = 'data/' + filename_base + '.pkl'
+    save_continents_filename = None  ## don't save anything (pickling doesn't seem to work for large continents anyway)
 
     draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, output_filename = filename, draw_args = draw_args, build_type = build_type, load_continents_filename = load_continents_filename, expand_continents = True, save_continents_filename = save_continents_filename )
     

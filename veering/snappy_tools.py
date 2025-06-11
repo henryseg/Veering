@@ -59,7 +59,14 @@ def algebraic_shapes(tri):
     if result == None:
         assert False, 'could not find algebraic shapes'
     else:
-        return (result[0], result[2]) ### the field and the shapes. 
+        field, alg_shapes = (result[0], result[2])
+        float_shapes = shapes(tri)
+        # print('field', field)
+        # print('zero, one', abs(field.zero()), abs(field.one() - 1))
+        # for i in range(len(float_shapes)):
+        #     print(float_shapes[i], alg_shapes[i], abs(float_shapes[i] - alg_shapes[i]))
+            assert abs(float_shapes[i] - alg_shapes[i]) < 0.0001
+        return (field, alg_shapes)
 
 # Cusp areas
 

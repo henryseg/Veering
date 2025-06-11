@@ -215,13 +215,23 @@ class KP1(tuple):
             if type(self[0]) == complex or type(self[0]) == float or type(self[0]) == int:
                 return complex(self[0]/self[1])
             else: ### assume algebraic number
-                return complex((self[0]/self[1]).complex_embedding()).conjugate() ### The outer complex converts from sage complex to python complex
-                ### conjugate is some difference of conventions
+                out = complex( (self[0]/self[1]) - 0.0 ) 
+                ### subtract 0.0 to turn this into a 'sage.rings.complex_double.ComplexDoubleElement', 
+                ### then complex to get it to be python.
+                ### Do not use sage's complex_embedding, it doesn't know which embedding to use.
+                return out
+
+    # def spinor_direction(self): ### ask Dan Mathews
+    #     if self.is_infinity():
+    #         return complex(100,100) ### hack, useful for debugging
+    #     else:
+    #         return complex(0,1)/(self[1]*self[1])
 
     def project_to_plane(self): ### similar to above but allows for algebraic number output
-        assert not self.is_infinity()
-        return self[0]/self[1]
-
+        if self.is_infinity():
+            return None
+        else:
+            return self[0]/self[1]
 
     def is_close_to(self, other, epsilon =  0.000001):
         a, b = self

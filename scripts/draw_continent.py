@@ -177,7 +177,7 @@ def lightning_curve_for_ladder_unit(dividers, lu, offset):
     non_inf_verts.remove(lu.face)
     edge_colours = []
     for i in range(3):
-        edge_colours.append( lu.ladder.vt.get_edge_between_verts_colour(lu.tet_num, (non_inf_verts[(i+1)%3], non_inf_verts[(i+2)%3]) ) )
+        edge_colours.append( lu.ladder.vt().get_edge_between_verts_colour(lu.tet_num, (non_inf_verts[(i+1)%3], non_inf_verts[(i+2)%3]) ) )
     for i in range(3):
         if edge_colours[i] == edge_colours[(i+1)%3]:
             odd_one_out = (i+2)%3
@@ -189,12 +189,11 @@ def lightning_curve_for_ladder_unit(dividers, lu, offset):
     # print('len lightning_curve', len(lightning_curve))
     lightning_curve = [c + offset for c in lightning_curve]
     return lightning_curve
-    # lightning_curve_scaled = [ T.drawing_scale * (c + offset) for c in lightning_curve ]
+    # lightning_curve_scaled = [ T.drawing_scale_and_rotate * (c + offset) for c in lightning_curve ]
     # draw_path(T.canv, lightning_curve_scaled, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[ladder_parity%2]])
 
 def lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T):
     ### describe a ladderpole edge by a neighbouring ladder unit. Draw lightning curves around it
-    vt = T.vt
     tet_num, face = lu.tet_num, lu.face
     if lu.is_on_left():
         opp_vert = lu.right_vertices[0]
@@ -205,7 +204,7 @@ def lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T):
 
     ladderpole_verts_complex = [lu.verts_pos[i].project_to_plane() for i in ladderpole_verts]
 
-    ladderpole_colour = vt.get_edge_between_verts_colour(tet_num, ladderpole_verts)
+    ladderpole_colour = T.vt().get_edge_between_verts_colour(tet_num, ladderpole_verts)
     if (ladderpole_colour == "red" and lu.is_on_left()) or (ladderpole_colour == "blue" and lu.is_on_right()):
         pivot_vert, trailing_vert = ladderpole_verts
     else:
@@ -214,7 +213,7 @@ def lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T):
         
     leading_vert = opp_vert  
 
-    tet = T.vt.tri.tetrahedron(tet_num)
+    tet = T.vt().tri.tetrahedron(tet_num)
     gluing = tet.adjacentGluing(opp_vert)
     nb_tet = tet.adjacentTetrahedron(opp_vert)
     nb_face = gluing[face]
@@ -224,8 +223,8 @@ def lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T):
     ### if the edge is blue, rotate up to the right to find relevant tet_faces to its right, and down to the left.
     ### vice versa for red ladderpole edge
 
-    our_side_tet_faces_pivots = explore_side(vt, tet, face, pivot_vert, leading_vert, trailing_vert, ladderpole_colour)
-    nb_side_tet_faces_pivots = explore_side(vt, nb_tet, nb_face, nb_pivot_vert, nb_leading_vert, nb_trailing_vert, ladderpole_colour)
+    our_side_tet_faces_pivots = explore_side(T.vt(), tet, face, pivot_vert, leading_vert, trailing_vert, ladderpole_colour)
+    nb_side_tet_faces_pivots = explore_side(T.vt(), nb_tet, nb_face, nb_pivot_vert, nb_leading_vert, nb_trailing_vert, ladderpole_colour)
 
     ### for each of these tet_faces, use the edge for the corresponding ladder unit in T, translated as necessary using the offset
     ### from either end of the ladderpole edge.
@@ -262,20 +261,18 @@ def uniquify_list(dup_list, subtract = [], epsilon = 0.001):
 
 def replace_with_continent_vertices(v_list, con, epsilon = 0.001):
     for i, w in enumerate(v_list):
-        for v in con.boundary_triangulation_vertices:
-            # print(type(v), type(w))
-            if abs(v.pos.project_to_plane() - w) < epsilon:
-                v_list[i] = v    
-                break    
+        if w != None:
+            for v in con.boundary_triangulation_vertices:
+                if not v.pos.is_infinity():
+                    if abs(v.pos.project_to_plane() - w) < epsilon:
+                        v_list[i] = v    
+                        break    
 
 def assign_continent_vertices_to_tet_faces(T, con):
     for L in T.ladder_list:
         for lu in L.ladder_unit_list:
-            lu.con_verts = [v.project_to_plane() for v in lu.verts_pos if not v.is_infinity()]
+            lu.con_verts = [v.project_to_plane() for v in lu.verts_pos]
             replace_with_continent_vertices(lu.con_verts, con)
-
-def our_cusp_area(u, v):
-    return abs(u.real*v.imag - u.imag*v.real)
 
 def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, use_algebraic_numbers = False, draw_args = None ):
     expand_fund_dom = draw_args['expand_fund_dom']
@@ -371,8 +368,6 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
 
         con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, maintain_coast = True )
         con.ladderpoles_vertices = ladderpoles_vertices ### store for later
-        con.our_cusp_area = our_cusp_area(T.sideways_once_holonomy, T.ladder_holonomy)
-        print('our_cusp_area', con.our_cusp_area)
 
         con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
@@ -417,7 +412,7 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
 
         # print 'important verts', important_vertices
         # for v in important_vertices:
-        #     z = T.drawing_scale * v.pos.project_to_plane()
+        #     z = T.drawing_scale_and_rotate * v.pos.project_to_plane()
         #     pyx_fill_col = pyx.deco.filled([pyx.color.rgb.black])
         #     T.canv.fill(pyx.path.circle(z.real, z.imag, 0.02), [pyx_fill_col])
 
@@ -425,9 +420,10 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
 
     return continents, B
 
-def expand_continents_for_drawing( continents, build_type, max_length = 0.5, max_num_tetrahedra = 100 ):
+def expand_continents_for_drawing( continents, B, build_type, max_length = 0.5, max_num_tetrahedra = 100 ):
     for i, con in enumerate(continents):
-        scaled_max_length = max_length * sqrt(con.our_cusp_area)
+        T = B.torus_triangulation_list[i]
+        scaled_max_length = max_length * sqrt(T.our_cusp_area)  
         print('expanding continent for cusp', i, build_type, 'scaled_max_length is', scaled_max_length, 'max_num_tetrahedra is', max_num_tetrahedra)
         hit_max_tetrahedra = False ### default assumption is that we had enough tetrahedra to get the max_length we want.
         # print(build_type)
@@ -468,11 +464,10 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
         T = B.torus_triangulation_list[i]
         assign_continent_vertices_to_tet_faces(T, con)
 
-        ### scale and rotate 
-        sclrot = 1.0/sqrt(con.our_cusp_area) * complex(0.0, 1.0) * abs(T.ladder_holonomy) / (T.ladder_holonomy)
-
         for v in con.vertices:
-            v.drawing_pos = sclrot * v.pos.complex() 
+            # v.drawing_pos = T.drawing_scale_and_rotate * v.pos.complex() 
+            v.drawing_pos = v.pos.complex() 
+            # v.spinor_dir = v.pos.spinor_direction()
 
         dividers = con.lightning_dividers([])  ## only lightning curves for infinity
         layer1 = T.canv.layer("layer1")
@@ -500,13 +495,13 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                         assert abs(CT_ladderpole_pos[0] - curves[0][-1]) < 0.0001
                         assert abs(CT_ladderpole_pos[-1] - curves[0][0]) < 0.0001
                         loop0 = curves[0] + CT_ladderpole_pos[1:-1]
-                        path_C = [ T.drawing_scale * c for c in loop0 ]
+                        path_C = [ complex(T.drawing_scale_and_rotate * c) for c in loop0 ] ### complex to make sure its not a sage complex number
                         draw_path(layer1, path_C, [jordan_colours[0]], fill = True)  
                         assert abs(CT_ladderpole_pos[0] - curves[1][0]) < 0.0001
                         assert abs(CT_ladderpole_pos[-1] - curves[1][-1]) < 0.0001
                         CT_ladderpole_pos.reverse()
                         loop1 = curves[1] + CT_ladderpole_pos[1:-1]
-                        path_C = [ T.drawing_scale * c for c in loop1 ]
+                        path_C = [ complex(T.drawing_scale_and_rotate * c) for c in loop1 ]
                         draw_path(layer1, path_C, [jordan_colours[1]], fill = True)  
                         
 
@@ -526,12 +521,12 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
             #             assert CT_ladderpole_pos[0] == lightning_curve[-1] and CT_ladderpole_pos[-1] == lightning_curve[0]
             #             lightning_curve = lightning_curve[1:-1]
             #             loop = CT_ladderpole_pos + lightning_curve
-            #             path_C = [ T.drawing_scale * c for c in loop ]
+            #             path_C = [ T.drawing_scale_and_rotate * c for c in loop ]
             #             draw_path(layer1, path_C, [jordan_colours[i]], fill = True)  
                         # if k == 0:
                         #     L = T.ladder_list[0]
                         #     offset = L.left_ladderpole_index_to_ladder_unit(j).gluing_offset
-                        #     path_C = [ T.drawing_scale * (c + offset) for c in loop ]
+                        #     path_C = [ T.drawing_scale_and_rotate * (c + offset) for c in loop ]
                         #     draw_path(layer1, path_C, [jordan_colours[i]], fill = True) 
 
             box = T.canv.bbox()
@@ -545,7 +540,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
             for k in range(2):
                 for divider_list in dividers[k]:
                     for edge in divider_list:
-                        edgeC = [T.drawing_scale * v.drawing_pos for v in edge.vertices]
+                        edgeC = [T.drawing_scale_and_rotate * v.drawing_pos for v in edge.vertices]
                         draw_path(layer1, edgeC, [lightning_colours[k], pyx.style.linewidth(0.005)])
 
         ##### draw the Cannon-Thurston curve
@@ -562,13 +557,21 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                         path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
                         for v in path[:-1]:
                             assert v.is_ladderpole_descendant()
-                        path_C = [ T.drawing_scale * v.drawing_pos for v in path ]
+                        path_C = [ T.drawing_scale_and_rotate * v.drawing_pos for v in path ]
                         draw_path(T.canv, path_C, draw_options)  
+
             else:
                 path = con.coast
                 path.remove(con.infinity)
-                path_C = [ T.drawing_scale * v.drawing_pos for v in path ]
+                path_C = [ T.drawing_scale_and_rotate * v.drawing_pos for v in path ]
                 draw_path(T.canv, path_C, draw_options)  
+                # draw_options_spinor = [pyx.style.linewidth(ct_lw*0.5), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)]
+                # for v in path:
+                #     a = T.drawing_scale_and_rotate * v.drawing_pos
+                #     b = a + T.drawing_scale_and_rotate * v.spinor_dir
+                #     spike = [a, b]
+                #     # print(v.spinor_dir)
+                #     draw_path(T.canv, spike, draw_options_spinor)  
 
 
         ##############
@@ -578,7 +581,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
         # lines for triangles meeting infinity
 
         # for endpoints, veering_colour in adj_edges:
-        #     z, w = [T.drawing_scale * v.drawing_pos for v in endpoints]
+        #     z, w = [T.drawing_scale_and_rotate * v.drawing_pos for v in endpoints]
         #     pyx_stroke_col = pyx.deco.stroked([colours[veering_colour]])
         #     T.canv.stroke(pyx.path.line( z.real, z.imag, w.real, w.imag),  [pyx.style.linewidth(lw * 5), pyx_stroke_col]  )
 
@@ -592,7 +595,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
         # T = B.torus_triangulation_list[0]
         # for L in T.ladder_list:
         #     for v in L.left_ladder_pole_vertices():
-        #         v *= T.drawing_scale
+        #         v *= T.drawing_scale_and_rotate
         #         if L.is_even:
         #             col = colours["blue"]
         #         else:
@@ -615,12 +618,12 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                     u, v = e.vertices
                     if u == con.infinity or v == con.infinity:
                         if u == con.infinity:
-                            z = T.drawing_scale * v.drawing_pos
+                            z = T.drawing_scale_and_rotate * v.drawing_pos
                         else:
-                            z = T.drawing_scale * u.drawing_pos
+                            z = T.drawing_scale_and_rotate * u.drawing_pos
                         T.canv.fill(pyx.path.circle(z.real, z.imag, 0.05), [col])
                     else:
-                        draw_path(T.canv, [T.drawing_scale * u.drawing_pos, T.drawing_scale * v.drawing_pos], [pyx.style.linewidth(0.5 * ct_lw), col])
+                        draw_path(T.canv, [T.drawing_scale_and_rotate * u.drawing_pos, T.drawing_scale_and_rotate * v.drawing_pos], [pyx.style.linewidth(0.5 * ct_lw), col])
 
         #### draw lightning curves
 
@@ -638,7 +641,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                     if k%2 == 0:
                         curves = lightning_curves_around_ladder_unit_ladder_pole_edge(dividers, lu, T)
                         for j, crv in enumerate(curves):
-                            lightning_curve_scaled = [ T.drawing_scale * c for c in crv ]
+                            lightning_curve_scaled = [ T.drawing_scale_and_rotate * c for c in crv ]
                             draw_path(T.canv, lightning_curve_scaled, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[j]])
 
 
@@ -647,18 +650,18 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                     # non_inf_verts.remove(lu.face)
                     # edge_colours = []
                     # for i in range(3):
-                    #     edge_colours.append( T.vt.get_edge_between_verts_colour(lu.tet_num, (non_inf_verts[(i+1)%3], non_inf_verts[(i+2)%3]) ) )
+                    #     edge_colours.append( T.vt().get_edge_between_verts_colour(lu.tet_num, (non_inf_verts[(i+1)%3], non_inf_verts[(i+2)%3]) ) )
                     # for i in range(3):
                     #     if edge_colours[i] == edge_colours[(i+1)%3]:
                     #         odd_one_out = (i+2)%3
                     # s, e = lu.con_verts[non_inf_verts[(odd_one_out + 1)%3]], lu.con_verts[non_inf_verts[(odd_one_out + 2)%3]] 
 
                     # lightning_curve = lightning_curve_from_dividers(dividers[k%2], s, e, special_vertices = all_ladderpole_vertices, spiky = False)
-                    # lightning_curve_scaled = [ T.drawing_scale * c for c in lightning_curve ]
+                    # lightning_curve_scaled = [ T.drawing_scale_and_rotate * c for c in lightning_curve ]
                     # draw_path(T.canv, lightning_curve_scaled, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[k%2]])
                     # if k == len(T.ladder_list) - 1:
                     #     lightning_curve_shifted = [c + lu.gluing_offset for c in lightning_curve]
-                    #     lightning_curve_shifted_scaled = [ T.drawing_scale * c for c in lightning_curve_shifted ]
+                    #     lightning_curve_shifted_scaled = [ T.drawing_scale_and_rotate * c for c in lightning_curve_shifted ]
                     #     draw_path(T.canv, lightning_curve_shifted_scaled, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[k%2]])
 
 
@@ -669,13 +672,13 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
             #         s, e = ladderpole[j], ladderpole[j+1]
             #         for i in range(2):
             #             lightning_curve = lightning_curve_from_dividers(dividers[i], s, e, special_vertices = all_ladderpole_vertices, spiky = False)
-            #             lightning_curve_scaled = [ T.drawing_scale * c for c in lightning_curve ]
+            #             lightning_curve_scaled = [ T.drawing_scale_and_rotate * c for c in lightning_curve ]
             #             draw_path(T.canv, lightning_curve_scaled, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[i]])
 
                         # if k == 0:
                         #     L = T.ladder_list[0]
                         #     offset = L.left_ladderpole_index_to_ladder_unit(j).gluing_offset
-                        #     lightning_curve_scaled_shifted = [ T.drawing_scale * (c + offset) for c in lightning_curve ]
+                        #     lightning_curve_scaled_shifted = [ T.drawing_scale_and_rotate * (c + offset) for c in lightning_curve ]
                         #     draw_path(T.canv, lightning_curve_scaled_shifted, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.color.rgb(0,1,1)]) 
 
             # for i in range(2):
@@ -691,7 +694,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
             #         #         crv = []
             #         #     else:
             #         #         crv = crv[ladderpole_indices[0]:ladderpole_indices[-1] + 1]
-            #         crv = [ T.drawing_scale * c.drawing_pos for c in crv ]
+            #         crv = [ T.drawing_scale_and_rotate * c.drawing_pos for c in crv ]
             #         if len(crv) > 0:
             #             draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, lightning_colours[i]])
             #         # ## trim to ladder poles
@@ -702,9 +705,9 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
             #         # if len(ladderpole_vertex_indices) > 0:
             #         #     crv = crv[ladderpole_vertex_indices[0]: ladderpole_vertex_indices[-1] + 1]
             #         #     # for e in crv:
-            #         #         # pts = [T.drawing_scale * v.drawing_pos for v in e.vertices]
+            #         #         # pts = [T.drawing_scale_and_rotate * v.drawing_pos for v in e.vertices]
             #         #         # draw_path(T.canv, pts, [pyx.style.linewidth(ct_lw)])  
-            #         #     crv = [ T.drawing_scale * c.drawing_pos for c in crv ]
+            #         #     crv = [ T.drawing_scale_and_rotate * c.drawing_pos for c in crv ]
             #         #     draw_path(T.canv, crv, [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round]) 
 
 
@@ -724,8 +727,8 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
             zero_vert = inf_vert - ((inf_vert%2)*2 - 1)  ## swaps 0 with 1, 2 with 3
             one_vert = inf_vert - 2*(((inf_vert//2) % 2)*2 - 1) ## swaps 0 with 2, 1 with 3
 
-            zero_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[zero_vert].project_to_plane()
-            one_vert_pos = T.drawing_scale * initial_tet_face.verts_pos[one_vert].project_to_plane()
+            zero_vert_pos = T.drawing_scale_and_rotate * initial_tet_face.verts_pos[zero_vert].project_to_plane()
+            one_vert_pos = T.drawing_scale_and_rotate * initial_tet_face.verts_pos[one_vert].project_to_plane()
 
             half_pos = 0.5 * (zero_vert_pos + one_vert_pos)  
             ### we must rotate, translate, and scale the cohom fractal picture to fit in the box
@@ -778,7 +781,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
         if draw_desired_vertices:
             for pos in desired_vertices:
                 # pos = v.drawing_pos
-                pos *= T.drawing_scale
+                pos *= T.drawing_scale_and_rotate
                 T.canv.stroke(pyx.path.circle(pos.real, pos.imag, 0.3), [pyx.style.linewidth(0.1), pyx.color.rgb.green])
 
     out_canvas = pyx.canvas.canvas()
@@ -817,23 +820,36 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
     
     hit_max_tetrahedra = False
     if expand_continents:
-        hit_max_tetrahedra = expand_continents_for_drawing( continents, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra )
+        hit_max_tetrahedra = expand_continents_for_drawing( continents, B, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra )
 
     if save_continents_filename != None:
         ### remove Regina triangulations from the data because they cannot be pickled
-        B.vt = None
-        for con in continents:
-            con.vt = None
-            # for thing in con.tet_face.__dict__.items():
-            #     print(thing[0], type(thing[1]))
+        # B.vt = None
+        # for con in continents:
+        #     con.vt = None
+        #     ### try to kill sets?
+        #     con.boundary_triangulation_vertices = None
+        #     con.upper_landscape_triangles = None
+        #     con.lower_landscape_triangles = None
+        #     con.upper_landscape_edges = None
+        #     con.lower_landscape_edges = None
+        #     ### try to kill dicts?
+        #     for v in con.vertices:
+        #         v.ladderpole_ancestors = None
+        #     for e in con.edges:
+        #         e.other_end = None
         
-        output_to_pickle((continents, B), save_continents_filename)
+        output_to_pickle(continents[0], save_continents_filename[:-4] + 'foo.pkl')
+        # output_to_pickle((continents, B), save_continents_filename)
 
     continent_sizes = [len(con.tetrahedra) for con in continents]
     output_filename = output_filename[:-4] + '_' + str(continent_sizes) + '.pdf'
     if hit_max_tetrahedra:
         output_filename = output_filename[:-4] + '_hitmax.pdf'
     draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
+    # draw_args['draw_CT_curve'] = False
+    # draw_args['draw_jordan_curve'] = True
+    # draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
 
 def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_length = 0.1, interval_to_draw = None, draw_args = None, build_type = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)

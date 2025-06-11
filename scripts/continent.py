@@ -826,10 +826,10 @@ class continent:
         self.coast = None
         self.max_length = None
 
-        self.upper_landscape_triangles = set([]) 
-        self.lower_landscape_triangles = set([]) 
-        self.upper_landscape_edges = set([])
-        self.lower_landscape_edges = set([])
+        self.upper_landscape_triangles = None
+        self.lower_landscape_triangles = None
+        self.upper_landscape_edges = None
+        self.lower_landscape_edges = None
         self.coastal_edges = None
 
         self.maintain_coast = maintain_coast ### if True, do extra work that makes things a bit slower
@@ -1682,7 +1682,8 @@ class continent:
         self.first_non_buried_index = 0
         while self.num_tetrahedra < max_num_tetrahedra:  
             tri = self.triangles[self.first_non_buried_index]  
-            self.bury(tri)
+            if not tri.is_buried():
+                self.bury(tri)
             self.first_non_buried_index += 1
             while self.triangles[self.first_non_buried_index].is_buried():
                 self.first_non_buried_index += 1
