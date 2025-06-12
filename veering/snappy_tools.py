@@ -65,7 +65,7 @@ def algebraic_shapes(tri):
         # print('zero, one', abs(field.zero()), abs(field.one() - 1))
         # for i in range(len(float_shapes)):
         #     print(float_shapes[i], alg_shapes[i], abs(float_shapes[i] - alg_shapes[i]))
-            assert abs(float_shapes[i] - alg_shapes[i]) < 0.0001
+        assert abs(float_shapes[i] - alg_shapes[i]) < 0.0001
         return (field, alg_shapes)
 
 # Cusp areas

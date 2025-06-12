@@ -1783,7 +1783,8 @@ class continent:
 
     def build_make_long_descendant_edges_internal(self, max_length = 0.1, max_num_tetrahedra = 50000):  
         self.max_length = max_length
-        # print(('max_length', max_length))
+        print(('max_length', max_length))
+        num_tet = len(self.tetrahedra)
 
         ## now build
 
@@ -1794,6 +1795,10 @@ class continent:
             if not tri.is_buried():
                 if any( [(edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges] ):
                     self.bury(tri)
+                    current_num_tet = len(self.tetrahedra)
+                    if current_num_tet > num_tet + 2000:
+                        num_tet = current_num_tet
+                        print(current_num_tet)
             self.first_interesting_index += 1
 
         # print(('num_tetrahedra', self.num_tetrahedra))

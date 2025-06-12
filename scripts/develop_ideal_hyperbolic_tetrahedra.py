@@ -7,34 +7,39 @@ from veering.basic_math import matrix, KP1
 def developed_position(A1, A2, A3, z, field = None): #use Feng's "solving Thurston's equations in a commutative ring"
     # print A1, A2, A3, z
     # print('field', field)
-    epsilon = 0.00001  
+    if field == None: ### using floating point (otherwise we are using algebraic numbers and don't need to check anything!)
+        epsilon = 0.00001  
+
     a1,b1 = A1 ## eg 1, 0
     a2,b2 = A2 ## eg 0, 1
     a3,b3 = A3 ## eg 1, 1
+    
     Xinv = matrix((a1, a2, b1, b2))
+    
+    if field == None: 
+        try:
+            assert abs(Xinv.det()) > epsilon
+        except:
+            print(Xinv) 
+            print((abs(Xinv.det())))
+            print(('A1', A1))
+            print(('A2', A2))
+            print(('A3', A3))
+            raise 
 
-    try:
-        assert abs(Xinv.det()) > epsilon
-    except:
-        print(Xinv) 
-        print((abs(Xinv.det())))
-        print(('A1', A1))
-        print(('A2', A2))
-        print(('A3', A3))
-        raise 
-
-    X = Xinv.inverse()
+    X = Xinv.inverse() 
     A3p = X * A3
     a3p, b3p = A3p
 
-    try:
-        assert abs(b3p) > epsilon and abs(a3p) > epsilon
-    except: 
-        print((X * A3))
-        print(('A1', A1))
-        print(('A2', A2))
-        print(('A3', A3))
-        raise
+    if field == None: ### using floating point
+        try:
+            assert abs(b3p) > epsilon and abs(a3p) > epsilon
+        except: 
+            print((X * A3))
+            print(('A1', A1))
+            print(('A2', A2))
+            print(('A3', A3))
+            raise
 
     # B = KP1((-z/b3p, -1/a3p)).preferred_rep_saul()
     # B = KP1((-z/b3p, -1/a3p)).preferred_rep()
@@ -42,33 +47,35 @@ def developed_position(A1, A2, A3, z, field = None): #use Feng's "solving Thurst
         B = KP1((-z/b3p, -1/a3p))   ### Danger: if a3p is an integer, the second coordinate is a float
     else:
         B = KP1((-z/b3p, -field.one()/a3p))
+    
     A4 = Xinv * B
-    a4, b4 = A4
+    
+    if field == None: ### using floating point
+        a4, b4 = A4
+        try:
+            # assert (A1 - A3)(A2 - A4) / (A2 - A3)(A1 - A4) == z
+            # assert (a1/b1 - a3/b3)(a2/b2 - a4/b4) / (a2/b2 - a3/b3)(a1/b1 - a4/b4) == z
+            # assert (a1*b2*b3*b4 - a3*b1*b2*b4)*(a2*b1*b3*b4 - a4*b1*b2*b3) / (a2*b1*b3*b4 - a3*b1*b2*b4)(a1*b2*b3*b4 - a4*b1*b2*b3) == z
+            # assert b2*b4*(a1*b3 - a3*b1)*b1*b3*(a2*b4 - a4*b2) / b1*b4*(a2*b3 - a3*b2)*b2*b3*(a1*b4 - a4*b1) == z
+            # assert (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / (a2*b3 - a3*b2)*(a1*b4 - a4*b1) == z
+            # assert (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z == 0
+            assert abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z ) < epsilon
+        except:
+            print(('cross ratio', (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / ( (a2*b3 - a3*b2)*(a1*b4 - a4*b1) )))
+            print(('z', z))
+            print(('error', abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z )))
+            raise
 
-    try:
-        # assert (A1 - A3)(A2 - A4) / (A2 - A3)(A1 - A4) == z
-        # assert (a1/b1 - a3/b3)(a2/b2 - a4/b4) / (a2/b2 - a3/b3)(a1/b1 - a4/b4) == z
-        # assert (a1*b2*b3*b4 - a3*b1*b2*b4)*(a2*b1*b3*b4 - a4*b1*b2*b3) / (a2*b1*b3*b4 - a3*b1*b2*b4)(a1*b2*b3*b4 - a4*b1*b2*b3) == z
-        # assert b2*b4*(a1*b3 - a3*b1)*b1*b3*(a2*b4 - a4*b2) / b1*b4*(a2*b3 - a3*b2)*b2*b3*(a1*b4 - a4*b1) == z
-        # assert (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / (a2*b3 - a3*b2)*(a1*b4 - a4*b1) == z
-        # assert (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z == 0
-        assert abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z ) < epsilon
-    except:
-        print(('cross ratio', (a1*b3 - a3*b1)*(a2*b4 - a4*b2) / ( (a2*b3 - a3*b2)*(a1*b4 - a4*b1) )))
-        print(('z', z))
-        print(('error', abs( (a1*b3 - a3*b1)*(a2*b4 - a4*b2) - (a2*b3 - a3*b2)*(a1*b4 - a4*b1) * z )))
-        raise
-
-    try:
-        assert A4.is_infinity() or abs(A4.complex()) < 10000.0
-    except:
-        print(('abs(A4.complex())', abs(A4.complex()) ))
-        print(Xinv) 
-        print((abs(Xinv.det())))
-        print(('A1', A1))
-        print(('A2', A2))
-        print(('A3', A3))
-        raise 
+        try:
+            assert A4.is_infinity() or abs(A4.complex()) < 10000.0
+        except:
+            print(('abs(A4.complex())', abs(A4.complex()) ))
+            print(Xinv) 
+            print((abs(Xinv.det())))
+            print(('A1', A1))
+            print(('A2', A2))
+            print(('A3', A3))
+            raise 
 
     # print('developed_position', A4)
     return A4

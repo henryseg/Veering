@@ -557,7 +557,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                         path = con.segment_between(ladderpole_vertices[i], ladderpole_vertices[i+1])  
                         for v in path[:-1]:
                             assert v.is_ladderpole_descendant()
-                        path_C = [ T.drawing_scale_and_rotate * v.drawing_pos for v in path ]
+                        path_C = [ complex(T.drawing_scale_and_rotate * v.drawing_pos) for v in path ]
                         draw_path(T.canv, path_C, draw_options)  
 
             else:
@@ -794,12 +794,9 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
     out_canvas.writePDFfile(output_filename)
     return out_data
 
-### The following should really be called "draw_continents"
-def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, output_filename = None, draw_args = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None ):
-    draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
-    draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
-    draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
-
+### The following should really be called "draw_continents" since we have one per boundary component of the manifold
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, output_filenames = None, draw_args_list = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None ):
+    draw_args = draw_args_list[0] ### used for generating canvases etc.
     if load_continents_filename != None:
         continents, B = read_from_pickle(load_continents_filename)
         ### reinstate the veering triangulation
@@ -843,13 +840,14 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         # output_to_pickle((continents, B), save_continents_filename)
 
     continent_sizes = [len(con.tetrahedra) for con in continents]
-    output_filename = output_filename[:-4] + '_' + str(continent_sizes) + '.pdf'
-    if hit_max_tetrahedra:
-        output_filename = output_filename[:-4] + '_hitmax.pdf'
-    draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
-    # draw_args['draw_CT_curve'] = False
-    # draw_args['draw_jordan_curve'] = True
-    # draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
+
+    for i, output_filename in enumerate(output_filenames):
+        output_filename = output_filename[:-4] + '_' + str(continent_sizes) + '.pdf'
+        if hit_max_tetrahedra:
+            output_filename = output_filename[:-4] + '_hitmax.pdf'
+        draw_args = draw_args_list[i]
+        draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
+        B.clear_canvases()
 
 def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_length = 0.1, interval_to_draw = None, draw_args = None, build_type = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)

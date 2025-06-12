@@ -925,6 +925,10 @@ class boundary_triangulation:
             # print(('cusp:', i, '| num ladders:', len(T.ladder_list)))
             T.generate_canvas(args = args)
 
+    def clear_canvases(self):
+        for i,T in enumerate(self.torus_triangulation_list):
+            T.canv = pyx.canvas.canvas()
+
     def draw(self, output_filename, args = {}):
         self.generate_canvases(args = args)
         out_canvas = pyx.canvas.canvas()
