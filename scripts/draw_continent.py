@@ -1,7 +1,7 @@
 
 import pyx ### vector graphics 
 import cmath
-from math import sqrt
+from math import sqrt, exp, log
 
 from veering.file_io import parse_data_file, read_from_pickle, output_to_pickle
 from veering.taut import isosig_to_tri_angle
@@ -280,12 +280,19 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
 
     print('preparing for drawing', veering_isosig)
     tri, angle = isosig_to_tri_angle(veering_isosig)
+    failed_to_find_alg_shapes = False
     if tet_shapes == None:
-        if not use_algebraic_numbers:
+        if use_algebraic_numbers:
+            try:
+                field, tet_shapes = algebraic_shapes(tri)
+            except:
+                failed_to_find_alg_shapes = True
+                field = None
+                tet_shapes = shapes(tri)
+        else:
             field = None
             tet_shapes = shapes(tri)
-        else:
-            field, tet_shapes = algebraic_shapes(tri)
+            
     print('tet_shapes', tet_shapes)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes, field = field)
     B = boundary_triangulation(vt)
@@ -418,32 +425,38 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
 
         continents.append(con)
 
-    return continents, B
+    return continents, B, failed_to_find_alg_shapes
 
-def expand_continents_for_drawing( continents, B, build_type, max_length = 0.5, max_num_tetrahedra = 100 ):
+def expand_continents_for_drawing( continents, B, build_type, max_length = 0.5, scale_max_length = True, max_num_tetrahedra = 100 ):
     for i, con in enumerate(continents):
         T = B.torus_triangulation_list[i]
-        scaled_max_length = max_length * sqrt(T.our_cusp_area)  
-        print('expanding continent for cusp', i, build_type, 'scaled_max_length is', scaled_max_length, 'max_num_tetrahedra is', max_num_tetrahedra)
+        if scale_max_length:
+            max_length2 = max_length * sqrt(T.our_cusp_area)  
+        else:
+            max_length2 = max_length
+        print('expanding continent for cusp', i, build_type, 'max_length2 is', max_length2, 'max_num_tetrahedra is', max_num_tetrahedra)
         hit_max_tetrahedra = False ### default assumption is that we had enough tetrahedra to get the max_length we want.
         # print(build_type)
         if build_type == 'build_naive':
             con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_on_coast':
-            hit_max_tetrahedra = con.build_on_coast(max_length = scaled_max_length, max_num_tetrahedra = max_num_tetrahedra)
-        elif build_type == 'build_make_long_descendant_edges_internal':
-            hit_max_tetrahedra = con.build_make_long_descendant_edges_internal(max_length = scaled_max_length, max_num_tetrahedra = max_num_tetrahedra)
+            hit_max_tetrahedra = build_on_coast(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_long':
+            hit_max_tetrahedra = build_long(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_explore_prongs':
-            hit_max_tetrahedra = con.build_explore_prongs(max_length = scaled_max_length, max_num_tetrahedra = max_num_tetrahedra)
+            hit_max_tetrahedra = build_explore_prongs(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_long_and_mid':
             mid_scaling = 1.0 ## less than this makes cusp circles not round...
-            hit_max_tetrahedra = con.build_long_and_mid(max_length = scaled_max_length, mid_scaling = mid_scaling, max_num_tetrahedra = max_num_tetrahedra)
+            hit_max_tetrahedra = build_long_and_mid(con, max_length = max_length2, mid_scaling = mid_scaling, max_num_tetrahedra = max_num_tetrahedra)
         print('con size', len(con.tetrahedra))
     return hit_max_tetrahedra
-    #######
 
-    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][1] )   ## segment under one edge of ladderpole
-    # eq = con.segment_between( ladderpoles_vertices[0][0], ladderpoles_vertices[0][-1] )   ## 0th ladderpole
+def expand_continents_for_drawing_animate( continents, B, build_type, max_length = 0.5, max_num_tetrahedra = 100, draw_args = None ):
+    for i, con in enumerate(continents):
+        T = B.torus_triangulation_list[i]
+        max_length2 = max_length * sqrt(T.our_cusp_area)  
+        hit_max_tetrahedra = build_long(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra, animate = True, images_filename_base = 'Images/Animation2/foo', B = B, draw_args = draw_args)
+
 
 def draw_prepared_continents( continents, B, output_filename = None, max_length = 0.5, draw_args = None ):
     draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
@@ -529,8 +542,14 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                         #     path_C = [ T.drawing_scale_and_rotate * (c + offset) for c in loop ]
                         #     draw_path(layer1, path_C, [jordan_colours[i]], fill = True) 
 
-            box = T.canv.bbox()
-            layer2.fill(box.enlarged(1.0).rect(), [pyx.color.rgb(0.5,0.5,0.5)])
+            if draw_args['bounding_boxes'] == None:
+                box = T.canv.bbox().enlarged(1.0)
+                print('enlarged bounding box', [100*x for x in [box.left().t, box.bottom().t, box.right().t, box.top().t]]) ### 100* because of some units issue in pyx
+            else:
+                print('using set bounding box')
+                llx, lly, urx, ury = draw_args['bounding_boxes'][i]
+                box = pyx.bbox.bbox(llx, lly, urx, ury)
+            layer2.fill(box.rect(), [pyx.color.rgb(0.5,0.5,0.5)])
 
         # lightning_colours = [pyx.color.rgb(0,0.5,0), pyx.color.rgb(0.5,0,0.5)]  ### green, purple
         # lightning_colours = [pyx.color.rgb(1,0,0), pyx.color.rgb(1,0,0)]  ### red, red
@@ -559,6 +578,14 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                             assert v.is_ladderpole_descendant()
                         path_C = [ complex(T.drawing_scale_and_rotate * v.drawing_pos) for v in path ]
                         draw_path(T.canv, path_C, draw_options)  
+                if draw_args['bounding_boxes'] == None:
+                    box = T.canv.bbox().enlarged(1.0)
+                    print('enlarged bounding box', [100*x for x in [box.left().t, box.bottom().t, box.right().t, box.top().t]]) ### 100* because of some units issue in pyx
+                else:
+                    print('using set bounding box')
+                    llx, lly, urx, ury = draw_args['bounding_boxes'][i]
+                    box = pyx.bbox.bbox(llx, lly, urx, ury)
+                layer2.fill(box.rect(), [pyx.color.rgb(0.0,0.0,0.0)]) ## black background
 
             else:
                 path = con.coast
@@ -794,8 +821,23 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
     out_canvas.writePDFfile(output_filename)
     return out_data
 
+def make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args):
+    if draw_args['draw_CT_curve']:
+        draw_type = 'Spectrum'
+    else: ### If you want to draw something else, hack something in here!
+        draw_type = 'Jordan'
+    string_max_length = str(max_length)
+    string_max_length = string_max_length.strip('0')
+    if use_algebraic_numbers:
+        alg_status = 'algeb'
+    else:
+        alg_status = 'float'
+    filename_base = veering_isosig + '_' + build_type + '_' + string_max_length + '_' + alg_status 
+    return 'Images/Cannon-Thurston/' + draw_type + '/' + filename_base + '.pdf'
+
 ### The following should really be called "draw_continents" since we have one per boundary component of the manifold
-def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, output_filenames = None, draw_args_list = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None ):
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, draw_args_list = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None, expand_continents_animate = False ):
+    output_filenames = [make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args) for draw_args in draw_args_list]
     draw_args = draw_args_list[0] ### used for generating canvases etc.
     if load_continents_filename != None:
         continents, B = read_from_pickle(load_continents_filename)
@@ -813,11 +855,33 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         for con in continents:
             con.vt = vt
     else:
-        continents, B = generate_initial_continents_for_drawing( veering_isosig, tet_shapes = tet_shapes, use_algebraic_numbers = use_algebraic_numbers, draw_args = draw_args )
+        continents, B, failed_to_find_alg_shapes = generate_initial_continents_for_drawing( veering_isosig, tet_shapes = tet_shapes, use_algebraic_numbers = use_algebraic_numbers, draw_args = draw_args )
     
+    if failed_to_find_alg_shapes:
+        print('failed to find algebraic shapes, falling back to floating point numbers')
+        use_algebraic_numbers = False ### modifies the filenames
+        output_filenames = [make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args) for draw_args in draw_args_list]
+
     hit_max_tetrahedra = False
     if expand_continents:
-        hit_max_tetrahedra = expand_continents_for_drawing( continents, B, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra )
+        if not expand_continents_animate:
+            hit_max_tetrahedra = expand_continents_for_drawing( continents, B, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra )
+            ### animate by bury_num:
+            # hit_max_tetrahedra = expand_continents_for_drawing_animate( continents, B, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra, draw_args = draw_args_list[0] )
+
+        else:
+            num_frames = 2000
+            start_max_length = 0.26
+            expand_continents_for_drawing( continents, B, build_type, max_length = start_max_length, max_num_tetrahedra = max_num_tetrahedra )
+
+            for i in range(num_frames):
+                new_max_length = under_ladderpole_biggest_length(continents[0]) - 0.00001
+                print('new_max_length', new_max_length)
+                expand_continents_for_drawing( continents, B, build_type, max_length = new_max_length, scale_max_length = False, max_num_tetrahedra = max_num_tetrahedra )
+                output_filename = 'Images/Animation2/bar' + str(i).zfill(4) + '.pdf'
+                draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
+                B.clear_canvases()
+
 
     if save_continents_filename != None:
         ### remove Regina triangulations from the data because they cannot be pickled
@@ -891,3 +955,182 @@ def draw_jigsaw_from_veering_isosigs_file(veering_isosigs_filename, output_dirna
         to_draw = veering_isosigs_list
     draw_jigsaw_from_veering_isosigs_list(to_draw, output_dirname, jigsaw_data_out_filename = jigsaw_data_out_filename, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, draw_args = draw_args)
 
+
+#### building continent algorithms
+
+def build_on_coast(con, max_length = 0.1, max_num_tetrahedra = 50000):  # build until all edges we want to draw are short
+    con.max_length = max_length
+    # print(('max_length', max_length))
+
+    ## now build
+
+    # while con.num_long_edges > 0 and con.num_tetrahedra < max_num_tetrahedra: 
+    while con.num_tetrahedra < max_num_tetrahedra and con.first_non_buried_index < len(con.triangles): 
+        tri = con.triangles[con.first_non_buried_index]  
+
+        if tri.ladderpole_descendant_long_coastal_indices() != []:
+            con.bury(tri)
+        con.first_non_buried_index += 1
+        while con.first_non_buried_index < len(con.triangles) and con.triangles[con.first_non_buried_index].is_buried():
+            con.first_non_buried_index += 1
+    # print(('num_tetrahedra', con.num_tetrahedra))
+    hit_max_tetrahedra = con.num_tetrahedra >= max_num_tetrahedra
+    # print(('hit max tetrahedra', hit_max_tetrahedra))
+    con.build_boundary_data()
+    # print(('num_long_edges_direct_count', con.count_long_edges()))
+    # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
+    return hit_max_tetrahedra
+
+def under_ladderpole_biggest_length(con):
+    biggest_length = 0.0
+    for tri in con.triangles:
+        if not tri.is_buried():
+            for e in tri.edges:
+                if e.is_under_ladderpole():
+                    if e.length() > biggest_length:
+                        biggest_length = e.length()
+    print('biggest_length', biggest_length)
+    return biggest_length
+
+def build_long(con, max_length = 0.1, max_num_tetrahedra = 50000, animate = False, images_filename_base = 'Images/Animation/foo', B = None, draw_args = None):  
+    con.max_length = max_length
+    print(('max_length', max_length))
+    num_tet = len(con.tetrahedra)
+
+    ## now build
+    bury_num = 0
+    frame_num = 0
+
+    ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
+    con.first_interesting_index = con.first_non_buried_index ### "interesting" means not buried and not already small enough.
+    while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+        tri = con.triangles[con.first_interesting_index]  
+        if not tri.is_buried():
+            if any( [(edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges] ):
+                con.bury(tri)
+                if animate:
+                    output_filename = images_filename_base + str(frame_num) + '.pdf'
+                    if bury_num % 100 == 0:
+                        draw_prepared_continents([con], B, output_filename = output_filename, max_length = max_length, draw_args = draw_args)
+                        B.clear_canvases()
+                        frame_num += 1
+                    bury_num += 1
+                current_num_tet = len(con.tetrahedra)
+                if current_num_tet > num_tet + 2000:
+                    num_tet = current_num_tet
+                    print(current_num_tet)
+        con.first_interesting_index += 1
+
+    # print(('num_tetrahedra', con.num_tetrahedra))
+    hit_max_tetrahedra = (con.num_tetrahedra >= max_num_tetrahedra)
+    # print(('hit max tetrahedra', hit_max_tetrahedra))
+    # con.build_boundary_data() ### only needed if drawing upper/lower boundary landscapes
+    # print(('num_long_edges_direct_count', con.count_long_edges()))
+    # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
+    return hit_max_tetrahedra
+
+def build_explore_prongs(con, max_length = 0.1, max_num_tetrahedra = 50000):  
+    con.max_length = max_length
+    # print(('max_length', max_length))
+
+    ## now build
+
+    while con.first_non_buried_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+        tri = con.triangles[con.first_non_buried_index]  
+        u = tri.vertices[tri.downriver_index()]
+
+        crossing_edges = tri.all_river_crossing_edges()
+        for e in crossing_edges:   ### previously only used the last edge
+        # for e in crossing_edges[-1:]:   ### only the last edge
+            if e.is_under_ladderpole():
+                if e.has_infinity() or u.pos.is_infinity():
+                    mid_is_far = True
+                    break
+                else:
+                    m = e.midpoint()  
+                    distance_of_e_to_cusp = abs(u.pos.project_to_plane() - m)
+                    if distance_of_e_to_cusp > mid_scaling*max_length: 
+                        mid_is_far = True
+                        break
+        if mid_is_far:
+            con.bury(tri)
+
+            # dist_to_v = abs(u.pos.project_to_plane() - v.pos.project_to_plane())
+            # dist_to_w = abs(u.pos.project_to_plane() - w.pos.project_to_plane())
+            # if dist_to_v > con.max_length or dist_to_w > con.max_length:
+            #     if 0.01 < dist_to_v/dist_to_w < 100:  ## ratio is not too weird
+            #         con.bury(tri)
+            #     else:
+            #         print "big ratio..."
+        con.first_non_buried_index += 1
+        while con.first_non_buried_index < len(con.triangles) and con.triangles[con.first_non_buried_index].is_buried():
+            con.first_non_buried_index += 1
+    # print(('num_tetrahedra', con.num_tetrahedra))
+    hit_max_tetrahedra = con.num_tetrahedra >= max_num_tetrahedra
+    # print(('hit max tetrahedra', hit_max_tetrahedra))
+    con.build_boundary_data()
+    # print(('num_long_edges_direct_count', con.count_long_edges()))
+    # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
+    return hit_max_tetrahedra
+
+# def build_loxodromics(con, max_length = 0.1, max_num_tetrahedra = 50000):
+#     con.max_length = max_length
+#     print 'max_length', max_length
+#     con.build_boundary_data()
+
+#     ## now build
+
+#     while con.first_non_buried_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+#         tri = con.triangles[con.first_non_buried_index]  
+
+#         if any( [(edge.is_ladderpole_descendant and tri.dist_from_lox(edge) > con.max_length) for edge in tri.edges] ):
+#             con.bury(tri)
+#         con.first_non_buried_index += 1
+#         while con.first_non_buried_index < len(con.triangles) and con.triangles[con.first_non_buried_index].is_buried():
+#             con.first_non_buried_index += 1
+#     print 'num_tetrahedra', con.num_tetrahedra
+#     con.build_boundary_data()
+#     print 'num_long_edges_direct_count', con.count_long_edges()
+#     print 'max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()
+
+def build_long_and_mid(con, max_length = 0.1, mid_scaling = 1.0, max_num_tetrahedra = 50000):   ### fills out a bit better than build_long alone, though not near the obvious cusps
+    con.max_length = max_length
+    print(('max_length', max_length))
+    num_tet = len(con.tetrahedra)
+    ## now build
+
+    ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
+    con.first_interesting_index = con.first_non_buried_index ### "interesting" means not buried and not already small enough.
+    while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+        tri = con.triangles[con.first_interesting_index]  
+        if not tri.is_buried():
+            u = tri.vertices[tri.downriver_index()]  ### this is the upriver vertex (opposite downriver triangle)
+            is_long = any( (edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges )
+            mid_is_far = False
+            crossing_edges = tri.all_river_crossing_edges() ### the edges that the river starting from this triangle crosses
+            for e in crossing_edges:  
+                if e.is_under_ladderpole():
+                    if e.has_infinity() or u.pos.is_infinity():
+                        mid_is_far = True
+                        break
+                    else:
+                        m = e.midpoint()  
+                        distance_of_e_to_cusp = abs(u.pos.project_to_plane() - m)
+                        if distance_of_e_to_cusp > mid_scaling*max_length: 
+                            mid_is_far = True
+                            break
+            if is_long or mid_is_far:
+                con.bury(tri)
+                current_num_tet = len(con.tetrahedra)
+                if current_num_tet > num_tet + 2000:
+                    num_tet = current_num_tet
+                    print(current_num_tet)
+        con.first_interesting_index += 1
+
+    # print(('num_tetrahedra', con.num_tetrahedra))
+    hit_max_tetrahedra = con.num_tetrahedra >= max_num_tetrahedra
+    # print(('hit max tetrahedra', hit_max_tetrahedra))
+    con.build_boundary_data()
+    # print(('num_long_edges_direct_count', con.count_long_edges()))
+    # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
+    return hit_max_tetrahedra

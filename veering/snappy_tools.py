@@ -52,7 +52,7 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
 def algebraic_shapes(tri):
     N = snappy.Manifold(tri)
     L = N.tetrahedra_field_gens()
-    for i in range(5):
+    for i in range(10):
         result = L.find_field(prec = (i+1)*100, degree = (i+1)*10, optimize = True)
         if result != None:
             break
