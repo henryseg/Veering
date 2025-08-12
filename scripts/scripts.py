@@ -91,8 +91,9 @@ def draw_continent_script():
     from draw_continent import draw_continent
 
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.002, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'only_draw_ladderpoles': False, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': False, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'only_draw_ladderpoles': False, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': False, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    # draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args['bounding_boxes'] = None
 
     # max_num_tetrahedra = 40
     # max_num_tetrahedra = 5000
@@ -124,7 +125,7 @@ def draw_continent_script():
     # build_type = 'build_explore_prongs'
     build_type = 'build_long_and_mid'
 
-    veering_isosig = 'cPcbbbiht_12'
+    # veering_isosig = 'cPcbbbiht_12'
     # # # # veering_isosig = 'cPcbbbdxm_10'
     # veering_isosig = 'dLQacccjsnk_200'
     # veering_isosig = 'eLMkbcddddedde_2100'
@@ -152,6 +153,12 @@ def draw_continent_script():
     # veering_isosig = 'mvLALPMPQecfggjgikllklccaxxvcfaqdmo_100001122100'
     # veering_isosig = 'nLLLLzAPQkbefgjkjimlllmmxxqhxqubxtivwb_1022101110220'
 
+    ### non geometric examples
+    # veering_isosig = 'jLAwwAQbcbdfghihihhwhnaaxrn_211211021'
+    veering_isosig = 'kLALPPzkbcbefghgijjxxnsaaqkqqs_0110021020'
+    # veering_isosig = 'kLALPPzkcbbegfhgijjhhrwaaxnxxn_1221100101'
+    # veering_isosig = 'kLAMLLAkcbbdeghihjjhhrhhkaarxn_1221211201'
+    # veering_isosig = 'lLALPPzMcbcbefghgijkkxxnsaaqkqqqj_01100210202'
     
     ### for jigsaws: 
     # draw_args['draw_CT_curve'] = False
@@ -175,17 +182,18 @@ def draw_continent_script():
     draw_args['draw_desired_vertices'] = False
     draw_args['expand_fund_dom'] = True  ### needed for jordan curve?
 
-    draw_type = ''
-    if draw_args['draw_CT_curve']:
-        draw_type = 'CT_spectrum'
-    elif draw_args['draw_jordan_curve']:
-        draw_type = 'CT_jordan'
+    # draw_args_list = [ draw_args.copy(), draw_args.copy() ]
+    # draw_args_list[1]['draw_CT_curve'] = True
+    # draw_args_list[0]['draw_jordan_curve'] = True
 
-    filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_length) + '_' + build_type + '_' + draw_type + '.pdf'
+    draw_args['draw_CT_curve'] = True
+    draw_args_list = [draw_args]
+
+    # filename = 'Images/Cannon-Thurston/' + veering_isosig + '_' + str(max_length) + '_' + build_type + '_' + draw_type + '.pdf'
     # filename = 'Images/Jigsaw/' + veering_isosig + '_' + str(max_num_tetrahedra) + '_' + str(max_length) + '_' + build_type + '.pdf'
 
 
-    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, output_filename = filename, draw_args = draw_args, build_type = build_type )
+    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, save_continents_filename = None, draw_args_list = draw_args_list, build_type = build_type )
     
 
 
@@ -204,9 +212,10 @@ def draw_continent_script():
 def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahedra = 500000, use_algebraic_numbers = True):
     from draw_continent import draw_continent
     draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 12, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
-    # draw_args['bounding_boxes'] = None
+    # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'only_draw_ladderpoles': True, 'ct_lw': 0.02, 'global_drawing_scale': 12, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
+    draw_args['bounding_boxes'] = None
     # draw_args['bounding_boxes'] = [[-6.583629154612597, -4.6704093087523795, 23.334516618450387, 7.894119104223006]] ### 'cPcbbbiht_12' 0.01
-    draw_args['bounding_boxes'] = [[-5.952085431521495, -5.786755264656737, 13.612644846599578, 20.004173761557166]] ### 'gLLAQbecdfffhhnkqnc_120012', 0.01
+    # draw_args['bounding_boxes'] = [[-5.952085431521495, -5.786755264656737, 13.612644846599578, 20.004173761557166]] ### 'gLLAQbecdfffhhnkqnc_120012', 0.01
     # draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'only_draw_ladderpoles': False, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     build_type = 'build_long'
     # build_type = 'build_long_and_mid'
@@ -222,8 +231,12 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
     draw_args['draw_desired_vertices'] = False
     draw_args['expand_fund_dom'] = True  ### needed for jordan curve?
 
-    draw_args_list = [ draw_args.copy(), draw_args.copy() ]
-    draw_args_list[1]['draw_CT_curve'] = True
+    # draw_args_list = [ draw_args.copy(), draw_args.copy() ]
+    # draw_args_list[1]['draw_CT_curve'] = True
+    # draw_args_list[0]['draw_jordan_curve'] = True
+
+    draw_args_list = [draw_args.copy()]
+    # draw_args_list[0]['draw_CT_curve'] = True
     draw_args_list[0]['draw_jordan_curve'] = True
 
     load_continents_filename = None  ## don't load anything
@@ -231,15 +244,15 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
     # save_continents_filename = 'data/' + filename_base + '.pkl'
     save_continents_filename = None  ## don't save anything (pickling doesn't seem to work for large continents anyway)
     
-    expand_continents_animate = True
+    # expand_continents_animate = True 
+    expand_continents_animate = False
     
     draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, draw_args_list = draw_args_list, build_type = build_type, load_continents_filename = load_continents_filename, expand_continents = True, save_continents_filename = save_continents_filename, expand_continents_animate = expand_continents_animate)
-    
-
 
 def draw_census_continents(census_start = 0, census_end = 10, max_length = 0.1, use_algebraic_numbers = False):
     census = parse_data_file('../veering/data/veering_census.txt')
-    for sig in census[census_start:census_end]:
+    for i, sig in enumerate(census[census_start:census_end]):
+        print('drawing census sig ' + str(i + census_start) + ' ' + sig)
         draw_continent_from_isosig(sig, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers)
 
 def draw_fund_dom_continent_circle_script():

@@ -23,9 +23,12 @@ def tet_norm(z):
         return 1/(1 - z)
     
 
-def shapes(tri):
+def shapes(tri, bits_prec = 424):  ###212
     N = snappy.Manifold(tri)
-    return [complex(shape['rect']) for shape in N.tetrahedra_shapes()]
+    # return [complex(shape['rect']) for shape in N.tetrahedra_shapes()]
+    return N.tetrahedra_shapes('rect', bits_prec = bits_prec)
+
+
 
 # From a given collection of isosigs, build the snappy shapes and put
 # them in a pickled dictionary.
@@ -52,19 +55,26 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
 def algebraic_shapes(tri):
     N = snappy.Manifold(tri)
     L = N.tetrahedra_field_gens()
-    for i in range(10):
-        result = L.find_field(prec = (i+1)*100, degree = (i+1)*10, optimize = True)
+    # for i in range(10):
+        # result = L.find_field(prec = (i+1)*100, degree = (i+1)*10, optimize = True)
+    for pair in [(212, 10), (1000, 20), (2000, 20), (10000, 50)]:
+        prec, degree = pair
+        print('prec, deg', prec, degree)
+        result = L.find_field(prec = prec, degree = degree, optimize = True)
         if result != None:
             break
     if result == None:
-        assert False, 'could not find algebraic shapes'
+        print('could not find algebraic shapes')
+        return None
     else:
+        print('found algebraic shapes')
         field, alg_shapes = (result[0], result[2])
-        float_shapes = shapes(tri)
-        # print('field', field)
+        print('field', field)
         # print('zero, one', abs(field.zero()), abs(field.one() - 1))
-        # for i in range(len(float_shapes)):
-        #     print(float_shapes[i], alg_shapes[i], abs(float_shapes[i] - alg_shapes[i]))
+        # float_shapes = shapes(tri)
+        print('float, alg, difference:')
+        for i in range(len(float_shapes)):
+            print(float_shapes[i], alg_shapes[i], abs(float_shapes[i] - alg_shapes[i]))
         assert abs(float_shapes[i] - alg_shapes[i]) < 0.0001
         return (field, alg_shapes)
 

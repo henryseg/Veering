@@ -283,10 +283,12 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
     failed_to_find_alg_shapes = False
     if tet_shapes == None:
         if use_algebraic_numbers:
-            try:
-                field, tet_shapes = algebraic_shapes(tri)
-            except:
+            result = algebraic_shapes(tri)
+            if result != None:
+                field, tet_shapes = result
+            else:
                 failed_to_find_alg_shapes = True
+                print('failed_to_find_alg_shapes')
                 field = None
                 tet_shapes = shapes(tri)
         else:
@@ -468,9 +470,10 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
         # colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}  
     colours = {"blue":pyx.color.rgb(0,0,0.5), "red":pyx.color.rgb(0.5,0,0)}
 
-    ct_lw = 0.2 * max_length 
+    ct_lw = 0.6 * max_length 
 
-    draw_options = [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
+    # draw_options = [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
+    draw_options = [pyx.style.linewidth(ct_lw), pyx.color.rgb(0,1.0,0)]
     out_data = []
 
     for i, con in enumerate(continents):
@@ -585,7 +588,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                     print('using set bounding box')
                     llx, lly, urx, ury = draw_args['bounding_boxes'][i]
                     box = pyx.bbox.bbox(llx, lly, urx, ury)
-                layer2.fill(box.rect(), [pyx.color.rgb(0.0,0.0,0.0)]) ## black background
+                # layer2.fill(box.rect(), [pyx.color.rgb(0.0,0.0,0.0)]) ## black background
 
             else:
                 path = con.coast
@@ -880,7 +883,7 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
                 expand_continents_for_drawing( continents, B, build_type, max_length = new_max_length, scale_max_length = False, max_num_tetrahedra = max_num_tetrahedra )
                 output_filename = 'Images/Animation2/bar' + str(i).zfill(4) + '.pdf'
                 draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
-                B.clear_canvases()
+                B.clear_canvases()  ### also kills the boundary triangulation if we drew it...
 
 
     if save_continents_filename != None:
@@ -1024,7 +1027,7 @@ def build_long(con, max_length = 0.1, max_num_tetrahedra = 50000, animate = Fals
     # print(('num_tetrahedra', con.num_tetrahedra))
     hit_max_tetrahedra = (con.num_tetrahedra >= max_num_tetrahedra)
     # print(('hit max tetrahedra', hit_max_tetrahedra))
-    # con.build_boundary_data() ### only needed if drawing upper/lower boundary landscapes
+    con.build_boundary_data() ### only needed if drawing upper/lower boundary landscapes
     # print(('num_long_edges_direct_count', con.count_long_edges()))
     # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
     return hit_max_tetrahedra

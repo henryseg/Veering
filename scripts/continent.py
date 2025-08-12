@@ -1637,9 +1637,6 @@ class continent:
         self.upper_landscape_edges = set([])
         self.lower_landscape_edges = set([])
 
-        # for e in self.edges:
-        #     e.boundary_triangles = []
-
         for tri in self.upper_landscape_triangles:
             for e in tri.edges:
                 # e.boundary_triangles.append(tri)
@@ -1649,6 +1646,10 @@ class continent:
                 # e.boundary_triangles.append(tri)
                 self.lower_landscape_edges.add(e)
 
+        coastal_edges = self.upper_landscape_edges.intersection(self.lower_landscape_edges)
+        self.upper_landscape_edges = self.upper_landscape_edges.difference(coastal_edges)
+        self.lower_landscape_edges = self.lower_landscape_edges.difference(coastal_edges)
+        
     # def old_coast(self):
     #     old_coast = []
     #     for tri in self.triangles:

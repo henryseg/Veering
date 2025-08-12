@@ -146,9 +146,10 @@ class matrix(tuple):
     def __call__(self, z): # z is a number or an element of KP1
         if isinstance(z, Number):
             if type(z) == complex or type(z) == float or type(z) == int:
-                v = vector((z, 1))
-            else: ### assume z is an element of a number field
-                v = vector((z, z.parent.one()))
+                v = vector((z, type(z)(1)))
+            else: ### assume z is an element of a number field pr a snappy number
+                # v = vector((z, z.parent.one())) ### only for sage number fields
+                v = vector((z, z.parent()(1)))  ### works for sage number fields and snappy numbers
             w = self * v
             return w[0]/w[1]
         if isinstance(z, KP1):

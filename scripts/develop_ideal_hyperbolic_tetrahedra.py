@@ -8,7 +8,7 @@ def developed_position(A1, A2, A3, z, field = None): #use Feng's "solving Thurst
     # print A1, A2, A3, z
     # print('field', field)
     if field == None: ### using floating point (otherwise we are using algebraic numbers and don't need to check anything!)
-        epsilon = 0.00001  
+        epsilon = 1e-32
 
     a1,b1 = A1 ## eg 1, 0
     a2,b2 = A2 ## eg 0, 1
@@ -35,7 +35,7 @@ def developed_position(A1, A2, A3, z, field = None): #use Feng's "solving Thurst
         try:
             assert abs(b3p) > epsilon and abs(a3p) > epsilon
         except: 
-            print((X * A3))
+            print(('A3p', X * A3))
             print(('A1', A1))
             print(('A2', A2))
             print(('A3', A3))
@@ -44,9 +44,10 @@ def developed_position(A1, A2, A3, z, field = None): #use Feng's "solving Thurst
     # B = KP1((-z/b3p, -1/a3p)).preferred_rep_saul()
     # B = KP1((-z/b3p, -1/a3p)).preferred_rep()
     if field == None:
-        B = KP1((-z/b3p, -1/a3p))   ### Danger: if a3p is an integer, the second coordinate is a float
+        num_type = z.parent()
+        B = KP1((-z/b3p, -num_type(1)/a3p))   ### Danger: if a3p is an integer, the second coordinate is a float
     else:
-        B = KP1((-z/b3p, -field.one()/a3p))
+        B = KP1((-z/b3p, -field(1)/a3p))
     
     A4 = Xinv * B
     
