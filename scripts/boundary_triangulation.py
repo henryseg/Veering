@@ -579,9 +579,14 @@ class torus_triangulation:
         if self.vt().tet_shapes != None:  ### set up vertex positions on KP1 for first tetrahedron, so face is at infinity
             verts_pos = [None, None, None, None]
             if self.vt().field == None:
-                num_type = self.vt().tet_shapes[0].parent()
-                one = num_type(1)
-                zero = num_type(0)
+                ts = self.vt().tet_shapes[0]
+                if type(ts) == complex or type(ts) == float or type(ts) == int:
+                    one = complex(1.0, 0.0)
+                    zero = complex(0.0, 0.0)
+                else:
+                    num_type = self.vt().tet_shapes[0].parent()
+                    one = num_type(1)
+                    zero = num_type(0)
             else:
                 one = self.vt().field(1)
                 zero = self.vt().field(0)

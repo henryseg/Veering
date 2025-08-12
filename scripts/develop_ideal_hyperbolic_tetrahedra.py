@@ -44,8 +44,11 @@ def developed_position(A1, A2, A3, z, field = None): #use Feng's "solving Thurst
     # B = KP1((-z/b3p, -1/a3p)).preferred_rep_saul()
     # B = KP1((-z/b3p, -1/a3p)).preferred_rep()
     if field == None:
-        num_type = z.parent()
-        B = KP1((-z/b3p, -num_type(1)/a3p))   ### Danger: if a3p is an integer, the second coordinate is a float
+        if type(z) == complex or type(z) == float or type(z) == int:
+            one = complex(1.0, 0.0)
+        else:
+            one = z.parent()(1)
+        B = KP1((-z/b3p, -one/a3p))   ### Danger: if a3p is an integer, the second coordinate is a float
     else:
         B = KP1((-z/b3p, -field(1)/a3p))
     
