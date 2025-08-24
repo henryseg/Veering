@@ -3,7 +3,7 @@ import pyx ### vector graphics
 import cmath
 from math import sqrt, exp, log
 
-from veering.file_io import parse_data_file, read_from_pickle, output_to_pickle
+from veering.file_io import parse_data_file, read_from_pickle, output_to_pickle, output_to_json
 from veering.taut import isosig_to_tri_angle
 from veering.veering_tri import veering_triangulation
 from veering.snappy_tools import shapes, algebraic_shapes, cusp_areas
@@ -450,6 +450,8 @@ def expand_continents_for_drawing( continents, B, build_type, max_length = 0.5, 
         elif build_type == 'build_long_and_mid':
             mid_scaling = 1.0 ## less than this makes cusp circles not round...
             hit_max_tetrahedra = build_long_and_mid(con, max_length = max_length2, mid_scaling = mid_scaling, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_spherically_long':
+            hit_max_tetrahedra = build_spherical_long(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra)
         print('con size', len(con.tetrahedra))
     return hit_max_tetrahedra
 
@@ -459,8 +461,16 @@ def expand_continents_for_drawing_animate( continents, B, build_type, max_length
         max_length2 = max_length * sqrt(T.our_cusp_area)  
         hit_max_tetrahedra = build_long(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra, animate = True, images_filename_base = 'Images/Animation2/foo', B = B, draw_args = draw_args)
 
+def export_spherical_coordinates(continents, B, output_filename = None):
+    for i, con in enumerate(continents):
+        T = B.torus_triangulation_list[i]
+        # assign_continent_vertices_to_tet_faces(T, con)
+        path = con.coast
+        path_sphere = [ v.pos.sphere_coordinates() for v in path ]
+        filename = output_filename[:-4] + '_' + str(i) + '.json'
+        output_to_json(path_sphere, filename)
 
-def draw_prepared_continents( continents, B, output_filename = None, max_length = 0.5, draw_args = None ):
+def draw_prepared_continents( continents, B, output_filename = None, max_length = 0.5, draw_args = None):
     draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
     draw_dividers, draw_landscapes, draw_box_for_cohom_frac = draw_args['draw_dividers'], draw_args['draw_landscapes'], draw_args['draw_box_for_cohom_frac']
     draw_alignment_dots, draw_desired_vertices, expand_fund_dom = draw_args['draw_alignment_dots'], draw_args['draw_desired_vertices'], draw_args['expand_fund_dom']
@@ -472,8 +482,8 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
 
     ct_lw = 0.6 * max_length 
 
-    # draw_options = [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
-    draw_options = [pyx.style.linewidth(ct_lw), pyx.color.rgb(0,1.0,0)]
+    draw_options = [pyx.style.linewidth(ct_lw), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)] ## this may get overwritten with colour information for the ladder
+    # draw_options = [pyx.style.linewidth(ct_lw), pyx.color.rgb(0,1.0,0)]
     out_data = []
 
     for i, con in enumerate(continents):
@@ -602,7 +612,6 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                 #     spike = [a, b]
                 #     # print(v.spinor_dir)
                 #     draw_path(T.canv, spike, draw_options_spinor)  
-
 
         ##############
         # adj_verts, adj_edges = con.vertices_and_edges_adjacent_to_infinity()  
@@ -824,11 +833,14 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
     out_canvas.writePDFfile(output_filename)
     return out_data
 
-def make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args):
-    if draw_args['draw_CT_curve']:
-        draw_type = 'Spectrum'
-    else: ### If you want to draw something else, hack something in here!
-        draw_type = 'Jordan'
+def make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args, export_spherical):
+    if export_spherical:
+        draw_type = 'Spherical'
+    else:
+        if draw_args['draw_CT_curve']:
+            draw_type = 'Spectrum'
+        else: ### If you want to draw something else, hack something in here!
+            draw_type = 'Jordan'   
     string_max_length = str(max_length)
     string_max_length = string_max_length.strip('0')
     if use_algebraic_numbers:
@@ -839,8 +851,10 @@ def make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbe
     return 'Images/Cannon-Thurston/' + draw_type + '/' + filename_base + '.pdf'
 
 ### The following should really be called "draw_continents" since we have one per boundary component of the manifold
-def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, draw_args_list = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None, expand_continents_animate = False ):
-    output_filenames = [make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args) for draw_args in draw_args_list]
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, draw_args_list = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None, expand_continents_animate = False, export_spherical = False ):
+    output_filenames = [make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args, False) for draw_args in draw_args_list]
+    if export_spherical:
+        output_filenames.append(make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, None, True))
     draw_args = draw_args_list[0] ### used for generating canvases etc.
     if load_continents_filename != None:
         continents, B = read_from_pickle(load_continents_filename)
@@ -912,9 +926,13 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         output_filename = output_filename[:-4] + '_' + str(continent_sizes) + '.pdf'
         if hit_max_tetrahedra:
             output_filename = output_filename[:-4] + '_hitmax.pdf'
-        draw_args = draw_args_list[i]
-        draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
-        B.clear_canvases()
+        if i < len(draw_args_list):
+            draw_args = draw_args_list[i]
+            draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
+            B.clear_canvases()
+        else:
+            export_spherical_coordinates( continents, B, output_filename = output_filename )
+
 
 def draw_cannon_thurston_from_veering_isosigs_file(veering_isosigs_filename, output_dirname, max_num_tetrahedra = 500, max_length = 0.1, interval_to_draw = None, draw_args = None, build_type = None):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)
@@ -1137,3 +1155,43 @@ def build_long_and_mid(con, max_length = 0.1, mid_scaling = 1.0, max_num_tetrahe
     # print(('num_long_edges_direct_count', con.count_long_edges()))
     # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
     return hit_max_tetrahedra
+
+
+def build_spherical_long(con, max_length = 0.1, max_num_tetrahedra = 50000, animate = False, images_filename_base = 'Images/Animation/foo', B = None, draw_args = None):  
+    con.max_length = max_length
+    print(('max_length (spherical)', max_length))
+    num_tet = len(con.tetrahedra)
+
+    ## now build
+    bury_num = 0
+    frame_num = 0
+
+    ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
+    con.first_interesting_index = con.first_non_buried_index ### "interesting" means not buried and not already small enough.
+    while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+        tri = con.triangles[con.first_interesting_index]  
+        if not tri.is_buried():
+            if any( [edge.is_spherically_long() for edge in tri.edges] ):
+                con.bury(tri)
+                if animate:
+                    output_filename = images_filename_base + str(frame_num) + '.pdf'
+                    if bury_num % 100 == 0:
+                        draw_prepared_continents([con], B, output_filename = output_filename, max_length = max_length, draw_args = draw_args)
+                        B.clear_canvases()
+                        frame_num += 1
+                    bury_num += 1
+                current_num_tet = len(con.tetrahedra)
+                if current_num_tet > num_tet + 2000:
+                    num_tet = current_num_tet
+                    print(current_num_tet)
+        con.first_interesting_index += 1
+
+    # print(('num_tetrahedra', con.num_tetrahedra))
+    hit_max_tetrahedra = (con.num_tetrahedra >= max_num_tetrahedra)
+    # print(('hit max tetrahedra', hit_max_tetrahedra))
+    con.build_boundary_data() ### only needed if drawing upper/lower boundary landscapes
+    # print(('num_long_edges_direct_count', con.count_long_edges()))
+    # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
+    return hit_max_tetrahedra
+
+

@@ -246,6 +246,13 @@ class landscape_edge:
         else:
             return self.length() > self.continent.max_length
 
+    def spherical_length(self):
+        u, v = self.vertices
+        return u.pos.spherical_distance(v.pos)
+
+    def is_spherically_long(self):
+        return self.spherical_length() > self.continent.max_length
+
     def is_under_ladderpole(self):
         return any( v.is_ladderpole_descendant() for v in self.vertices )
 

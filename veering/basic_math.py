@@ -4,6 +4,7 @@
 
 from numbers import Number
 from cmath import sqrt
+from math import acos
 
 
 # helper functions for printing
@@ -234,10 +235,25 @@ class KP1(tuple):
         else:
             return self[0]/self[1]
 
-    def is_close_to(self, other, epsilon =  0.000001):
+    def sphere_coordinates(self): ### could make this work for algebraic numbers etc
+        p, q = self
+        p = complex(p)
+        q = complex(q)
+        xy = 2*p*q.conjugate()
+        denom = (p*p.conjugate() + q*q.conjugate()).real
+        z = (p*p.conjugate() - q*q.conjugate()).real
+        v = [xy.real, xy.imag, z]
+        return [c/denom for c in v]
+
+    def is_close_to(self, other, epsilon = 0.000001):
         a, b = self
         c, d = other
         return abs(a*d - b*c) < epsilon
+
+    def spherical_distance(self, other):
+        U = self.sphere_coordinates()
+        V = other.sphere_coordinates()
+        return acos( sum([u*v for (u,v) in zip(U, V)]) )
 
     # def preferred_rep(self):
     #     if abs(self[1]) < 0.000001:
