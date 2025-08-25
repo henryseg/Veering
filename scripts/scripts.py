@@ -232,6 +232,7 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
     draw_args['draw_box_for_cohom_frac'] = False
     draw_args['draw_alignment_dots'] = False
     draw_args['draw_desired_vertices'] = False
+    draw_args['include_fund_dom'] = False ### when first building a continent, should we make sure it includes a fundamental domain of the boundary torus as seen from infinity?
     draw_args['expand_fund_dom'] = True  ### needed for jordan curve?
 
     # draw_args_list = [ draw_args.copy(), draw_args.copy() ]
@@ -250,8 +251,9 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
     # expand_continents_animate = True 
     expand_continents_animate = False
     export_spherical = True
+    scale_max_length = False ### scale max_length by sqrt(T.our_cusp_area)
 
-    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers, draw_args_list = draw_args_list, build_type = build_type, load_continents_filename = load_continents_filename, expand_continents = True, save_continents_filename = save_continents_filename, expand_continents_animate = expand_continents_animate, export_spherical = export_spherical)
+    draw_continent( veering_isosig, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, scale_max_length = scale_max_length, use_algebraic_numbers = use_algebraic_numbers, draw_args_list = draw_args_list, build_type = build_type, load_continents_filename = load_continents_filename, expand_continents = True, save_continents_filename = save_continents_filename, expand_continents_animate = expand_continents_animate, export_spherical = export_spherical)
 
 def draw_census_continents(census_start = 0, census_end = 10, max_length = 0.1, use_algebraic_numbers = False):
     census = parse_data_file('../veering/data/veering_census.txt')

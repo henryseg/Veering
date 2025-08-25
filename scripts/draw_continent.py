@@ -275,6 +275,7 @@ def assign_continent_vertices_to_tet_faces(T, con):
             replace_with_continent_vertices(lu.con_verts, con)
 
 def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, use_algebraic_numbers = False, draw_args = None ):
+    include_fund_dom = draw_args['include_fund_dom']
     expand_fund_dom = draw_args['expand_fund_dom']
     ### one continent for each cusp
 
@@ -310,114 +311,123 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
         # print('cusp area', cusp_areas(tri)[i]) ### snappy normalizes this between cusps so its not useful to us...
         
         ### make initial_tet_face be in the lower left of the fundamental domain
-        # initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
+        initial_tet_face = T.ladder_list[0].ladder_unit_list[0]
         
         ### make initial_tet_face be in the middle of the fundamental domain
-        num_ladders = len(T.ladder_list)
-        L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
-        num_ladder_units = len(L.ladder_unit_list)
-        initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
+        # num_ladders = len(T.ladder_list)
+        # L = T.ladder_list[int(num_ladders/2 - 1)]  ## -1 because we split the last ladder between the left and right
+        # num_ladder_units = len(L.ladder_unit_list)
+        # initial_tet_face = L.ladder_unit_list[int(num_ladder_units/2)]
 
         # print(('initial_tet_face', initial_tet_face)) 
         # print(('origin_in_C', initial_tet_face.origin_in_C))
-        # print(('verts_pos', initial_tet_face.verts_pos))
-        ### want to draw a box which will contain a fund dom, will be what we render as a cohom frac
+        print('verts_pos') 
+        for x in initial_tet_face.verts_pos:
+            for a in x:
+                print(complex(a))
 
-        ladderpoles_vertices = T.left_ladder_pole_vertices() ### everything is on left of the ladders...
+        if include_fund_dom:
+            ### want to draw a box which will contain a fund dom
+            ladderpoles_vertices = T.left_ladder_pole_vertices() ### everything is on left of the ladders...
 
-        if expand_fund_dom:
-            left_ladder = T.ladder_list[0]
-            right_ladder = T.ladder_list[-1]
+            if expand_fund_dom: ### bigger than the fundamental domain for lightning curves etc.
+                left_ladder = T.ladder_list[0]
+                right_ladder = T.ladder_list[-1]
 
-            left_ladder_nbd = []
-            for lu in left_ladder.ladder_unit_list:
-                if lu.is_on_left():
-                    # print(lu, lu.left_vertices[0])
-                    left_ladder_nbd.extend( lu.vert_positions_around_corner( vt, lu.left_vertices[0] ) )
-            last = left_ladder.ladder_unit_list[-1]
-            # print('extra', last, last.left_vertices[-1])
-            left_ladder_nbd.extend( last.vert_positions_around_corner( vt, last.left_vertices[-1] ) )
-            # print('right')
-            right_ladder_nbd = []
-            for lu in right_ladder.ladder_unit_list:
-                if lu.is_on_left():
-                    # print(lu, lu.left_vertices[0])
-                    right_ladder_nbd.extend( lu.vert_positions_around_corner( vt, lu.left_vertices[0] ) )
-            last = right_ladder.ladder_unit_list[-1]
-            # print('extra', last, last.left_vertices[-1])
-            right_ladder_nbd.extend( last.vert_positions_around_corner( vt, last.left_vertices[-1] ) )
-            
-            left_ladder_nbd = uniquify_list(left_ladder_nbd)
-            right_ladder_nbd = uniquify_list(right_ladder_nbd)
+                left_ladder_nbd = []
+                for lu in left_ladder.ladder_unit_list:
+                    if lu.is_on_left():
+                        # print(lu, lu.left_vertices[0])
+                        left_ladder_nbd.extend( lu.vert_positions_around_corner( vt, lu.left_vertices[0] ) )
+                last = left_ladder.ladder_unit_list[-1]
+                # print('extra', last, last.left_vertices[-1])
+                left_ladder_nbd.extend( last.vert_positions_around_corner( vt, last.left_vertices[-1] ) )
+                # print('right')
+                right_ladder_nbd = []
+                for lu in right_ladder.ladder_unit_list:
+                    if lu.is_on_left():
+                        # print(lu, lu.left_vertices[0])
+                        right_ladder_nbd.extend( lu.vert_positions_around_corner( vt, lu.left_vertices[0] ) )
+                last = right_ladder.ladder_unit_list[-1]
+                # print('extra', last, last.left_vertices[-1])
+                right_ladder_nbd.extend( last.vert_positions_around_corner( vt, last.left_vertices[-1] ) )
+                
+                left_ladder_nbd = uniquify_list(left_ladder_nbd)
+                right_ladder_nbd = uniquify_list(right_ladder_nbd)
 
-            bottom_nbd = []
-            top_nbd = []
-            for i, L in enumerate(T.ladder_list):
-                if i%2 == 0:
-                    lu_bottom = L.ladder_unit_list[0]
-                    lu_top = L.ladder_unit_list[-1]
+                bottom_nbd = []
+                top_nbd = []
+                for i, L in enumerate(T.ladder_list):
+                    if i%2 == 0:
+                        lu_bottom = L.ladder_unit_list[0]
+                        lu_top = L.ladder_unit_list[-1]
 
-                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.left_vertices[0]) )
-                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.right_vertices[0]) )
-                    top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.left_vertices[-1]) )
-                    top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.right_vertices[-1]) )
-            bottom_nbd = uniquify_list(bottom_nbd)
-            top_nbd = uniquify_list(top_nbd)
+                        bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.left_vertices[0]) )
+                        bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.right_vertices[0]) )
+                        top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.left_vertices[-1]) )
+                        top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.right_vertices[-1]) )
+                bottom_nbd = uniquify_list(bottom_nbd)
+                top_nbd = uniquify_list(top_nbd)
 
-            all_ladderpole_vertices = [v for L in ladderpoles_vertices for v in L]
-            left_ladder_nbd = uniquify_list(left_ladder_nbd, subtract = all_ladderpole_vertices)
-            right_ladder_nbd = uniquify_list(right_ladder_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd)  ### right and left can overlap
-            bottom_nbd = uniquify_list(bottom_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd) ### top and bottom cannot
-            top_nbd = uniquify_list(top_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd)
+                all_ladderpole_vertices = [v for L in ladderpoles_vertices for v in L] ### union of all v in all of the L's in ladderpoles_vertices
+                left_ladder_nbd = uniquify_list(left_ladder_nbd, subtract = all_ladderpole_vertices)
+                right_ladder_nbd = uniquify_list(right_ladder_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd)  ### right and left can overlap
+                bottom_nbd = uniquify_list(bottom_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd) ### top and bottom cannot
+                top_nbd = uniquify_list(top_nbd, subtract = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd)
 
-            desired_vertices = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd + bottom_nbd + top_nbd
-            desired_vertices = uniquify_list(desired_vertices) ## just in case...
+                desired_vertices = all_ladderpole_vertices + left_ladder_nbd + right_ladder_nbd + bottom_nbd + top_nbd
+                desired_vertices = uniquify_list(desired_vertices) ## just in case...
+            else:
+                desired_vertices = [v for L in ladderpoles_vertices for v in L]
+
         else:
-            desired_vertices = [v for L in ladderpoles_vertices for v in L]
+            desired_vertices = []
 
         con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, maintain_coast = True )
-        con.ladderpoles_vertices = ladderpoles_vertices ### store for later
+        
+        if include_fund_dom:
+            con.ladderpoles_vertices = ladderpoles_vertices ### store for later
 
-        con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
+            con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
-        # print(('unfound desired_vertices', con.desired_vertices))
-        # assert con.desired_vertices == [] ### found all the desired vertices
-        if con.desired_vertices != []:
-            print(veering_isosig, 'did not find all torus triangulation vertices')
-            return False
+            # print(('unfound desired_vertices', con.desired_vertices))
+            # assert con.desired_vertices == [] ### found all the desired vertices
+            if con.desired_vertices != []:
+                print(veering_isosig, 'did not find all torus triangulation vertices')
+                return False
 
-        # now replace ladderpoles_vertices with the continent's corresponding vertices 
-        for ladderpole_vertices in ladderpoles_vertices:
-            replace_with_continent_vertices(ladderpole_vertices, con)    
-        if expand_fund_dom:
-            replace_with_continent_vertices(left_ladder_nbd, con)
-            replace_with_continent_vertices(right_ladder_nbd, con)
-            replace_with_continent_vertices(bottom_nbd, con)
-            replace_with_continent_vertices(top_nbd, con)
-            nbd = left_ladder_nbd + bottom_nbd + top_nbd + right_ladder_nbd
-            nbd.sort(key = lambda v: con.coast.index(v))
-
-        ### the following is the list with correctly replaced vertices
-        all_ladderpole_vertices = [v for L in ladderpoles_vertices for v in L] ### dont need this to be bigger when doing "expand_fund_dom" 
-
-        ladderpole_descendant_segments = []
-        if expand_fund_dom:  
-            ### we must sort the extra vertices of nbd into the correct ladderpoles... just do by colour of the edge connecting to infty
-            ladderpole_is_red = nbd[0].edge_between(con.infinity).is_red
-            segment_start = con.coast.index(nbd[0])
-            for i,v in enumerate(nbd):
-                if v.edge_between(con.infinity).is_red != ladderpole_is_red:
-                    ladderpole_descendant_segments.append( [segment_start, con.coast.index(nbd[i-1])] )
-                    segment_start = con.coast.index(nbd[i])
-                    ladderpole_is_red = not ladderpole_is_red
-            ladderpole_descendant_segments.append( [segment_start, con.coast.index(nbd[-1])] )
-        else:
+            # now replace ladderpoles_vertices with the continent's corresponding vertices 
             for ladderpole_vertices in ladderpoles_vertices:
-                segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
-                segment.sort()
-                ladderpole_descendant_segments.append( segment )
+                replace_with_continent_vertices(ladderpole_vertices, con)    
+            if expand_fund_dom:
+                replace_with_continent_vertices(left_ladder_nbd, con)
+                replace_with_continent_vertices(right_ladder_nbd, con)
+                replace_with_continent_vertices(bottom_nbd, con)
+                replace_with_continent_vertices(top_nbd, con)
+                nbd = left_ladder_nbd + bottom_nbd + top_nbd + right_ladder_nbd
+                nbd.sort(key = lambda v: con.coast.index(v))
 
-        con.mark_ladderpole_descendants(ladderpole_descendant_segments)
+            ### the following is the list with correctly replaced vertices
+            all_ladderpole_vertices = [v for L in ladderpoles_vertices for v in L] ### dont need this to be bigger when doing "expand_fund_dom" 
+
+            ladderpole_descendant_segments = []
+            if expand_fund_dom:  
+                ### we must sort the extra vertices of nbd into the correct ladderpoles... just do by colour of the edge connecting to infty
+                ladderpole_is_red = nbd[0].edge_between(con.infinity).is_red
+                segment_start = con.coast.index(nbd[0])
+                for i,v in enumerate(nbd):
+                    if v.edge_between(con.infinity).is_red != ladderpole_is_red:
+                        ladderpole_descendant_segments.append( [segment_start, con.coast.index(nbd[i-1])] )
+                        segment_start = con.coast.index(nbd[i])
+                        ladderpole_is_red = not ladderpole_is_red
+                ladderpole_descendant_segments.append( [segment_start, con.coast.index(nbd[-1])] )
+            else:
+                for ladderpole_vertices in ladderpoles_vertices:
+                    segment = [con.coast.index(ladderpole_vertices[0]), con.coast.index(ladderpole_vertices[-1])]
+                    segment.sort()
+                    ladderpole_descendant_segments.append( segment )
+
+            con.mark_ladderpole_descendants(ladderpole_descendant_segments)
 
         # print 'important verts', important_vertices
         # for v in important_vertices:
@@ -466,6 +476,8 @@ def export_spherical_coordinates(continents, B, output_filename = None):
         T = B.torus_triangulation_list[i]
         # assign_continent_vertices_to_tet_faces(T, con)
         path = con.coast
+        # for v in path:
+        #     print(v.pos.sphere_coordinates(), v.pos.is_infinity())
         path_sphere = [ v.pos.sphere_coordinates() for v in path ]
         filename = output_filename[:-4] + '_' + str(i) + '.json'
         output_to_json(path_sphere, filename)
@@ -601,8 +613,7 @@ def draw_prepared_continents( continents, B, output_filename = None, max_length 
                 # layer2.fill(box.rect(), [pyx.color.rgb(0.0,0.0,0.0)]) ## black background
 
             else:
-                path = con.coast
-                path.remove(con.infinity)
+                path = con.coast[1:] # don't include infinity 
                 path_C = [ T.drawing_scale_and_rotate * v.drawing_pos for v in path ]
                 draw_path(T.canv, path_C, draw_options)  
                 # draw_options_spinor = [pyx.style.linewidth(ct_lw*0.5), pyx.style.linejoin.round, pyx.deco.colorgradient(grad, steps = 256)]
@@ -851,7 +862,7 @@ def make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbe
     return 'Images/Cannon-Thurston/' + draw_type + '/' + filename_base + '.pdf'
 
 ### The following should really be called "draw_continents" since we have one per boundary component of the manifold
-def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, tet_shapes = None, use_algebraic_numbers = False, draw_args_list = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None, expand_continents_animate = False, export_spherical = False ):
+def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2, scale_max_length = False, tet_shapes = None, use_algebraic_numbers = False, draw_args_list = None, build_type = None, load_continents_filename = None, expand_continents = True, save_continents_filename = None, expand_continents_animate = False, export_spherical = False ):
     output_filenames = [make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, draw_args, False) for draw_args in draw_args_list]
     if export_spherical:
         output_filenames.append(make_CT_filename(veering_isosig, build_type, max_length, use_algebraic_numbers, None, True))
@@ -882,14 +893,14 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
     hit_max_tetrahedra = False
     if expand_continents:
         if not expand_continents_animate:
-            hit_max_tetrahedra = expand_continents_for_drawing( continents, B, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra )
+            hit_max_tetrahedra = expand_continents_for_drawing( continents, B, build_type, max_length = max_length, scale_max_length = scale_max_length, max_num_tetrahedra = max_num_tetrahedra )
             ### animate by bury_num:
             # hit_max_tetrahedra = expand_continents_for_drawing_animate( continents, B, build_type, max_length = max_length, max_num_tetrahedra = max_num_tetrahedra, draw_args = draw_args_list[0] )
 
         else:
             num_frames = 2000
             start_max_length = 0.26
-            expand_continents_for_drawing( continents, B, build_type, max_length = start_max_length, max_num_tetrahedra = max_num_tetrahedra )
+            expand_continents_for_drawing( continents, B, build_type, max_length = start_max_length, scale_max_length = scale_max_length, max_num_tetrahedra = max_num_tetrahedra )
 
             for i in range(num_frames):
                 new_max_length = under_ladderpole_biggest_length(continents[0]) - 0.00001
@@ -985,15 +996,16 @@ def build_on_coast(con, max_length = 0.1, max_num_tetrahedra = 50000):  # build 
 
     ## now build
 
+    con.first_interesting_index = 0
     # while con.num_long_edges > 0 and con.num_tetrahedra < max_num_tetrahedra: 
-    while con.num_tetrahedra < max_num_tetrahedra and con.first_non_buried_index < len(con.triangles): 
-        tri = con.triangles[con.first_non_buried_index]  
+    while con.num_tetrahedra < max_num_tetrahedra and con.first_interesting_index < len(con.triangles): 
+        tri = con.triangles[con.first_interesting_index]  
 
         if tri.ladderpole_descendant_long_coastal_indices() != []:
             con.bury(tri)
-        con.first_non_buried_index += 1
-        while con.first_non_buried_index < len(con.triangles) and con.triangles[con.first_non_buried_index].is_buried():
-            con.first_non_buried_index += 1
+        con.first_interesting_index += 1
+        while con.first_interesting_index < len(con.triangles) and con.triangles[con.first_interesting_index].is_buried():
+            con.first_interesting_index += 1
     # print(('num_tetrahedra', con.num_tetrahedra))
     hit_max_tetrahedra = con.num_tetrahedra >= max_num_tetrahedra
     # print(('hit max tetrahedra', hit_max_tetrahedra))
@@ -1022,8 +1034,7 @@ def build_long(con, max_length = 0.1, max_num_tetrahedra = 50000, animate = Fals
     bury_num = 0
     frame_num = 0
 
-    ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
-    con.first_interesting_index = con.first_non_buried_index ### "interesting" means not buried and not already small enough.
+    con.first_interesting_index = 0
     while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
         tri = con.triangles[con.first_interesting_index]  
         if not tri.is_buried():
@@ -1056,8 +1067,9 @@ def build_explore_prongs(con, max_length = 0.1, max_num_tetrahedra = 50000):
 
     ## now build
 
-    while con.first_non_buried_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
-        tri = con.triangles[con.first_non_buried_index]  
+    con.first_interesting_index = 0
+    while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+        tri = con.triangles[con.first_interesting_index]  
         u = tri.vertices[tri.downriver_index()]
 
         crossing_edges = tri.all_river_crossing_edges()
@@ -1083,9 +1095,9 @@ def build_explore_prongs(con, max_length = 0.1, max_num_tetrahedra = 50000):
             #         con.bury(tri)
             #     else:
             #         print "big ratio..."
-        con.first_non_buried_index += 1
-        while con.first_non_buried_index < len(con.triangles) and con.triangles[con.first_non_buried_index].is_buried():
-            con.first_non_buried_index += 1
+        con.first_interesting_index += 1
+        while con.first_interesting_index < len(con.triangles) and con.triangles[con.first_interesting_index].is_buried():
+            con.first_interesting_index += 1
     # print(('num_tetrahedra', con.num_tetrahedra))
     hit_max_tetrahedra = con.num_tetrahedra >= max_num_tetrahedra
     # print(('hit max tetrahedra', hit_max_tetrahedra))
@@ -1120,8 +1132,7 @@ def build_long_and_mid(con, max_length = 0.1, mid_scaling = 1.0, max_num_tetrahe
     num_tet = len(con.tetrahedra)
     ## now build
 
-    ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
-    con.first_interesting_index = con.first_non_buried_index ### "interesting" means not buried and not already small enough.
+    con.first_interesting_index = 0
     while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
         tri = con.triangles[con.first_interesting_index]  
         if not tri.is_buried():
@@ -1166,12 +1177,13 @@ def build_spherical_long(con, max_length = 0.1, max_num_tetrahedra = 50000, anim
     bury_num = 0
     frame_num = 0
 
-    ### "first_non_buried_index" is the first non buried index after the initial continent building. We don't update it in this function.
-    con.first_interesting_index = con.first_non_buried_index ### "interesting" means not buried and not already small enough.
+    con.first_interesting_index = 0 ### "interesting" means not buried and not already small enough.
     while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
         tri = con.triangles[con.first_interesting_index]  
         if not tri.is_buried():
+            # print(sorted([edge.spherical_length() for edge in tri.edges]), any( [edge.is_spherically_long() for edge in tri.edges] ))
             if any( [edge.is_spherically_long() for edge in tri.edges] ):
+                # print('burying')
                 con.bury(tri)
                 if animate:
                     output_filename = images_filename_base + str(frame_num) + '.pdf'

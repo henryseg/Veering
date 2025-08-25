@@ -1695,7 +1695,7 @@ class continent:
                 self.bury(tri)
             self.first_non_buried_index += 1
             while self.triangles[self.first_non_buried_index].is_buried():
-                self.first_non_buried_index += 1
+                self.first_non_buried_index += 1  ### at the end, self.non_first_buried_index should be exactly that
         self.build_boundary_data()  
 
     def build_triangulation_fundamental_domain(self, max_num_tetrahedra = 50000):
@@ -1739,30 +1739,30 @@ class continent:
         return continent_fund_dom_tets
 
 
-    def build_boundary_fundamental_domain_old(self, max_num_tetrahedra = 50000):
-        self.first_non_buried_index = 0
-        while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
-            tri = self.triangles[self.first_non_buried_index]  
-            self.bury(tri)
-            self.first_non_buried_index += 1
-            while self.triangles[self.first_non_buried_index].is_buried():
-            # while self.triangles[first_non_buried_index].is_buried() or self.triangles[first_non_buried_index].is_upper:
-                self.first_non_buried_index += 1
-        self.build_boundary_data()  
+    # def build_boundary_fundamental_domain_old(self, max_num_tetrahedra = 50000):
+    #     self.first_non_buried_index = 0
+    #     while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
+    #         tri = self.triangles[self.first_non_buried_index]  
+    #         self.bury(tri)
+    #         self.first_non_buried_index += 1
+    #         while self.triangles[self.first_non_buried_index].is_buried():
+    #         # while self.triangles[first_non_buried_index].is_buried() or self.triangles[first_non_buried_index].is_upper:
+    #             self.first_non_buried_index += 1
+    #     self.build_boundary_data()  
 
     ### old version builds lots of things we dont care about, this is much faster.
     def build_boundary_fundamental_domain(self, max_num_tetrahedra = 50000):
         ### fundamental domain for the boundary torus?
-        self.first_non_buried_index = 0
+        self.first_interesting_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
-            tri = self.triangles[self.first_non_buried_index] 
+            tri = self.triangles[self.first_interesting_index] 
              ### if this tri is incident to infinity, bury it
             if self.infinity in tri.vertices:
                 self.bury(tri)
-            self.first_non_buried_index += 1
-            while self.triangles[self.first_non_buried_index].is_buried():
+            self.first_interesting_index += 1
+            while self.triangles[self.first_interesting_index].is_buried():
             # while self.triangles[first_non_buried_index].is_buried() or self.triangles[first_non_buried_index].is_upper:
-                self.first_non_buried_index += 1
+                self.first_interesting_index += 1
         self.build_boundary_data()  
 
 
