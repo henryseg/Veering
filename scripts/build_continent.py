@@ -17,7 +17,7 @@ from draw_veering_triangulation_and_mid_annuli import get_consistent_tet_vert_po
 def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
-    initial_tet_face = tet_face(vt, 0, 0, verts_pos = [None, None, None, None])
+    initial_tet_face = tet_face(0, 0, verts_pos = [None, None, None, None])
     con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
     con.build_naive(max_num_tetrahedra = max_num_tetrahedra)
     con.build_boundary_data()
@@ -27,7 +27,7 @@ def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
 def make_continent_fund_dom(veering_isosig, max_num_tetrahedra = 50):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle) #, tet_shapes = tet_shapes)
-    initial_tet_face = tet_face(vt, 0, 0, verts_pos = [None, None, None, None])
+    initial_tet_face = tet_face(0, 0, verts_pos = [None, None, None, None])
     con = continent( vt, initial_tet_face) #, desired_vertices = desired_vertices )
     continent_fund_dom_tets = con.build_triangulation_fundamental_domain(max_num_tetrahedra = max_num_tetrahedra)
     con.build_boundary_data()

@@ -29,9 +29,12 @@ class vertex:
         self.rational_position = None ### in the Farey triangulation
         self.Regina_cusp_num = None ### which cusp of the manifold is this
         self.circle_pos = None
+        self.saved_coastal_index = None
 
     def coastal_index(self):
-        return self.continent.coast.index(self)
+        if self.saved_coastal_index == None:
+            self.saved_coastal_index = self.continent.coast.index(self)
+        return self.saved_coastal_index
 
     def chronological_index(self):
         return self.continent.vertices.index(self)

@@ -34,6 +34,14 @@ def draw_path(filename):
 	dists.sort()
 	print(dists[-10:])
 
+def draw_mesh(verts_filename, tris_filename):
+	verts = read_from_json(verts_filename)
+	verts = [rs.CreateVector(v) for v in verts]
+	landscapes = read_from_json(tris_filename)
+	upper_tris, lower_tris = landscapes
+	rs.AddMesh( verts, upper_tris )
+	rs.AddMesh( verts, lower_tris )
+
 def draw_list_of_edges(filename):
 	edges = read_from_json(filename)
 
@@ -46,6 +54,19 @@ def draw_list_of_edges(filename):
 	dists.sort()
 	print(dists[-10:])
 
-# draw_path('/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/cPcbbbiht_12_build_spherically_long_.1_float_[20226]_0.json')
+# draw_path('/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/cPcbbbiht_12_build_spherically_long_.1_float_[5564]_0_non_coast_factor_.5.json')
 # 
-draw_list_of_edges('/Users/segerman/Library/CloudStorage/Dropbox/Schleimer-Segerman/Figure_eight/Seifert_surface/foo_scale_5.json')
+# verts_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/cPcbbbiht_12_build_spherically_long_.015_float_[1300026]_0.json'
+# tris_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/cPcbbbiht_12_build_spherically_long_.015_float_[1300026]_tris_0.json'
+# draw_mesh(verts_filename, tris_filename)
+
+
+
+verts_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/gLLAQbecdfffhhnkqnc_120012_build_spherically_long_.03_float_[484218]_0.json'
+tris_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/gLLAQbecdfffhhnkqnc_120012_build_spherically_long_.03_float_[484218]_tris_0.json'
+draw_mesh(verts_filename, tris_filename)
+
+# draw_list_of_edges('/Users/segerman/Library/CloudStorage/Dropbox/Schleimer-Segerman/Figure_eight/Seifert_surface/bar_0.00265752_large_835774.json')
+
+
+

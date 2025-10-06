@@ -383,7 +383,7 @@ def generate_initial_continents_for_drawing( veering_isosig, tet_shapes = None, 
         else:
             desired_vertices = []
 
-        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, maintain_coast = True )
+        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, maintain_coast = True, maintain_coastal_edges = True )
         
         if include_fund_dom:
             con.ladderpoles_vertices = ladderpoles_vertices ### store for later
@@ -471,7 +471,7 @@ def expand_continents_for_drawing_animate( continents, B, build_type, max_length
         max_length2 = max_length * sqrt(T.our_cusp_area)  
         hit_max_tetrahedra = build_long(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra, animate = True, images_filename_base = 'Images/Animation2/foo', B = B, draw_args = draw_args)
 
-def export_spherical_coordinates(continents, B, output_filename = None):
+def export_spherical_coordinates(continents, B, output_filename = None, export_triangles = True):
     for i, con in enumerate(continents):
         T = B.torus_triangulation_list[i]
         # assign_continent_vertices_to_tet_faces(T, con)
@@ -481,6 +481,21 @@ def export_spherical_coordinates(continents, B, output_filename = None):
         path_sphere = [ v.pos.sphere_coordinates() for v in path ]
         filename = output_filename[:-4] + '_' + str(i) + '.json'
         output_to_json(path_sphere, filename)
+        print('exported spherical vertices')
+        if export_triangles:
+            triangles_filename = output_filename[:-4] + '_tris_' + str(i) + '.json'
+            upper_tri_vert_indices = []
+            for tri in con.upper_landscape_triangles:
+                vert_indices = [v.coastal_index() for v in tri.vertices]
+                upper_tri_vert_indices.append(vert_indices)
+            lower_tri_vert_indices = []
+            for tri in con.lower_landscape_triangles:
+                vert_indices = [v.coastal_index() for v in tri.vertices]
+                lower_tri_vert_indices.append(vert_indices)    
+            landscapes = [upper_tri_vert_indices, lower_tri_vert_indices]
+            print('collected landscape triangles')
+            output_to_json(landscapes, triangles_filename)
+            print('exported landscape triangles')
 
 def draw_prepared_continents( continents, B, output_filename = None, max_length = 0.5, draw_args = None):
     draw_CT_curve, draw_lightning_curve, draw_jordan_curve = draw_args['draw_CT_curve'], draw_args['draw_lightning_curve'], draw_args['draw_jordan_curve']
@@ -938,9 +953,10 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         if hit_max_tetrahedra:
             output_filename = output_filename[:-4] + '_hitmax.pdf'
         if i < len(draw_args_list):
-            draw_args = draw_args_list[i]
-            draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
-            B.clear_canvases()
+            pass
+            # draw_args = draw_args_list[i]
+            # draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
+            # B.clear_canvases()
         else:
             export_spherical_coordinates( continents, B, output_filename = output_filename )
 
@@ -1181,7 +1197,21 @@ def build_spherical_long(con, max_length = 0.1, max_num_tetrahedra = 50000, anim
     while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
         tri = con.triangles[con.first_interesting_index]  
         if not tri.is_buried():
-            # print(sorted([edge.spherical_length() for edge in tri.edges]), any( [edge.is_spherically_long() for edge in tri.edges] ))
+            ### The following commented out code was (2025-08-27) trying to interpolate between us and Thurston
+            ### by taking non_coast_factor from 1.0 (us) to 0.0. This doesn't work: Thurston stays in one elevation
+            ### of the Seifert surface, while the continent building algorithm selects whichever elevations it needs
+            ### at each cusp.
+
+            # non_coast_factor = 1.0
+            # triangle_badness = 0.0 
+            # for edge in tri.edges:
+            #     if edge.is_coastal():
+            #         edge_badness = edge.spherical_length()
+            #     else:
+            #         edge_badness = edge.spherical_length() * non_coast_factor
+            #     if edge_badness > triangle_badness:
+            #         triangle_badness = edge_badness
+            # if triangle_badness > max_length:
             if any( [edge.is_spherically_long() for edge in tri.edges] ):
                 # print('burying')
                 con.bury(tri)

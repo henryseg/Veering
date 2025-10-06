@@ -65,7 +65,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
     green = color.rgb(0.0,0.5,0.0)
     purple = color.rgb(0.5,0.0,0.5)
     leaf_colours = {True: green, False: purple}
-    grey = color.rgb(0.7,0.7,0.7)
+    grey = color.rgb(0.6,0.6,0.6)
     
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
@@ -101,7 +101,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
             dot_coords = coords + offset
             canv.stroke(path.circle(dot_coords.real, dot_coords.imag, 0.05), [deco.filled(), style.linewidth(0)])
             if draw_vertex_numbers:
-                symbol_coords = global_scale_up*(1.13*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset)
+                symbol_coords = global_scale_up*(1.11*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset)
                 canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(ind)+"$", textattrs=[text.size(-4), grey, text.halign.center, text.valign.middle])
 
         Regina_tet = con.vt.tri.tetrahedron(i)
