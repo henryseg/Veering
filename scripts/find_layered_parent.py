@@ -15,7 +15,7 @@ def try_to_find_layered_parent(sig, flow_cycle_max_length = 5, flow_cycle_min_le
     for fc in flow_cycles:
         if verbose > 2:
             print(fc)
-        out = drill_flow_cycle(sig, fc, return_tri_angle = True, return_found_parallel = True, return_cusp_mapping = True)  
+        out = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True, return_found_parallel = True, return_cusp_mapping = True)  
         if out != None:
             drilled_sig, drilled_tri, drilled_angle, found_parallel, isosig_to_original_cusp_mapping = out
             if is_layered(drilled_tri, drilled_angle):

@@ -46,7 +46,7 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
 
     return tri, angle, cusp_mapping
 
-def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_rectangles = False, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
+def drill_flow_cycle(veering_isosig, flow_cycle, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, draw_rectangles = False, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
     out = make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
     if out == None:  ### flow cycle is boundary parallel
         # print('flow_cycle is boundary parallel')
@@ -89,8 +89,12 @@ def drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = False, draw_
         print('drilled sig:', new_sig)
 
     out = [new_sig]
-    if return_tri_angle:
+    if return_isosig_tri_angle:
         out.extend([isosig_tri, isosig_angle])
+    if return_built_tri_angle:
+        out.extend([built_tri, built_angle])
+    if return_triangulation_data:
+        out.extend([new_tetrahedra, new_faces])
     if return_found_parallel:
         out.append(found_parallel)
     if return_cusp_mapping:

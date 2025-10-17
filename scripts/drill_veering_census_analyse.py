@@ -79,11 +79,12 @@ def main():
 	run([filename3], max_count = None, existing_equiv_class_pickle_filename = equivs_filename2)
 
 def collate_data():
+	census_data = parse_data_file('veering_census_with_data.txt') 
 	filename1 = '/Users/segerman/Dropbox/Data/drillings_census_4_ladders_max_cycle_len_5.txt'
 	filename2 = '/Users/segerman/Dropbox/Data/drillings_census_4_ladders_max_cycle_len_6_6.txt'
 	filename3 = '/Users/segerman/Dropbox/Data/drillings_census_4_ladders_max_cycle_len_7_7.txt'
 	max_count = None
-	
+
 	filename = filename1
 	count = 0
 	with open(filename, 'r') as file:

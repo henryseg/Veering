@@ -507,7 +507,7 @@ def drill_flow_cycle_script():
     
     print(veering_isosig, flow_cycle)
 
-    out = drill_flow_cycle(veering_isosig, flow_cycle, return_tri_angle = True, draw_rectangles = True, return_found_parallel = True, return_cusp_mapping = True, use_untwisted_speed_up = True, verbose = 0)
+    out = drill_flow_cycle(veering_isosig, flow_cycle, return_isosig_tri_angle = True, draw_rectangles = True, return_found_parallel = True, return_cusp_mapping = True, use_untwisted_speed_up = True, verbose = 0)
     drilled_sig, drilled_tri, drilled_angle, found_parallel, cusp_mapping_isosig = out
 
 
@@ -536,7 +536,7 @@ def compare_flow_and_geodesic_drilling_script():
 
     for fc in cycles:  
         print(fc)
-        out = drill_flow_cycle(sig, fc, return_tri_angle = True) 
+        out = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True) 
         if out != None: 
             tri, angle = isosig_to_tri_angle(sig) 
             
