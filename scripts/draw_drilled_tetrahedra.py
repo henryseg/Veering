@@ -25,14 +25,13 @@ def draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple, dr
     text_pos = global_scale_up * (complex(1.5, 3.8) + offset)
     canv.text(text_pos.real, text_pos.imag, "$"+str(i)+"$", textattrs=[text.size(3), text.halign.center, text.valign.middle])
 
-def draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_scale_in = None, global_delta = None, ind = None):
+def draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_scale_in = None, global_delta = None):
     center = 0.5*(corners[0] + corners[1])
     x0, x1 = sorted([corner.real for corner in corners])
     y0, y1 = sorted([corner.imag for corner in corners])
     if global_delta == None:
         w = x1 - x0
         h = y1 - y0
-
         ### shrink smaller of the two sidelengths
         # delta = min(w, h) * (1.0 - rect_scale_in)
 
@@ -41,9 +40,8 @@ def draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_
         
         ### reduce perimeter
         delta = (h+w)*(1 - rect_scale_in)/2
-
     else:
-        delta = global_delta + float(ind) * 0.01
+        delta = global_delta 
     # corners = [rect_scale_in*(corner - center) + center for corner in corners]
     x0, x1 = x0 + delta, x1 - delta
     y0, y1 = y0 + delta, y1 - delta
@@ -60,9 +58,13 @@ def draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_
     p = p.transformed(scl)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
 
-def draw_rectangle(canv, x_interval, y_interval, scl, edge_thickness, green, purple, rect_scale_in = None, global_delta = None, ind = None):
+def draw_rectangle(canv, x_interval, y_interval, scl, edge_thickness, green, purple, rect_scale_in = None, global_delta = None):
     corners = [complex(x_interval[i], y_interval[i]) for i in range(2)]
-    draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_scale_in = rect_scale_in, global_delta = global_delta, ind = ind)
+    draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_scale_in = rect_scale_in, global_delta = global_delta)
+
+class rect_wrapper:
+    def __init__(self, rect):
+        self.rect = rect
 
 def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None, 
     intervals_inside_tet_rectangles = None, 
@@ -76,9 +78,13 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
     edge_thickness = 0.02,
     transparency = 0.9):
 
-    global_delta = 0.01
+    global_delta = 0.04
+    rectangle_spacing = 0.02
     # global_delta = None
     rect_scale_in = 0.95
+
+    big_dot_rad = 0.03
+    small_dot_rad = 0.02
 
     global_scale_up = 1.0
     red = color.rgb(0.9,0.3,0)
@@ -117,13 +123,12 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
         tet_rect_coords[v2hperm[0]] = global_scale_up*(S_coords + offset)
         tet_rect_coords[v2hperm[-1]] = global_scale_up*(N_coords + offset)
 
-
         Regina_tet = con.vt.tri.tetrahedron(i)
+        ### Draw triangle numbers
         for coords, ind in [(W_mid_coords, E_ind), (E_mid_coords, W_ind), (S_mid_coords, N_ind), (N_mid_coords, S_ind)]:
             symbol_coords = global_scale_up*(1.13*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset)
             tri_num = Regina_tet.triangle(ind).index()
             canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(tri_num)+"$", textattrs=[text.size(-2), text.halign.center, text.valign.middle])
-
 
         we_chunks, sn_chunks = tetrahedra_chunks[i]
         widths = [len(chunk) + 1 for chunk in we_chunks]
@@ -157,31 +162,64 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
                 draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple, rect_scale_in = rect_scale_in)
 
         if draw_tetrahedron_rectangles:
-            tet_rects = old_tet_rect.tetrahedron_rectangles()
-            # print('tet', i, 'num tet rects', len(tet_rects))
-            for i, rect in enumerate(tet_rects):
-                verts = [tet_rect_coords[j] for j in rect]
-                x_coords = [v.real for v in verts]
-                y_coords = [v.imag for v in verts]
-                x_interval = (min(x_coords), max(x_coords))
-                y_interval = (min(y_coords), max(y_coords))
-                draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple, global_delta = global_delta, rect_scale_in = rect_scale_in, ind = i)
 
+            rectws = [rect_wrapper(rect) for rect in old_tet_rect.tetrahedron_rectangles()]
+
+            ### work out which rectangles hit which side of which dots
+
+            ### rectangles incident to this dot on the dot's E, W, N, S:
+            dot_sides = [] 
+            for i in range(len(old_tet_rect.horiz_ordering)):
+                dot_sides.append({'E':[], 'W':[], 'N':[], 'S':[]})
+            # print('dot sides', dot_sides)
+
+            for rectw in rectws:
+                verts = [tet_rect_coords[j] for j in rectw.rect]
+                rectw.x_coords = [v.real for v in verts]
+                rectw.y_coords = [v.imag for v in verts]
+
+                rectw.W_ind = min(range(len(rectw.x_coords)), key=rectw.x_coords.__getitem__)
+                rectw.W_dot = rectw.rect[rectw.W_ind]
+                dot_sides[rectw.W_dot]['E'].append(rectw)  ### west side of rect is east side of dot
+                rectw.E_ind = max(range(len(rectw.x_coords)), key=rectw.x_coords.__getitem__)
+                rectw.E_dot = rectw.rect[rectw.E_ind]
+                dot_sides[rectw.E_dot]['W'].append(rectw)
+                rectw.S_ind = min(range(len(rectw.y_coords)), key=rectw.y_coords.__getitem__)
+                rectw.S_dot = rectw.rect[rectw.S_ind]
+                dot_sides[rectw.S_dot]['N'].append(rectw)
+                rectw.N_ind = max(range(len(rectw.y_coords)), key=rectw.y_coords.__getitem__)
+                rectw.N_dot = rectw.rect[rectw.N_ind]
+                dot_sides[rectw.N_dot]['S'].append(rectw)
+            # print('dot sides', dot_sides)
+
+            for dot in dot_sides:
+                dot['E'].sort(key = lambda rectw: rectw.x_coords[rectw.E_ind]) ### sort rects to east of dot by where their eastern sides are
+                dot['W'].sort(key = lambda rectw: -rectw.x_coords[rectw.W_ind]) ### - to reverse order
+                dot['N'].sort(key = lambda rectw: rectw.y_coords[rectw.N_ind]) ### sort rects to east of dot by where their eastern sides are
+                dot['S'].sort(key = lambda rectw: -rectw.y_coords[rectw.S_ind]) ### - to reverse order                
+
+            for rectw in rectws:
+                W_place = dot_sides[rectw.W_dot]['E'].index(rectw)
+                E_place = dot_sides[rectw.E_dot]['W'].index(rectw)
+                S_place = dot_sides[rectw.S_dot]['N'].index(rectw)
+                N_place = dot_sides[rectw.N_dot]['S'].index(rectw)
+                x_interval = [min(rectw.x_coords) + rectangle_spacing*W_place, max(rectw.x_coords) - rectangle_spacing*E_place]
+                y_interval = [min(rectw.y_coords) + rectangle_spacing*S_place, max(rectw.y_coords) - rectangle_spacing*N_place]
+                draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple, global_delta = global_delta, rect_scale_in = rect_scale_in)
+
+        ### drilling dots
         for interval in tet_intervals:
             # print('we chunk num', interval.we_chunk_num, 'we_in_chunk_index', interval.we_in_chunk_index, 'sn chunk num', interval.sn_chunk_num, 'sn_in_chunk_index', interval.sn_in_chunk_index, 'interval', interval)
             x = interval.we_chunk_num + (interval.we_in_chunk_index + 1)/widths[interval.we_chunk_num]
             y = interval.sn_chunk_num + (interval.sn_in_chunk_index + 1)/heights[interval.sn_chunk_num]
             coords = global_scale_up*(offset + complex(x, y))
-            # tet_rect_coords[old_tet_rect.horiz_ordering.index(interval)] = coords
             ### draw drilled dots
-            canv.stroke(path.circle(coords.real, coords.imag, 0.035), [deco.filled(), style.linewidth(0)])
+            canv.stroke(path.circle(coords.real, coords.imag, small_dot_rad), [deco.filled(), style.linewidth(0)])
 
-                ### tetrahedron vertex indices
-
-        ### Draw dots for the vertices of the original tetrahedra
+        ### Draw dots and indices for the vertices of the original tetrahedra
         for coords, ind in [(W_coords, W_ind), (E_coords, E_ind), (S_coords, S_ind), (N_coords, N_ind)]:
             dot_coords = coords + offset
-            canv.stroke(path.circle(dot_coords.real, dot_coords.imag, 0.05), [deco.filled(), style.linewidth(0)])
+            canv.stroke(path.circle(dot_coords.real, dot_coords.imag, big_dot_rad), [deco.filled(), style.linewidth(0)])
             if draw_vertex_numbers:
                 symbol_coords = global_scale_up*(1.11*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset)
                 canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(ind)+"$", textattrs=[text.size(-4), grey, text.halign.center, text.valign.middle])
