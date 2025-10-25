@@ -121,7 +121,7 @@ def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.
     for i, node in enumerate(nodes_to_draw):
         if i % 100 == 0:
             print(i/len(nodes_to_draw))
-        for neighbour_sig in node.neighbour_isoSigs_drill:
+        for neighbour_sig in node.neighbour_isoSigs_drill_dict.values():
             if neighbour_sig in graph.keys():
                 neighbour = graph[neighbour_sig]
                 if neighbour in nodes_to_draw:
