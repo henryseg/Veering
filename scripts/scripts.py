@@ -181,6 +181,7 @@ def draw_continent_script():
     draw_args['draw_alignment_dots'] = False
     draw_args['draw_desired_vertices'] = False
     draw_args['expand_fund_dom'] = True  ### needed for jordan curve?
+    draw_args['scale_for_CT'] = True ### when drawing the boundary triangulation with labels we want to scale differently
 
     # draw_args_list = [ draw_args.copy(), draw_args.copy() ]
     # draw_args_list[1]['draw_CT_curve'] = True
@@ -234,6 +235,7 @@ def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahe
     draw_args['draw_desired_vertices'] = False
     draw_args['include_fund_dom'] = False ### when first building a continent, should we make sure it includes a fundamental domain of the boundary torus as seen from infinity?
     draw_args['expand_fund_dom'] = True  ### needed for jordan curve?
+    draw_args['scale_for_CT'] = True ### when drawing the boundary triangulation with labels we want to scale differently
 
     # draw_args_list = [ draw_args.copy(), draw_args.copy() ]
     # draw_args_list[1]['draw_CT_curve'] = True
