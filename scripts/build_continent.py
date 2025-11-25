@@ -154,15 +154,15 @@ def find_strip_vertex(v, quadrant_sides, interval, is_upper = True):
     # print('did not find strip vertex')
     # return (None, None, candidate_triangles) ### testing
 
-def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_speed_up = True, verbose = 0):
+def make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_speed_up = True, verbose = 0):
     ### format for loops: it is a list of tuples, 
     ### each tuple is (tet_index, edge_index within this tet that we exit through)
 
     con, continent_fund_dom_tets = make_continent_fund_dom(veering_isosig)
     vt = con.vt
-    flow_cycle_is_twisted = is_twisted(vt, flow_cycle)
+    flow_cycles_are_twisted = [is_twisted(vt, flow_cycle) for flow_cycle in flow_cycles]
     if verbose > 0:
-        print('drill', veering_isosig, flow_cycle, 'is_twisted:', flow_cycle_is_twisted, 'use_untwisted_speed_up:', use_untwisted_speed_up)
+        print('drill', veering_isosig, flow_cycles, 'are_twisted:', flow_cycles_are_twisted, 'use_untwisted_speed_up:', use_untwisted_speed_up)
 
     found_parallel = False ### in building the continent, do we find fellow-travelling flow_cycles (if so then drilling naively will not give a hyperbolic manifold)
 
@@ -173,150 +173,159 @@ def make_continent_drill_flow_cycle(veering_isosig, flow_cycle, use_untwisted_sp
     ### identify the next edge in the cycle 
 
     # print([t.index for t in continent_fund_dom_tets])
-    init_tetrahedron = continent_fund_dom_tets[flow_cycle[0][0]]
-    # print('init tet index, flow cycle', init_tetrahedron.index, flow_cycle)
-    assert init_tetrahedron.index == flow_cycle[0][0]
+    main_intervals = []
+    for i, flow_cycle in enumerate(flow_cycles):
+        flow_cycle_is_twisted = flow_cycles_are_twisted[i]
+        init_tetrahedron = continent_fund_dom_tets[flow_cycle[0][0]]
+        # print('init tet index, flow cycle', init_tetrahedron.index, flow_cycle)
+        assert init_tetrahedron.index == flow_cycle[0][0]
 
-    main_interval = flow_interval(con, flow_cycle, init_tetrahedron, 0)
+        main_interval = flow_interval(con, flow_cycle, init_tetrahedron, 0)
+        main_intervals.append(main_interval)
 
-    fund_dom_edges = []
-    for tet in continent_fund_dom_tets:
-        for e in tet.edges():
-            fund_dom_edges.append(e)
-    for e in fund_dom_edges:
-        e.ensure_continent_contains_rectangle()
+        fund_dom_edges = []
+        for tet in continent_fund_dom_tets:
+            for e in tet.edges():
+                fund_dom_edges.append(e)
+        for e in fund_dom_edges:
+            e.ensure_continent_contains_rectangle()
 
-    ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
-    main_interval.ensure_contains_one_cycle_up()
-    if flow_cycle_is_twisted or not use_untwisted_speed_up:
-        main_interval.ensure_contains_one_cycle_down()  ### does not make much difference experimentally
+        ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
+        main_interval.ensure_contains_one_cycle_up()
+        if flow_cycle_is_twisted or not use_untwisted_speed_up:
+            main_interval.ensure_contains_one_cycle_down()  ### does not make much difference experimentally
 
-    if main_interval.is_boundary_parallel():  ### FIX?
-        if verbose >= 1:
-            print('flow cycle is boundary parallel')
-        return None
-    up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
-    up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
-    if flow_cycle_is_twisted or not use_untwisted_speed_up:
-        down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))
-    else:
-        down_translate_tet = main_interval.get_tet_at_position(0)
+        if main_interval.is_boundary_parallel():  ### FIX?
+            if verbose >= 1:
+                print('flow cycle is boundary parallel')
+            return None
+        up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
+        up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
+        if flow_cycle_is_twisted or not use_untwisted_speed_up:
+            down_translate_tet = main_interval.get_tet_at_position(-len(flow_cycle))
+        else:
+            down_translate_tet = main_interval.get_tet_at_position(0)
 
-    ### c and gamma^2c are corresponding cusps of down_translate_tet, up_translate_tet 
-    ### (or just gamma c if the flow cycle is not twisted)
+        ### c and gamma^2c are corresponding cusps of down_translate_tet, up_translate_tet 
+        ### (or just gamma c if the flow cycle is not twisted)
 
-    ### next determine a quadrant that contains the puncture p.
-    ### choose a vertex of top edge of up_translate_tet
-    up_v = up_translate_tet.upper_edge.vertices[0] ### this is gamma^2c in the notes
-    if up_v not in up_translate_edge.vertices or (up_translate_edge == up_translate_tet.upper_edge):
-        ### then quadrant starts at up_v and contains edge rect for up_translate_tet.upper_edge
-        up_quadrant_edge = up_translate_tet.upper_edge
-    else:
-        ### then quadrant starts at up_v and contains edge rect for up_translate_edge
-        up_quadrant_edge = up_translate_edge
+        ### next determine a quadrant that contains the puncture p.
+        ### choose a vertex of top edge of up_translate_tet
+        up_v = up_translate_tet.upper_edge.vertices[0] ### this is gamma^2c in the notes
+        if up_v not in up_translate_edge.vertices or (up_translate_edge == up_translate_tet.upper_edge):
+            ### then quadrant starts at up_v and contains edge rect for up_translate_tet.upper_edge
+            up_quadrant_edge = up_translate_tet.upper_edge
+        else:
+            ### then quadrant starts at up_v and contains edge rect for up_translate_edge
+            up_quadrant_edge = up_translate_edge
 
-    v_num = up_translate_tet.vertices.index(up_v)
-    # other_end_vert_num = up_translate_tet.vertices.index(up_quadrant_edge.other_end(up_v))
-    e_num = up_translate_tet.ordered_edges().index(up_quadrant_edge)
+        v_num = up_translate_tet.vertices.index(up_v)
+        # other_end_vert_num = up_translate_tet.vertices.index(up_quadrant_edge.other_end(up_v))
+        e_num = up_translate_tet.ordered_edges().index(up_quadrant_edge)
 
-    down_v = down_translate_tet.vertices[v_num] ### this is c in the notes
-    down_quadrant_edge = down_translate_tet.edge(e_num)
+        down_v = down_translate_tet.vertices[v_num] ### this is c in the notes
+        down_quadrant_edge = down_translate_tet.edge(e_num)
 
-    up_quadrant_edge.ensure_continent_contains_rectangle()
-    down_quadrant_edge.ensure_continent_contains_rectangle()
+        up_quadrant_edge.ensure_continent_contains_rectangle()
+        down_quadrant_edge.ensure_continent_contains_rectangle()
 
-    up_rect_sides = up_quadrant_edge.rectangle_sides()
-    up_quadrant_sides = [leaf for leaf in up_rect_sides if leaf.cusp == up_v]
-    assert len(up_quadrant_sides) == 2
+        up_rect_sides = up_quadrant_edge.rectangle_sides()
+        up_quadrant_sides = [leaf for leaf in up_rect_sides if leaf.cusp == up_v]
+        assert len(up_quadrant_sides) == 2
 
-    down_rect_sides = down_quadrant_edge.rectangle_sides()
-    down_quadrant_sides = [leaf for leaf in down_rect_sides if leaf.cusp == down_v]
-    assert len(down_quadrant_sides) == 2
-    
-    # leaves_to_draw = up_quadrant_sides + down_quadrant_sides
-    leaves_to_draw = []
-    # leaves_to_draw.extend( up_quadrant_sides[:] + down_quadrant_sides[:] )
+        down_rect_sides = down_quadrant_edge.rectangle_sides()
+        down_quadrant_sides = [leaf for leaf in down_rect_sides if leaf.cusp == down_v]
+        assert len(down_quadrant_sides) == 2
+        
+        # leaves_to_draw = up_quadrant_sides + down_quadrant_sides
+        leaves_to_draw = []
+        # leaves_to_draw.extend( up_quadrant_sides[:] + down_quadrant_sides[:] )
 
-    # for i in range(2):
-    #     main_interval.go_up()    
-### going up a few times before starting to search properly might be more efficient
-### because the search below for the upper_strip_vertex involves get_non_special_vertex_cusp_leaves()
-### which calls ensure_continent_contains_rectangle, which adds tetrahedra and (it seems) more candidate_triangles
-### Maybe there is a more efficient way to check for upper_strip_vertex that doesn't require generating the leaves at 
-### the non-special vertices of the candidate triangles? Just look at the position of the cusps on the circle?
+        # for i in range(2):
+        #     main_interval.go_up()    
+    ### going up a few times before starting to search properly might be more efficient
+    ### because the search below for the upper_strip_vertex involves get_non_special_vertex_cusp_leaves()
+    ### which calls ensure_continent_contains_rectangle, which adds tetrahedra and (it seems) more candidate_triangles
+    ### Maybe there is a more efficient way to check for upper_strip_vertex that doesn't require generating the leaves at 
+    ### the non-special vertices of the candidate triangles? Just look at the position of the cusps on the circle?
 
-        # main_interval.go_down()
+            # main_interval.go_down()
 
-    upper_strip_vertex, up_internal_leaf, up_boundary_leaves, up_f, up_candidate_index = find_strip_vertex(up_v, up_quadrant_sides, main_interval, is_upper = True)
-    # leaves_to_draw.append(up_internal_leaf)
-    # leaves_to_draw.extend(up_boundary_leaves)
-    triangles_to_draw = []
-    # triangles_to_draw.append(up_f)
+        upper_strip_vertex, up_internal_leaf, up_boundary_leaves, up_f, up_candidate_index = find_strip_vertex(up_v, up_quadrant_sides, main_interval, is_upper = True)
+        # leaves_to_draw.append(up_internal_leaf)
+        # leaves_to_draw.extend(up_boundary_leaves)
+        triangles_to_draw = []
+        # triangles_to_draw.append(up_f)
 
-    lower_strip_vertex, down_internal_leaf, down_boundary_leaves, down_f, down_candidate_index = find_strip_vertex(down_v, down_quadrant_sides, main_interval, is_upper = False)
+        lower_strip_vertex, down_internal_leaf, down_boundary_leaves, down_f, down_candidate_index = find_strip_vertex(down_v, down_quadrant_sides, main_interval, is_upper = False)
 
-    ### Now find the quadrant at upper_strip_vertex that contains the flow line
+        ### Now find the quadrant at upper_strip_vertex that contains the flow line
 
-    ### up_f.edges[0] is the special edge of the face. other_colour_quadrant_sides are the two sides of that edge rect based at upper_strip_vertex
+        ### up_f.edges[0] is the special edge of the face. other_colour_quadrant_sides are the two sides of that edge rect based at upper_strip_vertex
 
-    up_quadrant_sides2 = up_f.edges[0].rectangle_sides_by_vertex()[upper_strip_vertex]
+        up_quadrant_sides2 = up_f.edges[0].rectangle_sides_by_vertex()[upper_strip_vertex]
 
-    # leaves_to_draw.extend(up_quadrant_sides2)  # 2 for the edges of opposite slope
+        # leaves_to_draw.extend(up_quadrant_sides2)  # 2 for the edges of opposite slope
 
-    ### Now we have a quadrant based at upper_strip_vertex (b_NW in the notes) that contains p
-    up_w = upper_strip_vertex ### rename things to make parallelism clearer
+        ### Now we have a quadrant based at upper_strip_vertex (b_NW in the notes) that contains p
+        up_w = upper_strip_vertex ### rename things to make parallelism clearer
 
 
-    ### We also need down_w, which is the translate of up_w by \gamma^{-2}
+        ### We also need down_w, which is the translate of up_w by \gamma^{-2}
 
-    if up_f.is_upper:
-        up_w_tet = up_f.lower_tet
-    else:
-        up_w_tet = up_f.upper_tet
-    f_num = up_w_tet.ordered_faces().index(up_f)
+        if up_f.is_upper:
+            up_w_tet = up_f.lower_tet
+        else:
+            up_w_tet = up_f.upper_tet
+        f_num = up_w_tet.ordered_faces().index(up_f)
 
-    face_num_path = up_translate_tet.face_num_path_to_other_tet(up_w_tet)
-    down_w_tet = down_translate_tet.follow_face_num_path(face_num_path)
-    down_f = down_w_tet.ordered_faces()[f_num]
-    down_w = down_f.vertices[up_candidate_index]
-    down_quadrant_sides2 = down_f.edges[0].rectangle_sides_by_vertex()[down_w]
-    # leaves_to_draw.extend(down_quadrant_sides2)
+        face_num_path = up_translate_tet.face_num_path_to_other_tet(up_w_tet)
+        down_w_tet = down_translate_tet.follow_face_num_path(face_num_path)
+        down_f = down_w_tet.ordered_faces()[f_num]
+        down_w = down_f.vertices[up_candidate_index]
+        down_quadrant_sides2 = down_f.edges[0].rectangle_sides_by_vertex()[down_w]
+        # leaves_to_draw.extend(down_quadrant_sides2)
 
-    # triangles_to_draw.append(down_f) 
+        # triangles_to_draw.append(down_f) 
 
-    upper_strip_vertex2, up_internal_leaf2, up_boundary_leaves2, up_f2, up_candidate_index2 = find_strip_vertex(up_w, up_quadrant_sides2, main_interval, is_upper = True)
-    lower_strip_vertex2, down_internal_leaf2, down_boundary_leaves2, down_f2, down_candidate_index2 = find_strip_vertex(down_w, down_quadrant_sides2, main_interval, is_upper = False)
+        upper_strip_vertex2, up_internal_leaf2, up_boundary_leaves2, up_f2, up_candidate_index2 = find_strip_vertex(up_w, up_quadrant_sides2, main_interval, is_upper = True)
+        lower_strip_vertex2, down_internal_leaf2, down_boundary_leaves2, down_f2, down_candidate_index2 = find_strip_vertex(down_w, down_quadrant_sides2, main_interval, is_upper = False)
 
-    # triangles_to_draw.append(up_f2) 
-    # triangles_to_draw.append(down_f2) 
-    # leaves_to_draw.append(up_internal_leaf2)
-    # leaves_to_draw.append(down_internal_leaf2)
+        # triangles_to_draw.append(up_f2) 
+        # triangles_to_draw.append(down_f2) 
+        # leaves_to_draw.append(up_internal_leaf2)
+        # leaves_to_draw.append(down_internal_leaf2)
 
-       
+           
 
-    # print('up_v', up_v, 'down_v', down_v, 'up_w', up_w, 'down_w', down_w, 'lower_strip_vertex', lower_strip_vertex, 'upper_strip_vertex2', upper_strip_vertex2, 'lower_strip_vertex2', lower_strip_vertex2)
+        # print('up_v', up_v, 'down_v', down_v, 'up_w', up_w, 'down_w', down_w, 'lower_strip_vertex', lower_strip_vertex, 'upper_strip_vertex2', upper_strip_vertex2, 'lower_strip_vertex2', lower_strip_vertex2)
 
     ### Continent is now big enough to contain a gamma-translate of any edge whose rectangle contains the puncture.
 
-    candidate_drilled_edges = con.edges[:] # shallow copy
-    drilled_continent_edges = []
-            
-    ### find edges in continent that have a puncture
-    for e in candidate_drilled_edges:
-        if main_interval.is_inside_edge_rectangle(e):
-            drilled_continent_edges.append(e)
-            # print('main interval found in edge with index', e.index)
-            # print('edge is red?', e.is_red)
-    # print('continent_size', len(con.tetrahedra))
-
-    ### translate punctures to fund dom edges (those edges below fund dom tets)
+    ### now get all translates of all main_intervals to the fundamental domain tetrahedra
     flow_intervals = []
-    for e in drilled_continent_edges:
-        if e.upper_tet == None:
-            e.ensure_continent_contains_tet_above()
-        e2 = continent_fund_dom_tets[e.upper_tet.index].lower_edge
-        new_interval = translate_of_interval_from_one_edge_rect_to_another(e, e2, main_interval)
-        flow_intervals.append( new_interval )
+
+    candidate_drilled_edges = con.edges[:] # shallow copy
+    
+    for main_interval in main_intervals:
+        drilled_continent_edges = []
+                
+        ### find edges in continent that have a puncture
+        for e in candidate_drilled_edges:
+            if main_interval.is_inside_edge_rectangle(e):
+                drilled_continent_edges.append(e)
+                    # print('main interval found in edge with index', e.index)
+                    # print('edge is red?', e.is_red)
+        # print('continent_size', len(con.tetrahedra))
+
+        ### translate punctures to fund dom edges (those edges below fund dom tets)
+        
+        for e in drilled_continent_edges:
+            if e.upper_tet == None:
+                e.ensure_continent_contains_tet_above()
+            e2 = continent_fund_dom_tets[e.upper_tet.index].lower_edge
+            new_interval = translate_of_interval_from_one_edge_rect_to_another(e, e2, main_interval)
+            flow_intervals.append( new_interval )
 
     for interval in flow_intervals:
         interval.extend_within_continent()

@@ -42,6 +42,8 @@ class flow_interval:
 
     def equals(self, other):
         """assuming both intervals have been extended within the continent, checks if they are the same"""
+        if self.flow_cycle != other.flow_cycle:
+            return False
         self.extend_within_continent()
         other.extend_within_continent()
         out = (self.tetrahedra[-1] == other.tetrahedra[-1]) and (self.up_index == other.up_index)
@@ -61,7 +63,9 @@ class flow_interval:
 
     def fellow_travels(self, other):
         """Do the two flow cycles bound an annulus?"""
-        ### Might not work with intervals made from different flow cycles
+        ### This will detect flow intervals based on different flow cycles that bound an annulus. 
+        ### But what if some multiple of one flow cycle cobounds an annulus with some multiple of another?
+        ### If this happens then the code will run forever, trying to separate the flow intervals
         self.ensure_contains_one_cycle()
         other.ensure_contains_one_cycle()
         this_lowest = self.tetrahedra[0]

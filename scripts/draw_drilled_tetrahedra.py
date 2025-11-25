@@ -3,6 +3,38 @@ import pyx ### vector graphics
 from pyx import path, trafo, canvas, style, text, color, deco
 from math import sqrt
 
+def HSLtoRGB(Hk,S,L): ### Hue, Saturation, Luminance between 0.0 and 1.0
+    if (S == 0.0):
+        return [L,L,L]
+    Q = 0.0
+    if L < 0.5:
+        Q = L*(1.0+S)
+    else:
+        Q = L+S-(L*S)
+    P = 2.0 * L - Q
+    r = CalcHSLRGB(Hk + (1.0/3.0), P, Q)
+    g = CalcHSLRGB(Hk, P, Q)
+    b = CalcHSLRGB(Hk - (1.0/3.0), P, Q)
+    
+    return color.rgb(r,g,b)  
+
+# This function is needed by HSLtoRGB().
+def CalcHSLRGB(T, P, Q):
+    if (T < 0.0):
+        T += 1.0
+    elif (T > 1.0):
+        T -= 1.0    
+    c = 0
+    if (T < (1.0/6.0)):
+        c = P + ((Q-P)*6.0*T)
+    elif (T < (0.5)):
+        c = Q
+    elif (T < (2.0/3.0)):
+        c = P + ((Q-P)*((2.0/3.0)-T)*6.0)
+    else:
+        c = P
+    return c     
+
 def make_line(a, b):
     p = path.path( path.moveto(a.real, a.imag) )
     p.append( path.lineto(b.real, b.imag) )
@@ -99,6 +131,23 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
     
+    ### find all flow cycles involved
+    flow_cycles = set([])
+    for tet_intervals in intervals_inside_tet_rectangles:
+        for interval in tet_intervals:
+            flow_cycles.add(interval.flow_cycle)
+    flow_cycles = list(flow_cycles)
+    flow_cycles.sort()
+
+    n = len(flow_cycles)
+    colours = [HSLtoRGB(float(i)/float(n), 1.0, 0.33) for i in range(n)]
+    for i in range(n):
+        coords = global_scale_up * (complex(0.0, -0.6 - 0.25*float(i)))
+        text_coords = global_scale_up * (complex(0.075, -0.6 - 0.25*float(i)))
+        canv.stroke(path.circle(coords.real, coords.imag, big_dot_rad), [deco.filled(), colours[i], style.linewidth(0)])
+        canv.text(text_coords.real, text_coords.imag, "$"+str(flow_cycles[i])+"$", textattrs=[text.size(-4), color.rgb(0.4,0.4,0.4), text.halign.left, text.valign.middle])
+
+
     for i in range(len(tetrahedra_cusp_orders)):
         draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple, draw_inner_lines = draw_square_inner_lines)
         old_tet_rect = old_tet_rectangles[i]
@@ -216,7 +265,9 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
                 y = interval.sn_chunk_num + (interval.sn_in_chunk_index + 1)/heights[interval.sn_chunk_num]
                 coords = global_scale_up*(offset + complex(x, y))
                 ### draw drilled dots
-                canv.stroke(path.circle(coords.real, coords.imag, small_dot_rad), [deco.filled(), style.linewidth(0)])
+                flow_cycle_ind = flow_cycles.index(interval.flow_cycle)
+                canv.stroke(path.circle(coords.real, coords.imag, small_dot_rad), [deco.filled(), colours[flow_cycle_ind], style.linewidth(0)])
+                # canv.text(coords.real, coords.imag, flow_cycle_ind, textattrs=[text.size(-3), grey, text.halign.center, text.valign.middle])
 
         ### Draw dots and indices for the vertices of the original tetrahedra
         for coords, ind in [(W_coords, W_ind), (E_coords, E_ind), (S_coords, S_ind), (N_coords, N_ind)]:
@@ -224,7 +275,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
             canv.stroke(path.circle(dot_coords.real, dot_coords.imag, big_dot_rad), [deco.filled(), style.linewidth(0)])
             if draw_vertex_numbers:
                 symbol_coords = global_scale_up*(1.11*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset)
-                canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(ind)+"$", textattrs=[text.size(-3), grey, text.halign.center, text.valign.middle])
+                canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(ind)+"$", textattrs=[text.size(-4), grey, text.halign.center, text.valign.middle])
 
     output_filename = 'Images/DrilledTetrahedra/' + name + '_tet_rects' + '.pdf'
     print(output_filename)
