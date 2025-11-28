@@ -40,7 +40,7 @@ def make_line(a, b):
     p.append( path.lineto(b.real, b.imag) )
     return p
 
-def draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple, draw_inner_lines = True):
+def draw_square(i, canv, global_scale_up, global_scale_matrix, edge_thickness, green, purple, draw_inner_lines = True):
     offset = complex(4*i,0)
     if draw_inner_lines:
         indices = [0,1,2,3]
@@ -48,51 +48,38 @@ def draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple, dr
         indices = [0,3]
     for j in indices:
         p = make_line(complex(0,j) + offset, complex(3,j) + offset)
-        p = p.transformed(scl)
+        p = p.transformed(global_scale_matrix)
         canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, purple, color.transparency(0.75)])
     for j in indices:
         p = make_line(complex(j,0) + offset, complex(j,3) + offset)
-        p = p.transformed(scl)
+        p = p.transformed(global_scale_matrix)
         canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green, color.transparency(0.75)])
     text_pos = global_scale_up * (complex(1.5, 3.8) + offset)
     canv.text(text_pos.real, text_pos.imag, "$"+str(i)+"$", textattrs=[text.size(3), text.halign.center, text.valign.middle])
 
-def draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_scale_in = None, global_delta = None):
+def draw_edge_rectangle(canv, corners, global_scale_matrix, edge_thickness, green, purple, global_delta = None):
     center = 0.5*(corners[0] + corners[1])
     x0, x1 = sorted([corner.real for corner in corners])
     y0, y1 = sorted([corner.imag for corner in corners])
-    if global_delta == None:
-        w = x1 - x0
-        h = y1 - y0
-        ### shrink smaller of the two sidelengths
-        # delta = min(w, h) * (1.0 - rect_scale_in)
 
-        ### reduce area
-        # delta = (h+w - sqrt( (h+w)**2 - 4*h*w*(1 - rect_scale_in) ))/2
-        
-        ### reduce perimeter
-        delta = (h+w)*(1 - rect_scale_in)/2
-    else:
-        delta = global_delta 
-    # corners = [rect_scale_in*(corner - center) + center for corner in corners]
-    x0, x1 = x0 + delta, x1 - delta
-    y0, y1 = y0 + delta, y1 - delta
+    x0, x1 = x0 + global_delta, x1 - global_delta
+    y0, y1 = y0 + global_delta, y1 - global_delta
     p = make_line(complex(x0, y0), complex(x1, y0))
-    p = p.transformed(scl)
+    p = p.transformed(global_scale_matrix)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, purple])
     p = make_line(complex(x1, y0), complex(x1, y1))
-    p = p.transformed(scl)
+    p = p.transformed(global_scale_matrix)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
     p = make_line(complex(x1, y1), complex(x0, y1))
-    p = p.transformed(scl)
+    p = p.transformed(global_scale_matrix)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, purple])
     p = make_line(complex(x0, y1), complex(x0, y0))
-    p = p.transformed(scl)
+    p = p.transformed(global_scale_matrix)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
 
-def draw_rectangle(canv, x_interval, y_interval, scl, edge_thickness, green, purple, rect_scale_in = None, global_delta = None):
+def draw_rectangle(canv, x_interval, y_interval, global_scale_matrix, edge_thickness, green, purple, global_delta = None):
     corners = [complex(x_interval[i], y_interval[i]) for i in range(2)]
-    draw_edge_rectangle(canv, corners, scl, edge_thickness, green, purple, rect_scale_in = rect_scale_in, global_delta = global_delta)
+    draw_edge_rectangle(canv, corners, global_scale_matrix, edge_thickness, green, purple, global_delta = global_delta)
 
 class rect_wrapper:
     def __init__(self, rect):
@@ -109,17 +96,15 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
     draw_square_inner_lines = True,
     draw_vertex_numbers = False, 
     edge_thickness = 0.02,
-    transparency = 0.9):
+    transparency = 0.9,
+    global_scale_up = 1.0,
+    scale_drawn_elements = 1.0):
 
-    global_delta = 0.04
-    rectangle_spacing = 0.02
-    # global_delta = None
-    rect_scale_in = 0.95
-
+    global_delta = 0.04      ### distance to move new rectangles in from dots
+    rectangle_spacing = 0.02 ### additional distance for multiple rectangles to one side of a dot
     big_dot_rad = 0.03
     small_dot_rad = 0.02
 
-    global_scale_up = 1.0
     red = color.rgb(0.9,0.3,0)
     blue = color.rgb(0,0.3,0.9)
     edge_colours = {True: red, False: blue}
@@ -128,7 +113,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
     leaf_colours = {True: green, False: purple}
     grey = color.rgb(0.5,0.5,0.5)
     
-    scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
+    global_scale_matrix = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
     canv = canvas.canvas()
     
     ### find all flow cycles involved
@@ -147,9 +132,15 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
         canv.stroke(path.circle(coords.real, coords.imag, big_dot_rad), [deco.filled(), colours[i], style.linewidth(0)])
         canv.text(text_coords.real, text_coords.imag, "$"+str(flow_cycles[i])+"$", textattrs=[text.size(-4), color.rgb(0.4,0.4,0.4), text.halign.left, text.valign.middle])
 
+    ### now that we have drawn the dots for the key, scale everything down.
+    global_delta *= scale_drawn_elements
+    rectangle_spacing *= scale_drawn_elements
+    big_dot_rad *= scale_drawn_elements
+    small_dot_rad *= scale_drawn_elements
+    edge_thickness *= scale_drawn_elements
 
     for i in range(len(tetrahedra_cusp_orders)):
-        draw_square(i, canv, global_scale_up, scl, edge_thickness, green, purple, draw_inner_lines = draw_square_inner_lines)
+        draw_square(i, canv, global_scale_up, global_scale_matrix, edge_thickness, green, purple, draw_inner_lines = draw_square_inner_lines)
         old_tet_rect = old_tet_rectangles[i]
         tet_rect_coords = [None] * len(old_tet_rect.horiz_ordering)
 
@@ -199,7 +190,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
                 # print('tet', i, 'num edge rects', len(edge_rects))
                 for edge_rect in edge_rects:
                     corners = [tet_rect_coords[j] for j in edge_rect]
-                    draw_edge_rectangle(canv, corners, scl, 0.4*edge_thickness, green, purple, rect_scale_in = rect_scale_in)
+                    draw_edge_rectangle(canv, corners, global_scale_matrix, 0.4*edge_thickness, green, purple)
 
             if draw_face_rectangles:
                 face_rects = old_tet_rect.face_rectangles()
@@ -210,7 +201,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
                     y_coords = [v.imag for v in verts]
                     x_interval = (min(x_coords), max(x_coords))
                     y_interval = (min(y_coords), max(y_coords))
-                    draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple, rect_scale_in = rect_scale_in)
+                    draw_rectangle(canv, x_interval, y_interval, global_scale_matrix, 0.4*edge_thickness, green, purple)
 
             if draw_tetrahedron_rectangles:
 
@@ -256,7 +247,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
                     N_place = dot_sides[rectw.N_dot]['S'].index(rectw)
                     x_interval = [min(rectw.x_coords) + rectangle_spacing*W_place, max(rectw.x_coords) - rectangle_spacing*E_place]
                     y_interval = [min(rectw.y_coords) + rectangle_spacing*S_place, max(rectw.y_coords) - rectangle_spacing*N_place]
-                    draw_rectangle(canv, x_interval, y_interval, scl, 0.4*edge_thickness, green, purple, global_delta = global_delta, rect_scale_in = rect_scale_in)
+                    draw_rectangle(canv, x_interval, y_interval, global_scale_matrix, 0.4*edge_thickness, green, purple, global_delta = global_delta)
 
             ### drilling dots
             for interval in tet_intervals:
@@ -271,7 +262,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
 
         ### Draw dots and indices for the vertices of the original tetrahedra
         for coords, ind in [(W_coords, W_ind), (E_coords, E_ind), (S_coords, S_ind), (N_coords, N_ind)]:
-            dot_coords = coords + offset
+            dot_coords = global_scale_up*(coords + offset)
             canv.stroke(path.circle(dot_coords.real, dot_coords.imag, big_dot_rad), [deco.filled(), style.linewidth(0)])
             if draw_vertex_numbers:
                 symbol_coords = global_scale_up*(1.11*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset)

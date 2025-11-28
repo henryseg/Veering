@@ -63,6 +63,9 @@ class flow_interval:
         ### It may be that one flow interval is the core of a mobius strip and the other is its boundary,
         ### in which case we need to see if one flow interval bounds and annulus with double the other.
         ### This happens with fLLQcbeddeehhbghh_01110 and the flow cycles ((1, 1),) and ((0, 5), (4, 0))
+
+        ### We probably only need to do these checks when the lengths of the flow cycles line up?
+
         self.ensure_contains_one_cycle_up()
         self.ensure_contains_one_cycle_down()
         other.ensure_contains_one_cycle_up()
