@@ -16,7 +16,7 @@ def flow_edge_in_continent(con_tet, edge_num):
     return edge
 
 class flow_interval:
-    def __init__(self, continent, flow_cycle, init_flow_tetrahedron, init_flow_index):
+    def __init__(self, continent, flow_cycle, init_flow_tetrahedron, init_flow_index, verbose = 0):
         self.continent = continent
         self.flow_cycle = flow_cycle
         self.tetrahedra = [init_flow_tetrahedron]
@@ -28,6 +28,7 @@ class flow_interval:
         self.init_tet = init_flow_tetrahedron  ### never alter after initialization
         self.init_edge = init_flow_edge  ### never alter after initialization
         self.name = 'int_' + self.init_tet.__repr__()
+        self.verbose = verbose
 
     def __repr__(self):
         return self.name
@@ -36,7 +37,7 @@ class flow_interval:
         return self.__repr__()
 
     def copy(self):
-        other = flow_interval(self.continent, self.flow_cycle, self.init_tet, self.init_flow_index)
+        other = flow_interval(self.continent, self.flow_cycle, self.init_tet, self.init_flow_index, verbose = self.verbose)
         other.extend_within_continent()
         return other
 
@@ -56,31 +57,42 @@ class flow_interval:
             assert self.down_index == other.down_index
         return out
 
-    def ensure_contains_one_cycle(self):
-        while len(self.tetrahedra) <= len(self.flow_cycle):
-            self.go_up()
-            self.go_down()  ### make longer, we don't really care how.
-
     def fellow_travels(self, other):
         """Do the two flow cycles bound an annulus?"""
         ### This will detect flow intervals based on different flow cycles that bound an annulus. 
-        ### But what if some multiple of one flow cycle cobounds an annulus with some multiple of another?
-        ### If this happens then the code will run forever, trying to separate the flow intervals
-        self.ensure_contains_one_cycle()
-        other.ensure_contains_one_cycle()
-        this_lowest = self.tetrahedra[0]
-        this_one_cycle_up = self.tetrahedra[len(self.flow_cycle)]
-        other_lowest = other.tetrahedra[0]
-        other_one_cycle_up = other.tetrahedra[len(other.flow_cycle)]
-        path = this_lowest.face_num_path_to_other_tet(other_lowest)
-        return this_one_cycle_up.follow_face_num_path(path) == other_one_cycle_up
+        ### It may be that one flow interval is the core of a mobius strip and the other is its boundary,
+        ### in which case we need to see if one flow interval bounds and annulus with double the other.
+        ### This happens with fLLQcbeddeehhbghh_01110 and the flow cycles ((1, 1),) and ((0, 5), (4, 0))
+        self.ensure_contains_one_cycle_up()
+        self.ensure_contains_one_cycle_down()
+        other.ensure_contains_one_cycle_up()
+        other.ensure_contains_one_cycle_down()
+        this_zero = self.get_tet_at_position(0)
+        this_pos_one = self.get_tet_at_position(len(self.flow_cycle))
+        this_neg_one = self.get_tet_at_position(-len(self.flow_cycle))
+        other_zero = other.get_tet_at_position(0)
+        other_pos_one = other.get_tet_at_position(len(other.flow_cycle))
+        other_neg_one = other.get_tet_at_position(-len(other.flow_cycle))
+
+        # path_zero = this_zero.face_num_path_to_other_tet(other_zero)
+        # return this_pos_one.follow_face_num_path(path_zero) == other_pos_one
+
+        path_neg_one = this_neg_one.face_num_path_to_other_tet(other_neg_one)
+        if this_zero.follow_face_num_path(path_neg_one) == other_zero:
+            return True ### flow cycles move at same speed
+        if this_zero.follow_face_num_path(path_neg_one) == other_pos_one:
+            return True ### this moves twice as fast as other
+        if this_pos_one.follow_face_num_path(path_neg_one) == other_zero:
+            return True ### this moves half as fast as other
+        return False
 
     def is_in_list(self, intervals_list):
         for other in intervals_list:
             if self.equals(other):
                 return True, False  ### first is the result, second is whether or not we found a parallel interval
             if self.fellow_travels(other):
-                # print('found fellow travelling flow intervals')
+                if self.verbose > 2 or (self.verbose > 1 and self.flow_cycle != other.flow_cycle):
+                    print('found fellow travelling flow intervals: ' + str(self.flow_cycle) + ' ' + str(other.flow_cycle))
                 return True, True
         return False, False
 
@@ -242,6 +254,11 @@ class flow_interval:
         if self.how_far_down() < len(self.flow_cycle):
             for i in range(len(self.flow_cycle) - self.how_far_down()):
                 self.go_down()
+
+    def ensure_contains_one_cycle(self):
+        while len(self.tetrahedra) <= len(self.flow_cycle):
+            self.go_up()
+            self.go_down()  ### make longer, we don't really care how.
 
     def crossing_leaves(self): ### find green leaves of tetrahedra[-1] that cross purple leaves of tetrahedra[0]
         green_boundary = self.tetrahedra[-1].get_boundary_cusp_leaves()[0]
@@ -438,7 +455,7 @@ def translate_of_interval_from_one_edge_rect_to_another(e1, e2, interval):
     assert t1.index == t2.index
     path = t1.face_num_path_to_other_tet(interval.continent.init_tet) + interval.continent.init_tet.face_num_path_to_other_tet(interval.init_tet)
     translated_interval_init_tet = t2.follow_face_num_path(path)
-    new_interval = flow_interval(interval.continent, interval.flow_cycle, translated_interval_init_tet, 0)
+    new_interval = flow_interval(interval.continent, interval.flow_cycle, translated_interval_init_tet, 0, verbose = interval.verbose)
     assert new_interval.is_inside_edge_rectangle(e2)
     return new_interval
 

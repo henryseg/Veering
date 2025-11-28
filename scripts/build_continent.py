@@ -164,7 +164,6 @@ def make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_
     if verbose > 0:
         print('drill', veering_isosig, flow_cycles, 'are_twisted:', flow_cycles_are_twisted, 'use_untwisted_speed_up:', use_untwisted_speed_up)
 
-    found_parallel = False ### in building the continent, do we find fellow-travelling flow_cycles (if so then drilling naively will not give a hyperbolic manifold)
 
     ## install into vt:
     # vt.side_face_collections, vt.side_tet_collections = edge_side_face_collections(vt.tri, vt.angle, tet_vert_coorientations = vt.coorientations, return_tets = True, order_bottom_to_top = False)
@@ -173,32 +172,42 @@ def make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_
     ### identify the next edge in the cycle 
 
     # print([t.index for t in continent_fund_dom_tets])
+
+    fund_dom_edges = []
+    for tet in continent_fund_dom_tets:
+        for e in tet.edges():
+            fund_dom_edges.append(e)
+    for e in fund_dom_edges:
+        e.ensure_continent_contains_rectangle()
+
     main_intervals = []
+    leaves_to_draw = []
+    triangles_to_draw = []
+    found_parallel = False ### in building the continent, do we find fellow-travelling flow_cycles (if so then drilling naively will not give a hyperbolic manifold)
+
     for i, flow_cycle in enumerate(flow_cycles):
+        if verbose > 0:
+            print('flow cycle', flow_cycle)
         flow_cycle_is_twisted = flow_cycles_are_twisted[i]
         init_tetrahedron = continent_fund_dom_tets[flow_cycle[0][0]]
         # print('init tet index, flow cycle', init_tetrahedron.index, flow_cycle)
         assert init_tetrahedron.index == flow_cycle[0][0]
 
-        main_interval = flow_interval(con, flow_cycle, init_tetrahedron, 0)
-        main_intervals.append(main_interval)
-
-        fund_dom_edges = []
-        for tet in continent_fund_dom_tets:
-            for e in tet.edges():
-                fund_dom_edges.append(e)
-        for e in fund_dom_edges:
-            e.ensure_continent_contains_rectangle()
+        main_interval = flow_interval(con, flow_cycle, init_tetrahedron, 0, verbose = verbose)
 
         ### next find translates of init_tetrahedron along flow interval up one cycle and down one cycle
         main_interval.ensure_contains_one_cycle_up()
         if flow_cycle_is_twisted or not use_untwisted_speed_up:
             main_interval.ensure_contains_one_cycle_down()  ### does not make much difference experimentally
 
-        if main_interval.is_boundary_parallel():  ### FIX?
+        if main_interval.is_boundary_parallel(): 
             if verbose >= 1:
-                print('flow cycle is boundary parallel')
-            return None
+                print('flow cycle ' + str(flow_cycle) +  ' is boundary parallel')
+            continue ## skip this flow_cycle
+
+        ### Now we know that main_interval is not boundary parallel
+        main_intervals.append(main_interval)
+
         up_translate_tet = main_interval.get_tet_at_position(len(flow_cycle))
         up_translate_edge = main_interval.get_edge_at_position(len(flow_cycle))
         if flow_cycle_is_twisted or not use_untwisted_speed_up:
@@ -238,7 +247,7 @@ def make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_
         assert len(down_quadrant_sides) == 2
         
         # leaves_to_draw = up_quadrant_sides + down_quadrant_sides
-        leaves_to_draw = []
+        
         # leaves_to_draw.extend( up_quadrant_sides[:] + down_quadrant_sides[:] )
 
         # for i in range(2):
@@ -254,7 +263,7 @@ def make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_
         upper_strip_vertex, up_internal_leaf, up_boundary_leaves, up_f, up_candidate_index = find_strip_vertex(up_v, up_quadrant_sides, main_interval, is_upper = True)
         # leaves_to_draw.append(up_internal_leaf)
         # leaves_to_draw.extend(up_boundary_leaves)
-        triangles_to_draw = []
+        
         # triangles_to_draw.append(up_f)
 
         lower_strip_vertex, down_internal_leaf, down_boundary_leaves, down_f, down_candidate_index = find_strip_vertex(down_v, down_quadrant_sides, main_interval, is_upper = False)
@@ -330,11 +339,13 @@ def make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_
     for interval in flow_intervals:
         interval.extend_within_continent()
 
+    if verbose >= 2:
+        print('num flow_intervals in fund dom edges', len(flow_intervals))
     flow_intervals, found_parallel_this_time = uniquify_list_of_flow_intervals(flow_intervals)
     if not found_parallel and found_parallel_this_time:
         found_parallel = True
     if verbose >= 2:
-        print('num unique flow_intervals', len(flow_intervals))
+        print('num unique flow_intervals in fund dom edges', len(flow_intervals))
 
     fund_dom_unique_edges = [t.lower_edge for t in continent_fund_dom_tets]
     fund_dom_unique_edge_indices = [e.index for e in fund_dom_unique_edges]

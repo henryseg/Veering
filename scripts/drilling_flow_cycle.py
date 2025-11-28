@@ -46,7 +46,7 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
 
     return tri, angle, cusp_mapping
 
-def drill_flow_cycles(veering_isosig, flow_cycles, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, draw_rectangles = False, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
+def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, draw_rectangles = False, draw_tetrahedron_rectangles = False, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
     out = make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
     if out == None:  ### flow cycle is boundary parallel
         # print('flow_cycle is boundary parallel')
@@ -56,12 +56,14 @@ def drill_flow_cycles(veering_isosig, flow_cycles, return_isosig_tri_angle = Fal
     new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
     
     if draw_rectangles:
-        name = veering_isosig + '' + str(flow_cycles) + '_drill'
-        draw_drilled_tetrahedra(con, name = name, draw_vertex_numbers = True, 
+        if save_filename == None:
+            save_filename = veering_isosig + '' + str(flow_cycles) + '_drill'
+        draw_drilled_tetrahedra(con, name = save_filename, draw_vertex_numbers = True, 
         tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
         intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 
         tetrahedra_chunks = tetrahedra_chunks,
-        old_tet_rectangles = old_tet_rectangles)
+        old_tet_rectangles = old_tet_rectangles,
+        draw_tetrahedron_rectangles = draw_tetrahedron_rectangles)
     
     built_tri, built_angle, built_to_original_cusp_mapping = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
 
@@ -108,6 +110,13 @@ def drill_flow_cycle_list(veering_isosig, max_length = 2, monochromatic_only = F
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length, monochromatic_only = monochromatic_only, max_length_only = max_length_only)
     for cycle, num_steps_up in cycles:
         print(veering_isosig, num_steps_up, cycle, drill_flow_cycles(veering_isosig, [cycle])) 
+
+def drill_all_flow_cycles(veering_isosig, min_length, max_length, verbose = 0):
+    cycles = generate_flow_cycles(veering_isosig, max_length = max_length, min_length = min_length)
+    print('flow_cycles', cycles)
+    save_filename = veering_isosig + '_drill_all_' + str(min_length) + '_' + str(max_length)
+    drilled = drill_flow_cycles(veering_isosig, cycles, save_filename = save_filename, draw_rectangles = True, draw_tetrahedron_rectangles = False, verbose = verbose)
+    return drilled
 
 def main():
     ### examples where drilling the flow cycle and drilling the geodesic give different answers:
