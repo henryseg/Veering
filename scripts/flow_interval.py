@@ -61,11 +61,19 @@ class flow_interval:
         """Do the two flow cycles bound an annulus?"""
         ### This will detect flow intervals based on different flow cycles that bound an annulus. 
         ### It may be that one flow interval is the core of a mobius strip and the other is its boundary,
-        ### in which case we need to see if one flow interval bounds and annulus with double the other.
+        ### in which case we need to see if one flow interval bounds an annulus with double the other.
         ### This happens with fLLQcbeddeehhbghh_01110 and the flow cycles ((1, 1),) and ((0, 5), (4, 0))
 
-        ### We probably only need to do these checks when the lengths of the flow cycles line up?
+        ### It also happens that a flow interval bounds an annulus with a translate of itself, or one copy
+        ### of a flow interval with a different flow cycle, see e.g. dLQacccjsnk_200, with self-fellow-travelling ((0, 3),)
 
+        ### Edge-orientable example: fLLQcbeddeehhnkhh_21112, has fellow travelling flow cycles ((1, 1),), ((0, 3),), and ((4, 3),)
+
+        ### Claim: We only need to do these checks when the lengths of the flow cycles line up
+        ### FIX: Proof: is somewhere in LMT 
+        a, b = len(self.flow_cycle), len(other.flow_cycle)
+        if a != b and 2*a != b and a != 2*b:
+            return False
         self.ensure_contains_one_cycle_up()
         self.ensure_contains_one_cycle_down()
         other.ensure_contains_one_cycle_up()

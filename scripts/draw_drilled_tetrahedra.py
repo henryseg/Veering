@@ -64,15 +64,19 @@ def draw_edge_rectangle(canv, corners, global_scale_matrix, edge_thickness, gree
 
     x0, x1 = x0 + global_delta, x1 - global_delta
     y0, y1 = y0 + global_delta, y1 - global_delta
+    
     p = make_line(complex(x0, y0), complex(x1, y0))
     p = p.transformed(global_scale_matrix)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, purple])
-    p = make_line(complex(x1, y0), complex(x1, y1))
-    p = p.transformed(global_scale_matrix)
-    canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
+    
     p = make_line(complex(x1, y1), complex(x0, y1))
     p = p.transformed(global_scale_matrix)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, purple])
+
+    p = make_line(complex(x1, y0), complex(x1, y1))
+    p = p.transformed(global_scale_matrix)
+    canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
+    
     p = make_line(complex(x0, y1), complex(x0, y0))
     p = p.transformed(global_scale_matrix)
     canv.stroke(p, [style.linewidth(edge_thickness), style.linecap.round, green])
@@ -159,11 +163,11 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
             N_ind, S_ind = top_vertices
             W_ind, E_ind = bottom_vertices
 
-            tet_rect_coords[0] = global_scale_up*(W_coords + offset)
-            tet_rect_coords[-1] = global_scale_up*(E_coords + offset)
+            tet_rect_coords[0] = (W_coords + offset)
+            tet_rect_coords[-1] = (E_coords + offset)
             v2hperm = old_tet_rect.vert_to_horiz_perm()
-            tet_rect_coords[v2hperm[0]] = global_scale_up*(S_coords + offset)
-            tet_rect_coords[v2hperm[-1]] = global_scale_up*(N_coords + offset)
+            tet_rect_coords[v2hperm[0]] = (S_coords + offset)
+            tet_rect_coords[v2hperm[-1]] = (N_coords + offset)
 
             Regina_tet = con.vt.tri.tetrahedron(i)
             ### Draw triangle numbers
@@ -181,7 +185,8 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
                 # print('we chunk num', interval.we_chunk_num, 'we_in_chunk_index', interval.we_in_chunk_index, 'sn chunk num', interval.sn_chunk_num, 'sn_in_chunk_index', interval.sn_in_chunk_index, 'interval', interval)
                 x = interval.we_chunk_num + (interval.we_in_chunk_index + 1)/widths[interval.we_chunk_num]
                 y = interval.sn_chunk_num + (interval.sn_in_chunk_index + 1)/heights[interval.sn_chunk_num]
-                coords = global_scale_up*(offset + complex(x, y))
+                # coords = global_scale_up*(offset + complex(x, y))
+                coords = (offset + complex(x, y))
                 tet_rect_coords[old_tet_rect.horiz_ordering.index(interval)] = coords
                 # canv.stroke(path.circle(coords.real, coords.imag, 0.035), [deco.filled(), style.linewidth(0)])
 

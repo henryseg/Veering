@@ -113,16 +113,13 @@ def drill_flow_cycle_list(veering_isosig, max_length = 2, monochromatic_only = F
     for cycle, num_steps_up in cycles:
         print(veering_isosig, num_steps_up, cycle, drill_flow_cycles(veering_isosig, [cycle])) 
 
-def drill_all_flow_cycles(veering_isosig, min_length, max_length, verbose = 0):
+def drill_all_flow_cycles(veering_isosig, min_length, max_length, draw_tetrahedron_rectangles = True, global_scale_up = 1.0, scale_drawn_elements = 1.0, verbose = 0):
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length, min_length = min_length)
     print('flow_cycles', cycles)
     save_filename = veering_isosig + '_drill_all_' + str(min_length) + '_' + str(max_length)
     drilled = drill_flow_cycles(veering_isosig, cycles, save_filename = save_filename, 
-        draw_rectangles = True, draw_tetrahedron_rectangles = False, 
-        global_scale_up = 1.0, scale_drawn_elements = 1.0, verbose = verbose)
-    # drilled = drill_flow_cycles(veering_isosig, cycles, save_filename = save_filename, 
-    #     draw_rectangles = True, draw_tetrahedron_rectangles = True, 
-    #     global_scale_up = 1.0, scale_drawn_elements = 0.25, verbose = verbose)
+        draw_rectangles = True, draw_tetrahedron_rectangles = draw_tetrahedron_rectangles, 
+        global_scale_up = global_scale_up, scale_drawn_elements = scale_drawn_elements, verbose = verbose)
     return drilled
 
 def main():
