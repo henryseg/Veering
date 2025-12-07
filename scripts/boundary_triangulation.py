@@ -710,7 +710,7 @@ class torus_triangulation:
             self.our_cusp_area = our_cusp_area(self.sideways_once_holonomy, self.ladder_holonomy)
             
             ### scale and rotate. Will get multiplied by global drawing scale when we generate canvas
-            if self.bt.args['scale_for_CT'] == True:
+            if 'scale_for_CT' in self.bt.args.keys() and self.bt.args['scale_for_CT'] == True:
                 self.drawing_scale_and_rotate = 1.0/sqrt(self.our_cusp_area) * complex(0.0, 1.0) * abs(self.ladder_holonomy) / (self.ladder_holonomy)
             else:
                 self.drawing_scale_and_rotate = complex(0.0, 1.0) * abs(self.ladder_holonomy) / (self.ladder_holonomy)
@@ -909,7 +909,7 @@ class torus_triangulation:
 class boundary_triangulation:
     """list of torus_triangulations for all boundary components of the manifold"""
 
-    def __init__(self, vt, args):
+    def __init__(self, vt, args = {}):
         self.torus_triangulation_list = []
         self.vt = vt
         self.args = args
@@ -972,7 +972,7 @@ def generate_boundary_triangulation(tri, angle, args = {}, output_filename = Non
     else:
         ts = None
     vt = veering_triangulation(tri, angle, tet_shapes = ts)
-    return boundary_triangulation(vt, args)
+    return boundary_triangulation(vt, args = args)
         
 def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, output_filename = None, verbose = 0.0):
     if verbose > 0.0: print(args)

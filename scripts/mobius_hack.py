@@ -2,10 +2,9 @@
 # Finding a path of mobius transformations
 #
 
-from sage.symbolic.all import I
+from sage.rings.imaginary_unit import I
 from sage.symbolic.constants import pi
-from sage.functions.other import sqrt
-from sage.functions.log import log
+from sage.misc.functional import sqrt, log
 from sage.functions.log import exp
 
 from veering.basic_math import matrix

@@ -59,6 +59,9 @@ class flow_interval:
 
     def fellow_travels(self, other):
         """Do the two flow cycles bound an annulus?"""
+
+        ### Only works for primitive flow cycles. (Which are the only ones we generate.)
+
         ### This will detect flow intervals based on different flow cycles that bound an annulus. 
         ### It may be that one flow interval is the core of a mobius strip and the other is its boundary,
         ### in which case we need to see if one flow interval bounds an annulus with double the other.
@@ -70,7 +73,13 @@ class flow_interval:
         ### Edge-orientable example: fLLQcbeddeehhnkhh_21112, has fellow travelling flow cycles ((1, 1),), ((0, 3),), and ((4, 3),)
 
         ### Claim: We only need to do these checks when the lengths of the flow cycles line up
-        ### FIX: Proof: is somewhere in LMT 
+        ### Proof: comes from LMT, Flows, growth rates, and the veering polynomial Thm 6.1(4):
+        ### Either an orbit is homotopic to a flow cycle or it is homotopic to an odd AB-cycle.
+        ### In the latter case, the homotopy class of this AB-cycle sends one flow line to another flow line,
+        ### both of which represent the same point of the orbit space.
+
+        ### So in the edge orientable case, we could skip checking for double one flow cycle being homotopic to one copy of the other.
+
         a, b = len(self.flow_cycle), len(other.flow_cycle)
         if a != b and 2*a != b and a != 2*b:
             return False

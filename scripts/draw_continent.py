@@ -953,10 +953,10 @@ def draw_continent( veering_isosig, max_num_tetrahedra = 1000, max_length = 0.2,
         if hit_max_tetrahedra:
             output_filename = output_filename[:-4] + '_hitmax.pdf'
         if i < len(draw_args_list):
-            pass
-            # draw_args = draw_args_list[i]
-            # draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
-            # B.clear_canvases()
+            # pass
+            draw_args = draw_args_list[i]
+            draw_prepared_continents( continents, B, output_filename = output_filename, max_length = max_length, draw_args = draw_args )
+            B.clear_canvases()
         else:
             export_spherical_coordinates( continents, B, output_filename = output_filename )
 
