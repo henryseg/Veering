@@ -295,10 +295,12 @@ def stratum(tri, angle, weights, return_surface = False):
     
     verify_Poincare_Hopf(g_b_data, prongs_data)
     
+    stratum = [[g_b_data[i][0], prongs_data[i]] for i in range(len(g_b_data))]
+    
     if return_surface == True:
-        return g_b_data, prongs_data, surface
+        return stratum, surface
 
-    return g_b_data, prongs_data
+    return stratum
 
 def stratum_from_built_surface(surface): # when the surface is already built
     
@@ -307,7 +309,9 @@ def stratum_from_built_surface(surface): # when the surface is already built
     
     verify_Poincare_Hopf(g_b_data, prongs_data)
     
-    return g_b_data, prongs_data
+    stratum = [[g_b_data[i][0], prongs_data[i]] for i in range(len(g_b_data))]
+    
+    return stratum
     
 # below: finding combinatorial isomorphisms of the surface which are orientation preserving and preserve the stable track    
 
