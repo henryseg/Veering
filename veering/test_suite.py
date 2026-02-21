@@ -707,7 +707,7 @@ sage_tests = [test_is_layered,
               test_is_layered,
               test_measured,
               # test_empty, # broken in sage 10.4
-              test_euler_characteristic,
+              test_euler_characteristic, # very rarely just... hangs?
               # test_hom_dim, # sometimes broken in sage 10.4
               test_boundary_cycles,
               test_taut_with_cycles,
