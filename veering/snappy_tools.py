@@ -21,13 +21,11 @@ def tet_norm(z):
         return (z - 1)/z
     else:   
         return 1/(1 - z)
-    
 
 def shapes(tri, bits_prec = 424):  ###212
     N = snappy.Manifold(tri)
     # return [complex(shape['rect']) for shape in N.tetrahedra_shapes()]
     return N.tetrahedra_shapes('rect', bits_prec = bits_prec)
-
 
 
 # From a given collection of isosigs, build the snappy shapes and put
@@ -50,7 +48,9 @@ def shapes_to_pickle(isosigs, filename, progress = 100):
     output_to_pickle(shapes, filename)
     return None
 
+
 # Algebraic shapes
+
 
 def algebraic_shapes(tri):
     N = snappy.Manifold(tri)
@@ -78,13 +78,17 @@ def algebraic_shapes(tri):
         assert abs(float_shapes[i] - alg_shapes[i]) < 0.0001
         return (field, alg_shapes)
 
+
 # Cusp areas
+
 
 def cusp_areas(tri):
     N = snappy.Manifold(tri)
     return N.cusp_areas()
 
+
 # Peripheral intersection numbers
+
 
 def triangle_sum(x, y):
     x0, x1, x2 = x
@@ -104,13 +108,11 @@ def algebraic_intersection(a, b):
 
     return sum([triangle_sum(a[3*i:3*i + 3], b[3*i:3*i + 3]) for i in range(num_tets)]) // 2
 
-
 def cusp_slope(m, l, a):
     p, q = (algebraic_intersection(a, l), algebraic_intersection(m, a))
     if p > 0 or (p == 0 and q > 0):
         return (p, q)
     return (-p, -q)
-
 
 def get_slopes_from_peripherals(M, peripherals):
     # given a snappy manifold and list of peripheral curves, return a

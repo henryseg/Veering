@@ -196,17 +196,17 @@ def test_veering_drilling_and_filling(veering_isosigs, num_to_check, smaller_num
     from . import veering_drill_midsurface_bdy
 
     for sig in random.sample(veering_isosigs[:3000], num_to_check):
+        N = snappy.Manifold(sig.split("_")[0])
         T, per = veering_drill_midsurface_bdy.drill_midsurface_bdy(sig)
         M = snappy.Manifold(T.snapPea())
         M.set_peripheral_curves("shortest")
         L = snappy_tools.get_slopes_from_peripherals(M, per)
         M.dehn_fill(L)
-        N = snappy.Manifold(sig.split("_")[0])
+        M = snappy.Manifold(M.triangulation_isosig()) # seems to help?!?!? Bizarre
         try:
             assert M.is_isometric_to(N), sig
         except:
             print("Something has gone wrong.")
-            print("Perhaps snappy is working with too little precision.")
             print(sig)
             raise
 
