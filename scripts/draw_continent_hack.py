@@ -14,8 +14,8 @@ from continent import continent
 from boundary_triangulation import boundary_triangulation, tet_face
 from mobius_hack import many_matrices
 
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPM
+# from svglib.svglib import svg2rlg
+# from reportlab.graphics import renderPM
 
 # def pre_draw_transformation( z, ladder_holonomy ):
     # return z/ladder_holonomy
@@ -291,7 +291,7 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
 
     tri, angle = isosig_to_tri_angle(veering_isosig)
     vt = veering_triangulation(tri, angle, tet_shapes = tet_shapes)
-    B = boundary_triangulation(vt)
+    B = boundary_triangulation(vt, {})
     B.generate_canvases(args = draw_args)
 
     out_data = []

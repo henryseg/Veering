@@ -145,7 +145,8 @@ class ladder_unit(tet_face):
 
         tet_col = pyx.color.rgb(0.0,0.0,0.0)
         if 'tet_shapes' in args:
-            if args['tet_shapes'][self.tet_num].imag < 0:
+            shape = complex(args['tet_shapes'][self.tet_num])
+            if shape.imag < 0:
                 tet_col = pyx.color.rgb(0.0,0.8,0.8)
 
         my_canvas.text(pos[0], pos[1], "$"+str(self.tet_num)+"_"+str(self.face)+"$", textattrs=[pyx.text.halign.center, pyx.text.vshift.middlezero, tet_col])
@@ -157,7 +158,8 @@ class ladder_unit(tet_face):
 
         tet_col = pyx.color.rgb(0.0,0.0,0.0)
         if 'tet_shapes' in args:
-            if args['tet_shapes'][self.tet_num].imag < 0:
+            shape = complex(args['tet_shapes'][self.tet_num])
+            if shape.imag < 0:  ### .imag for python complex number, .imag() for sage complex
                 tet_col = pyx.color.rgb(0.0,0.8,0.8)
 
         for i in range(3):
@@ -234,7 +236,8 @@ class ladder_unit(tet_face):
 
         tet_col = pyx.color.rgb(0.0,0.0,0.0)
         if 'tet_shapes' in args:
-            if args['tet_shapes'][self.tet_num].imag < 0:
+            shape = complex(args['tet_shapes'][self.tet_num])
+            if shape.imag < 0:
                 tet_col = pyx.color.rgb(0.0,0.8,0.8)
 
         magic_number = 0.6
@@ -705,10 +708,14 @@ class torus_triangulation:
         if self.vt().tet_shapes != None:
             self.ladder_holonomy = self.ladder_list[0].holonomy
             self.our_cusp_area = our_cusp_area(self.sideways_once_holonomy, self.ladder_holonomy)
+            
             ### scale and rotate. Will get multiplied by global drawing scale when we generate canvas
-            self.drawing_scale_and_rotate = 1.0/sqrt(self.our_cusp_area) * complex(0.0, 1.0) * abs(self.ladder_holonomy) / (self.ladder_holonomy)
-            # print('sclrot', sclrot)
+            if 'scale_for_CT' in self.bt.args.keys() and self.bt.args['scale_for_CT'] == True:
+                self.drawing_scale_and_rotate = 1.0/sqrt(self.our_cusp_area) * complex(0.0, 1.0) * abs(self.ladder_holonomy) / (self.ladder_holonomy)
+            else:
+                self.drawing_scale_and_rotate = complex(0.0, 1.0) * abs(self.ladder_holonomy) / (self.ladder_holonomy)
 
+                
             print('self.ladder_holonomy', self.ladder_holonomy)
             print('self.sideways_holonomy', self.sideways_holonomy) ### breaks when we do self.transform(mob_tsfm)
             print('our_cusp_area', self.our_cusp_area)
@@ -902,9 +909,10 @@ class torus_triangulation:
 class boundary_triangulation:
     """list of torus_triangulations for all boundary components of the manifold"""
 
-    def __init__(self, vt):
+    def __init__(self, vt, args = {}):
         self.torus_triangulation_list = []
         self.vt = vt
+        self.args = args
         self.tet_face_list = self.generate_tet_face_list()
         while self.tet_face_list != []:
             start_tet_face = self.tet_face_list[0]
@@ -964,7 +972,7 @@ def generate_boundary_triangulation(tri, angle, args = {}, output_filename = Non
     else:
         ts = None
     vt = veering_triangulation(tri, angle, tet_shapes = ts)
-    return boundary_triangulation(vt)
+    return boundary_triangulation(vt, args = args)
         
 def draw_triangulation_boundary_from_veering_isosig(veering_isosig, args = {}, output_filename = None, verbose = 0.0):
     if verbose > 0.0: print(args)

@@ -4,6 +4,7 @@
 
 import pickle
 import sys
+import json
 
 
 def parse_data_file(filename):
@@ -52,3 +53,8 @@ def output_to_pickle(out, filename):
 # a very common use case
 def veering_census():
     return parse_data_file("veering_census.txt")
+
+def output_to_json(out, filename):
+    with open(filename, "w") as outfile:
+        json.dump(out, outfile)
+

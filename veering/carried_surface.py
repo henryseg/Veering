@@ -213,58 +213,105 @@ def build_surface(tri, angle, weights, tet_vert_coorientations = None, return_ed
         return surface, edge_colours
        
     return surface
-                
+
+@liberal
 def genus_punctures(tri, angle, weights, return_surface = False):
         
     real_Euler_char = -1/2*sum(weights)
     surface = build_surface(tri, angle, weights)
-    regina_Euler_char = surface.eulerChar()
-    # regina fills in ideal vertices
-    genus = int(1/2*(2 - regina_Euler_char))
-    boundaries = int(2 - 2*genus - real_Euler_char)
+    # the surface might be disconnected
+    # need to treat each component separately
+    cpts = surface.triangulateComponents()
+    g_b_data = []
+    
+    for cpt in cpts:
+        real_Euler_char = -1/2*cpt.countTriangles()
+        regina_Euler_char = cpt.eulerChar() # regina fills in ideal vertices
+        genus = int(1/2*(2 - regina_Euler_char))
+        boundaries = int(2 - 2*genus - real_Euler_char)
+        g_b_data.append([genus, boundaries])
     
     if return_surface == True:
-        return genus, boundaries, surface
+        return g_b_data, surface
         
-    return genus, boundaries
+    return g_b_data
 
-def genus_punctures_from_weights_surface(weights, surface): #if the surface is already built
-    real_Euler_char = -1/2*sum(weights)
-    regina_Euler_char = surface.eulerChar()
-    genus = int(1/2*(2 - regina_Euler_char))
-    boundaries = int(2 - 2*genus - real_Euler_char)
+def genus_punctures_from_built_surface(surface): #if the surface is already built
+    # the surface might be disconnected
+    # need to treat each component separately
+    cpts = surface.triangulateComponents()
+    g_b_data = []
     
-    return genus, boundaries
+    for cpt in cpts:
+        real_Euler_char = -1/2*cpt.countTriangles()
+        regina_Euler_char = cpt.eulerChar()
+        genus = int(1/2*(2 - regina_Euler_char))
+        boundaries = int(2 - 2*genus - real_Euler_char)
+        g_b_data.append([genus, boundaries])
+    
+    return g_b_data
     
 
-def count_prongs(surface):
+def count_prongs_from_built_surface(surface):
     # for a surface built using build_surface it is enough to count how many times a vertex appears as the vertex 2 of faces in which it is embedded
-    out = []
-    for v in surface.vertices():
-        prongs = 0
-        embeds = v.embeddings()
-        for embed in embeds:
-            if embed.vertex() == 2:
-                prongs = prongs + 1
-        out.append(prongs)
-    return out
+    prongs_data = []
+    #cpts = surface.triangulateComponents()
+    #Problem: triangulateComponents() builts a new triangulation. 
+    #If it changes the numberings of vertices in any triangle then we're screwed.
+    
+    cpts = surface.components() #these are *not* triangulations of components
+    
+    for cpt in cpts:
+        prongs_in_cpt = []
+        for v in cpt.vertices():
+            prongs_at_v = 0
+            embeds = v.embeddings()
+            for embed in embeds:
+                if embed.vertex() == 2:
+                    prongs_at_v = prongs_at_v + 1
+            prongs_in_cpt.append(prongs_at_v)
+        prongs_data.append(prongs_in_cpt)
+            
+    return prongs_data
 
+def verify_Poincare_Hopf(g_b_data, prongs_data, print_info = False): #for sanity checks
+    for i in range(len(prongs_data)): 
+        # prongs_data is a list of lists
+        # len(prongs_data) = #cpts
+        prongs_in_ith_cpt = len(prongs_data[i])
+        punctures_in_ith_cpt = g_b_data[i][1]
+        assert prongs_in_ith_cpt == punctures_in_ith_cpt
+        genus_of_ith_cpt = g_b_data[i][0]
+        LHS = sum(k-2 for k in prongs_data[i])
+        assert LHS == 4*genus_of_ith_cpt - 4 
+    if print_info == True:
+        print("Poincare-Hopf verified")
+
+@liberal
 def stratum(tri, angle, weights, return_surface = False):
     
-    genus, punctures, surface = genus_punctures(tri, angle, weights, return_surface =  True)
-    prongs = count_prongs(surface)
+    g_b_data, surface = genus_punctures(tri, angle, weights, return_surface =  True)
+    prongs_data = count_prongs_from_built_surface(surface)
+    
+    verify_Poincare_Hopf(g_b_data, prongs_data)
+    
+    stratum = [[g_b_data[i][0], prongs_data[i]] for i in range(len(g_b_data))]
     
     if return_surface == True:
-        return (genus, punctures), prongs, surface
+        return stratum, surface
 
-    return (genus, punctures), prongs
+    return stratum
 
-def stratum_from_weights_surface(weights, surface): # when the surface is already built
+def stratum_from_built_surface(surface): # when the surface is already built
     
-    genus, punctures = genus_punctures_from_weights_surface(weights, surface)
-    prongs = count_prongs(surface)
+    g_b_data = genus_punctures_from_built_surface(surface)
+    prongs_data = count_prongs_from_built_surface(surface)
     
-    return (genus, punctures), prongs
+    verify_Poincare_Hopf(g_b_data, prongs_data)
+    
+    stratum = [[g_b_data[i][0], prongs_data[i]] for i in range(len(g_b_data))]
+    
+    return stratum
     
 # below: finding combinatorial isomorphisms of the surface which are orientation preserving and preserve the stable track    
 

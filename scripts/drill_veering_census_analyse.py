@@ -16,16 +16,19 @@ class blob:
     	self.orig_triangs.update(other.orig_triangs)
     	self.orig_triang_indices.update(other.orig_triang_indices)
 
-def parse_line(line):
+def parse_line(line, return_set = True):
 	line = line.strip()
 	first = line.index("_")
 	second = line.index("_", first + 1) # start searching immediately after the first one
 	undrilled_sig = line[:second]
-	drill_data = line[second + 1:]
-	drill_data = ast.literal_eval(drill_data)
-	data = set([d[0] for d in drill_data])
-	data.add(undrilled_sig)
-	return data, undrilled_sig
+	drill_data_str = line[second + 1:]
+	drill_data = ast.literal_eval(drill_data_str)
+	if return_set:
+		data = set([d[0] for d in drill_data])
+		data.add(undrilled_sig)
+		return data, undrilled_sig
+	else:
+		return drill_data_str, drill_data, undrilled_sig
 
 def run(filenames, max_count = None, existing_equiv_class_pickle_filename = None):
 	if existing_equiv_class_pickle_filename == None:
@@ -74,3 +77,29 @@ def main():
 	# run([filename1, filename2], max_count = None)
 
 	run([filename3], max_count = None, existing_equiv_class_pickle_filename = equivs_filename2)
+
+def collate_data():
+	census_data = parse_data_file('veering_census_with_data.txt') 
+	filename1 = '/Users/segerman/Dropbox/Data/drillings_census_4_ladders_max_cycle_len_5.txt'
+	filename2 = '/Users/segerman/Dropbox/Data/drillings_census_4_ladders_max_cycle_len_6_6.txt'
+	filename3 = '/Users/segerman/Dropbox/Data/drillings_census_4_ladders_max_cycle_len_7_7.txt'
+	max_count = None
+
+	filename = filename1
+	count = 0
+	with open(filename, 'r') as file:
+		while True:
+			line = file.readline()
+			
+			if len(line) == 0 or count == max_count:
+				break ### EOF
+			drill_data_str, drill_data, undrilled_sig = parse_line(line, return_set = False)
+			
+
+			count += 1
+			if count % 100 == 0:
+				print(count)
+
+
+
+

@@ -297,7 +297,6 @@ class new_tetrahedron:
             self.adjGluing.append([None, None, None, None])  ### permutation for each gluing
         self.cusp_index = [] ### what is the cusp index in the manifold for this vertex. n for the newly drilled cusp
         
-        ### fix
         old_tet_rectangle = old_tet_rectangles[self.ind]
         for i in range(4):
             j = self.anticlockwise_to_horiz[i]
