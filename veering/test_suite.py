@@ -633,10 +633,10 @@ def test_building_carried_surfaces_and_mutations(veering_isosigs, num_to_check, 
         ["jLLLMPQcdgfhfhiiihshassspiq_122201101", (0, 0, 4, 0, 4, 1, 0, 2, 2, 0, 1, 0, 0, 4, 0, 4, 0, 0)]
     ]
     strata = [
-        ((1, 2), [2, 2]),
-        ((2, 4), [5, 5, 1, 1]),
-        ((0, 3), [2, 0, 0]),
-        ((6, 1), [22])
+        [[1, [2, 2]]],
+        [[2, [5, 5, 1, 1]]],
+        [[0, [2, 0, 0]]],
+        [[6, [22]]]
     ]
     orders_of_veering_symmetry_groups = [4, 2, 2, 2]
 
@@ -644,7 +644,7 @@ def test_building_carried_surfaces_and_mutations(veering_isosigs, num_to_check, 
         tri, angle = taut.isosig_to_tri_angle(sigs_weights[i][0])
         weights = sigs_weights[i][1]
         surface, edge_colours = carried_surface.build_surface(tri, angle, weights, return_edge_colours = True)
-        assert strata[i] == carried_surface.stratum_from_weights_surface(weights, surface)
+        assert strata[i] == carried_surface.stratum_from_built_surface(surface)
         veering_isoms = carried_surface.veering_symmetry_group(surface, edge_colours)
         assert len(veering_isoms) == orders_of_veering_symmetry_groups[i]
         isom = veering_isoms[1]
@@ -719,7 +719,7 @@ sage_tests = [
     test_euler_and_edge_orientability,
     test_exotics,
     # test_depth,  # broken in sage 10.4
-    # test_building_carried_surfaces_and_mutations,  # Broken 2026-02-21
+    test_building_carried_surfaces_and_mutations,  
 ]
 
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
