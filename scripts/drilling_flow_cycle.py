@@ -46,6 +46,20 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
 
     return tri, angle, cusp_mapping
 
+def short_flow_cycle_string(flow_cycle):
+    out = ""
+    for pair in flow_cycle:
+        out += str(pair[0]) + str(pair[1]) + '-'
+    out = out[:-1] ## strip last '-'
+    return out
+
+def short_flow_cycles_string(flow_cycles):
+    out = "["
+    for flow_cycle in flow_cycles:
+        out += short_flow_cycle_string(flow_cycle) + ','
+    out = out[:-1] + ']' ## strip last ','
+    return out
+
 def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, draw_rectangles = False, draw_tetrahedron_rectangles = False, global_scale_up = 1.0, scale_drawn_elements = 1.0, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
     out = make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
     if out == None:  ### flow cycle is boundary parallel
@@ -57,7 +71,11 @@ def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_
     
     if draw_rectangles:
         if save_filename == None:
-            save_filename = veering_isosig + '' + str(flow_cycles) + '_drill'
+            # save_filename = veering_isosig + '_' + str(flow_cycles) 
+            save_filename = veering_isosig + '_' + short_flow_cycles_string(flow_cycles) 
+            if len(save_filename) - 4 > 255:
+                save_filename = save_filename[:240] + 'TooLong'
+
         draw_drilled_tetrahedra(con, name = save_filename, draw_vertex_numbers = True, 
         tetrahedra_cusp_orders = tetrahedra_cusp_orders, 
         intervals_inside_tet_rectangles = intervals_inside_tet_rectangles, 

@@ -273,7 +273,7 @@ def draw_drilled_tetrahedra(con, name = "", tetrahedra_cusp_orders = None,
                 symbol_coords = global_scale_up*(1.11*(coords - complex(1.5, 1.5)) + complex(1.5, 1.5) + offset)
                 canv.text(symbol_coords.real, symbol_coords.imag, "$"+str(ind)+"$", textattrs=[text.size(-4), grey, text.halign.center, text.valign.middle])
 
-    output_filename = 'Images/DrilledTetrahedra/' + name + '_tet_rects' + '.pdf'
+    output_filename = 'Images/DrilledTetrahedra/' + name + '.pdf'
     print(output_filename)
     canv.writePDFfile(output_filename)
         
