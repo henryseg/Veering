@@ -60,7 +60,7 @@ def short_flow_cycles_string(flow_cycles):
     out = out[:-1] + ']' ## strip last ','
     return out
 
-def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, draw_rectangles = False, draw_tetrahedron_rectangles = False, global_scale_up = 1.0, scale_drawn_elements = 1.0, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
+def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, generate_picture = False, draw_tetrahedron_rectangles = True, global_scale_up = 1.0, scale_drawn_elements = 1.0, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
     out = make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
     if out == None:  ### flow cycle is boundary parallel
         # print('flow_cycle is boundary parallel')
@@ -69,7 +69,7 @@ def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
     new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
     
-    if draw_rectangles:
+    if generate_picture:
         if save_filename == None:
             # save_filename = veering_isosig + '_' + str(flow_cycles) 
             save_filename = veering_isosig + '_' + short_flow_cycles_string(flow_cycles) 
@@ -131,12 +131,12 @@ def drill_flow_cycle_list(veering_isosig, max_length = 2, monochromatic_only = F
     for cycle, num_steps_up in cycles:
         print(veering_isosig, num_steps_up, cycle, drill_flow_cycles(veering_isosig, [cycle])) 
 
-def drill_all_flow_cycles(veering_isosig, min_length, max_length, draw_tetrahedron_rectangles = False, global_scale_up = 1.0, scale_drawn_elements = 1.0, verbose = 0):
+def drill_all_flow_cycles(veering_isosig, min_length, max_length, generate_picture = False, draw_tetrahedron_rectangles = False, global_scale_up = 1.0, scale_drawn_elements = 1.0, verbose = 0):
     cycles = generate_flow_cycles(veering_isosig, max_length = max_length, min_length = min_length)
     print('flow_cycles', cycles)
     save_filename = veering_isosig + '_drill_all_' + str(min_length) + '_' + str(max_length)
     drilled = drill_flow_cycles(veering_isosig, cycles, save_filename = save_filename, 
-        draw_rectangles = True, draw_tetrahedron_rectangles = draw_tetrahedron_rectangles, 
+        generate_picture = generate_picture, draw_tetrahedron_rectangles = draw_tetrahedron_rectangles, 
         global_scale_up = global_scale_up, scale_drawn_elements = scale_drawn_elements, verbose = verbose)
     return drilled
 
