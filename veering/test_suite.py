@@ -634,8 +634,8 @@ def test_building_carried_surfaces_and_mutations(veering_isosigs, num_to_check, 
     ]
     strata = [
         [[1, [2, 2]]],
-        [[2, [5, 5, 1, 1]]],
-        [[0, [2, 0, 0]]],
+        [[2, [1, 1, 5, 5]]],
+        [[0, [0, 0, 2]]],
         [[6, [22]]]
     ]
     orders_of_veering_symmetry_groups = [4, 2, 2, 2]
