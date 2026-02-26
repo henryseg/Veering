@@ -6,7 +6,7 @@
 
 import regina
 
-from .taut import isosig_to_tri_angle, isosig_from_tri_angle, is_taut
+from .taut import isosig_to_tri_angle, isosig_from_tri_angle, is_taut, liberal
 from .transverse_taut import is_transverse_taut, top_bottom_embeddings_of_faces
 from .veering_tri import is_veering
 from .taut_polynomial import tet_lower_upper_edges
@@ -234,7 +234,8 @@ def surface_isom_to_regluing_pattern(tri, angle, weights, isom, tet_vert_coorien
             regluing.append([tet_below_top_embed, which_face, tet_above_image, perm])
               
     return regluing
-    
+
+@liberal    
 def mutate(tri, angle, weights, isom, tet_vert_coorientations = None, quiet = False): 
     
     if tet_vert_coorientations == None:
@@ -277,7 +278,7 @@ def mutate(tri, angle, weights, isom, tet_vert_coorientations = None, quiet = Fa
             totals = is_taut(tri, angle, return_totals = True)
             print('Angles:', totals)
             
-
+@liberal
 def perform_all_mutations(tri, angle, weights, tet_vert_coorientations = None, print_stratum = True):
     if tet_vert_coorientations == None:
         tet_vert_coorientations = is_transverse_taut(tri, angle, return_type = "tet_vert_coorientations")
