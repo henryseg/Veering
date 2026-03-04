@@ -20,12 +20,23 @@ from mobius_hack import many_matrices
 # def pre_draw_transformation( z, ladder_holonomy ):
     # return z/ladder_holonomy
 
+# def draw_path(canv, path_C, draw_options, fill = False, closed = False):
+#     p = pyx.path.path( pyx.path.moveto(path_C[0].real, path_C[0].imag) )
+#     # for coord in path_C:
+#     #     ### hack tell us coords
+#     #     canv.text(coord.real, coord.imag, "$"+str(path_C[0])+"$" , textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
+
+#     for coord in path_C[1:]:  ### this is how path drawing works...
+#         p.append( pyx.path.lineto(coord.real, coord.imag) )
+#     if closed:
+#         p.closepath()
+#     if fill:
+#         canv.fill(p, draw_options)
+#     else:
+#         canv.stroke(p, draw_options)
+
 def draw_path(canv, path_C, draw_options, fill = False, closed = False):
     p = pyx.path.path( pyx.path.moveto(path_C[0].real, path_C[0].imag) )
-    # for coord in path_C:
-    #     ### hack tell us coords
-    #     canv.text(coord.real, coord.imag, "$"+str(path_C[0])+"$" , textattrs=[pyx.text.size(sizename="scriptsize"), pyx.text.halign.center, pyx.text.vshift.middlezero])
-
     for coord in path_C[1:]:  ### this is how path drawing works...
         p.append( pyx.path.lineto(coord.real, coord.imag) )
     if closed:
@@ -270,13 +281,22 @@ def uniquify_list(dup_list, subtract = [], epsilon = 0.001):
             unique_list.append(z)
     return unique_list
 
+# def replace_with_continent_vertices(v_list, con, epsilon = 0.001):
+#     for i, w in enumerate(v_list):
+#         for v in con.boundary_triangulation_vertices:
+#             # print(type(v), type(w))
+#             if abs(v.pos.project_to_plane() - w) < epsilon:
+#                 v_list[i] = v    
+#                 break    
+
 def replace_with_continent_vertices(v_list, con, epsilon = 0.001):
     for i, w in enumerate(v_list):
-        for v in con.boundary_triangulation_vertices:
-            # print(type(v), type(w))
-            if abs(v.pos.project_to_plane() - w) < epsilon:
-                v_list[i] = v    
-                break    
+        if w != None:
+            for v in con.boundary_triangulation_vertices:
+                if not v.pos.is_infinity():
+                    if abs(v.pos.project_to_plane() - w) < epsilon:
+                        v_list[i] = v    
+                        break    
 
 def assign_continent_vertices_to_tet_faces(T, con):
     for L in T.ladder_list:
@@ -326,19 +346,19 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
             for lu in left_ladder.ladder_unit_list:
                 if lu.is_on_left():
                     # print(lu, lu.left_vertices[0])
-                    left_ladder_nbd.extend( lu.vert_positions_around_corner( lu.left_vertices[0] ) )
+                    left_ladder_nbd.extend( lu.vert_positions_around_corner( vt,  lu.left_vertices[0] ) )
             last = left_ladder.ladder_unit_list[-1]
             # print('extra', last, last.left_vertices[-1])
-            left_ladder_nbd.extend( last.vert_positions_around_corner( last.left_vertices[-1] ) )
+            left_ladder_nbd.extend( last.vert_positions_around_corner( vt,  last.left_vertices[-1] ) )
             # print('right')
             right_ladder_nbd = []
             for lu in right_ladder.ladder_unit_list:
                 if lu.is_on_left():
                     # print(lu, lu.left_vertices[0])
-                    right_ladder_nbd.extend( lu.vert_positions_around_corner( lu.left_vertices[0] ) )
+                    right_ladder_nbd.extend( lu.vert_positions_around_corner( vt,  lu.left_vertices[0] ) )
             last = right_ladder.ladder_unit_list[-1]
             # print('extra', last, last.left_vertices[-1])
-            right_ladder_nbd.extend( last.vert_positions_around_corner( last.left_vertices[-1] ) )
+            right_ladder_nbd.extend( last.vert_positions_around_corner( vt,  last.left_vertices[-1] ) )
             
             left_ladder_nbd = uniquify_list(left_ladder_nbd)
             right_ladder_nbd = uniquify_list(right_ladder_nbd)
@@ -350,10 +370,10 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                     lu_bottom = L.ladder_unit_list[0]
                     lu_top = L.ladder_unit_list[-1]
 
-                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner(lu_bottom.left_vertices[0]) )
-                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner(lu_bottom.right_vertices[0]) )
-                    top_nbd.extend( lu_top.vert_positions_around_corner(lu_top.left_vertices[-1]) )
-                    top_nbd.extend( lu_top.vert_positions_around_corner(lu_top.right_vertices[-1]) )
+                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.left_vertices[0]) )
+                    bottom_nbd.extend( lu_bottom.vert_positions_around_corner( vt, lu_bottom.right_vertices[0]) )
+                    top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.left_vertices[-1]) )
+                    top_nbd.extend( lu_top.vert_positions_around_corner( vt, lu_top.right_vertices[-1]) )
             bottom_nbd = uniquify_list(bottom_nbd)
             top_nbd = uniquify_list(top_nbd)
 
@@ -368,7 +388,7 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
         else:
             desired_vertices = [v for L in ladderpoles_vertices for v in L]
 
-        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices )
+        con = continent( vt, initial_tet_face, desired_vertices = desired_vertices, maintain_coast = True, maintain_coastal_edges = True )
         
         con.build_boundary_fundamental_domain()  ## expand the continent until we have all vertices of the boundary triangulation fundamental domain
 
@@ -428,8 +448,11 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
         elif build_type == 'build_explore_prongs':
             hit_max_tetrahedra = con.build_explore_prongs(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_long_and_mid':
-            hit_max_tetrahedra = con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
-        
+            # hit_max_tetrahedra = con.build_long_and_mid(max_length = max_length, max_num_tetrahedra = max_num_tetrahedra)
+            mid_scaling = 1.0 ## less than this makes cusp circles not round...
+            hit_max_tetrahedra = build_long_and_mid(con, max_length = max_length, mid_scaling = mid_scaling, max_num_tetrahedra = max_num_tetrahedra)
+
+
         if hit_max_tetrahedra:
             output_filename = output_filename[:-4] + '_hitmax.pdf'
 
@@ -643,26 +666,26 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                     for v in path[:-1]:
                         assert v.is_ladderpole_descendant()
                     path_C = [ v.pos.project_to_plane() for v in path ]
-                    scaled_path_C = [ my_scale * c for c in path_C]
+                    scaled_path_C = [ complex(my_scale * c) for c in path_C]
                     
                     #### big path
                     # draw_path(my_canv, scaled_path_C, draw_options_spectrum)
                     draw_path(my_canv, scaled_path_C, draw_options_grey)  
 
-                    #### small path
-                    bounding_indices = []
-                    for k, c in enumerate(path_C):
-                        if abs(c - complex(1/2*cmath.sqrt(3), 0)) < 0.00001 or abs(c - complex(2/3*cmath.sqrt(3), 0)) < 0.00001:
-                            bounding_indices.append(k)
-                            # print('c',c, 'k', k)
-                    assert len(bounding_indices) == 2
-                    cut_path_C = path_C[bounding_indices[0]:bounding_indices[1] + 1]
-                    cut_path2_C = [matinv(KP1((c, 1))).project_to_plane() for c in cut_path_C]
-                    scaled_cut_path2_C = [ my_scale * c for c in cut_path2_C ]
-                    t = n/(num_mats + 1)
-                    line_scale = (1-t)*thin_line_scale + t*thick_line_scale
-                    draw_options_white = [pyx.style.linewidth(line_scale * ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)] ## this may get overwritten with colour information for the ladder
-                    draw_path(my_canv, scaled_cut_path2_C, draw_options_white)  
+                    #### small path ############################# uncomment later...
+                    # bounding_indices = []
+                    # for k, c in enumerate(path_C):
+                    #     if abs(c - complex(1/2*cmath.sqrt(3), 0)) < 0.00001 or abs(c - complex(2/3*cmath.sqrt(3), 0)) < 0.00001:
+                    #         bounding_indices.append(k)
+                    #         # print('c',c, 'k', k)
+                    # assert len(bounding_indices) == 2
+                    # cut_path_C = path_C[bounding_indices[0]:bounding_indices[1] + 1]
+                    # cut_path2_C = [matinv(KP1((c, 1))).project_to_plane() for c in cut_path_C]
+                    # scaled_cut_path2_C = [ complex(my_scale * c) for c in cut_path2_C ]
+                    # t = n/(num_mats + 1)
+                    # line_scale = (1-t)*thin_line_scale + t*thick_line_scale
+                    # draw_options_white = [pyx.style.linewidth(line_scale * ct_lw), pyx.style.linejoin.round, pyx.color.rgb(1,1,1)] ## this may get overwritten with colour information for the ladder
+                    # draw_path(my_canv, scaled_cut_path2_C, draw_options_white)  
 
 
                 # for k, L in enumerate(T.ladder_list):
@@ -695,10 +718,10 @@ def draw_continent_hack( veering_isosig, tet_shapes, max_num_tetrahedra, max_len
                 mat_filename_pdf = 'Images/Cannon-Thurston/PDF/' + output_filename[:-4] + str(n).zfill(3) + '.pdf'
                 mat_filename_svg = 'Images/Cannon-Thurston/SVG/' + output_filename[:-4] + str(n).zfill(3) + '.svg'
                 mat_filename_png = 'Images/Cannon-Thurston/PNG/' + output_filename[:-4] + str(n).zfill(3) + '.png'
-                # my_canv.writePDFfile(mat_filename_pdf)
+                my_canv.writePDFfile(mat_filename_pdf)
                 my_canv.writeSVGfile(mat_filename_svg)
-                drawing = svg2rlg(mat_filename_svg) 
-                renderPM.drawToFile(drawing, mat_filename_png, fmt='PNG', dpi=72, bg=0x000000)  
+                # drawing = svg2rlg(mat_filename_svg) 
+                # renderPM.drawToFile(drawing, mat_filename_png, fmt='PNG', dpi=72, bg=0x000000)  
 
 
                     # non_inf_verts = [0,1,2,3]
@@ -902,6 +925,48 @@ def draw_jigsaw_from_veering_isosigs_file(veering_isosigs_filename, output_dirna
         to_draw = veering_isosigs_list
     draw_jigsaw_from_veering_isosigs_list(to_draw, output_dirname, jigsaw_data_out_filename = jigsaw_data_out_filename, max_num_tetrahedra = max_num_tetrahedra, max_length = max_length, draw_args = draw_args)
 
+
+def build_long_and_mid(con, max_length = 0.1, mid_scaling = 1.0, max_num_tetrahedra = 50000):   ### fills out a bit better than build_long alone, though not near the obvious cusps
+    con.max_length = max_length
+    print(('max_length', max_length))
+    num_tet = len(con.tetrahedra)
+    ## now build
+
+    con.first_interesting_index = 0
+    while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+        tri = con.triangles[con.first_interesting_index]  
+        if not tri.is_buried():
+            u = tri.vertices[tri.downriver_index()]  ### this is the upriver vertex (opposite downriver triangle)
+            is_long = any( (edge.is_under_ladderpole() and edge.is_long()) for edge in tri.edges )
+            mid_is_far = False
+            crossing_edges = tri.all_river_crossing_edges() ### the edges that the river starting from this triangle crosses
+            for e in crossing_edges:  
+                if e.is_under_ladderpole():
+                    if e.has_infinity() or u.pos.is_infinity():
+                        mid_is_far = True
+                        break
+                    else:
+                        m = e.midpoint()  
+                        distance_of_e_to_cusp = abs(u.pos.project_to_plane() - m)
+                        if distance_of_e_to_cusp > mid_scaling*max_length: 
+                            mid_is_far = True
+                            break
+            if is_long or mid_is_far:
+                con.bury(tri)
+                current_num_tet = len(con.tetrahedra)
+                if current_num_tet > num_tet + 2000:
+                    num_tet = current_num_tet
+                    print(current_num_tet)
+        con.first_interesting_index += 1
+
+    # print(('num_tetrahedra', con.num_tetrahedra))
+    hit_max_tetrahedra = con.num_tetrahedra >= max_num_tetrahedra
+    # print(('hit max tetrahedra', hit_max_tetrahedra))
+    con.build_boundary_data()
+    # print(('num_long_edges_direct_count', con.count_long_edges()))
+    # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
+    return hit_max_tetrahedra
+
 def main():
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': False, 'only_draw_ladderpoles': True, 'ct_lw': 0.002, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'only_draw_ladderpoles': False, 'ct_lw': 0.02, 'global_drawing_scale': 4, 'style': 'geometric', 'draw_triangles_near_poles': False, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
@@ -921,11 +986,11 @@ def main():
     # max_length = 0.2
     # max_length = 0.15
     # max_length = 0.14
-    # max_length = 0.1
+    max_length = 0.1
     # max_length = 0.09
     # max_length = 0.07
     # max_length = 0.06
-    max_length = 0.04
+    # max_length = 0.04
     # max_length = 0.02
     # max_length = 0.015
     # max_length = 0.01
