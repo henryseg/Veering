@@ -173,3 +173,52 @@ def get_rid_of_more_non_knots(hard_cases):
     return hard_but_def_hyp, hard_cases_two
 
 # 59 and 55 - need to deal with the latter.
+
+def try_drilling_a_bit(hard_cases_two):
+    filling_on_torus_knot = []
+    hard_case_three = []
+    for sig, pos_sig, slope in hard_cases_two:
+        win = False
+        M = snappy.Manifold(pos_sig)
+        M.dehn_fill(slope, 0)
+        T = M.filled_triangulation()
+        for i in range(500):
+            T.randomize()
+            N = T.with_hyperbolic_structure()
+            N.dehn_fill((0, 0))
+            G = N.fundamental_group()
+            if G.num_generators() == 2 and G.num_relators() == 1 and lens_space_word(G.relators()[0]):
+                win = True
+                break
+        if win:
+            filling_on_torus_knot.append((sig, pos_sig, slope))
+        else:
+            hard_case_three.append((sig, pos_sig, slope))
+    return filling_on_torus_knot, hard_case_three
+
+# only 13 left!  Four of these are two-generator with a Milley
+# relation, so we can deal with those.  That leaves seven... We can
+# also try filling, drilling, and splitting to get "obvious"
+# pieces... Or we can do this:
+
+import regina_tests
+
+for sig, pos_sig, slope in hard_case_three:
+    M = snappy.Manifold(pos_sig)
+    M.dehn_fill(slope, 0)
+    T = M.filled_triangulation()
+    print(regina_tests.torus_decomp_wrapper(T))
+
+# Great - they are all toroidal, so we are done. Hum-dee-dum. 
+
+# Time to draw some diagrams. 
+
+# in the correct directory:
+
+for sig, pos_sig, slope in def_knot:
+    M = snappy.Manifold(pos_sig)
+    M.dehn_fill(slope, 0)
+    L = M.exterior_to_link()
+    K = L.sage_link()
+    P = K.plot(gap = 3/10)
+    P.save_image(sig + ".pdf")
