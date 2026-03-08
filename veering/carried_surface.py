@@ -270,6 +270,7 @@ def count_prongs_from_built_surface(surface):
                 if embed.vertex() == 2:
                     prongs_at_v = prongs_at_v + 1
             prongs_in_cpt.append(prongs_at_v)
+        prongs_in_cpt = sorted(prongs_in_cpt) 
         prongs_data.append(prongs_in_cpt)
             
     return prongs_data
@@ -296,6 +297,7 @@ def stratum(tri, angle, weights, return_surface = False):
     verify_Poincare_Hopf(g_b_data, prongs_data)
     
     stratum = [[g_b_data[i][0], prongs_data[i]] for i in range(len(g_b_data))]
+    stratum.sort(key=lambda x:x[0])
     
     if return_surface == True:
         return stratum, surface
@@ -310,6 +312,7 @@ def stratum_from_built_surface(surface): # when the surface is already built
     verify_Poincare_Hopf(g_b_data, prongs_data)
     
     stratum = [[g_b_data[i][0], prongs_data[i]] for i in range(len(g_b_data))]
+    stratum.sort(key=lambda x:x[0])
     
     return stratum
     
