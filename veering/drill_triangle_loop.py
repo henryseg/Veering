@@ -1,5 +1,5 @@
 #
-# drill.py
+# drill_triangle_loop.py
 #
 
 # Given a triangulation and a loop of triangles, drill along that loop

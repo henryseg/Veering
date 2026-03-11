@@ -11,9 +11,9 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
     from veering.taut import isosig_to_tri_angle
     from veering.branched_surface import upper_branched_surface    
     from veering.flow_cycles import generate_simple_flow_cycles, flow_cycle_to_triangle_loop, tri_loop_is_boundary_parallel, generate_flow_cycles, is_twisted 
-    from veering.drill import drill
+    from veering.drill_triangle_loop import drill
     from veering.veering_tri import veering_triangulation
-    from drilling_flow_cycle import drill_flow_cycle
+    from drill_flow_cycle import drill_flow_cycles
     from pachner_graph_path import search_Pachner_graph_for_shortest_path
 
     for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
@@ -30,7 +30,7 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
             if tl != False:
                 if not tri_loop_is_boundary_parallel(tl, tri):
                     drill(tri_copy, tl, angle = angle_copy, branch = branch_copy)
-                    veering_sig_2, tri_2, angle_2, found_parallel = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True, return_found_parallel = True)    
+                    veering_sig_2, tri_2, angle_2, found_parallel = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True, return_found_parallel = True)    
                     if not found_parallel:
                         print('testing drilling', sig, 'flow cycle', fc, 'is_twisted', fc_is_twisted)
                         ### now tri_copy and tri_2 should be the same manifold.
@@ -38,7 +38,7 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
                         sig2 = tri_2.isoSig()
                         
                         if not fc_is_twisted:
-                            veering_sig_3, tri_3, angle_3, found_parallel = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True, return_found_parallel = True, use_untwisted_speed_up = False)    
+                            veering_sig_3, tri_3, angle_3, found_parallel = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True, return_found_parallel = True, use_untwisted_speed_up = False)    
                             assert veering_sig_2 == veering_sig_3, 'untwisted speedup gave a different answer ' + sig + ' ' + fc
 
                         # print('drilling flow cycle', fc, 'sigs', sig1, sig2)
@@ -77,7 +77,7 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
     from veering.veering_tri import veering_triangulation
     from veering.taut_polytope import is_layered
     from veering.edge_orientability import is_edge_orientable
-    from drilling_flow_cycle import drill_flow_cycle
+    from drill_flow_cycle import drill_flow_cycles
     from boundary_triangulation import generate_boundary_triangulation
 
     for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
@@ -87,14 +87,17 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
         vt = veering_triangulation(tri, angle)
         flow_cycles = generate_flow_cycles(sig, max_length = flow_cycle_max_length)
         for fc in random.sample(flow_cycles, min(num_to_check, len(flow_cycles))):
-            out = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True, return_found_parallel = True, return_cusp_mapping = True)  
+            out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True, return_found_parallel = True, return_cusp_mapping = True)  
+            # print(out)
             if out != None:
                 drilled_sig, drilled_tri, drilled_angle, found_parallel, isosig_to_original_cusp_mapping = out
+                # print('drilled_tri', drilled_tri, 'drilled_tri.isOriented()', drilled_tri.isOriented())
+                assert drilled_tri.isOriented()
                 fc_is_twisted = is_twisted(vt, fc)
                 print('testing drilling', sig, 'flow cycle', fc, 'is_twisted', fc_is_twisted)
 
                 if not fc_is_twisted:
-                    drilled_sig_2, _, _, _ = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True, return_found_parallel = True, use_untwisted_speed_up = False)   
+                    drilled_sig_2, _, _, _ = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True, return_found_parallel = True, use_untwisted_speed_up = False)   
                     assert drilled_sig == drilled_sig_2, 'untwisted speedup gave a different answer ' + sig + ' ' + fc
 
                 # print(sig, '->', drilled_sig, 'cusp_mapping', isosig_to_original_cusp_mapping)

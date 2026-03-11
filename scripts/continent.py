@@ -10,22 +10,17 @@ from veering.fundamental_domain import spanning_dual_tree
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
 from circular_order import are_anticlockwise, are_linking, are_anticlockwise_pairs, are_linking_pairs
-# from sage.rings.rational_field import QQ 
-# from fractions import Fraction
-
 
 class vertex:
     def __init__(self, continent, pos):
         self.continent = continent
         self.edges = []
         self.triangles_with_special_vertex_here = [] ### the edges of the triangle meeting here have the same colour
-        # self.triangles_without_special_vertex_here = [] ### the other two kinds of triangle corners ### we never use this
         self.tetrahedra = []
-        self.pos = pos  ### complex position, not used for circular pictures
+        self.pos = pos  ### complex position, used for Cannon-Thurston map approximations, not used for circular pictures or drilling
         self.ladderpole_ancestors = set() ## which ladderpole edges did you come from
         self.continent.vertices.append(self)
         self.cusp_leaves = []
-        # self.circular_ordering_triangle_towards_root = None
         self.rational_position = None ### in the Farey triangulation
         self.Regina_cusp_num = None ### which cusp of the manifold is this
         self.circle_pos = None
@@ -54,7 +49,7 @@ class vertex:
     def edge_between(self, other):
         for e in self.edges:
             if other in e.vertices:
-                return e  ### note, no parallel edges in univ cover of a veering triangulation
+                return e  ### note, no parallel edges in universal cover of a veering triangulation
         assert False
 
     def __repr__(self):
@@ -85,15 +80,9 @@ class landscape_edge:
         self.cusp_leaves = [] ### should be empty if not a coastal edge
         self.rectangle_sides_data = [None, None, None, None]
         self.rational_position = None
-        # try:
-        #     assert self.length() > 0.0001
-        # except:
-        #     print 'edge too short', self.vertices
-        #     raise
 
     def __repr__(self):
         u, v = self.vertices
-        # return ' '.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v), str(self.length())] )
         return '_'.join( [str(self.continent.edges.index(self)), 'edge', str(u), str(v)] )
 
     def has_infinity(self):
@@ -139,15 +128,12 @@ class landscape_edge:
         leaves = u.cusp_leaves
         first_leaf = leaves[0]
         last_leaf = leaves[-1]
-        # if are_anticlockwise(u.coastal_index(), first_leaf.end_positions()[1], v.coastal_index()):
         if are_anticlockwise_pairs(u.get_rational_position(), first_leaf.rational_end_positions()[1], v.get_rational_position()):
             self.rectangle_sides_data[1] = first_leaf
-        # elif are_anticlockwise(u.coastal_index(), v.coastal_index(), last_leaf.end_positions()[1]):
         elif are_anticlockwise_pairs(u.get_rational_position(), v.get_rational_position(), last_leaf.rational_end_positions()[1]):
             self.rectangle_sides_data[0] = last_leaf
         else:      
             for i, leaf in enumerate(leaves):
-                # if are_anticlockwise(u.coastal_index(), leaf.end_positions()[1], v.coastal_index()):
                 if are_anticlockwise_pairs(u.get_rational_position(), leaf.rational_end_positions()[1], v.get_rational_position()):
                     self.rectangle_sides_data[0] = leaves[i-1]
                     self.rectangle_sides_data[1] = leaf
@@ -155,29 +141,18 @@ class landscape_edge:
         leaves = v.cusp_leaves
         first_leaf = leaves[0]
         last_leaf = leaves[-1]
-        # if are_anticlockwise(v.coastal_index(), first_leaf.end_positions()[1], u.coastal_index()):
         if are_anticlockwise_pairs(v.get_rational_position(), first_leaf.rational_end_positions()[1], u.get_rational_position()):
             self.rectangle_sides_data[3] = first_leaf
-        # elif are_anticlockwise(v.coastal_index(), u.coastal_index(), last_leaf.end_positions()[1]):
         elif are_anticlockwise_pairs(v.get_rational_position(), u.get_rational_position(), last_leaf.rational_end_positions()[1]):
             self.rectangle_sides_data[2] = last_leaf
         else:      
             for i, leaf in enumerate(leaves):
-                # if are_anticlockwise(v.coastal_index(), leaf.end_positions()[1], u.coastal_index()):
                 if are_anticlockwise_pairs(v.get_rational_position(), leaf.rational_end_positions()[1], u.get_rational_position()):
                     self.rectangle_sides_data[2] = leaves[i-1]
                     self.rectangle_sides_data[3] = leaf
                     break
         if not None in self.rectangle_sides_data:
             a, b, c, d = self.rectangle_sides_data
-            # if not (a.links(d) and b.links(c)):
-            #     print('rectangle sides linking failed')
-            #     print(self.vertices)
-            # assert a.links(d) and b.links(c)    ### This could have false positives with v4 of end_positions
-            # assert a.is_upper == c.is_upper
-            # assert b.is_upper == d.is_upper
-            # assert a.is_upper != b.is_upper
-            # assert self.is_red == a.is_upper
         return self.rectangle_sides_data
 
     def green_purple_rectangle_sides(self):
@@ -201,13 +176,10 @@ class landscape_edge:
     def ensure_continent_contains_rectangle(self):
         """Add to the continent to ensure that this edge has all its cusp leaves in the continent"""
         while None in self.rectangle_sides():
-            # print('edge has this many triangles', len(self.triangles))
             found_a_tri_to_bury = False
             for tri in self.triangles:
-                # print('tri.index', tri.index)
                 if not tri.is_buried():
                     found_a_tri_to_bury = True
-                    # print('bury triangle with index', tri.index)
                     self.continent.bury(tri)
                     assert tri.is_buried()
                     break
@@ -221,23 +193,7 @@ class landscape_edge:
                 if len(upper_boundary_triangles) == 0:
                     break ## out of while loop
                 self.continent.bury(upper_boundary_triangles[0])
-        assert self.upper_tet != None
-
-    # def ensure_continent_contains_neighbourhood(self):
-    #     """Add to the continent to ensure that this edge is internal to the continent"""
-    #     while len(self.boundary_triangles()) > 0:
-    #         # print('edge has this many triangles', len(self.triangles))
-    #         found_a_tri_to_bury = False
-    #         for tri in self.triangles:
-    #             # print('tri.index', tri.index)
-    #             if not tri.is_buried():
-    #                 found_a_tri_to_bury = True
-    #                 # print('bury triangle with index', tri.index)
-    #                 self.continent.bury(tri)
-    #                 assert tri.is_buried()
-    #                 break
-    #         assert found_a_tri_to_bury ### We checked all triangles and all are buried so we should be done
-    #     assert len(self.boundary_triangles()) == 0      
+        assert self.upper_tet != None   
 
     def length(self):
         u, v = self.vertices
@@ -283,25 +239,9 @@ class cusp_leaf:
         return (start, end)
 
     def rational_end_positions(self):
-        # start = self.cusp.coastal_index()
-        # index_on_edge = self.coastal_edge.cusp_leaves.index(self)
-
-        # v1:
-        # end = self.coastal_edge.coastal_index() + QQ( ((index_on_edge) + 1)/(len(self.coastal_edge.cusp_leaves) + 1) )
-        # v2:
-        # end = self.coastal_edge.coastal_index() + Fraction( ((index_on_edge) + 1), (len(self.coastal_edge.cusp_leaves) + 1) )
-
-        # v3:
-        # denom = len(self.coastal_edge.cusp_leaves) + 1
-        # numer = denom * self.coastal_edge.coastal_index() + index_on_edge + 1
-        # end = (numer, denom)
-
-        # v4:  ### This is ok because we never compare two thorns when testing 
-        # end = self.coastal_edge.coastal_index() + 0.5
-
-        # v5: 
         start = self.cusp.get_rational_position()
         end = self.coastal_edge.rational_position ### This is ok because we never compare two thorns when testing 
+        ### But beware that two thorns could get the same rational_position
         return (start, end)
 
     def links(self, other):
@@ -310,31 +250,16 @@ class cusp_leaf:
         b1, b2 = other.rational_end_positions()
         return are_linking_pairs(a1, a2, b1, b2)  ### will break if two leaves end on the same edge 
 
-        ### have faces know about the cusp leaves that start there, and vice versa?
-        ### leave until we need it
-
     def sees_to_its_left(self, cusp): 
         ### if the cusp is to the left of the oriented leaf, return true
         ### In particular, a leaf does _not_ see its own cusp to its left 
 
         start, end = self.rational_end_positions()
-        # return are_anticlockwise(start, end, cusp.coastal_index())
         return are_anticlockwise_pairs(start, end, cusp.get_rational_position())
 
-    # def sees_to_its_right(self, cusp): 
-    #     ### if the cusp is to the right of the oriented leaf, return true
-    #     ### In particular, a leaf does _not_ see its own cusp to its right
-
-    #     start, end = self.rational_end_positions()
-    #     return are_anticlockwise(start, cusp.coastal_index(), end)
-
-    # def is_entirely_to_one_side_of(self, tet): ### are all of the cusps of tet on one or the other side of self?
-    #     if self.cusp in tet.vertices:
-    #         return False
-    #     are_to_left = [self.sees_to_its_left(v) for v in tet.vertices]
-    #     return are_to_left.count(True) % 4 == 0 ### True if all are on one side or the other
-
-    def separates(self, cusp_list_1, cusp_list_2): ### returns True if and only if all of cusp_list_1 is on one side of self, and all of cusp_list_2 is on the other side
+    def separates(self, cusp_list_1, cusp_list_2): 
+        """returns True if and only if all of cusp_list_1 is on one side of self, 
+           and all of cusp_list_2 is on the other side"""
         if self.cusp in cusp_list_1 or self.cusp in cusp_list_2:
             return False
         are_to_left_1 = [self.sees_to_its_left(v) for v in cusp_list_1]
@@ -343,14 +268,6 @@ class cusp_leaf:
             return True
         if all(are_to_left_2) and not any(are_to_left_1):
             return True   
-        # are_to_left_1 = [self.sees_to_its_left(v) for v in cusp_list_1]
-        # are_to_right_1 = [self.sees_to_its_right(v) for v in cusp_list_1]
-        # are_to_left_2 = [self.sees_to_its_left(v) for v in cusp_list_2]
-        # are_to_right_2 = [self.sees_to_its_right(v) for v in cusp_list_2]
-        # if all(are_to_left_1) and all(are_to_right_2):
-        #     return True
-        # if all(are_to_left_2) and all(are_to_right_1):
-        #     return True   
         return False
 
     def weakly_separates(self, cusp_list_1, cusp_list_2): 
@@ -381,7 +298,6 @@ class landscape_triangle:
         self.upper_tet = None
         self.lower_tet = None
         self.neighbours = [] ## list of three triangles incident to this one, opposite corresponding vertices
-        # self.circular_ordering_triangle_towards_root = None ### Some triangles are part of a rooted tree that spans the continent and allows for fast circular ordering calculations
         self.continent.triangles.append(self)
 
     def __str__(self):
@@ -390,8 +306,6 @@ class landscape_triangle:
     def update_vertices(self, vertices):
         self.vertices = vertices
         vertices[0].triangles_with_special_vertex_here.append(self)
-        # vertices[1].triangles_without_special_vertex_here.append(self)  ### we never use these
-        # vertices[2].triangles_without_special_vertex_here.append(self)
 
     def update_edges(self, edges):
         self.edges = edges
@@ -452,7 +366,9 @@ class landscape_triangle:
         ind = self.neighbours.index(old_neighbour)
         self.neighbours[ind] = new_neighbour
 
-    def outwards_tet(self, return_other_tet = False, return_other_tet_and_embed = False): ### for the universal cover tet outside the continent, next to this triangle, get the corresponding quotient tet
+    def outwards_tet(self, return_other_tet = False, return_other_tet_and_embed = False): 
+        """for the universal cover tet outside the continent, next to this triangle, 
+           get the corresponding quotient tet"""
         face = self.continent.vt.tri.face(2,self.index)
         embed0 = face.embedding(0)
         embed1 = face.embedding(1)
@@ -586,7 +502,6 @@ class landscape_triangle:
     def ladderpole_descendant_long_coastal_indices(self):
         return [ i for i in self.ladderpole_descendant_coastal_indices() if self.edges[i].is_long() ]
 
-    # def distance_to_prong(self):
     def end_of_river_edge(self):
         assert self.is_boundary()  
         tri, is_coastal = self.continent.flow(self)
@@ -624,26 +539,6 @@ class landscape_triangle:
             out[v] = {'internal':internal_leaf_at_v[0], 'boundary':boundary_leaves_at_v}
         return out
 
-    # def dist_from_lox(self, edge):
-    #     vt = self.continent.vt
-    #     edge_index = self.edges.index(edge)
-    #     tet, embed = self.outwards_tet()
-
-    #     ### get the tetrahedron outwards of the edge 
-    #     our_regina_vert_indices = self.outwards_tet_our_vert_indices()
-
-    #     init_verts_pos = [None, None, None, None]
-    #     for i, ind in enumerate(our_regina_vert_indices):
-    #         init_verts_pos[ind] = self.vertices[i].pos
-
-    #     tet_shape = vt.tet_shapes[tet.index()]
-    #     tet_ordering = unknown_vert_to_known_verts_ordering[embed.face]
-    #     init_verts_pos[embed.face] = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape) 
-
-    #     lox = loxodromic_from_flag(vt, tet.index(), embed.face, our_regina_vert_indices[edge_index], init_verts_pos = init_verts_pos)
-
-    #     ### has two fixed points... get dist of midpoint of the edge to the correct fixed point...
-
 class continent_tetrahedron:
     def __init__(self, continent, tet_index, came_from):
         self.continent = continent
@@ -657,7 +552,6 @@ class continent_tetrahedron:
         self.ordered_faces_data = None
         self.continent.tetrahedra.append(self)
         self.vertices = [None, None, None, None] ## ordered according to the indices of the vertices downstairs in the manifold
-        # self.gluings = [None, None, None, None] ## a gluing specifies another tetrahedron and the Perm4 from the downstairs manifold
         self.came_from = came_from ### the landscape_triangle that we were glued onto. Initial continent_tetrahedron has None
 
     def __repr__(self):
@@ -681,23 +575,8 @@ class continent_tetrahedron:
         self.vertices[vert_num] = vert
         vert.tetrahedra.append(self)
 
-    # def upper_edge(self):
-    #     return self.upper_triangles[0].shared_edge(self.upper_triangles[1])
-
-    # def lower_edge(self):
-    #     return self.lower_triangles[0].shared_edge(self.lower_triangles[1])
-
     def edges(self):
         return self.equatorial_edges + [self.upper_edge, self.lower_edge]
-        # out = self.upper_triangles[0].edges[:] ### copy of list
-        # out.remove(self.upper_edge())
-        # return out + self.upper_triangles[1].edges + [self.lower_edge()]
-
-    # def vertices(self):
-    #     out = set([])
-    #     for tri in self.upper_triangles:
-    #         out = out.union(set(tri.vertices))
-    #     return out
 
     def ordered_faces(self):
         if self.ordered_faces_data != None:
@@ -715,7 +594,6 @@ class continent_tetrahedron:
                     if triangle.index == face_index:
                         out.append(triangle)
                         break
-        # print(out)
         assert len(out) == 4
         self.ordered_faces_data = out
         return out
@@ -735,18 +613,6 @@ class continent_tetrahedron:
             out.append(self.edge(i))
         return out
 
-    # def ordered_vertices(self):
-    #     out = []
-    #     tet_faces = self.ordered_faces()
-    #     tet_vertices = self.vertices
-    #     for i in range(4):
-    #         face_vertices = tet_faces[i].vertices
-    #         diff = set(tet_vertices) - set(face_vertices)
-    #         assert len(diff) == 1
-    #         vert = diff.pop()
-    #         out.append(vert)
-    #     return out
-        
     def path_to_init_tet(self):
         """Returns list of landscape_triangles which connect self back to the initial tet"""
         path = []
@@ -795,7 +661,8 @@ class continent_tetrahedron:
                 current_tet = triangle.tet_on_other_side(current_tet)
         return current_tet
 
-    def get_boundary_cusp_leaves(self): ### returns [[green leaves], [purple leaves]] on boundary of tet rect
+    def get_boundary_cusp_leaves(self): 
+        """returns [[green leaves], [purple leaves]] on boundary of tet rect"""
         green_leaves = []
         purple_leaves = []
         for e in self.equatorial_edges:
@@ -814,7 +681,6 @@ def farey_sum(a, b):
 
 class continent:
     def __init__(self, vt, initial_tet_face, desired_vertices = [], maintain_coast = False, maintain_coastal_edges = False):
-        # print 'initializing continent'
         self.vt = vt
         self.triangles = [] 
         self.first_non_buried_index = None
@@ -844,7 +710,6 @@ class continent:
 
         self.maintain_coast = maintain_coast ### if True, do extra work that makes things a bit slower
         self.maintain_coastal_edges = maintain_coastal_edges 
-        # self.circular_ordering_triangles = []
 
         ###   c---R----b
         ###   |`d    ,'|     faces a, b on bottom, c, d on top
@@ -886,10 +751,6 @@ class continent:
         triangle_c = landscape_triangle(self, face_c_index, tris_cd_are_upper, tris_cd_are_red)
         triangle_d = landscape_triangle(self, face_d_index, tris_cd_are_upper, tris_cd_are_red)
 
-        # triangle_a.circular_ordering_triangle_towards_root = triangle_a ### this is how we record that it is the root
-        # triangle_b.circular_ordering_triangle_towards_root = triangle_a
-        # self.circular_ordering_triangles = [triangle_a, triangle_b]
-
         ## now for the vertices
 
         vert_a = self.vertices[face_a]
@@ -921,11 +782,6 @@ class continent:
             triangle_c.update_vertices( [vert_b, vert_a, vert_d] )
             triangle_d.update_vertices( [vert_a, vert_b, vert_c] )
 
-        # vert_a.circular_ordering_triangle_towards_root = triangle_b
-        # vert_b.circular_ordering_triangle_towards_root = triangle_a
-        # vert_c.circular_ordering_triangle_towards_root = triangle_a
-        # vert_d.circular_ordering_triangle_towards_root = triangle_a
-
         ## add the edges
 
         ###   c---R----b
@@ -949,15 +805,10 @@ class continent:
         edge_bd = landscape_edge(self, [vert_b, vert_d], edge_bd_index, False)
         edge_cd = landscape_edge(self, [vert_c, vert_d], edge_cd_index, lower_edge_colour == "red")
 
-        # edge_bc.circular_ordering_triangle_towards_root = triangle_a
-        # edge_bd.circular_ordering_triangle_towards_root = triangle_a
-        # edge_ac.circular_ordering_triangle_towards_root = triangle_b
-        # edge_ad.circular_ordering_triangle_towards_root = triangle_b
         edge_bc.rational_position = (-2,1)
         edge_ac.rational_position = (-1,2)
         edge_ad.rational_position = (1,2)
         edge_bd.rational_position = (2,1)
-
 
         ### make the coast (vertices) and coastal edges
         self.coast = [vert_a, vert_d, vert_b, vert_c]
@@ -1050,9 +901,6 @@ class continent:
             edge_ac.cusp_leaves.insert(0, d_leaf)
         vert_c.cusp_leaves.append(c_leaf)
         vert_d.cusp_leaves.append(d_leaf)
-
-        # self.build_boundary_data()
-        # assert self.is_convex()
 
     def check_vertex_desired(self, v, epsilon = 0.001):
         assert not v.pos.is_infinity()
@@ -1195,30 +1043,18 @@ class continent:
         ## add gluings and vertices to con_tet
 
         gluing = tet.adjacentGluing(face_t)
-        # con_tet.gluings[face_t] = (other_tet, gluing)
-        # other_face_t = gluing[face_t]
-        # assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
-        # other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
-
         n_gluing = n_tet.adjacentGluing(face_n)
-        # con_tet.gluings[face_n] = (n_other_tet, n_gluing)
-        # other_face_n = n_gluing[face_n]
-        # assert n_other_con_tet.gluings[other_face_n] == None ### make sure it is not already glued to something
-        # n_other_con_tet.gluings[other_face_n] = (n_tet, n_other_tet.adjacentGluing(other_face_n))
 
         for vert_num in range(4):
             if vert_num != face_t and vert_num != face_n:
                 vt = other_con_tet.vertices[gluing[vert_num]]
                 vn = n_other_con_tet.vertices[n_gluing[vert_num]]
                 assert vt == vn
-                # con_tet.vertices[vert_num] = vt
                 con_tet.set_vertex(vert_num, vt)
             elif vert_num == face_t:
-                # con_tet.vertices[vert_num] = n_other_con_tet.vertices[n_gluing[vert_num]] 
                 con_tet.set_vertex(vert_num, n_other_con_tet.vertices[n_gluing[vert_num]])
             else:
                 assert vert_num == face_n
-                # con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
                 con_tet.set_vertex(vert_num, other_con_tet.vertices[gluing[vert_num]])
                 
         ## now for the edges
@@ -1306,8 +1142,6 @@ class continent:
         ## We find the easy information so we can build the new triangles
         tet, embed, other_tet = triangle.outwards_tet(return_other_tet = True)  
         face_t = embed.face()
-        # print 'tet.index(), face_t', tet.index(), face_t
-
         for i in range(4):
             if i != face_t:
                 if self.vt.coorientations[tet.index()][face_t] == self.vt.coorientations[tet.index()][i]:
@@ -1323,14 +1157,11 @@ class continent:
             face_b, face_a = verts  
         else:
             face_a, face_b = verts
-        # print 'face_a, face_b, face_c', face_a, face_b, face_c
         face_a_index = tet.face(2,face_a).index()
         face_b_index = tet.face(2,face_b).index()
         face_c_index = tet.face(2,face_c).index()
-        # print 'face triangulation indices: a b c', face_a_index, face_b_index, face_c_index
 
         far_edge_colour = self.vt.get_edge_between_verts_colour(tet.index(), (face_c, face_t))
-        # print 'far edge colour', far_edge_colour
         tris_ab_are_red = ( far_edge_colour == "red" ) ## faces, not talking about an edge
         c_is_red = triangle.is_red
         tris_ab_are_upper = triangle.is_upper
@@ -1371,11 +1202,9 @@ class continent:
         if self.vt.tet_shapes != None:
             ### next: permute the triangle verts in KP1 into tet order. Then plug through tet_ordering so we can develop
             tet_shape = self.vt.tet_shapes[tet.index()]
-            # print tet_shape
             tet_ordering = unknown_vert_to_known_verts_ordering[face_t]
             pos = developed_position(tet_vert_posns[tet_ordering[0]], tet_vert_posns[tet_ordering[1]], tet_vert_posns[tet_ordering[2]], tet_shape, field = self.vt.field)
         
-            # ancestors = [ a for a in vert_a.ladderpole_ancestors if a in vert_b.ladderpole_ancestors ]
             ancestors = vert_a.ladderpole_ancestors.intersection(vert_b.ladderpole_ancestors)
 
             vert_t = vertex( self, pos)
@@ -1411,18 +1240,12 @@ class continent:
         ## add gluings and vertices to con_tet
 
         gluing = tet.adjacentGluing(face_t)
-        # con_tet.gluings[face_t] = (other_tet, gluing)
-        # other_face_t = gluing[face_t]
-        # assert other_con_tet.gluings[other_face_t] == None ### make sure it is not already glued to something
-        # other_con_tet.gluings[other_face_t] = (tet, other_tet.adjacentGluing(other_face_t))
 
         for vert_num in range(4):
             if vert_num != face_t:
-                # con_tet.vertices[vert_num] = other_con_tet.vertices[gluing[vert_num]]
                 con_tet.set_vertex(vert_num, other_con_tet.vertices[gluing[vert_num]])
             else:
                 assert vert_num == face_t
-                # con_tet.vertices[vert_num] = vert_t
                 con_tet.set_vertex(vert_num, vert_t)
 
         ### now for the edges
@@ -1464,13 +1287,6 @@ class continent:
         edge_at.rational_position = farey_sum(a_rational_position, vert_t.rational_position)
         b_rational_position = vert_b.get_rational_position(other = vert_t.rational_position)
         edge_bt.rational_position = farey_sum(b_rational_position, vert_t.rational_position)
-
-        # assert edge_ab.circular_ordering_triangle_towards_root != None
-        # triangle_c.circular_ordering_triangle_towards_root = edge_ab.circular_ordering_triangle_towards_root
-        # edge_at.circular_ordering_triangle_towards_root = triangle_c
-        # edge_bt.circular_ordering_triangle_towards_root = triangle_c
-        # vert_t.circular_ordering_triangle_towards_root = triangle_c
-        # self.circular_ordering_triangles.append(triangle_c)
 
         if triangle.is_upper:
             con_tet.set_upper_edge(edge_ct)
@@ -1535,9 +1351,6 @@ class continent:
         ### we may have added lots of faces incident to vert_t. only one of them should have a cusp leaf 
         ### on the same side as we added the filling tetrahedra. That triangle is one of the outer_triangles 
 
-        # print('a', self.vertices.index(vert_a), 'b', self.vertices.index(vert_b), 'c', self.vertices.index(vert_c))
-        # print('tris_ab_are_upper', tris_ab_are_upper, 'edge_ab.is_red', edge_ab.is_red)
-
         last_tri = None
         for tri in outer_triangles:
             if vert_t == tri.vertices[tri.downriver_index()]:
@@ -1556,14 +1369,12 @@ class continent:
             insert_index = None # default at end 
         for i, leaf in enumerate(last_edge.cusp_leaves):
             if leaf.is_upper == t_leaf.is_upper: 
-                # if are_anticlockwise(t_leaf.cusp.coastal_index(), leaf.cusp.coastal_index(), last_edge.coastal_index() + 0.5):
                 if are_anticlockwise_pairs(t_leaf.cusp.get_rational_position(), leaf.cusp.get_rational_position(), last_edge.rational_position):
                     insert_index = i + 1 ## goes after this one, can repeat
                 else:
                     if insert_index == None:
                         insert_index = i ## before this one, cannot repeat
                         break
-        # print('insert_index', insert_index)
         if insert_index == None:
             last_edge.cusp_leaves.append(t_leaf)
         else:
@@ -1584,7 +1395,6 @@ class continent:
         before_cut = []
         after_cut = []
         for leaf in same_side_leaves:
-            # if are_anticlockwise(vert_t.coastal_index(), last_edge.coastal_index() + 0.5, leaf.cusp.coastal_index()):
             if are_anticlockwise_pairs(vert_t.get_rational_position(), last_edge.rational_position, leaf.cusp.get_rational_position()):
                 before_cut.append(leaf)
             else:
@@ -1613,15 +1423,6 @@ class continent:
         for leaf in edge_bt.cusp_leaves:
             leaf.coastal_edge = edge_bt
 
-    # def make_convex(self): 
-    #     ### new triangles are added to the end of the list so this is safe.
-    #     ### new sinks created by in-fills have new triangles that point at them, so we get everything.
-    #     for tri in self.triangles:
-    #         if tri.is_boundary():
-    #             downriver_triangle, is_coastal = self.flow(tri)
-    #             if not is_coastal:
-    #                 self.in_fill(downriver_triangle)
-
     def is_convex(self):
         for tri in self.triangles:
             if tri.is_boundary():
@@ -1632,9 +1433,6 @@ class continent:
 
     def build_boundary_data(self):
         """Make data used when drawing so only called once"""
-
-        ### figure out coast here? Don't update it as we go...
-
         self.upper_landscape_triangles = set([])
         self.lower_landscape_triangles = set([])
         for tri in self.triangles:
@@ -1659,38 +1457,9 @@ class continent:
         coastal_edges = self.upper_landscape_edges.intersection(self.lower_landscape_edges)
         self.upper_landscape_edges = self.upper_landscape_edges.difference(coastal_edges)
         self.lower_landscape_edges = self.lower_landscape_edges.difference(coastal_edges)
-        
-    # def old_coast(self):
-    #     old_coast = []
-    #     for tri in self.triangles:
-    #         if tri.is_boundary():
-    #             break  ## found an initial unburied tri 
-    #     vert_index = 0  
-    #     initial_vert = tri.vertices[vert_index]
-    #     vert = initial_vert   
-    #     while old_coast == [] or vert != initial_vert:
-    #         if tri.neighbours[(vert_index - 1) % 3].is_upper != tri.is_upper: ## we are coastal
-    #             vert_index = (vert_index + 1) % 3   
-    #             vert = tri.vertices[vert_index]
-    #             old_coast.append(vert)
-    #         else: # walk to the next triangle
-    #             tri = tri.neighbours[(vert_index - 1) % 3]  
-    #             vert_index = tri.vertices.index(vert) 
 
-    #     #  i+1
-    #     #   *-------* i  
-    #     #    \     /
-    #     #     \   / 
-    #     #      \ /
-    #     #       * i-1 
-
-    #     # now rotate to put infinity first
-    #     inf_vert_index = old_coast.index( self.infinity )
-    #     old_coast = old_coast[inf_vert_index:] + old_coast[:inf_vert_index]
-    #     return old_coast
-
-
-    def build_naive(self, max_num_tetrahedra = 50000):  ### just keep building until we hit max tetrahedra
+    def build_naive(self, max_num_tetrahedra = 50000):  
+        """just keep building until we hit max tetrahedra"""
         self.first_non_buried_index = 0
         while self.num_tetrahedra < max_num_tetrahedra:  
             tri = self.triangles[self.first_non_buried_index]  
@@ -1706,7 +1475,6 @@ class continent:
            tree_faces of fundamental_domain.spanning_dual_tree"""
         initial_tet_num = self.tet_face.tet_num
         tree_faces, non_tree_faces, distances_to_root = spanning_dual_tree(self.vt.tri, initial_tet_num = initial_tet_num)
-        # print('tree_faces of fund dom', tree_faces)
         initial_continent_tet = self.tetrahedra[0]
         continent_fund_dom_tets = [initial_continent_tet]
         initial_regina_tet = self.vt.tri.tetrahedron(initial_tet_num)
@@ -1741,21 +1509,7 @@ class continent:
         continent_fund_dom_tets.sort(key = lambda t : t.index)
         return continent_fund_dom_tets
 
-
-    # def build_boundary_fundamental_domain_old(self, max_num_tetrahedra = 50000):
-    #     self.first_non_buried_index = 0
-    #     while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
-    #         tri = self.triangles[self.first_non_buried_index]  
-    #         self.bury(tri)
-    #         self.first_non_buried_index += 1
-    #         while self.triangles[self.first_non_buried_index].is_buried():
-    #         # while self.triangles[first_non_buried_index].is_buried() or self.triangles[first_non_buried_index].is_upper:
-    #             self.first_non_buried_index += 1
-    #     self.build_boundary_data()  
-
-    ### old version builds lots of things we dont care about, this is much faster.
     def build_boundary_fundamental_domain(self, max_num_tetrahedra = 50000):
-        ### fundamental domain for the boundary torus?
         self.first_interesting_index = 0
         while len(self.desired_vertices) > 0 and self.num_tetrahedra < max_num_tetrahedra:  # will go a little over because we check after each bury, which adds many tetrahedra
             tri = self.triangles[self.first_interesting_index] 
@@ -1764,12 +1518,8 @@ class continent:
                 self.bury(tri)
             self.first_interesting_index += 1
             while self.triangles[self.first_interesting_index].is_buried():
-            # while self.triangles[first_non_buried_index].is_buried() or self.triangles[first_non_buried_index].is_upper:
                 self.first_interesting_index += 1
-        self.build_boundary_data()  
-
-
-    
+        self.build_boundary_data()     
 
     def mark_ladderpole_descendants(self, ladderpole_descendant_segments):
         for i, v in enumerate(self.coast):
@@ -1805,28 +1555,7 @@ class continent:
                     vertices.add( (vert, vertex_veering_colour) )
         return vertices, edges
 
-    # def calculate_max_ladderpole_descendant_coast_edge_length(self):
-    #     m = 0.0
-    #     for i,v in enumerate(self.coast):
-    #         w = self.coast[(i+1)%len(self.coast)]
-    #         if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
-    #             edge_length = abs( v.pos.complex() - w.pos.complex() )
-    #             if edge_length > m:
-    #                 m = edge_length
-    #     return m
-
-    # def count_long_edges(self):
-    #     out = 0
-    #     for i,v in enumerate(self.coast):
-    #         w = self.coast[(i+1)%len(self.coast)]
-    #         if len(v.ladderpole_ancestors.intersection(w.ladderpole_ancestors)) > 0:
-    #             edge_length = abs( v.pos.complex() - w.pos.complex() )
-    #             if edge_length > self.max_length:
-    #                 out += 1
-    #     return out
-
     def lightning_dividers(self, special_vertices):
-
         ## for every special vertex v, do the following for upper and lower landscapes. For every river R with source v,
         ## follow it to the coast, let e be the mouth. On the lower landscape, we define a set of edges, the "dividers", for the pair
         ## (v,e). These are the edges that link (v,e) in the circular ordering. We return all lists of dividers, for upper/lower, and for each river.
@@ -1904,7 +1633,6 @@ class continent:
                         ### finally, assert that there is nothing below any tri in the river at the end 
                         for tri in river:
                             assert tri.lower_tet == None
-                        # curve = [e.midpoint() for e in river_edges]
                         dividers[0].append(river_edges)   ## midpoints of these are our lightning curve
 
                     else:  ### its a triangle on the bottom... swap all the uppers with lowers... 
@@ -1965,41 +1693,8 @@ class continent:
                             assert tri.upper_tet == None
                         # curve = [e.midpoint() for e in river_edges]
                         dividers[1].append(river_edges)   ## midpoints of these are our lightning curve
-        
-        ### now clean up each divider by removing "fan edges"
-        # out = []
-        # for divider in dividers:
-        #     if len(divider) <= 2:
-        #         out.append(divider)
-        #         continue
-        #     clean_divider = []
-        #     a, b = divider[:2]
-        #     x = a.shared_vertex(b)
-        #     clean_divider.append(a)
-        #     for c in divider[2:]:
-        #         y = b.shared_vertex(c)
-        #         if x == y:
-        #             a, b = a, c
-        #         else:
-        #             clean_divider.append(b)
-        #             a, b = b, c
-        #             x = y
-        #     clean_divider.append(divider[-1])
-        #     out.append(clean_divider)
 
         return dividers
-
-if __name__ == '__main__':
-
-    veering_isosig = 'dLQacccjsnk_200'
-
-    shapes_data = read_from_pickle('Data/veering_shapes_up_to_ten_tetrahedra.pkl')
-
-    tri, angle = isosig_to_tri_angle(veering_isosig)
-    vt = veering_triangulation(tri, angle, tet_shapes = shapes_data[veering_isosig])
-    # con = continent( vt )
-    # con.build(5)
-    # print con.coast()
 
 
 

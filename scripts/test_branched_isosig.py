@@ -3,7 +3,7 @@ import regina
 from veering.taut import isosig_to_tri_angle, isosig_from_tri_angle, apply_isom_to_angle_struct_list, is_taut
 from veering.branched_surface import upper_branched_surface, isosig_from_tri_angle_branch, isosig_to_tri_angle_branch, apply_isom_to_branched_surface, is_branched
 from veering.flow_cycles import flow_cycle_to_triangle_loop
-from veering.drill import drill 
+from veering.drill_triangle_loop import drill 
 
 def main():
     tri, angle = isosig_to_tri_angle('cPcbbbdxm_10')

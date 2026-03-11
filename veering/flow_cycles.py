@@ -11,7 +11,7 @@ from .branched_surface import upper_branched_surface, branch_num_to_large_edge_a
 from .transverse_taut import get_tet_top_and_bottom_edges, get_tet_above_edge, is_transverse_taut, edge_side_face_collections, get_top_and_bottom_vert_nums
 from .taut import isosig_to_tri_angle, edge_num_to_vert_pair, vert_pair_to_edge_num
 from .veering_tri import is_veering, is_AB_turn
-from .drill import drill
+from .drill_triangle_loop import drill
 
 ### format for loops: it is a list of tuples, 
 ### each tuple is (tet_index, edge_index within this tet that we exit through)

@@ -2,7 +2,7 @@ from build_continent import make_continent_drill_flow_cycles
 from draw_drilled_tetrahedra import draw_drilled_tetrahedra
 from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
 
-from veering.taut import is_taut, isosig_from_tri_angle
+from veering.taut import is_taut, isosig_from_tri_angle, isosig_to_tri_angle
 from veering.veering_tri import is_veering
 from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
 import regina 
@@ -87,10 +87,14 @@ def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_
     
     built_tri, built_angle, built_to_original_cusp_mapping = triangulation_data_to_tri_angle(new_tetrahedra, new_faces)
 
-    new_sig, isom, isosig_tri, isosig_angle = isosig_from_tri_angle(built_tri, built_angle, return_isom = True, return_Regina_tri = True, return_isosig_angle = True)
+    new_sig, isom1 = isosig_from_tri_angle(built_tri, built_angle, return_isom = True)
+    ### isom1 is isom from the original triang to the symmetry of the Regina isosig triang with lex smallest angle struct
+    veering_isosig_tri, veering_isosig_angle, isom2 = isosig_to_tri_angle(new_sig, return_isom = True)
+    ### isom2 is the isom from the regina isosig triang to the oriented triangulation.
+    isom = isom2 * isom1
 
     if return_cusp_mapping:
-        isosig_to_built_cusp_mapping = [None] * isosig_tri.countVertices()
+        veering_isosig_to_built_cusp_mapping = [None] * veering_isosig_tri.countVertices()
         for i in range(built_tri.countVertices()):
             v = built_tri.vertex(i)
             mapped_cusp_indices = []
@@ -99,13 +103,13 @@ def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_
                 vert_num = embed.face()
                 mapped_tet_index = isom.tetImage(tet_index)
                 mapped_vert_num = isom.facetPerm(tet_index)[vert_num]
-                mapped_v = isosig_tri.tetrahedron(mapped_tet_index).vertex(mapped_vert_num)
+                mapped_v = veering_isosig_tri.tetrahedron(mapped_tet_index).vertex(mapped_vert_num)
                 mapped_cusp_indices.append(mapped_v.index())
             cusp_ind = mapped_cusp_indices[0]
             assert all([cusp_ind == cusp_ind_m for cusp_ind_m in mapped_cusp_indices])
-            isosig_to_built_cusp_mapping[cusp_ind] = i
+            veering_isosig_to_built_cusp_mapping[cusp_ind] = i
 
-        isosig_to_original_cusp_mapping = [built_to_original_cusp_mapping[ind] for ind in isosig_to_built_cusp_mapping]
+        veering_isosig_to_original_cusp_mapping = [built_to_original_cusp_mapping[ind] for ind in veering_isosig_to_built_cusp_mapping]
 
     ### We could also ask which flow cycle corresponds to which cusp of the drilled manifold.
     ### This is not currently implemented.
@@ -115,7 +119,7 @@ def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_
 
     out = [new_sig]
     if return_isosig_tri_angle:
-        out.extend([isosig_tri, isosig_angle])
+        out.extend([veering_isosig_tri, veering_isosig_angle])
     if return_built_tri_angle:
         out.extend([built_tri, built_angle])
     if return_triangulation_data:
@@ -123,7 +127,7 @@ def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_
     if return_found_parallel:
         out.append(found_parallel)
     if return_cusp_mapping:
-        out.append(isosig_to_original_cusp_mapping)
+        out.append(veering_isosig_to_original_cusp_mapping)
     return out
 
 def drill_flow_cycle_list(veering_isosig, max_length = 2, monochromatic_only = False, min_length = None):

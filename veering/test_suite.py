@@ -150,7 +150,7 @@ def test_taut_and_branched_drill_plus_semiflows_on_drillings(veering_isosigs, nu
     from . import taut
     from . import branched_surface
     from . import flow_cycles
-    from . import drill
+    from . import drill_triangle_loop
 
     for sig in random.sample(veering_isosigs, 3):
         tri, angle = taut.isosig_to_tri_angle(sig)
@@ -162,7 +162,7 @@ def test_taut_and_branched_drill_plus_semiflows_on_drillings(veering_isosigs, nu
             tri_loop = flow_cycles.flow_cycle_to_triangle_loop(tri, branch, loop)
             if tri_loop != False:
                 if not flow_cycles.tri_loop_is_boundary_parallel(tri_loop, tri):
-                    drill.drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
+                    drill_triangle_loop.drill(tri, tri_loop, angle = angle, branch = branch, sig = sig)
                     assert branched_surface.has_non_sing_semiflow(tri, branch), sig
 
     return None

@@ -964,7 +964,7 @@ class boundary_triangulation:
 @liberal
 def generate_boundary_triangulation(tri, angle, args = {}, output_filename = None, draw = True, ct_depth = 20):
     """make a picture of the boundary triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
-    if args['style'] == 'geometric': 
+    if 'style' in args and args['style'] == 'geometric': 
         if 'tet_shapes' in args:
             ts = args['tet_shapes']
         else:
