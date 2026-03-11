@@ -9,7 +9,6 @@ def rect_is_empty(j, i, pj, pi, perm):
     for k in range(j + 1, i):
         pk = perm[k]
         if is_between(pj, pk, pi):
-        # if (pj - pk) * (pk - pi) > 0: ### pk is between pi and pj
             return False ### k breaks apart the edge rectangle
     return True
 
@@ -228,15 +227,11 @@ def face_rect_from_face(f, ind, old_tet_rectangles):
     return old_tet_rectangles[tet_num].face(tet_face_num)
 
 def sanity_check(old_tet_rectangles):
-    # print('sanity check')
     r = old_tet_rectangles[0]
     tri = r.con.vt.tri
     for f in tri.triangles():
-        # print(f)
         face_rect0 = face_rect_from_face(f, 0, old_tet_rectangles)
         face_rect1 = face_rect_from_face(f, 1, old_tet_rectangles)
-        # if face_rect0.corner_location() != face_rect1.corner_location(): 
-        #     face_rect1.rotate()    ### unnecessary because we canonise_orientation 
         assert face_rect0.corner_location() == face_rect1.corner_location()
         assert face_rect0.horiz_to_vert_perm() == face_rect1.horiz_to_vert_perm()
 
@@ -263,19 +258,6 @@ def new_rectangle_equiv_class(new_rect, containing_old_tet_rect):
     new_rect_sig = (3, containing_old_tet_rect.tet_index, im) 
     this_rect_equiv_class.add(new_rect_sig)  
     return this_rect_equiv_class
-
-# def anticlockwise_ordering(horiz_verts, vertical_verts):
-#     W = 0
-#     E = 3
-#     if vertical_verts[1] < vertical_verts[2]:
-#         S = 1
-#         N = 2
-#     else:
-#         S = 2
-#         N = 1
-#     return [E, N, W, S]
-
-
 
 class new_tetrahedron:
     def __init__(self, equiv_class, old_tet_rectangles):
@@ -306,7 +288,6 @@ class new_tetrahedron:
             else:
                 assert type(old_tet_rectangle.horiz_ordering[ind]) == flow_interval.flow_interval
                 self.cusp_index.append(old_tet_rectangle.con.vt.tri.countVertices()) ### new cusp
-        # print('self.cusp_index', self.cusp_index)
 
     def set_anticlockwise_ordering(self):
         W, E = 0, 3
@@ -365,7 +346,6 @@ def build_drilled_triangulation_data(old_tet_rectangles):
             ### now check if we already have this equivalence class
             intersecting_equiv_classes = []
             for equiv_class in new_face_equiv_classes:
-                # print('check against equiv_class', equiv_class)
                 if not this_face_rect_equiv_class.isdisjoint(equiv_class):
                     intersecting_equiv_classes.append(equiv_class)
             for equiv_class in intersecting_equiv_classes:
@@ -387,13 +367,6 @@ def build_drilled_triangulation_data(old_tet_rectangles):
                 new_tet_equiv_classes.remove(equiv_class)
             new_tet_equiv_classes.append(this_tet_rect_equiv_class)
 
-
-    # print('num new faces', len(new_face_equiv_classes))
-    # for x in new_face_equiv_classes:
-    #     print(x)
-    # print('num new tetrahedra', len(new_tet_equiv_classes))
-    # for x in new_tet_equiv_classes:
-    #     print(x)
     assert len(new_face_equiv_classes) == 2 * len(new_tet_equiv_classes)
 
     new_tetrahedra = []
@@ -416,7 +389,6 @@ def build_drilled_triangulation_data(old_tet_rectangles):
         assert len(new_face.tet_face) == 2
         new_face.other_tet_ind = {new_face.tet_face[0]: new_face.tet_face[1], new_face.tet_face[1]: new_face.tet_face[0]}
     for new_tet in new_tetrahedra:
-        # print(new_tet.cusp_index)
         for i in range(4):
             face = new_tet.faces[i]
             new_tet.adjTetFace[i] = face.other_tet_ind[(new_tet, i)]
@@ -425,8 +397,6 @@ def build_drilled_triangulation_data(old_tet_rectangles):
             this_tet_face_indices.remove(i)
             other_tet_face_indices = [0,1,2,3]
             other_tet_face_indices.remove(other_i)
-            # if new_tet.face_special_corner[i] != other_tet.face_special_corner[other_i]:
-            #     other_tet_face_indices.reverse()
             this_special = new_tet.special_vertex_index_in_face[i]
             other_special = other_tet.special_vertex_index_in_face[other_i]
             this_tet_face_indices = [this_tet_face_indices[(k + this_special)%3] for k in range(3)]
@@ -438,8 +408,6 @@ def build_drilled_triangulation_data(old_tet_rectangles):
                 perm[this_tet_face_indices[k]] = other_tet_face_indices[k]
             new_tet.adjGluing[i] = perm
 
-    # for new_tet in new_tetrahedra:
-    #     print('new_tet', new_tet.index, [(tf[0].index, tf[1]) for tf in new_tet.adjTetFace], new_tet.adjGluing)
     return (new_tetrahedra, new_faces)
 
 

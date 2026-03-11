@@ -16,7 +16,8 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
     from drill_flow_cycle import drill_flow_cycles
     from pachner_graph_path import search_Pachner_graph_for_shortest_path
 
-    for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
+    print('testing drilling methods agree')
+    for sig in random.sample(veering_isosigs, num_to_check): 
         tri, angle = isosig_to_tri_angle(sig)
         vt = veering_triangulation(tri, angle)
         branch = upper_branched_surface(tri, angle)   
@@ -80,6 +81,7 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
     from drill_flow_cycle import drill_flow_cycles
     from boundary_triangulation import generate_boundary_triangulation
 
+    print('testing drilling properties')
     for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
         tri, angle = isosig_to_tri_angle(sig)
         original_is_layered = is_layered(tri, angle)
@@ -134,5 +136,5 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
 
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     veering_isosigs = veering_census()
-    # test_drilling_methods_agree(veering_isosigs, 5, 3)   
+    test_drilling_methods_agree(veering_isosigs, 5, 3)   
     test_drilling_properties(veering_isosigs, 5, 3)

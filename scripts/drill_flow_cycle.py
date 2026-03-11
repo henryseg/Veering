@@ -25,11 +25,8 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
     assert tri.isIdeal()
     assert tri.isOriented()
     angle = [1] * len(Regina_tets)
-    # print('angle struct', angle)
-    # print('countBoundaryComponents', tri.countBoundaryComponents())
     assert is_veering(tri, angle)
     cusp_mapping = []
-    # print('tri.countVertices()', tri.countVertices())
     for i in range(tri.countVertices()):
         # print('vertex', i)
         v = tri.vertex(i)
@@ -37,10 +34,8 @@ def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):
         for embed in v.embeddings():
             tet_index = embed.simplex().index()
             vert_num = embed.face()
-            # print(tet_index, vert_num)
             cusp_ind_measurements.append(new_tetrahedra[tet_index].cusp_index[vert_num])
         cusp_ind = cusp_ind_measurements[0]
-        # print(cusp_ind_measurements)
         assert all([cusp_ind == cusp_ind_m for cusp_ind_m in cusp_ind_measurements]) 
         cusp_mapping.append(cusp_ind)
 
@@ -71,7 +66,6 @@ def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_
     
     if generate_picture:
         if save_filename == None:
-            # save_filename = veering_isosig + '_' + str(flow_cycles) 
             save_filename = veering_isosig + '_' + short_flow_cycles_string(flow_cycles) 
             if len(save_filename) - 4 > 255:
                 save_filename = save_filename[:240] + 'TooLong'
