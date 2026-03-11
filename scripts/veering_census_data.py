@@ -125,6 +125,7 @@ def homology_from_old_data(triang_data):
 def other_names_from_old_data(triang_data):
 	return triang_data['old_data'][10]
 
+### change the following to add or update data to return
 functions_list = [veering_isosig, depth_from_old_data, num_cusps_from_old_data, is_geometric_from_old_data, symmetry_group_size_from_old_data, edge_orientable_from_old_data, euler_class_from_old_data, ladder_counts_from_old_data, num_toggles_red_blue_from_old_data, homology_from_old_data, other_names_from_old_data]
 
 def recompute():
