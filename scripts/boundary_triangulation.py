@@ -493,6 +493,16 @@ class ladder:
         for lu in self.ladder_unit_list:
             lu.transform(mob_tsfm)
 
+    def triangles_corresponding_to_rungs(self):
+        out = []
+        for lu in self.ladder_unit_list:
+            if len(lu.left_vertices) == 2:
+                pi_vertex = lu.left_vertices[0]
+            else:
+                pi_vertex = lu.right_vertices[0]
+            out.append(self.vt().tri.tetrahedron(lu.tet_num).face(2, pi_vertex).index())
+        return out
+
 def draw_vertex_colour(my_canvas, coords, veering_direction):
     colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
     circ = pyx.path.circle(coords[0], coords[1] ,0.1)
@@ -904,7 +914,13 @@ class torus_triangulation:
         new_ladder_B_index = (ladder_B_index - 1) % len(self.ladder_list)
         new_unit_posn_B = (new_ladder_B_index, find_unit_index(tet_face(new_tet_B_index, new_face_B), self.ladder_list[new_ladder_B_index]) )
 
-        return (new_unit_posn_A, new_unit_posn_B)     
+        return (new_unit_posn_A, new_unit_posn_B)    
+
+    def triangles_corresponding_to_rungs(self):
+        out = []
+        for ladder in self.ladder_list:
+            out.extend(ladder.triangles_corresponding_to_rungs())
+        return out
 
 class boundary_triangulation:
     """list of torus_triangulations for all boundary components of the manifold"""
