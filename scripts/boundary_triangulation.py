@@ -503,6 +503,15 @@ class ladder:
             out.append(self.vt().tri.tetrahedron(lu.tet_num).face(2, pi_vertex).index())
         return out
 
+    def triangles_corresponding_to_left_ladderpole(self):
+        out = []
+        for lu in self.ladder_unit_list:
+            if len(lu.left_vertices) == 2:
+                right_vertex = lu.right_vertices[0]
+                out.append(self.vt().tri.tetrahedron(lu.tet_num).face(2, right_vertex).index())
+        return out
+
+
 def draw_vertex_colour(my_canvas, coords, veering_direction):
     colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
     circ = pyx.path.circle(coords[0], coords[1] ,0.1)
@@ -920,6 +929,12 @@ class torus_triangulation:
         out = []
         for ladder in self.ladder_list:
             out.extend(ladder.triangles_corresponding_to_rungs())
+        return out
+
+    def triangles_corresponding_to_ladderpoles(self):
+        out = []
+        for ladder in self.ladder_list:
+            out.append(ladder.triangles_corresponding_to_left_ladderpole())
         return out
 
 class boundary_triangulation:
