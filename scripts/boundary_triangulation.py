@@ -928,7 +928,7 @@ class torus_triangulation:
     def triangles_corresponding_to_rungs(self):
         out = []
         for ladder in self.ladder_list:
-            out.extend(ladder.triangles_corresponding_to_rungs())
+            out.append(ladder.triangles_corresponding_to_rungs())
         return out
 
     def triangles_corresponding_to_ladderpoles(self):
