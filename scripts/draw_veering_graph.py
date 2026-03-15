@@ -2,6 +2,7 @@ import regina
 import pickle
 from pyx import path, trafo, canvas, style, text, color, deco
 from math import sqrt, ceil, floor, cos, sin, pi
+from veering.file_io import parse_data_file
 
 def read_from_pickle(filename):
     f = open(filename, 'rb')
@@ -45,7 +46,27 @@ def transp(target_dot_rad, max_dot_rad, max_transp = 0.9, min_transp = 0.6):
     # param = param**1.2
     return (1.0 - param)*max_transp + param*min_transp
 
-def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.6, min_transp = 0.5):
+
+
+def prune_nodes(nodes_to_draw, graph):  ### here set up to draw torus bundles and drillings of them
+    torus_bundle_sigs = parse_data_file('data/torus_bundles_b++_sigs.txt')
+    seed_nodes = []
+    for node in nodes_to_draw:
+        if node.isoSig.split("_")[0] in torus_bundle_sigs:
+            seed_nodes.append(node)
+    ### now recursively get drillings of torus bundles
+    out = set([])
+    while len(seed_nodes) > 0:
+        node = seed_nodes.pop()
+        out.add(node)
+        for neighbour_sig in node.neighbour_isoSigs_drill_dict.values():
+            if neighbour_sig in graph.keys():
+                neighbour = graph[neighbour_sig]
+                if neighbour in nodes_to_draw: 
+                    seed_nodes.append(neighbour) 
+    return list(out)
+
+def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.6, min_transp = 0.5, write_sigs = False):
 
     canv = canvas.canvas()
 
@@ -100,6 +121,8 @@ def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.
 
     table, nodes_to_draw = prepare_table(graph, max_tetrahedra = max_tetrahedra, max_cusps = max_cusps)
 
+    nodes_to_draw = prune_nodes(nodes_to_draw, graph)
+
     for row in table:
         print([len(entry) for entry in row])
 
@@ -135,27 +158,32 @@ def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.
         p = path.circle(node.dot_coords.real, node.dot_coords.imag, node.dot_rad)
         p = p.transformed(scl)
         canv.stroke(p, [deco.filled(), style.linewidth(0), col])
+        if write_sigs:
+            string = node.isoSig
+            # s = string
+            s = string.split('_')[0]  ### latex has trouble with underscores
+            # print(s) 
+            canv.text(global_scale_up * (node.dot_coords.real + 1.5*node.dot_rad), global_scale_up * node.dot_coords.imag, s, textattrs=[text.size(-3), default_col, text.halign.left, text.valign.middle, trafo.rotate(-10)])
 
     output_filename = 'Images/Graphs/' + name + '.pdf'
     print(output_filename)
     canv.writePDFfile(output_filename)
 
-def draw_from_filename(filename, max_tetrahedra = 5, max_cusps = 2):
-    name = filename.split('.')[0] + '_draw_max_' + str(max_tetrahedra) + '_' + str(max_cusps)
+def draw_from_filename(filename, max_tetrahedra = 5, max_cusps = 2, name_postscript = "", write_sigs = False):
+    name = filename.split('.')[0] + '_draw_max_' + str(max_tetrahedra) + '_' + str(max_cusps) + name_postscript
     name = name.split('/')[1]
 
     graph = read_from_pickle(filename)
     max_transp = 0.99999
     min_transp = 0.8
-    draw(graph, name = name, max_tetrahedra = max_tetrahedra, max_cusps = max_cusps, max_transp = max_transp, min_transp = min_transp)
+    draw(graph, name = name, max_tetrahedra = max_tetrahedra, max_cusps = max_cusps, max_transp = max_transp, min_transp = min_transp, write_sigs = write_sigs)
 
 
-def main(max_tetrahedra = 16, max_cusps = 5):
+def main(max_tetrahedra = 16, max_cusps = 5, name_postscript = "", write_sigs = False):
     filename = 'data/veering_drilling_graph.pkl'
-    draw_from_filename(filename, max_tetrahedra = max_tetrahedra, max_cusps = max_cusps)
-    
+    draw_from_filename(filename, max_tetrahedra = max_tetrahedra, max_cusps = max_cusps, name_postscript = name_postscript, write_sigs = write_sigs)
 
-
+        
 
 
 

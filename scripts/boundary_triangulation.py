@@ -2,7 +2,7 @@ from math import sqrt
 
 from veering.file_io import parse_data_file, read_from_pickle
 from veering.basic_math import vector, matrix, KP1
-from veering.taut import isosig_to_tri_angle, liberal
+from veering.taut import isosig_to_tri_angle, liberal, unsorted_vert_pair_to_edge_pair
 from veering.veering_tri import veering_triangulation
 
 from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
@@ -496,7 +496,7 @@ class ladder:
     def triangles_corresponding_to_rungs(self):
         out = []
         for lu in self.ladder_unit_list:
-            if len(lu.left_vertices) == 2:
+            if lu.is_on_left():
                 pi_vertex = lu.left_vertices[0]
             else:
                 pi_vertex = lu.right_vertices[0]
@@ -506,11 +506,23 @@ class ladder:
     def triangles_corresponding_to_left_ladderpole(self):
         out = []
         for lu in self.ladder_unit_list:
-            if len(lu.left_vertices) == 2:
+            if lu.is_on_left():
                 right_vertex = lu.right_vertices[0]
                 out.append(self.vt().tri.tetrahedron(lu.tet_num).face(2, right_vertex).index())
         return out
 
+    def ladderpole_path(self):
+        """returns list of triples of the form (tet_num, edge_pair, sign) where sign is positive
+        if and only if the path turns anticlockwise around the corner."""
+        out = []
+        for lu in self.ladder_unit_list:
+            if lu.is_on_left():
+                edge_pair = unsorted_vert_pair_to_edge_pair[(lu.face, lu.right_vertices[0])]
+                out.append( (lu.tet_num, edge_pair, -1) )
+            else:
+                edge_pair = unsorted_vert_pair_to_edge_pair[(lu.face, lu.left_vertices[0])]
+                out.append( (lu.tet_num, edge_pair, +1) )
+        return out
 
 def draw_vertex_colour(my_canvas, coords, veering_direction):
     colours = {"blue":pyx.color.rgb.blue, "red":pyx.color.rgb.red}
@@ -551,6 +563,7 @@ class torus_triangulation:
     """list of ladders stacked next to each other"""
 
     def __init__(self, bt, start_tet_face):
+        self.start_tet_face = start_tet_face
         self.bt = bt
         self.ladder_list = []
         self.ladder_holonomy = None
@@ -631,6 +644,11 @@ class torus_triangulation:
             # print 'tet, inf, shapes', tet_num, face, verts_pos
         current_tf = tet_face(current_tet_face.tet_num, current_tet_face.face, verts_pos = verts_pos) 
         
+        ### rho records only the last ladder_unit in a ladder
+        ### gamma records the whole path
+        gamma = []
+        pi_colour_to_direction = { 'red': 1, 'blue': -1 }
+
         while current_tf not in rho:  ### ignoring the verts_pos information because of our equality definition for tet_faces
             rho.append(current_tf)
             tet_num, inf_vert = current_tf.tet_num, current_tf.face
@@ -654,8 +672,23 @@ class torus_triangulation:
             tet = self.vt().tri.tetrahedron(tet_num)
             if self.vt().tet_shapes != None:
                 verts_pos = current_tf.verts_pos
+
+            first_time = True
             while self.vt().get_edge_between_verts_colour(tet.index(), (leading_vertex, pivot_vertex)) == start_leading_edge_colour:
                 # print tet.index(), '|iplt|', inf_vert, pivot_vertex, leading_vertex, trailing_vertex
+                
+                ### update gamma
+                
+                if first_time:
+                    edge_pair = unsorted_vert_pair_to_edge_pair[(inf_vert, leading_vertex)]
+                    gamma.append( ( (tet.index(), inf_vert), edge_pair, -pi_colour_to_direction[pi_colour]) ) ### opposite way on first tet_face of a ladder
+                    # print( 'tet', tet.index(), 'inf', inf_vert, 'around', leading_vertex, -pi_colour_to_direction[pi_colour] )
+                    first_time = False
+                else:
+                    edge_pair = unsorted_vert_pair_to_edge_pair[(inf_vert, pivot_vertex)]
+                    gamma.append( ( (tet.index(), inf_vert), edge_pair, pi_colour_to_direction[pi_colour]) )
+                    # print( 'tet', tet.index(), 'inf', inf_vert, 'around', pivot_vertex, pi_colour_to_direction[pi_colour] )
+
                 gluing = tet.adjacentGluing(trailing_vertex)
                 new_tet = tet.adjacentTetrahedron(trailing_vertex)
                 new_inf_vert = gluing[inf_vert]
@@ -669,6 +702,13 @@ class torus_triangulation:
                 inf_vert, pivot_vertex, leading_vertex, trailing_vertex = new_inf_vert, new_pivot_vertex, new_leading_vertex, new_trailing_vertex
             current_tf = tet_face( tet.index(), inf_vert, verts_pos = verts_pos )
         sideways = rho[rho.index(current_tf):]   ### remove initial tail. Here .index ignores the verts_pos data of a tet_face
+        current_tf2 = (tet.index(), inf_vert)
+        
+        for i, entry in enumerate(gamma):
+            if entry[0] == current_tf2:
+                first_sighting = i
+                break
+        gamma = gamma[first_sighting:] ### remove initial tail for gamma
 
         not_inf_vert = (current_tf.face + 1) % 4
         if self.vt().tet_shapes != None:
@@ -700,14 +740,19 @@ class torus_triangulation:
                 sideways[-1].transform(mob_tsfm)
             sideways = sideways[-1:] + sideways[:-1] 
             sideways.reverse()
+            gamma.reverse()
+            gamma = [(a, b, -c) for (a, b, c) in gamma]
             if self.vt().tet_shapes != None:
                 self.sideways_holonomy = -self.sideways_holonomy
-        return sideways
+
+        # print(gamma)       
+        gamma = [(tet_ind, edge_pair, direction) for ((tet_ind, inf_vert), edge_pair, direction) in gamma]
+        return sideways, gamma
 
     def make_torus_triangulation(self, start_tet_face):
         """build a torus triangulation by building multiple ladders"""
         
-        sideways = self.find_sideways(start_tet_face)
+        sideways, gamma = self.find_sideways(start_tet_face)
 
         for tf in sideways:
             if len(self.ladder_list) > 0 and tf in self.ladder_list[0].ladder_unit_list:
@@ -936,6 +981,13 @@ class torus_triangulation:
         for ladder in self.ladder_list:
             out.append(ladder.triangles_corresponding_to_left_ladderpole())
         return out
+
+    def ladderpole_path(self):
+        return self.ladder_list[0].ladderpole_path()
+
+    def veering_longitude_path(self):
+        sideways, gamma = self.find_sideways(self.start_tet_face)
+        return gamma
 
 class boundary_triangulation:
     """list of torus_triangulations for all boundary components of the manifold"""
