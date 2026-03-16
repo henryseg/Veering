@@ -222,3 +222,270 @@ def loop_twistednesses(tri, angle):
             twistednesses_dict[i] = 1
     
     return [twistednesses_dict[i] for i in range(tri.countTriangles())]
+
+### Code for getting nice positions of tetrahedra, primarily for drawing midsurfaces
+
+def get_edge_num_between_verts(v0, v1):
+    edge_vert_index_map = {(0,1):0, (0,2):1, (0,3):2, (1,2): 3, (1,3):4, (2,3):5 }  ## should import
+    edge = [v0,v1]
+    edge.sort()
+    return edge_vert_index_map[tuple(edge)]
+
+def get_edge_between_verts(tetrahedron, v0, v1):
+    edge_num_in_tet = get_edge_num_between_verts(v0, v1)
+    edge = tetrahedron.edge(edge_num_in_tet)
+    return edge
+
+def get_edge_between_verts_index(tetrahedron, v0, v1):
+    edge = get_edge_between_verts(tetrahedron, v0, v1)
+    return edge.index()
+
+def get_edge_between_verts_oriented(tetrahedron, v0, v1, edge_orientations_relative_to_regina = None):
+    edge_num_in_tet = get_edge_num_between_verts(v0, v1)
+    perm = tetrahedron.faceMapping(1, edge_num_in_tet)
+    edge_num = get_edge_between_verts_index(tetrahedron, v0, v1)
+    if (edge_orientations_relative_to_regina == None) or (edge_orientations_relative_to_regina[edge_num] == 1):
+        return (perm[0], perm[1])  ### these are v0, v1 in order given by underlying edge
+    else:
+        return (perm[1], perm[0]) 
+
+def is_same_orientation_as_regina(tetrahedron, v0, v1, edge_orientations_relative_to_regina = None):
+    return get_edge_between_verts_oriented(tetrahedron, v0, v1, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)[0] == v0
+
+def get_edge_between_verts_colour(veering_colours, tetrahedron, v0, v1):
+    """returns the veering direction (colour) for the given edge, between v0, v1"""
+    edge_index = get_edge_between_verts_index( tetrahedron, v0, v1)
+    return veering_colours[edge_index]
+
+def get_vert_locations(triangulation, tet_num, veering_colours, coorientations):
+    coors = coorientations[tet_num]
+    top_vertices = []
+    bottom_vertices = []
+    #coor for a tet looks like [1, -1, 1, -1], is 1 for pointing out of tet, -1 for in
+    for i in range(4):
+        if coors[i] == 1:
+            bottom_vertices.append(i) 
+            # Assume coorientation is upwards. If == 1, face coorientation is outwards, 
+            # means this face is on top, means corresponding vertex is on bottom
+        else:
+            top_vertices.append(i) 
+    col = get_edge_between_verts_colour(veering_colours, triangulation.tetrahedron(tet_num), top_vertices[0], bottom_vertices[0])
+    if col != "red":
+        bottom_vertices = [bottom_vertices[1], bottom_vertices[0]]
+    return (top_vertices, bottom_vertices)
+
+def rotate_vertices(vert_posns):
+    top_verts, bottom_verts = vert_posns
+    return ([top_verts[1], top_verts[0]], [bottom_verts[1], bottom_verts[0]])
+
+###           top[0]
+###          /   |   \
+### bottom[0]--- | ---bottom[1]
+###          \   |   /
+###           top[1]
+
+
+def get_edge_to_left_of_tet(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, tet_num_right, side_of_zigzag = 'upper'):
+    # print tet_vert_posns_below 
+    # print tet_vert_posns_above
+    # print tet_num_right
+    tet_right = triangulation.tetrahedron(tet_num_right)  
+    if side_of_zigzag == 'upper':          ### which is the edge to the left of tet_right depends on the colour of the annulus we are in
+        tet_right_vert_posns = tet_vert_posns_above[tet_num_right]
+        edge_of_tet_right = tet_right_vert_posns[1]  ### bottom edge of the tet, is in our annulus
+    else:
+        tet_right_vert_posns = tet_vert_posns_below[tet_num_right]
+        edge_of_tet_right = tet_right_vert_posns[0]  ### top edge of the tet, is in our annulus
+    annulus_colour = get_edge_between_verts_colour(veering_colours, tet_right, edge_of_tet_right[0], edge_of_tet_right[1]) 
+
+    if annulus_colour == "red":
+        edge_num = get_edge_between_verts_index(tet_right, tet_right_vert_posns[0][0], tet_right_vert_posns[1][0])
+        # print 'to left of ', tet_num_right, 'is edge', edge_num, 'red', side_of_zigzag
+    else:
+        edge_num = get_edge_between_verts_index(tet_right, tet_right_vert_posns[0][1], tet_right_vert_posns[1][0])
+        # print 'to left of ', tet_num_right, 'is edge', edge_num, 'blue', side_of_zigzag
+    return edge_num
+
+def orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_num_right):
+    #### compare orientation of a tet in lower half of annulus to the tet below the edge to left of original tet
+    # print 'orientations agree function'
+    edge_num = get_edge_to_left_of_tet(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, tet_num_right, side_of_zigzag = 'lower') 
+    tet_num_below = tet_num_below_edge_num[edge_num]
+    ### check for consistency with the tet below an edge against the tet to the right of the edge
+    if veering_colours[edge_num] == "red":  
+        front_vert_above = tet_vert_posns_below[tet_num_right][1][0]  ## bottom[0]
+        back_vert_above = tet_vert_posns_below[tet_num_right][0][0]   ## top[0]
+    else:
+        front_vert_above = tet_vert_posns_below[tet_num_right][0][1]  ## top[1]
+        back_vert_above = tet_vert_posns_below[tet_num_right][1][0]   ## bottom[0]
+    front_vert_below = tet_vert_posns_below[tet_num_below][0][1]  # top[1]
+    back_vert_below = tet_vert_posns_below[tet_num_below][0][0]   # top[0]
+
+    v0, v1 = get_edge_between_verts_oriented(triangulation.tetrahedron(tet_num_right), front_vert_above, back_vert_above)
+    w0, w1 = get_edge_between_verts_oriented(triangulation.tetrahedron(tet_num_below), front_vert_below, back_vert_below)
+
+    return ((v0 == front_vert_above) and (w0 == front_vert_below)) or ((v1 == front_vert_above) and (w1 == front_vert_below))
+
+def find_cut_edges(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, zigzags):
+    cut_edges = []
+    for zigzag in zigzags:
+        tet_class_below, tet_class_above = zigzag
+        for tet_num in tet_class_below:
+            if not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_num):
+                # print 'find cut edges'
+                cut_edges.append(get_edge_to_left_of_tet(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, tet_num, side_of_zigzag = 'lower')) 
+    return cut_edges
+
+def get_nice_edge_orientations_relative_to_regina(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, zigzags):
+    ## all edges on bottom side of an annulus should point towards us (but we draw them pointing away??)
+    edge_orientations_relative_to_regina = [1] * triangulation.countEdges()
+    for zigzag in zigzags:
+        tet_class_below, tet_class_above = zigzag
+        for tet_num in tet_class_below:
+            edge_num = get_edge_to_left_of_tet(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, tet_num, side_of_zigzag = 'lower')
+
+            top_vertices, bottom_vertices = tet_vert_posns_below[tet_num]
+            if veering_colours[edge_num] == "red":
+                verts = [top_vertices[0], bottom_vertices[0]] #left
+            else:
+                verts = [bottom_vertices[0], top_vertices[1]] #left
+            if is_same_orientation_as_regina(triangulation.tetrahedron(tet_num), verts[0], verts[1]):
+                edge_orientations_relative_to_regina[edge_num] = -1
+    return edge_orientations_relative_to_regina
+
+def get_consistent_tet_vert_posns(triangulation, angle, tet_types, coorientations):
+    veering_colours = is_veering(triangulation, angle, return_type = 'veering_colours')
+    # coorientations = is_transverse_taut(triangulation, angle_structure, return_type = 'tet_vert_coorientations')
+    tet_vert_posns_below = []  ## positions of the tetrahedron vertices in the top down view. These determine which way round to draw diamonds
+    tet_vert_posns_above = []  ## there are two for tracking the upper and lower pairs of triangles on the tetrahedra
+    ### but above is talking about triangles in the top half of a zigzag, so the triangles at the bottom of tetrahedra, and vice versa. Confusing, I know...
+
+    for tet_num in range(triangulation.countTetrahedra()):
+        tet_vert_posns_below.append( get_vert_locations(triangulation, tet_num, veering_colours, coorientations) )
+        tet_vert_posns_above.append( get_vert_locations(triangulation, tet_num, veering_colours, coorientations) )
+
+    ### get map from edges to the tetrahedra below them
+    edge_num_below_tet_num = []
+    tet_num_below_edge_num = [''] * triangulation.countTetrahedra()
+    for tet_num in range(triangulation.countTetrahedra()):
+        top_vertices, bottom_vertices = tet_vert_posns_below[tet_num]
+        edge_num = get_edge_between_verts_index(triangulation.tetrahedron(tet_num), top_vertices[0], top_vertices[1])
+        edge_num_below_tet_num.append(edge_num)
+        tet_num_below_edge_num[edge_num] = tet_num
+
+    ### Next make tet_vert_posns consistent ...
+    ### find zigzags, then find cuts. These are edges where we have to twist as we glue
+
+    blue_zigzags = []
+    red_zigzags = []
+    tet_nums_to_visit = list(range(triangulation.countTetrahedra())) ## these will all be on the bottom of zigzags
+    while len(tet_nums_to_visit) > 0: # find all components of all colour complex regions
+        ### first time around, assume that the last tet is good, move from there.
+        first_tet_num = tet_nums_to_visit.pop() ## start new component
+        frontier_tet_nums = [first_tet_num]  ### these are possible tets to start exploring from
+        while len(frontier_tet_nums) > 0:
+            tet_num = frontier_tet_nums.pop()  # build lower half of zigzag starting from this tet
+            edge_class_below = []  
+            tet_class_below = []
+            edge_class_above = []
+            tet_class_above = []
+            while True:    # go along the zigzag
+                tet = triangulation.tetrahedron(tet_num)
+                top_vertices, bottom_vertices = tet_vert_posns_below[tet_num]
+                tet_above_right = tet.adjacentSimplex( bottom_vertices[0] )  #adjacent tet to the tet opposite bottom left vert (so in top half of zigzag)
+                tet_above_right_from_tet_perm = tet.adjacentGluing( bottom_vertices[0] )
+
+                if get_edge_between_verts_colour(veering_colours, tet, top_vertices[0], top_vertices[1]) == "red": ## top edge of orig tet
+                    ### then if consistent orientation, top[0] of orig tet should map to top[0] of tet_above_right, and 
+                    ### tet to right of orig tet is through tet_above_right opposite this vertex
+                    colour_constant = 0
+                else:
+                    colour_constant = 1
+                
+###           top[0]
+###          /   |   \
+### bottom[0]--- | ---bottom[1]
+###          \   |   /
+###           top[1]
+
+                edge_class_below.append( get_edge_between_verts_index(tet, bottom_vertices[0], top_vertices[colour_constant]) ) 
+                # edge to the left of this tet
+                edge_class_above.append( get_edge_between_verts_index(tet, top_vertices[0], top_vertices[1]) )
+                # edge to the left of the above right tet
+                tet_class_below.append( tet_num )
+                tet_class_above.append( tet_above_right.index() )
+
+                if tet_above_right_from_tet_perm[ bottom_vertices[1] ] != tet_vert_posns_above[tet_above_right.index()][1][1]: # bottom_vertices[1] should match whether red or blue
+                    ### then orientation is wrong
+                    # print 'rotate tet above right:', tet_above_right.index()
+                    tet_vert_posns_above[tet_above_right.index()] = rotate_vertices( tet_vert_posns_above[tet_above_right.index()] )
+
+                tet_right_from_tet_above_right_perm = tet_above_right.adjacentGluing( tet_above_right_from_tet_perm[top_vertices[colour_constant]] )
+                tet_right = tet_above_right.adjacentSimplex( tet_above_right_from_tet_perm[top_vertices[colour_constant]] )
+
+                if tet_right_from_tet_above_right_perm[tet_above_right_from_tet_perm[ bottom_vertices[1] ]] != tet_vert_posns_below[tet_right.index()][0][colour_constant]:
+                    ### then orientation is wrong
+                    # print 'rotate tet right:', tet_right.index()
+                    tet_vert_posns_below[tet_right.index()] = rotate_vertices( tet_vert_posns_below[tet_right.index()] )
+
+                if tet_right.index() in tet_nums_to_visit:  #we have not looped yet
+                    tet_nums_to_visit.remove(tet_right.index())
+                    if tet_right.index() in frontier_tet_nums:  # if we hit it while exploring horizontally, we are already building the loop its in, 
+                        frontier_tet_nums.remove(tet_right.index()) # so we don't need to explore from there
+
+                    tet_num = tet_right.index() # do this next
+                else:
+                    break # we have looped horizontally: stop
+            zigzag = [tet_class_below, tet_class_above]
+            if colour_constant == 0:
+                red_zigzags.append(zigzag)
+            else:
+                blue_zigzags.append(zigzag)
+
+            # now go downwards from the edges in the edge class below
+            for tet_num in tet_class_below:
+                # print 'go downwards'
+                edge_num = get_edge_to_left_of_tet(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, tet_num, side_of_zigzag = 'lower')
+                tet_num_below = tet_num_below_edge_num[edge_num]
+                if tet_num_below in tet_nums_to_visit: 
+                    if tet_num_below not in frontier_tet_nums:  # just in case, don't want duplicates in the list
+                        frontier_tet_nums.append(tet_num)
+
+                    if not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_num):
+                        # print 'rotate tet below:', tet_num_below
+                        tet_vert_posns_below[tet_num_below] = rotate_vertices(tet_vert_posns_below[tet_num_below])
+                # else: # we have looped vertically. 
+            break
+
+    red_zigzags.sort(key = lambda x: len(x[0]))   # sorted short to long
+    blue_zigzags.sort(key = lambda x: len(x[0]))
+    zigzags = red_zigzags + blue_zigzags
+
+    while True:
+        made_change = False
+        for i, zigzag in enumerate(zigzags):
+            tet_class_below, tet_class_above = zigzag
+            if len([tet_num for tet_num in tet_class_below if tet_types[tet_num] == 'toggle']) == 0:  #all fan tetrahedra
+                # print 'all fan tetrahedra'
+                if not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_class_below[0]):
+                    for tet_num in tet_class_below:
+                        assert not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_num)
+                    # print 'and orientations dont match below: rotate this entire annulus'  ### also rotates some other stuff for toggles...
+                    for tet_num_above in tet_class_above:
+                        tet_vert_posns_above[tet_num_above] = rotate_vertices(tet_vert_posns_above[tet_num_above])
+                    for tet_num_below in tet_class_below:
+                        tet_vert_posns_below[tet_num_below] = rotate_vertices(tet_vert_posns_below[tet_num_below])
+                    tet_class_below.append(tet_class_below.pop(0)) # fence post stuff
+                    tet_class_below.reverse() 
+                    tet_class_above.reverse()
+                    zigzags[i] = [tet_class_below, tet_class_above]
+                    made_change = True
+                    break # out of for loop
+        if made_change == False:  #otherwise, have to keep shifting down until we make a pass through and make no changes
+            break
+
+    cut_edges = find_cut_edges(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, zigzags)
+    # print tet_vert_posns_below
+    # print zigzags
+
+    return tet_vert_posns_below, tet_vert_posns_above, zigzags, cut_edges

@@ -5,12 +5,11 @@
 ### functions for building continents
 
 from .taut import isosig_to_tri_angle
-from .veering_tri import veering_triangulation
+from .veering_tri import veering_triangulation, get_consistent_tet_vert_posns
 from .flow_cycles import is_twisted
 from .continent import continent, continent_tetrahedron
 from .boundary_triangulation import tet_face
 from .flow_interval import flow_interval, uniquify_list_of_flow_intervals, translate_of_interval_from_one_edge_rect_to_another, cmp_to_key
-from .draw_veering_triangulation_and_mid_annuli import get_consistent_tet_vert_posns
 
 def make_continent_naive(veering_isosig, max_num_tetrahedra = 50):
     tri, angle = isosig_to_tri_angle(veering_isosig)
