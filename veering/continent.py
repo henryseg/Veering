@@ -2,14 +2,13 @@
 # continent.py
 #
 
-from veering.file_io import parse_data_file, read_from_pickle
-from veering.basic_math import sign
-from veering.taut import isosig_to_tri_angle, vert_pair_to_edge_num, edge_num_to_vert_pair
-from veering.veering_tri import veering_triangulation
-from veering.fundamental_domain import spanning_dual_tree
-
-from develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
-from circular_order import are_anticlockwise, are_linking, are_anticlockwise_pairs, are_linking_pairs
+from .file_io import parse_data_file, read_from_pickle
+from .basic_math import sign
+from .taut import isosig_to_tri_angle, vert_pair_to_edge_num, edge_num_to_vert_pair
+from .veering_tri import veering_triangulation
+from .fundamental_domain import spanning_dual_tree
+from .develop_ideal_hyperbolic_tetrahedra import developed_position, unknown_vert_to_known_verts_ordering
+from .circular_order import are_anticlockwise, are_linking, are_anticlockwise_pairs, are_linking_pairs
 
 class vertex:
     def __init__(self, continent, pos):

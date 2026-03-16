@@ -1,10 +1,9 @@
-from build_continent import make_continent_drill_flow_cycles
-from draw_drilled_tetrahedra import draw_drilled_tetrahedra
-from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
-
-from veering.taut import is_taut, isosig_from_tri_angle, isosig_to_tri_angle
-from veering.veering_tri import is_veering
-from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
+from .build_continent import make_continent_drill_flow_cycles
+from .draw_drilled_tetrahedra import draw_drilled_tetrahedra
+from .ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
+from .taut import is_taut, isosig_from_tri_angle, isosig_to_tri_angle
+from .veering_tri import is_veering
+from .flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
 import regina 
 
 def triangulation_data_to_tri_angle(new_tetrahedra, new_faces):

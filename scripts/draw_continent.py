@@ -8,8 +8,8 @@ from veering.taut import isosig_to_tri_angle
 from veering.veering_tri import veering_triangulation
 from veering.snappy_tools import shapes, algebraic_shapes, cusp_areas
 
-from continent import continent
-from boundary_triangulation import boundary_triangulation, tet_face
+from veering.continent import continent
+from veering.boundary_triangulation import boundary_triangulation, tet_face
 
 # def pre_draw_transformation( z, ladder_holonomy ):
     # return z/ladder_holonomy

@@ -10,8 +10,8 @@ from veering.snappy_tools import shapes
 from veering.taut import isosig_to_tri_angle
 from veering.veering_tri import veering_triangulation
 
-from continent import continent
-from boundary_triangulation import boundary_triangulation, tet_face
+from veering.continent import continent
+from veering.boundary_triangulation import boundary_triangulation, tet_face
 from mobius_hack import many_matrices
 
 # from svglib.svglib import svg2rlg

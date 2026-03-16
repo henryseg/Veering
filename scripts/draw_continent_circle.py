@@ -3,8 +3,8 @@ import pyx ### vector graphics
 from pyx import path, trafo, canvas, style, text, color, deco
 from math import pi, cos, sin, acos, tan, atan2, sqrt
 
-from continent import continent_tetrahedron
-from circular_order import are_anticlockwise, are_linking
+from veering.continent import continent_tetrahedron
+from veering.circular_order import are_anticlockwise, are_linking
 
 def unitize(a):
     return a/abs(a)

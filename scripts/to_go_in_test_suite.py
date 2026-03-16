@@ -13,8 +13,8 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
     from veering.flow_cycles import generate_simple_flow_cycles, flow_cycle_to_triangle_loop, tri_loop_is_boundary_parallel, generate_flow_cycles, is_twisted 
     from veering.drill_triangle_loop import drill
     from veering.veering_tri import veering_triangulation
-    from drill_flow_cycle import drill_flow_cycles
-    from pachner_graph_path import search_Pachner_graph_for_shortest_path
+    from veering.drill_flow_cycle import drill_flow_cycles
+    # from pachner_graph_path import search_Pachner_graph_for_shortest_path
 
     print('testing drilling methods agree')
     for sig in random.sample(veering_isosigs, num_to_check): 
@@ -78,8 +78,8 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
     from veering.veering_tri import veering_triangulation
     from veering.taut_polytope import is_layered
     from veering.edge_orientability import is_edge_orientable
-    from drill_flow_cycle import drill_flow_cycles
-    from boundary_triangulation import generate_boundary_triangulation
+    from veering.drill_flow_cycle import drill_flow_cycles
+    from veering.boundary_triangulation import generate_boundary_triangulation
 
     print('testing drilling properties')
     for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples

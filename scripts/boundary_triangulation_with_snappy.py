@@ -4,7 +4,7 @@ from veering.snappy_tools import shapes
 from veering.file_io import parse_data_file
 from veering.taut import isosig_to_tri_angle
 
-from boundary_triangulation import generate_boundary_triangulation
+from veering.boundary_triangulation import generate_boundary_triangulation
 
 def draw_ladders_and_geometric_boundary_for_veering_isosig(sig, args = {}, global_drawing_scale = 12):
 	if args == {}:
@@ -39,7 +39,7 @@ def draw_ladders_and_geometric_boundary_for_veering_isosig(sig, args = {}, globa
 
 def draw_ladders_and_geometric_boundary_for_veering_isosig_list(filename, args = {}):
 	if args == {}:
-		args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
+		args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_epsilon':0.03, 'global_drawing_scale': 4, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
 	sigs = parse_data_file(filename)
 	for sig in sigs:
 		draw_ladders_and_geometric_boundary_for_veering_isosig(sig, args = args)

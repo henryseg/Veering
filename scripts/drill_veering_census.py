@@ -4,8 +4,8 @@ from veering.veering_tri import veering_triangulation
 from veering.flow_cycles import generate_flow_cycles, is_twisted 
 from veering.edge_orientability import is_edge_orientable
 
-from drilling_flow_cycle import drill_flow_cycle
-from boundary_triangulation import generate_boundary_triangulation
+from veering.drill_flow_cycle import drill_flow_cycle
+from veering.boundary_triangulation import generate_boundary_triangulation
 
 from multiprocessing import Process, Lock, Queue
 

@@ -1,7 +1,7 @@
 import regina
 import pickle
 import veering
-import drilling_flow_cycle
+from veering.drill_flow_cycle import drill_flow_cycles
 
 def read_from_pickle(filename):
     f = open(filename, 'rb')
@@ -56,7 +56,7 @@ def main(max_tetrahedra = 16, max_cusps = 5):
         if to_drill != None:
             for pair in to_drill:
                 sig, fc = pair
-                drilling_flow_cycle.drill_flow_cycle(sig, fc, draw_rectangles = True)
+                drill_flow_cycle.drill_flow_cycles(sig, [fc], draw_rectangles = True)
 
     #     if node.num_tetrahedra >= most_tetrahedra:
     #         most_tetrahedra = node.num_tetrahedra

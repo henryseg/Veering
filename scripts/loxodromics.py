@@ -4,7 +4,7 @@
 
 from veering.basic_math import KP1, move_in_PSL
 
-from develop_ideal_hyperbolic_tetrahedra import develop_verts_pos  ### Need to update to include field if using algebraic numbers
+from veering.develop_ideal_hyperbolic_tetrahedra import develop_verts_pos  ### Need to update to include field if using algebraic numbers
 
 
 def mob_tsfm_from_tets(init_verts_pos, final_verts_pos):

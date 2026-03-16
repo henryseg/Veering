@@ -1,5 +1,7 @@
 ###run this using regina-python to produce a .pkl file that rhino can read in and draw edges from
 
+### OLD This is superseded by draw_continent.py
+
 import pickle
 import pyx ### vector graphics 
 
@@ -7,7 +9,7 @@ from veering.file_io import read_from_pickle
 from veering.taut import isosig_to_tri_angle
 from veering.veering_tri import veering_triangulation
 
-from develop_ideal_hyperbolic_tetrahedra import develop_verts_pos
+from veering.develop_ideal_hyperbolic_tetrahedra import develop_verts_pos
 
 edge_vert_index_map = {(0,1):0, (0,2):1, (0,3):2, (1,2): 3, (1,3):4, (2,3):5}
 

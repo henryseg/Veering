@@ -13,8 +13,7 @@ from veering.veering_tri import is_veering
 from veering.transverse_taut import is_transverse_taut, symmetry_group_size
 from veering.edge_orientability import is_edge_orientable
 from veering.taut_polytope import depth as tp_depth
-
-from boundary_triangulation import generate_boundary_triangulation
+from veering.boundary_triangulation import generate_boundary_triangulation
 
 def compute_census_data(filename_in, filename_out, functions, verbose = 0):
 	### each function takes in data about the triangulation, returns a string

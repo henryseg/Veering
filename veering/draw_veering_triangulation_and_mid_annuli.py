@@ -10,7 +10,7 @@ from veering.file_io import parse_data_file
 
 from veering.veering_tri import is_veering
 from veering.transverse_taut import is_transverse_taut
-import veering_detect
+# import veering_detect
 from veering.taut import isosig_to_tri_angle
 
 # pyx.text.set(mode="latex")
@@ -811,7 +811,7 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
     # print 'drawing:', midannuli_filename
     if angle == None:
         # ??? broken
-        veering_structures = veering_detect.find_veering_structures(triangulation)
+        # veering_structures = veering_detect.find_veering_structures(triangulation)
         assert len(veering_structures) > 0
         if len(veering_structures) > 1:
             print('warning, not drawing all veering structures!')

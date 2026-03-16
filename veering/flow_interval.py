@@ -1,5 +1,5 @@
-from veering.taut import edge_num_to_vert_pair, vert_pair_to_edge_num
-from veering.transverse_taut import get_tet_above_edge, get_tet_top_vert_nums
+from .taut import edge_num_to_vert_pair, vert_pair_to_edge_num
+from .transverse_taut import get_tet_above_edge, get_tet_top_vert_nums
 
 def flow_edge_in_continent(con_tet, edge_num):
     tet_vertices = con_tet.vertices
@@ -116,20 +116,7 @@ class flow_interval:
                 return True, True
         return False, False
 
-    def is_boundary_parallel(self):  ### FIX we should prove that this works... or better check it before building continents
-    #     ### use def tri_loop_is_boundary_parallel(tri_loop, tri)?? from veering.flow_cycles
-    #     ### if you go straight up through a tetrahedron you do so infinitely many times so you are not boundary parallel
-    #     ### if you are boundary parallel then you are trapped inside one ladder of the boundary triangulation, so you 
-    #     ### follow the ladder pole slope.
-    #     self.ensure_contains_one_cycle_up()
-    #     self.ensure_contains_one_cycle_down() ### two cycles should be enough to separate the vertices if not boundary parallel. 
-    #     ### One might not be enough if there is a rotation by pi as we go up
-    #     lowest = self.tetrahedra[0]
-    #     two_cycles_up = self.tetrahedra[2 * len(self.flow_cycle)]
-    #     # print(lowest.vertices, one_cycle_up.vertices)
-    #     # print(not set(lowest.vertices).isdisjoint(set(one_cycle_up.vertices)))
-    #     return not set(lowest.vertices).isdisjoint(set(two_cycles_up.vertices))
-
+    def is_boundary_parallel(self):  
         self.ensure_contains_one_cycle()
         lowest = self.tetrahedra[0]
         one_cycle_up = self.tetrahedra[len(self.flow_cycle)]
@@ -204,32 +191,6 @@ class flow_interval:
                     return False ### we ran out of continent to extend the flow interval into
             new_tet = the_edge.lower_tet
         else:
-            # print('sideways case')
-            #### this was too complicated... let's be less efficient and just make it work
-            # ### find which side of the edge our tet is in
-            # side_tet_collections_at_edge = vt.side_tet_collections[the_edge.index] ## index in the manifold
-            # side_face_collections_at_edge = vt.side_face_collections[the_edge.index] ## here these are ordered top to bottom
-            # downward_path = None
-            # flow_step = self.flow_cycle[next_down_index] ### pair of (tet index in manifold, index of edge in that tet)
-            # for i, side_tet_collection in enumerate(side_tet_collections_at_edge):
-            #     if flow_step in side_tet_collection:
-            #         downward_path = side_tet_collection[:side_tet_collection.index(flow_step) + 1]
-            #         downward_path_faces = side_face_collections_at_edge[i][:side_tet_collection.index(flow_step) + 1]
-            # assert downward_path != None
-            # new_tet = None
-            # for j, (tet_num, edge_num) in enumerate(downward_path): 
-            #     lower_boundary_triangles = [t for t in the_edge.boundary_triangles() if not t.is_upper and t.index == downward_path_faces[j][0]] 
-            #     assert len(lower_boundary_triangles) <= 1
-            #     for tet in the_edge.side_tetrahedra:  ### check to see if we already have the new_tet
-            #         if tet.index == flow_step[0]:
-            #             if tet.edge(flow_step[1]) == the_edge:
-            #                 new_tet = tet
-            #                 break
-            #     if expand_continent:  
-            #         if len(lower_boundary_triangles) == 1:
-            #             self.continent.bury(lower_boundary_triangles[0])
-            #     else:  ### did not find new_tet without expanding the continent
-            #         return False
             if expand_continent:  ### this edge is on the bottom of some tet so it has either 2 or 0 lower boundary triangles incident to it, bury them until we get 0.
                 while True:
                     lower_boundary_triangles = [t for t in the_edge.boundary_triangles() if not t.is_upper] 
@@ -319,13 +280,6 @@ class flow_interval:
 
     def is_inside_edge_rectangle(self, con_edge):
         return self.is_inside_edge_rectangle_green_sides(con_edge) and self.is_inside_edge_rectangle_purple_sides(con_edge)
-
-    # def find_edge_rectangle_we_are_inside(self, tet):
-    #     """Given tet in the fund dom and in our flow cycle, find an edge of tet whose rectangle contains the flow interval's point"""  
-    #     for e in tet.edges():
-    #         if self.is_inside_edge_rectangle(e):
-    #             return e
-    #     assert False
 
     def is_green_comparable_with(self, other): ### check if upper tets do not overlap horizontally
         self.extend_within_continent()

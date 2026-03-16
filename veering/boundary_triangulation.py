@@ -1,16 +1,11 @@
 from math import sqrt
 
-from veering.file_io import parse_data_file, read_from_pickle
-from veering.basic_math import vector, matrix, KP1
-from veering.taut import isosig_to_tri_angle, liberal, unsorted_vert_pair_to_edge_pair
-from veering.veering_tri import veering_triangulation
-
-from develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
-from veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
-from veering.snappy_tools import shapes, algebraic_shapes
-
-# from scripts.develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
-# from scripts.veering_cannon_thurston import ct_edge, get_ct_edge_above, develop_cannon_thurston
+from .file_io import parse_data_file, read_from_pickle
+from .basic_math import vector, matrix, KP1
+from .taut import isosig_to_tri_angle, liberal, unsorted_vert_pair_to_edge_pair
+from .veering_tri import veering_triangulation
+from .develop_ideal_hyperbolic_tetrahedra import developed_position, develop_verts_pos, unknown_vert_to_known_verts_ordering
+from .snappy_tools import shapes, algebraic_shapes
 
 import pyx ### vector graphics 
 
@@ -284,54 +279,6 @@ class ladder_unit(tet_face):
         else:
             self.draw_triangle_edge(my_canvas, s0, s1)
 
-    def get_ct_edge(self, ladder_is_even):
-        # assert self.is_on_left()
-        # start_ct_edge = ct_edge(self.tet_num, None, self.verts_pos, 0, self.vt)
-        ### when on an even ladder (concave down in our pictures) the edge_vertex is the inf vertex, the face_vertex is the singleton
-        ### vice versa for odd ladders  
-        if self.is_on_left():
-            singleton = self.right_vertices[0]
-        else:
-            singleton = self.left_vertices[0]
-        if ladder_is_even:
-            edge_vertex = self.face # inf vertex
-            face_vertex = singleton
-        else:
-            edge_vertex = singleton
-            face_vertex = self.face # inf vertex
-        self.ct_edge = get_ct_edge_above(self.vt().tri.tetrahedron(self.tet_num), self.verts_pos, edge_vertex, face_vertex, self.vt(), 0, depth_increment = 0, verbose = 0.0)
-
-    def generate_ct(self, ladder_is_even = True, args = {}):
-        #max_depth = 1, epsilon = 0.02, verbose = 0.0):
-        self.get_ct_edge(ladder_is_even)
-        self.ct_developed_edges = develop_cannon_thurston([self.ct_edge], max_depth = args['ct_depth'], epsilon = args['ct_epsilon'], verbose = 0.1)
-
-    # def draw_ct(self, canv, origin, drawing_scale, veering_colour = None, lw = 0.005):
-    """draw edges one by one"""
-    #     for edge in self.ct_developed_edges:
-    #         s, e = edge.start_complex, edge.end_complex
-    #         s = drawing_scale * ( s + origin ) 
-    #         e = drawing_scale * ( e + origin ) 
-    #         canv.stroke(pyx.path.line(s.real, s.imag, e.real, e.imag), [pyx.style.linewidth(lw), colour])
-
-    # def draw_ct_path(self, canv, origin, drawing_scale, veering_colour = None, lw = 0.005):
-    #     """draw path of edges"""
-    #     # if veering_colour == "red":
-    #     #     colour = pyx.color.rgb(0.5,0.0,0.0)  # dark red
-    #     #     grad = pyx.color.gradient.RedBlack
-    #     # else:
-    #     #     colour = pyx.color.rgb(0.0,0.0,0.5)  # dark blue
-    #     #     grad = pyx.color.gradient.BlueBlack
-    #     grad = pyx.color.gradient.Hue
-    #     edges = self.ct_developed_edges
-    #     comp_coords = [edges[0].start_complex] + [edge.end_complex for edge in edges]
-    #     comp_coords = [drawing_scale * (c + origin) for c in comp_coords]
-    #     p = pyx.path.path( pyx.path.moveto(comp_coords[0].real, comp_coords[0].imag) )
-    #     for coord in comp_coords[1:]: 
-    #       p.append( pyx.path.lineto(coord.real, coord.imag) )
-    #     # canv.stroke(p, [pyx.style.linewidth(lw), colour])
-    #     canv.stroke(p, [pyx.style.linewidth(lw), pyx.deco.colorgradient(grad)])
-
 class ladder:
     """ladder of triangles in cusp triangulation of a veering triangulation"""
     def __init__(self, torus_triangulation, start_tf):
@@ -405,11 +352,6 @@ class ladder:
                         c = self.torus_triangulation.drawing_scale_and_rotate * ( c + ladder_unit.gluing_offset ) 
                         posns_dict[i] = c
                 ladder_unit.verts_C = posns_dict
-        # if args['style'] == 'geometric' and args['draw_triangles_near_poles'] and self == self.torus_triangulation.ladder_list[-1]:
-        #     for ladder_unit in self.ladder_unit_list:
-        #         if ladder_unit.is_on_left():
-        #             pass
-
 
     def draw(self, my_canvas, args = {}):
         for ladder_unit in self.ladder_unit_list:
@@ -427,12 +369,6 @@ class ladder:
                 ladder_unit.draw_triangle_edges(my_canvas, curvy = False, args = args)
                 if args['draw_labels']:
                     ladder_unit.draw_corner_and_face_labels(my_canvas, args = args)
-                if args['ct_depth'] >= 0:
-                    if ladder_unit.is_on_left():
-                        veering_colour = self.vt().get_edge_between_verts_colour(ladder_unit.tet_num, ladder_unit.left_vertices)
-                        ladder_unit.generate_ct(ladder_is_even = self.is_even, args = args)
-                        # print len(ladder_unit.ct_developed_edges)
-                        # ladder_unit.draw_ct_path(my_canvas, origin, self.torus_triangulation.drawing_scale, veering_colour = veering_colour)
             ladder_unit.draw_vertex_dots(my_canvas)
 
     def make_ladder(self, start_tf):
@@ -476,12 +412,6 @@ class ladder:
     def ladder_unit_index_to_left_ladderpole_index(self, ind):
         L = [lu for i, lu in enumerate(self.ladder_unit_list) if (lu.is_on_left() and i < ind)]
         return len(L)
-        # count = 0
-        # for i, lu in enumerate(self.ladder_unit_list):
-        #     if i == ind:
-        #         return count
-        #     elif lu.is_on_left():
-        #         count = count + 1
 
     def left_ladderpole_index_to_ladder_unit(self, ind):
         return [lu for lu in self.ladder_unit_list if lu.is_on_left()][ind]
@@ -584,7 +514,7 @@ class torus_triangulation:
     def vt(self):
         return self.bt.vt
 
-    def generate_canvas(self, args = {}): #style = 'ladders', ladder_width = 5.0, height = 10.0, , ct_depth = 5):
+    def generate_canvas(self, args = {}): #style = 'ladders', ladder_width = 5.0, height = 10.0):
         ### global_drawing_scale is just so that the text looks good
         self.canv = None
         # assert self.canv == None
@@ -796,24 +726,6 @@ class torus_triangulation:
                 if L.is_even:  ## move them up 
                     mob_tsfm = matrix(( one, self.ladder_holonomy, zero, one ))
                     L.transform(mob_tsfm)
-
-            # len(self.ladder_list[0].ladder_unit_list) / abs(self.ladder_holonomy) 
-
-            # average_ladderpole_length = sum( len(L.ladder_unit_list) for L in self.ladder_list ) / (2 * len(self.ladder_list))
-            
-            # ### now rotate and scale everything so that ladder_holonomy is i * average_ladderpole_length
-
-            # mob_tsfm = matrix(( complex(0, average_ladderpole_length)/self.ladder_holonomy, zero, zero, one ))
-            # self.transform(mob_tsfm)
-
-            # assert self.sideways_holonomy.real > 0.0
-            # assert abs(self.ladder_holonomy.real) < 0.001
-            # assert self.sideways_once_holonomy.real > 0.0
-            # assert self.ladder_holonomy.imag > 0.0
-
-        # print(self.sideways_index_shift)
-        # print(self.sideways_holonomy)
-        # print(self.sideways_once_holonomy)
 
     def transform(self, mob_tsfm):
         self.ladder_holonomy = mob_tsfm(self.ladder_holonomy)
@@ -1045,7 +957,7 @@ class boundary_triangulation:
         assert False
 
 @liberal
-def generate_boundary_triangulation(tri, angle, args = {}, output_filename = None, draw = True, ct_depth = 20):
+def generate_boundary_triangulation(tri, angle, args = {}, output_filename = None, draw = True):
     """make a picture of the boundary triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
     if 'style' in args and args['style'] == 'geometric': 
         if 'tet_shapes' in args:

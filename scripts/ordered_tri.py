@@ -65,7 +65,7 @@ def get_new_top_bottom_verts(vt, tet_num):
         ###      1
 
 @liberal
-def ordered_tri(tri, angle, verbose = 0):
+def ordered_tri(tri, angle, return_vertex_perms = False, verbose = 0):
     """
     Given a transverse veering triangulation, create a new triangulation with vertices labelled so that the 
     triangulation is ordered in a way consistent with the upper branched surface.
@@ -167,7 +167,10 @@ def ordered_tri(tri, angle, verbose = 0):
         print('tri_to_out_perms', tri_to_out_perms, [p.sign() for p in tri_to_out_perms])
     # assert out.isIsomorphicTo(vt.tri)  ### slow!
     assert out.isOrdered()
-    return out
+    if return_vertex_perms:
+        return (out, tri_to_out_perms)
+    else:
+        return out
 
 
 

@@ -1,6 +1,6 @@
-from veering.taut import edge_num_to_vert_pair
-import continent
-import flow_interval
+from .taut import edge_num_to_vert_pair
+from .continent import vertex
+from .flow_interval import flow_interval
 
 def is_between(i, j, k): ### is j between i and k inclusive
     return (i - j) * (j - k) >= 0
@@ -283,10 +283,10 @@ class new_tetrahedron:
         for i in range(4):
             j = self.anticlockwise_to_horiz[i]
             ind = self.horiz_verts[j]
-            if type(old_tet_rectangle.horiz_ordering[ind]) == continent.vertex:
+            if type(old_tet_rectangle.horiz_ordering[ind]) == vertex:
                 self.cusp_index.append(old_tet_rectangle.horiz_ordering[ind].Regina_cusp_num)
             else:
-                assert type(old_tet_rectangle.horiz_ordering[ind]) == flow_interval.flow_interval
+                assert type(old_tet_rectangle.horiz_ordering[ind]) == flow_interval
                 self.cusp_index.append(old_tet_rectangle.con.vt.tri.countVertices()) ### new cusp
 
     def set_anticlockwise_ordering(self):

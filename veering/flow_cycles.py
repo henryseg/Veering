@@ -2,7 +2,7 @@
 # flow_cycles.py
 #
 
-# Given a veering triangulation, find all simple flow cycles
+# Given a veering triangulation, find flow cycles
 
 import regina
 from functools import reduce
