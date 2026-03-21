@@ -13,7 +13,6 @@ from .transverse_taut import (is_transverse_taut, get_tet_top_and_bottom_edges,
                               top_bottom_embeddings_of_faces, edge_side_face_collections,
                               get_tet_top_vert_nums)
 
-
 def tet_type(triangulation, tet_num, veering_colours):
     num_L = [ veering_colours[triangulation.tetrahedron(tet_num).edge(i).index()] for i in range(6) ].count("blue")
     if num_L == 2:
@@ -28,8 +27,8 @@ def tet_type(triangulation, tet_num, veering_colours):
 @liberal
 def is_veering(tri, angle, return_type = "boolean"):
     """
-    checks to see if this triangulation with taut angle structure is
-    veering
+    checks to see if this triangulation with this taut angle
+    structure is veering
     """
     # return type can be "boolean", "veering_colours", "veering_partition" or "num_toggles"
     # all return False if it is not veering. If it is veering:
