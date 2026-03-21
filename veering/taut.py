@@ -43,9 +43,9 @@ def liberal(func):
 # converting between vertices, edges, and edge pairs.
 
 
-edge_num_to_vert_pair  = {0: (0, 1), 1: (0, 2), 2: (0, 3), 3: (1, 2), 4: (1, 3), 5: (2, 3)}    
+edge_num_to_vert_pair  = {0: (0, 1), 1: (0, 2), 2: (0, 3), 3: (1, 2), 4: (1, 3), 5: (2, 3)}
 vert_pair_to_edge_num = {(0, 1):0, (1, 0):0, (0, 2):1, (2, 0):1, (0, 3):2, (3, 0):2, (1, 2):3, (2, 1):3, (1, 3):4, (3, 1):4, (2, 3):5, (3, 2):5}
-        
+
 vert_pair_to_edge_pair = {(0, 1): 0, (2, 3): 0, (0, 2): 1, (1, 3): 1, (0, 3): 2, (1, 2): 2}
 unsorted_vert_pair_to_edge_pair = {(0, 1): 0, (1, 0): 0, (2, 3): 0, (3, 2): 0, (0, 2): 1, (2, 0): 1, (1, 3): 1, (3, 1): 1, (0, 3): 2, (3, 0): 2, (1, 2): 2, (2, 1): 2}
 
@@ -128,7 +128,7 @@ def census_num_from_isosig(sig):
 def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False, return_isosig_angle = False):
     """
     Given a triangulation and taut angle structure, generate the taut
-    isosig. If return_isom, give the isom from the original triang to 
+    isosig. If return_isom, give the isom from the original triang to
     the symmetry of the isosig triang with lex smallest angle struct.
     """
     isosig, isosig_isom = tri.isoSigDetail()  # isom is the mapping from the original triangulation to the isosig triangulation
@@ -179,7 +179,7 @@ def is_taut(tri, angle, return_totals = False):
             totals[tet.edge(e).index()] += 1
     if return_totals == True:
         return totals
-    
+
     return all(total == 2 for total in totals)
 
 
@@ -326,7 +326,7 @@ def fix_orientations(tri, angle, return_isom = False):
         else:
             swaps.append( regina.Perm4() ) ## identity
 
-    if return_isom:  
+    if return_isom:
         out_isom = regina.Isomorphism3.identity(len(swaps))
         for i, p in enumerate(swaps):
             out_isom.setFacetPerm(i, p)
