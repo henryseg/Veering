@@ -64,6 +64,26 @@ def edge_number_to_edge_pair(n):
 # converting a taut isosig to (tri,angle) pair and back again
 
 
+def tri_angle_from_isosig(isosig, return_isom = False):
+    """
+    Given a taut isosig, returns an oriented regina triangulation and
+    the list of angles for the taut angle structure, for the new
+    labelling.  If return_isom, returns the isomorphism from the
+    regina isosig triang to the oriented triangulation.
+    """
+    data = isosig.split("_")
+    isosig, angle = data[0], data[1]  ## we don't care if there is extra data in the sig, such as a branched surface
+    tri = regina.Triangulation3.fromIsoSig(isosig)
+    angle = [int(i) for i in list(angle)]
+    isom = fix_orientations(tri, angle, return_isom = return_isom)  # this does not alter what the angles_string should be
+    assert tri.isOriented()
+    assert is_taut(tri, angle)
+    if return_isom:
+        return tri, angle, isom
+    else:
+        return tri, angle
+
+
 def isosig_to_tri_angle(isosig, return_isom = False):
     """
     Given a taut isosig, returns an oriented regina triangulation and
@@ -92,11 +112,17 @@ def isoms_move_tetrahedra_to_same_tetrahedra(isom1, isom2):
     return True
 
 
-def isosig_from_census(veer_name):
-    assert veer_name[:4] == "veer"
-    num = veer_name[4:]
+def isosig_from_census_num(veer_num):
+    assert veer_num[:4] == "veer"
+    num = veer_num[4:]
     assert num.isnumeric()
     return cen[int(num)]
+
+
+def census_num_from_isosig(sig):
+    assert "_" in sig
+    num = cen.index(sig)
+    return "veer" + str(num)
 
 
 def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False, return_isosig_angle = False):
