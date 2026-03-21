@@ -9,7 +9,7 @@
 
 import regina
 from functools import wraps
-
+from .file_io import veering_census
 
 # convention - A "regina isosig" is a string specifying a labelled,
 # triangulated three-manifold.  An "angle string" specifies the
@@ -18,6 +18,7 @@ from functools import wraps
 #
 # regina_isosig + "_" + angle_string
 
+cen = veering_census()
 
 # "Be liberal in what you accept" - Postel's law
 def liberal(func):
@@ -25,6 +26,8 @@ def liberal(func):
     def liberal_wrapper(*args, **kwargs):
         if type(args[0]) is str:  # wrapping a function
             sig = args[0]
+            if sig[:4] == "veer" and sig[4:].isnumeric():
+                sig = cen[int(sig[4:])]
             if "_" in sig:
                 tri, angle = isosig_to_tri_angle(sig)
                 args = (tri, angle) + args[1:]
@@ -87,6 +90,13 @@ def isoms_move_tetrahedra_to_same_tetrahedra(isom1, isom2):
         if isom1.simpImage(i) != isom2.simpImage(i):
             return False
     return True
+
+
+def isosig_from_census(veer_name):
+    assert veer_name[:4] == "veer"
+    num = veer_name[4:]
+    assert num.isnumeric()
+    return cen[int(num)]
 
 
 def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False, return_isosig_angle = False):
