@@ -15,7 +15,7 @@ def test_is_taut(veering_isosigs, num_to_check, smaller_num_to_check):
     from . import taut
 
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         assert taut.is_taut(tri, angle), sig
 
     return None
@@ -23,7 +23,7 @@ def test_is_taut(veering_isosigs, num_to_check, smaller_num_to_check):
 def test_isosig_round_trip(veering_isosigs, num_to_check, smaller_num_to_check):
     from . import taut
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         recovered_sig = taut.isosig_from_tri_angle(tri, angle)
         assert sig == recovered_sig, sig
         # we only test this round trip - the other round trip does not
@@ -36,7 +36,7 @@ def test_is_transverse_taut(veering_isosigs, num_to_check, smaller_num_to_check)
     from . import transverse_taut
 
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         assert transverse_taut.is_transverse_taut(tri, angle), sig
 
     try:
@@ -46,7 +46,7 @@ def test_is_transverse_taut(veering_isosigs, num_to_check, smaller_num_to_check)
         non_transverse_taut_isosigs = None
     if non_transverse_taut_isosigs is not None:
         for sig in random.sample(non_transverse_taut_isosigs, num_to_check):
-            tri, angle = taut.isosig_to_tri_angle(sig)
+            tri, angle = taut.tri_angle_from_isosig(sig)
             assert not transverse_taut.is_transverse_taut(tri, angle), sig
 
     return None
@@ -56,7 +56,7 @@ def test_lower_labelling(veering_isosigs, num_to_check, smaller_num_to_check):
     from . import transverse_taut
 
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         transverse_taut.lower_labelling(tri, angle)
 
 def test_is_veering(veering_isosigs, num_to_check, smaller_num_to_check):
@@ -64,10 +64,10 @@ def test_is_veering(veering_isosigs, num_to_check, smaller_num_to_check):
     from . import veering_tri
 
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         assert veering_tri.is_veering(tri, angle), sig
 
-    # tri, angle = taut.isosig_to_tri_angle("cPcbbbdxm_10")
+    # tri, angle = taut.tri_angle_from_isosig("cPcbbbdxm_10")
     # explore_mobius_surgery_graph(tri, angle, max_tetrahedra = 12)
     # tests to see that it makes only veering triangulations as it goes
 
@@ -79,7 +79,7 @@ def test_veering_dehn_surgery(veering_isosigs, num_to_check, smaller_num_to_chec
     from . import veering_dehn_surgery
 
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         for face_num in veering_dehn_surgery.get_mobius_strip_indices(tri):
             (tri_s, angle_s, face_num_s) = veering_dehn_surgery.veering_mobius_dehn_surgery(tri, angle, face_num)
             assert veering_tri.is_veering(tri_s, angle_s), sig
@@ -91,10 +91,10 @@ def test_veering_fan_excision(veering_isosigs, num_to_check, smaller_num_to_chec
     from . import veering_tri
     from . import veering_fan_excision
 
-    m003, _ = taut.isosig_to_tri_angle("cPcbbbdxm_10")
-    m004, _ = taut.isosig_to_tri_angle("cPcbbbiht_12")
+    m003, _ = taut.tri_angle_from_isosig("cPcbbbdxm_10")
+    m004, _ = taut.tri_angle_from_isosig("cPcbbbiht_12")
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         tet_types = veering_tri.is_veering(tri, angle, return_type = "tet_types")
         if tet_types.count("toggle") == 2:
             excised_tri, _ = veering_fan_excision.excise_fans(tri, angle)
@@ -108,7 +108,7 @@ def test_pachner_with_taut_structure(veering_isosigs, num_to_check, smaller_num_
     from . import pachner
 
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         face_num = random.randrange(tri.countTriangles())
         result = pachner.twoThreeMove(tri, face_num, angle = angle, return_edge = True)
         if result != False:
@@ -125,7 +125,7 @@ def test_branched_surface_and_pachner_with_branched_surface(veering_isosigs, num
     import regina
 
     for sig in random.sample(veering_isosigs, num_to_check):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         tri_original = regina.Triangulation3(tri)  # copy
         branch = branched_surface.upper_branched_surface(tri, angle, return_lower = random.choice([True, False]))
 
@@ -153,11 +153,11 @@ def test_taut_and_branched_drill_plus_semiflows_on_drillings(veering_isosigs, nu
     from . import drill_triangle_loop
 
     for sig in random.sample(veering_isosigs, 3):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         branch = branched_surface.upper_branched_surface(tri, angle)  # also checks for veering and transverse taut
         found_loops = flow_cycles.generate_simple_flow_cycles(tri, branch)
         for loop in random.sample(found_loops, min(len(found_loops), 5)):  # drill along at most 5 loops
-            tri, angle = taut.isosig_to_tri_angle(sig)
+            tri, angle = taut.tri_angle_from_isosig(sig)
             branch = branched_surface.upper_branched_surface(tri, angle)
             tri_loop = flow_cycles.flow_cycle_to_triangle_loop(tri, branch, loop)
             if tri_loop != False:
@@ -596,7 +596,7 @@ def test_exotics(veering_isosigs, num_to_check, smaller_num_to_check):
     from . import taut_polytope
 
     for sig in random.sample(veering_isosigs[:3000], 3):
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         T = veering_tri.veering_triangulation(tri, angle)
         is_eo = T.is_edge_orientable()
         for angle in T.exotic_angles():
@@ -640,7 +640,7 @@ def test_building_carried_surfaces_and_mutations(veering_isosigs, num_to_check, 
     orders_of_veering_symmetry_groups = [4, 2, 2, 2]
 
     for i in range(len(sigs_weights)):
-        tri, angle = taut.isosig_to_tri_angle(sigs_weights[i][0])
+        tri, angle = taut.tri_angle_from_isosig(sigs_weights[i][0])
         weights = sigs_weights[i][1]
         surface, edge_colours = carried_surface.build_surface(tri, angle, weights, return_edge_colours = True)
         assert strata[i] == carried_surface.stratum_from_built_surface(surface)
@@ -678,7 +678,7 @@ def test_drilling_methods_agree(veering_isosigs, num_to_check, smaller_num_to_ch
 
     # print('testing drilling methods agree')
     for sig in random.sample(veering_isosigs, even_smaller_num_to_check): 
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         vt = veering_tri.veering_triangulation(tri, angle)
         branch = branched_surface.upper_branched_surface(tri, angle)   
         simple_flow_cycles = flow_cycles.generate_simple_flow_cycles(tri, branch) ### only simple flow cycles
@@ -744,7 +744,7 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
     even_smaller_num_to_check = 3
     # print('testing drilling properties')
     for sig in random.sample(veering_isosigs, even_smaller_num_to_check): 
-        tri, angle = taut.isosig_to_tri_angle(sig)
+        tri, angle = taut.tri_angle_from_isosig(sig)
         original_is_layered = taut_polytope.is_layered(tri, angle)
         original_is_edge_orientable = edge_orientability.is_edge_orientable(tri, angle)
         vt = veering_tri.veering_triangulation(tri, angle)
