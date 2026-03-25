@@ -9,10 +9,13 @@ from snappy import Manifold
 from veering.file_io import parse_data_file
 
 from veering.veering_tri import (is_veering, get_consistent_tet_vert_posns, 
-                                 get_edge_between_verts_colour, rotate_vertices, 
-                                 get_edge_between_verts_index, is_same_orientation_as_regina,
+                                 get_edge_between_verts_colour,
+                                 rotate_vertices, 
+                                 get_edge_between_verts_index,
+                                 is_same_orientation_as_regina,
                                  get_edge_between_verts_oriented,
-                                 )
+                                 get_nice_edge_orientations_relative_to_regina,
+                                )
 from veering.transverse_taut import is_transverse_taut
 # import veering_detect
 from veering.taut import isosig_to_tri_angle
