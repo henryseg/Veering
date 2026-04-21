@@ -9,7 +9,7 @@
 
 import regina
 from functools import wraps
-
+from .file_io import veering_census
 
 # convention - A "regina isosig" is a string specifying a labelled,
 # triangulated three-manifold.  An "angle string" specifies the
@@ -18,6 +18,7 @@ from functools import wraps
 #
 # regina_isosig + "_" + angle_string
 
+cen = veering_census()
 
 # "Be liberal in what you accept" - Postel's law
 def liberal(func):
@@ -25,6 +26,8 @@ def liberal(func):
     def liberal_wrapper(*args, **kwargs):
         if type(args[0]) is str:  # wrapping a function
             sig = args[0]
+            if sig[:4] == "veer" and sig[4:].isnumeric():
+                sig = cen[int(sig[4:])]
             if "_" in sig:
                 tri, angle = isosig_to_tri_angle(sig)
                 args = (tri, angle) + args[1:]
@@ -40,9 +43,9 @@ def liberal(func):
 # converting between vertices, edges, and edge pairs.
 
 
-edge_num_to_vert_pair  = {0: (0, 1), 1: (0, 2), 2: (0, 3), 3: (1, 2), 4: (1, 3), 5: (2, 3)}    
+edge_num_to_vert_pair  = {0: (0, 1), 1: (0, 2), 2: (0, 3), 3: (1, 2), 4: (1, 3), 5: (2, 3)}
 vert_pair_to_edge_num = {(0, 1):0, (1, 0):0, (0, 2):1, (2, 0):1, (0, 3):2, (3, 0):2, (1, 2):3, (2, 1):3, (1, 3):4, (3, 1):4, (2, 3):5, (3, 2):5}
-        
+
 vert_pair_to_edge_pair = {(0, 1): 0, (2, 3): 0, (0, 2): 1, (1, 3): 1, (0, 3): 2, (1, 2): 2}
 unsorted_vert_pair_to_edge_pair = {(0, 1): 0, (1, 0): 0, (2, 3): 0, (3, 2): 0, (0, 2): 1, (2, 0): 1, (1, 3): 1, (3, 1): 1, (0, 3): 2, (3, 0): 2, (1, 2): 2, (2, 1): 2}
 
@@ -59,6 +62,26 @@ def edge_number_to_edge_pair(n):
 
 
 # converting a taut isosig to (tri,angle) pair and back again
+
+
+def tri_angle_from_isosig(isosig, return_isom = False):
+    """
+    Given a taut isosig, returns an oriented regina triangulation and
+    the list of angles for the taut angle structure, for the new
+    labelling.  If return_isom, returns the isomorphism from the
+    regina isosig triang to the oriented triangulation.
+    """
+    data = isosig.split("_")
+    isosig, angle = data[0], data[1]  ## we don't care if there is extra data in the sig, such as a branched surface
+    tri = regina.Triangulation3.fromIsoSig(isosig)
+    angle = [int(i) for i in list(angle)]
+    isom = fix_orientations(tri, angle, return_isom = return_isom)  # this does not alter what the angles_string should be
+    assert tri.isOriented()
+    assert is_taut(tri, angle)
+    if return_isom:
+        return tri, angle, isom
+    else:
+        return tri, angle
 
 
 def isosig_to_tri_angle(isosig, return_isom = False):
@@ -89,10 +112,23 @@ def isoms_move_tetrahedra_to_same_tetrahedra(isom1, isom2):
     return True
 
 
+def isosig_from_census_num(veer_num):
+    assert veer_num[:4] == "veer"
+    num = veer_num[4:]
+    assert num.isnumeric()
+    return cen[int(num)]
+
+
+def census_num_from_isosig(sig):
+    assert "_" in sig
+    num = cen.index(sig)
+    return "veer" + str(num)
+
+
 def isosig_from_tri_angle(tri, angle, return_isom = False, return_Regina_tri = False, return_isosig_angle = False):
     """
     Given a triangulation and taut angle structure, generate the taut
-    isosig. If return_isom, give the isom from the original triang to 
+    isosig. If return_isom, give the isom from the original triang to
     the symmetry of the isosig triang with lex smallest angle struct.
     """
     isosig, isosig_isom = tri.isoSigDetail()  # isom is the mapping from the original triangulation to the isosig triangulation
@@ -143,7 +179,7 @@ def is_taut(tri, angle, return_totals = False):
             totals[tet.edge(e).index()] += 1
     if return_totals == True:
         return totals
-    
+
     return all(total == 2 for total in totals)
 
 
@@ -290,7 +326,7 @@ def fix_orientations(tri, angle, return_isom = False):
         else:
             swaps.append( regina.Perm4() ) ## identity
 
-    if return_isom:  
+    if return_isom:
         out_isom = regina.Isomorphism3.identity(len(swaps))
         for i, p in enumerate(swaps):
             out_isom.setFacetPerm(i, p)

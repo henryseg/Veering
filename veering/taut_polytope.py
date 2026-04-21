@@ -4,7 +4,7 @@
 
 # Analyze manifolds and their taut/veering triangulations.
 
-# Solvers - GLPK, CPLEX, CVXOPT, Gurobi
+# Solvers - Try PPL, GLPK, CPLEX, CVXOPT, Gurobi, COIN, others?
 
 import regina
 import snappy
@@ -49,7 +49,7 @@ def get_polytope(N):
     """
     num_faces = N.dimensions()[1]
     # q = MixedIntegerLinearProgram( maximization = False, solver = "Coin" ) # Why!!!
-    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" ) # Why!!!
+    q = MixedIntegerLinearProgram( maximization = False, solver = "GLPK" ) # Why!!! 
     w = q.new_variable(real = True, nonnegative = True)
     for v in N.rows():
         q.add_constraint( dot_prod(v, w) == 0 )
@@ -434,7 +434,7 @@ def analyse_many_angles(tri):
                 dict_of_dimensions[dim].add(angle_str)
 
 
-# coumputing the depth
+# computing the depth
 
 
 def cut_down_matrix(N, u):
