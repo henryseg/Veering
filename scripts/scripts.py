@@ -13,7 +13,7 @@ from veering.taut_polynomial import taut_polynomial_via_fox_calculus
 from veering.taut_polytope import min_neg_euler_carried
 
 def boundary_triangulation_script(veering_isosig):
-    from boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
+    from veering.boundary_triangulation import draw_triangulation_boundary_from_veering_isosig
     # Set 'ct_depth': <some non-negative integer> to do cannon-thurston
     args = {'draw_boundary_triangulation':True, 'draw_triangles_near_poles': False, 'ct_depth':-1, 'ct_epsilon':0.03, 'global_drawing_scale': 12, 'delta': 0.2, 'ladder_width': 10.0, 'ladder_height': 20.0, 'draw_labels': True}
     ### for standard ladder picture, set 'draw_triangles_near_poles' = False. Set True for CT pictures
@@ -468,7 +468,7 @@ def drill_flow_cycle_script():
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, make_continent_naive, make_continent_fund_dom
     from draw_drilled_tetrahedra import draw_drilled_tetrahedra
     from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
-    from drilling_flow_cycle import triangulation_data_to_tri_angle, drill_flow_cycle
+    from drill_flow_cycle import triangulation_data_to_tri_angle, drill_flow_cycle
     from veering.taut import isosig_from_tri_angle
     from boundary_triangulation import generate_boundary_triangulation
 
@@ -527,7 +527,7 @@ def drill_flow_cycle_script():
 def compare_flow_and_geodesic_drilling_script():  
     from veering.taut import isosig_from_tri_angle
     from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
-    from drilling_flow_cycle import drill_flow_cycle
+    from drill_flow_cycle import drill_flow_cycle
     from snappy_drill_homotopic import drill_tet_and_face_indices
     from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
     import snappy

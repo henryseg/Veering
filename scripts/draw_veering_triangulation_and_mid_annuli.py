@@ -11,11 +11,13 @@ from veering.file_io import parse_data_file
 from veering.veering_tri import (is_veering, get_consistent_tet_vert_posns, 
                                  get_edge_between_verts_colour, rotate_vertices, 
                                  get_edge_between_verts_index, is_same_orientation_as_regina,
-                                 get_edge_between_verts_oriented,
+                                 get_edge_between_verts_oriented, get_nice_edge_orientations_relative_to_regina,
                                  )
 from veering.transverse_taut import is_transverse_taut
 # import veering_detect
 from veering.taut import isosig_to_tri_angle
+
+import ordered_tri
 
 # pyx.text.set(mode="latex")
 # pyx.text.preamble(r"\usepackage{times}")
@@ -56,7 +58,7 @@ perp_offset = 0.12
 def get_edge_between_verts_pyx_colour(veering_colours, tetrahedron, v0, v1):
     return direction_to_pyx_col[ get_edge_between_verts_colour(veering_colours, tetrahedron, v0, v1) ]
 
-def draw_edge(canvas, triangulation, veering_colours, tet_num, vert_posns, v0, v1, context = 'tetrahedron', dotted = False, starred = False, edge_orientations_relative_to_regina = None):
+def draw_edge(canvas, triangulation, veering_colours, tet_num, vert_posns, v0, v1, angle = None, context = 'tetrahedron', dotted = False, starred = False, edge_orientations_relative_to_regina = None, draw_ordered = False, o_data = None):
     col = get_edge_between_verts_pyx_colour(veering_colours, triangulation.tetrahedron(tet_num), v0, v1)
     v0, v1 = get_edge_between_verts_oriented(triangulation.tetrahedron(tet_num), v0, v1, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
     w0 = vert_posns[v0]
@@ -86,17 +88,23 @@ def draw_edge(canvas, triangulation, veering_colours, tet_num, vert_posns, v0, v
             pos = edge_center + 0.17*diff + 0.08*perp
     else:
         pos = edge_center + 0.75 * (w1 - w0)  # put edge number at the end of the arrow
-    edge_string = str(get_edge_between_verts_index(triangulation.tetrahedron(tet_num), v0, v1))
+
+    if not draw_ordered:
+        edge_string = str(get_edge_between_verts_index(triangulation.tetrahedron(tet_num), v0, v1))
+    else:
+        o_tri, tri_to_o_tri_perms = o_data
+        perm = tri_to_o_tri_perms[tet_num]
+        edge_string = str(get_edge_between_verts_index(o_tri.tetrahedron(tet_num), perm[v0], perm[v1]))
     # if starred:  # the stars died, 2018-09-10 RIP
     #     edge_string = edge_string + '*'
     canvas.text(pos.real, pos.imag, edge_string, textattrs=[pyx.text.size(sizename="normalsize"), pyx.text.halign.center, pyx.text.vshift.middlezero, col])
 
-def draw_vertex_num(canvas, vert_posns, vert_num): 
+def draw_vertex_num(canvas, vert_posns, vert_num, to_write): 
     center = (1.0/4.0)*(vert_posns[0]+vert_posns[1]+vert_posns[2]+vert_posns[3])
     pos = -0.1 * center + 1.1 * vert_posns[vert_num]
-    canvas.text(pos.real, pos.imag, str(vert_num), textattrs=[pyx.text.size(sizename="small"), pyx.text.halign.center, pyx.text.vshift.middlezero])
+    canvas.text(pos.real, pos.imag, to_write, textattrs=[pyx.text.size(sizename="small"), pyx.text.halign.center, pyx.text.vshift.middlezero])
 
-def draw_triangle_num(canvas, veering_colours, vert_posns, tetrahedron, tri_num): #, offset_down = False):
+def draw_triangle_num(canvas, veering_colours, vert_posns, tetrahedron, tri_num, draw_ordered = False, o_data = None): #, offset_down = False):
     tri_verts = list(range(4))
     tri_verts.pop(tri_num)
     cols = [get_edge_between_verts_pyx_colour(veering_colours, tetrahedron, tri_verts[0], tri_verts[1]),
@@ -110,7 +118,14 @@ def draw_triangle_num(canvas, veering_colours, vert_posns, tetrahedron, tri_num)
     center = (1.0/4.0)*(vert_posns[0]+vert_posns[1]+vert_posns[2]+vert_posns[3])
     pos = (1.0/3.0) * (vert_posns[0]+vert_posns[1]+vert_posns[2]+vert_posns[3] - vert_posns[tri_num]) 
     pos = -1.3 * center + 2.3 * pos
-    tri_index = tetrahedron.triangle(tri_num).index()
+    if not draw_ordered:
+        tri_index = tetrahedron.triangle(tri_num).index()
+    else:
+        o_tri, tri_to_o_tri_perms = o_data
+        tet_num = tetrahedron.index()
+        perm = tri_to_o_tri_perms[tet_num]
+        o_tet = o_tri.tetrahedron(tet_num)
+        tri_index = o_tet.triangle(perm[tri_num]).index()
     canvas.text(pos.real, pos.imag, str(tri_index), textattrs=[pyx.text.size(sizename="normalsize"), pyx.text.halign.center, pyx.text.vshift.middlezero, tri_col])
 
 class midannulus:
@@ -228,7 +243,14 @@ def flip_and_order_midannuli(midannuli, edges_between_midannuli, tet_types, tet_
 
     return new_midannuli
                 
-def draw_tetrahedra(c, triangulation, veering_colours, tet_vert_posns_below, edge_orientations_relative_to_regina = None, draw_green = True, draw_purple = True):
+def draw_tetrahedra(c, triangulation, angle, veering_colours, tet_vert_posns_below, edge_orientations_relative_to_regina = None, draw_green = True, draw_purple = True, draw_ordered = False):
+    
+    if draw_ordered:
+        o_data = ordered_tri.ordered_tri(triangulation, angle, return_vertex_perms = True)
+        o_tri, tri_to_o_tri_perms = o_data
+    else:
+        o_data = None
+
     for tet_num in range(triangulation.countTetrahedra()):
         tetrahedron = triangulation.tetrahedron(tet_num)
 
@@ -259,15 +281,15 @@ def draw_tetrahedra(c, triangulation, veering_colours, tet_vert_posns_below, edg
         v0, v1 = top_vertices
         top_colour = get_edge_between_verts_pyx_colour(veering_colours, tetrahedron, v0, v1)
 
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, v0, v1, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, v0, v1, angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
         
         ## draw 0 angle edges, upper figure
         #red
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[0], bottom_vertices[0], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[1], bottom_vertices[1], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[0], bottom_vertices[0], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[1], bottom_vertices[1], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
         #blue
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[0], bottom_vertices[1], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[1], bottom_vertices[0], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)            
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[0], bottom_vertices[1], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns, top_vertices[1], bottom_vertices[0], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)            
         
 ###           top[0]
 ###          /   |   \
@@ -293,25 +315,25 @@ def draw_tetrahedra(c, triangulation, veering_colours, tet_vert_posns_below, edg
                 edge_orderings = edge_orderings[2:] + edge_orderings[:2]
             draw_triangle_green_and_purple(c, triangle_corners, top_colour, edge_orderings, draw_green = draw_green, draw_purple = draw_purple)
 
-        draw_triangle_num(c, veering_colours, vert_posns, tetrahedron, bottom_vertices[0])
-        draw_triangle_num(c, veering_colours, vert_posns, tetrahedron, bottom_vertices[1])
+        draw_triangle_num(c, veering_colours, vert_posns, tetrahedron, bottom_vertices[0], draw_ordered = draw_ordered, o_data = o_data)
+        draw_triangle_num(c, veering_colours, vert_posns, tetrahedron, bottom_vertices[1], draw_ordered = draw_ordered, o_data = o_data)
 
         ### bottom triangles
         ## draw bottom edge
         v0, v1 = bottom_vertices
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, v0, v1, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, v0, v1, angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
         bottom_colour = get_edge_between_verts_pyx_colour(veering_colours, tetrahedron, v0, v1)
 
         ## draw 0 angle edges, lower figure
         #nw red
 
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[0], bottom_vertices[0], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[0], bottom_vertices[0], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
         #se red
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[1], bottom_vertices[1], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[1], bottom_vertices[1], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
         #ne blue
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[0], bottom_vertices[1], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[0], bottom_vertices[1], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
         #sw blue     
-        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[1], bottom_vertices[0], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, vert_posns2, top_vertices[1], bottom_vertices[0], angle = angle, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
         
         # north triangle then south_triangle
         top_triangle_vertices = [[bottom_vertices[0], bottom_vertices[1], top_vertices[0]], [bottom_vertices[1], bottom_vertices[0], top_vertices[1]]]
@@ -331,13 +353,17 @@ def draw_tetrahedra(c, triangulation, veering_colours, tet_vert_posns_below, edg
                 edge_orderings = edge_orderings[1:] + edge_orderings[:1]
             draw_triangle_green_and_purple(c, triangle_corners, bottom_colour, edge_orderings, draw_green = draw_green, draw_purple = draw_purple)
         
-        draw_triangle_num(c, veering_colours, vert_posns2, tetrahedron, top_vertices[0])
-        draw_triangle_num(c, veering_colours, vert_posns2, tetrahedron, top_vertices[1])
+        draw_triangle_num(c, veering_colours, vert_posns2, tetrahedron, top_vertices[0], draw_ordered = draw_ordered, o_data = o_data)
+        draw_triangle_num(c, veering_colours, vert_posns2, tetrahedron, top_vertices[1], draw_ordered = draw_ordered, o_data = o_data)
 
 
         for i in range(4):
-            draw_vertex_num(c, vert_posns, i)
-            draw_vertex_num(c, vert_posns2, i)
+            if not draw_ordered:
+                to_write = i
+            else:
+                to_write = tri_to_o_tri_perms[tet_num][i]
+            draw_vertex_num(c, vert_posns, i, to_write)
+            draw_vertex_num(c, vert_posns2, i, to_write)
 
 
 def bezier_path_from_4_vecs(v0,v1,v2,v3):
@@ -421,7 +447,7 @@ def draw_triangle_green_and_purple(c, triangle_corners, majority_colour, edge_or
         c.stroke(straight_path_green,  [pyx.style.linewidth(1.5*lw2), pyx.deco.stroked([grey])])
         # c.stroke(connector_1_green, [pyx.style.linewidth(1.5*lw2), pyx.deco.stroked([grey])])
 
-def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns, tet_num, is_upper_half = True, edge_orientations_relative_to_regina = None, oriented = None):
+def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns, tet_num, is_upper_half = True, edge_orientations_relative_to_regina = None, oriented = None, draw_ordered = False, o_data = None):
     top_vertices, bottom_vertices = tet_vert_posns[tet_num]
 
     red_vertex_pairs = [[top_vertices[0], top_vertices[1]], #top
@@ -506,14 +532,22 @@ def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, ve
             dotted = True
         else:
             dotted = False
-        draw_edge(c, triangulation, veering_colours, tet_num, edge_endpt_posns, edge_verts[0], edge_verts[1], context = 'diamond', dotted = dotted, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina)
+        draw_edge(c, triangulation, veering_colours, tet_num, edge_endpt_posns, edge_verts[0], edge_verts[1], context = 'diamond', dotted = dotted, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_ordered = draw_ordered, o_data = o_data)
 
     for j,i in enumerate(corner_indices):
         verts = vertex_pairs[i]
-        edge_index = get_edge_between_verts_index(tetrahedron, verts[0], verts[1])
+        v0, v1 = verts[0], verts[1]
+        edge_index = get_edge_between_verts_index(tetrahedron, v0, v1)
         if edges_between_midannuli[edge_index].is_cut:
             c.stroke(pyx.path.circle(diamond_pts[i].real, diamond_pts[i].imag, dot_rad))
-        edge_string = str(edge_index)
+
+        if not draw_ordered:
+            edge_string = str(edge_index)
+        else:
+            o_tri, tri_to_o_tri_perms = o_data
+            perm = tri_to_o_tri_perms[tet_num]
+            edge_string = str(get_edge_between_verts_index(o_tri.tetrahedron(tet_num), perm[v0], perm[v1]))
+
         if is_same_orientation_as_regina(tetrahedron, verts[0], verts[1], edge_orientations_relative_to_regina = edge_orientations_relative_to_regina):  
             edge_string = edge_string + dot
         else:
@@ -524,7 +558,16 @@ def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, ve
         ## triangle labels
         if j != 2:  ### last one doesn't get a triangle label
             ### triangle labels
-            tri_string = tetrahedron.triangle(tri_nums[i]).index()
+            tri_num = tri_nums[i]
+            if not draw_ordered:
+                tri_index = tetrahedron.triangle(tri_num).index()
+            else:
+                o_tri, tri_to_o_tri_perms = o_data
+                perm = tri_to_o_tri_perms[tet_num]
+                o_tet = o_tri.tetrahedron(tet_num)
+                tri_index = o_tet.triangle(perm[tri_num]).index()
+            tri_string = str(tri_index)
+            # tri_string = tetrahedron.triangle(tri_nums[i]).index()
             c.text(label_diamond_midpts[i].real, label_diamond_midpts[i].imag, tri_string, textattrs=[pyx.text.size(sizename="large"), pyx.text.halign.center, pyx.text.vshift.middlezero, dark_col])
 
     # draw tet_num label
@@ -534,7 +577,13 @@ def draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, ve
         tet_col = cyan
     c.text(diamond_center.real, diamond_center.imag + tet_label_shift, str(tet_num), textattrs=[pyx.text.size(sizename="Huge"), pyx.text.halign.center, pyx.text.vshift.middlezero, tet_col])
 
-def draw_midannuli(c, triangulation, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina, oriented = None):
+def draw_midannuli(c, triangulation, angle, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina, oriented = None, draw_ordered = False):
+    if draw_ordered:
+        o_data = ordered_tri.ordered_tri(triangulation, angle, return_vertex_perms = True)
+        o_tri, tri_to_o_tri_perms = o_data
+    else:
+        o_data = None
+
     for j,this_midannulus in enumerate(midannuli):
         tet_class_below, tet_class_above = this_midannulus.tet_class_below, this_midannulus.tet_class_above
 
@@ -543,11 +592,11 @@ def draw_midannuli(c, triangulation, midannuli, edges_between_midannuli, veering
                     tet_width*0.5*math.cos(i*2*math.pi/4) + j*(tet_gap + 0.5*tet_width) + tet_width) for i in range(4)]
             diamond_pts_up = [v + complex(0.5*tet_width, 0.5*tet_width) for v in diamond_pts]
 
-            draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_class_below[k], is_upper_half = True, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, oriented = oriented)
-            draw_half_diamond(c, diamond_pts_up, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_above, tet_class_above[k], is_upper_half = False, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, oriented = oriented)
+            draw_half_diamond(c, diamond_pts, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_class_below[k], is_upper_half = True, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, oriented = oriented, draw_ordered = draw_ordered, o_data = o_data)
+            draw_half_diamond(c, diamond_pts_up, triangulation, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_above, tet_class_above[k], is_upper_half = False, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, oriented = oriented, draw_ordered = draw_ordered, o_data = o_data)
 
 
-def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, angle = None, draw_stuff = True, draw_green = True, draw_purple = True):
+def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, angle = None, draw_stuff = True, draw_green = True, draw_purple = True, draw_ordered = False):
     """make a picture of the triangulation, save to output_filename. Assumes that filename is of form '*_xxxx.tri' where xxxx is the angle structure for veering, unless is input in angle_structure_str"""
     # print 'drawing:', midannuli_filename
     if angle == None:
@@ -582,22 +631,28 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
 
     if draw_stuff:
         ct = pyx.canvas.canvas() 
-        draw_tetrahedra(ct, triangulation, veering_colours, tet_vert_posns_below, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_green = draw_green, draw_purple = draw_purple)
+        draw_tetrahedra(ct, triangulation, angle, veering_colours, tet_vert_posns_below, edge_orientations_relative_to_regina = edge_orientations_relative_to_regina, draw_green = draw_green, draw_purple = draw_purple, draw_ordered = draw_ordered)
         ct.writePDFfile(tetrahedra_filename)
 
         cm = pyx.canvas.canvas() 
-        draw_midannuli(cm, triangulation, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina, oriented = oriented)
+        draw_midannuli(cm, triangulation, angle, midannuli, edges_between_midannuli, veering_colours, tet_types, tet_vert_posns_below, tet_vert_posns_above, edge_orientations_relative_to_regina, oriented = oriented, draw_ordered = draw_ordered)
         cm.writePDFfile(midannuli_filename)
 
     return has_orientable_mid_surfaces(edges_between_midannuli)
 
-def draw_triangulation_from_veering_isosig(veering_isosig, midannuli_filename = None, tetrahedra_filename = None, draw_stuff = True):
+def draw_triangulation_from_veering_isosig(veering_isosig, midannuli_filename = None, tetrahedra_filename = None, draw_stuff = True, draw_ordered = False):
     tri, angle = isosig_to_tri_angle(veering_isosig)
     if midannuli_filename == None:
-        midannuli_filename = 'Images/Mid-annuli/' + veering_isosig + '_mid-annuli.pdf'
+        midannuli_filename = 'Images/Mid-annuli/' + veering_isosig + '_mid-annuli'
     if tetrahedra_filename == None:
-        tetrahedra_filename = 'Images/Triangulation/' + veering_isosig + '_tetrahedra.pdf'
-    return draw_triangulation(tri, midannuli_filename, tetrahedra_filename, angle = angle, draw_stuff = draw_stuff, draw_green = True, draw_purple = True)
+        tetrahedra_filename = 'Images/Triangulation/' + veering_isosig + '_tetrahedra'
+        if draw_ordered:
+            midannuli_filename += '_ordered.pdf'
+            tetrahedra_filename += '_ordered.pdf'
+        else:
+            midannuli_filename += '.pdf'
+            tetrahedra_filename += '.pdf'
+    return draw_triangulation(tri, midannuli_filename, tetrahedra_filename, angle = angle, draw_stuff = draw_stuff, draw_green = True, draw_purple = True, draw_ordered = draw_ordered)
 
 def draw_triangulations_from_veering_isosigs_file(veering_isosigs_filename, midannuli_dirname = 'Images/Mid-annuli', tetrahedra_dirname = 'Images/Triangulation'):
     veering_isosigs_list = parse_data_file(veering_isosigs_filename)
