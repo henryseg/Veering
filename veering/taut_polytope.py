@@ -30,16 +30,12 @@ from .fundamental_domain import non_tree_face_cycles
 # Sage does not treat the variables of a MILP as a vector, so we do it
 # ourselves.
 def dot_prod(u, v):
-    try:
-        dim = len(u)
-    except:
-        dim = len(v)
+    dim = max(len(u), len(v))  # 2026-05-03 Note that in the new
+                               # version of SageMath, variables of a
+                               # MILP have a length. But of course
+                               # they start with length
+                               # zero... 
     return sum( u[i] * v[i] for i in range(dim) )
-
-
-def extract_solution(q, v):
-    dim = q.number_of_variables()
-    return [q.get_values(v[i]) for i in range(dim)]
 
 
 # unused?
@@ -67,10 +63,11 @@ def farkas_solution(N):
     u = q.new_variable( real = True, nonnegative = False )
     for v in N.columns():
         q.add_constraint( dot_prod(u, v), min = 1 )
-    q.set_objective( sum( dot_prod(u, v) for v in N.columns() ) )
+    # q.set_objective( sum( dot_prod(u, v) for v in N.columns() ) )
+    q.set_objective( None )  # any solution will do
     try:
         q.solve()
-        return extract_solution(q, u)
+        return [q.get_values(var) for var in u]
     except MIPSolverException:
         return None
 
@@ -97,7 +94,7 @@ def non_trivial_solution(N, real_bool = True, int_bool = False,
     q.set_objective( None )  # any non-zero solution will do - and this is _much_ faster.
     try:
         q.solve()
-        return extract_solution(q, w)
+        return [q.get_values(var) for var in w]
     except MIPSolverException:
         return None
 
@@ -161,7 +158,7 @@ def min_neg_euler_carried(tri, angle, solver = "GLPK"):
 def fully_carried_solution(N):
     """
     Look for a face vector w with N*w = 0 and with all entries
-    positive, minimizing the sum of its entries.  
+    at least one, minimizing the sum of its entries.  
     """
     num_faces = N.dimensions()[1]
     # q = MixedIntegerLinearProgram( maximization = False, solver = "Gurobi" ) # Grrr.
@@ -179,7 +176,7 @@ def fully_carried_solution(N):
     q.set_objective( None )  # any positive solution will do
     try:
         q.solve()
-        return extract_solution(q, w)
+        return [q.get_values(var) for var in w]
     except MIPSolverException:
         return None
 
@@ -205,7 +202,7 @@ def carries_torus_or_sphere(tri, angle):
     # We must decide if there is a pair of columns which are negatives
     # of each other.  So we use the unique+sort trick.
     N = Matrix(N).transpose() # easier to work with rows
-    N = set(tuple(row) for row in N) # make rows unique
+    N = set( tuple(row) for row in N ) # make rows unique
     N = Matrix(N)  # make rows vectors
     P = []
     for row in N:
