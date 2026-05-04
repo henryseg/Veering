@@ -202,7 +202,10 @@ def test_veering_drilling_and_filling(veering_isosigs, num_to_check, smaller_num
         L = snappy_tools.get_slopes_from_peripherals(M, per)
         M.dehn_fill(L)
         M = M.filled_triangulation()
-        M.randomize()
+        for i in range(1000):
+            if M.solution_type == "all tetrahedra positively oriented":
+                break
+            M.randomize()
         # M = snappy.Manifold(M.triangulation_isosig())  # seems to help?!?!? Bizarre
         try:
             assert M.is_isometric_to(N)
