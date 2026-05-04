@@ -241,6 +241,7 @@ def get_edge_between_verts_index(tetrahedron, v0, v1):
     return edge.index()
 
 def get_edge_between_verts_oriented(tetrahedron, v0, v1, edge_orientations_relative_to_regina = None):
+    ### reorders the given vertices according to the regina edge
     edge_num_in_tet = get_edge_num_between_verts(v0, v1)
     perm = tetrahedron.faceMapping(1, edge_num_in_tet)
     edge_num = get_edge_between_verts_index(tetrahedron, v0, v1)
