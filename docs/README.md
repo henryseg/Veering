@@ -10,23 +10,23 @@ It was written by
 
 This walkthrough illustrates some of the capabilities of Veering when run inside [SageMath](https://www.sagemath.org/) from the command line. A complete list of available functions can be found by browsing the project’s [GitHub repository](https://github.com/henryseg/Veering/tree/master).
 
-The [References](veering.md#ref) section at the end of this page provide sources for the definitions of the terms used in this walkthrough.
+The [References](#ref) section at the end of this page provide sources for the definitions of the terms used in this walkthrough.
 
 ## Contents
 - [Installation](#installation)
 - [Testing](#testing)
-- [Taut signatures](veering.md#signatures)
-- [Edge-orientability](veering.md#EO)
-- [Layered, measurable, and non-measurable triangulations](veering.md#type)
-- [Carried surfaces](veering.md#carried)
-- [Topological information about a carried surface](veering.md#stratum)
-- [Homology classes of carried surfaces](veering.md#homology)
-- [Veering mutations](veering.md#mutations)
-- [Polynomial invariants](veering.md#polynomials)
-- [Flow cycles](veering.md#cycles)
-- [Drilling veering triangulations](veering.md#drilling)
-- [From a taut signature to a Regina triangulation](veering.md#regina)
-- [References](veering.md#ref)
+- [Taut signatures](#signatures)
+- [Edge-orientability](#EO)
+- [Layered, measurable, and non-measurable triangulations](#type)
+- [Carried surfaces](#carried)
+- [Topological information about a carried surface](#stratum)
+- [Homology classes of carried surfaces](#homology)
+- [Veering mutations](#mutations)
+- [Polynomial invariants](#polynomials)
+- [Flow cycles](#cycles)
+- [Drilling veering triangulations](#drilling)
+- [From a taut signature to a Regina triangulation](#regina)
+- [References](#ref)
 
 ---
 
@@ -193,7 +193,7 @@ Given V and S we can perform all possible veering mutations of V along S using p
         layered: True
         edge-orientable: False
 
-The output tells us that the carried surface that we chose is of genus 2, with two boundary components, each inside a four-gon (see [Carried surfaces](veering.md#carried)). The surface has three nontrivial "veering symmetries" (see [References](veering.md#ref)). Thus by performing all possible mutations we obtain three veering triangulations (although two of them are actually isomorphic).
+The output tells us that the carried surface that we chose is of genus 2, with two boundary components, each inside a four-gon (see [Carried surfaces](#carried)). The surface has three nontrivial "veering symmetries" (see [References](#ref)). Thus by performing all possible mutations we obtain three veering triangulations (although two of them are actually isomorphic).
 
 If no veering mutation is possible for a given (V, S) we would see:
 
@@ -258,7 +258,7 @@ A veering triangulation can be constructed from a pair (F_t, C) where F_t is a t
 
 If C is a perfect set for F_t, and c is any closed orbit of F_t that is not already in C, then the union of C and c is another perfect set for F_t. We call the veering triangulation V_c associated to (F_t, C \cup c) a _veering parent_ of the veering triangulation V associated to (F_t, C). The process of getting from V to V_c is called _drilling (veering triangulations)_. It has been implemented in Veering.
 
-The input is a veering triangulation and a list of flow cycles of that veering triangulation (see [Flow cycles](veering.md#cycles)).
+The input is a veering triangulation and a list of flow cycles of that veering triangulation (see [Flow cycles](#cycles)).
 The output is the taut signature of the veering parent.
 
         sage: sig = census[1]
@@ -317,46 +317,80 @@ The references provided below are __not__ necessarily the original sources in wh
 
 __1. Taut structure__
 
-M. Lackenby, [_Taut ideal triangulations of 3-manifolds_](https://msp.org/gt/2000/4-1/gt-v4-n1-p12-p.pdf), Definition on p. 370.
+[M. Lackenby](https://people.maths.ox.ac.uk/lackenby/),
+[_Taut ideal triangulations of 3-manifolds_](https://msp.org/gt/2000/4-1/gt-v4-n1-p12-p.pdf),
+Definition on p. 370.
 
 __2. Veering structure__
 
-*  (original definition) I. Agol [_Taut triangulations of pseudo-Anosov mapping tori_](https://arxiv.org/pdf/1008.1606), Definition 4.1.
-*  (now-standard definition) C.D. Hodgson, J.H. Rubinstein, H. Segerman, S. Tillmann [_Veering triangulations admit strict angle structures_](https://msp.org/gt/2011/15-4/gt-v15-n4-p06-p.pdf), Definition 1.3.
+*  (original definition)
+[I. Agol](https://math.berkeley.edu/people/faculty/ian-agol),
+[_Taut triangulations of pseudo-Anosov mapping tori_](https://arxiv.org/pdf/1008.1606),
+Definition 4.1.
+*  (now-standard definition)
+[C.D. Hodgson](https://researchers.ms.unimelb.edu.au/~craigdh@unimelb/),
+[J.H. Rubinstein](https://en.wikipedia.org/wiki/J._Hyam_Rubinstein),
+[H. Segerman](http://www.segerman.org),
+[S. Tillmann](https://www.maths.usyd.edu.au/u/tillmann/),
+[_Veering triangulations admit strict angle structures_](https://msp.org/gt/2011/15-4/gt-v15-n4-p06-p.pdf),
+Definition 1.3.
 
 __3. Edge-orientability__
 
-A. Parlak, [The taut polynomial and the Alexander polynomial](https://londmathsoc.onlinelibrary.wiley.com/doi/epdf/10.1112/topo.12302), Section 3.3.
+[A. Parlak](https://annaparlak.github.io),
+[The taut polynomial and the Alexander polynomial](https://londmathsoc.onlinelibrary.wiley.com/doi/epdf/10.1112/topo.12302),
+Section 3.3.
 
 __4. Branch equations (also called edge equations or matching equations)__
 
-A. Parlak, [Computation of the Taut, the Veering, and the Teichmüller Polynomials](https://www.tandfonline.com/doi/epdf/10.1080/10586458.2021.1985656), Section 3.1. 
+[A. Parlak](https://annaparlak.github.io),
+[Computation of the Taut, the Veering, and the Teichmüller Polynomials](https://www.tandfonline.com/doi/epdf/10.1080/10586458.2021.1985656),
+Section 3.1. 
 
 __5. Cone of homology classes of surfaces carried by a veering triangulation and the Thurston norm__
 
-M. Landry, Y.N. Minsky, S.J. Taylor [A polynomial invariant for veering triangulations](https://ems.press/journals/jems/articles/11806809), Theorem 5.15.
+[M.P. Landry](https://mlandry.top),
+[Y.N. Minsky](https://sites.google.com/view/yair-minsky/home),
+[S.J. Taylor](https://sites.google.com/view/sam-taylor-math),
+[A polynomial invariant for veering triangulations](https://ems.press/journals/jems/articles/11806809),
+Theorem 5.15.
 
 __6. Polynomial invariants__
 
-* (definition) M. Landry, Y.N. Minsky, S.J. Taylor [A polynomial invariant for veering triangulations](https://ems.press/journals/jems/articles/11806809), Section 3.
+* (definition)
+[M.P. Landry](https://mlandry.top),
+[Y.N. Minsky](https://sites.google.com/view/yair-minsky/home),
+[S.J. Taylor](https://sites.google.com/view/sam-taylor-math),
+[A polynomial invariant for veering triangulations](https://ems.press/journals/jems/articles/11806809),
+Section 3.
 
-* (algorithm for the computation) A. Parlak, [Computation of the Taut, the Veering, and the Teichmüller Polynomials](https://www.tandfonline.com/doi/epdf/10.1080/10586458.2021.1985656), Sections 4 - 6. 
+* (algorithm for the computation)
+[A. Parlak](https://annaparlak.github.io),
+[Computation of the Taut, the Veering, and the Teichmüller Polynomials](https://www.tandfonline.com/doi/epdf/10.1080/10586458.2021.1985656),
+Sections 4 - 6. 
 
-* (computation of the taut polynomial via Fox calculus) A. Parlak, [Arbitrarily large veering triangulations with a vanishing taut polynomial](https://ems.press/journals/ggd/articles/14298509), Section 2.4.2.
+* (computation of the taut polynomial via Fox calculus)
+[A. Parlak](https://annaparlak.github.io),
+[Arbitrarily large veering triangulations with a vanishing taut polynomial](https://ems.press/journals/ggd/articles/14298509),
+Section 2.4.2.
 
 __7. Veering mutations__
 
-A. Parlak, [Mutations and faces of the Thurston norm ball dynamically represented by multiple different flows](https://msp.org/gt/2025/29-4/gt-v29-n4-p07-s.pdf), Section 3.
+[A. Parlak](https://annaparlak.github.io),
+[Mutations and faces of the Thurston norm ball dynamically represented by multiple different flows](https://msp.org/gt/2025/29-4/gt-v29-n4-p07-s.pdf),
+Section 3.
 
 __8. Flow cycles__
 
-M. Landry, Y.N. Minsky, S.J. Taylor [Flows, growth rates, and the veering polynomial](https://www.cambridge.org/core/journals/ergodic-theory-and-dynamical-systems/article/flows-growth-rates-and-the-veering-polynomial/B79BE9FBDBE54CDE8C9D8A5285F4E7BF), Sections 2 (definition) and 6 (proof that flow cycles encode orbits of the flow).
+[M.P. Landry](https://mlandry.top),
+[Y.N. Minsky](https://sites.google.com/view/yair-minsky/home),
+[S.J. Taylor](https://sites.google.com/view/sam-taylor-math),
+[Flows, growth rates, and the veering polynomial](https://www.cambridge.org/core/journals/ergodic-theory-and-dynamical-systems/article/flows-growth-rates-and-the-veering-polynomial/B79BE9FBDBE54CDE8C9D8A5285F4E7BF),
+Sections 2 (definition) and 6 (proof that flow cycles encode orbits of the flow).
 
 __10. Drilling veering triangulations__
 
-A. Parlak, H. Segerman Drilling veering triangulations and applications to pseudo-Anosov flows, in preparation.
-
-
-
-
-
+[A. Parlak](https://annaparlak.github.io),
+[Henry Segerman](http://www.segerman.org),
+Drilling veering triangulations and applications to pseudo-Anosov flows,
+in preparation.
