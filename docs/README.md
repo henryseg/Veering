@@ -1,7 +1,10 @@
 # Veering walkthrough
 
-Veering is a Python codebase for working with transverse taut and veering ideal triangulations.
-It was written by [Saul Schleimer](https://sschleimer.warwick.ac.uk), [Henry Segerman](http://www.segerman.org), and [Anna Parlak](https://annaparlak.github.io).
+[Veering](https://github.com/henryseg/Veering) is a Python codebase for working with transverse taut and veering ideal triangulations.
+It was written by
+[Anna Parlak](https://annaparlak.github.io),
+[Saul Schleimer](https://sschleimer.warwick.ac.uk), and
+[Henry Segerman](http://www.segerman.org).
 
 <!-- Almost all functions rely on [Regina](https://regina-normal.github.io/). Some functions rely on [Snappy](https://snappy.computop.org/) and/or [SageMath](https://www.sagemath.org/). -->
 
@@ -10,8 +13,8 @@ This walkthrough illustrates some of the capabilities of Veering when run inside
 The [References](veering.md#ref) section at the end of this page provide sources for the definitions of the terms used in this walkthrough.
 
 ## Contents
-- [Installation](veering.md#installation)
-- [Testing](veering.md#testing)
+- [Installation](#installation)
+- [Testing](#testing)
 - [Taut signatures](veering.md#signatures)
 - [Edge-orientability](veering.md#EO)
 - [Layered, measurable, and non-measurable triangulations](veering.md#type)
