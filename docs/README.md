@@ -1,7 +1,7 @@
-# Veering Walkthrough
+# Veering walkthrough
 
 Veering is a Python codebase for working with transverse taut and veering ideal triangulations.
-It was written by Saul Schleimer, Henry Segerman, and Anna Parlak.
+It was written by [Saul Schleimer](https://sschleimer.warwick.ac.uk), [Henry Segerman](http://www.segerman.org), and [Anna Parlak](https://annaparlak.github.io).
 
 <!-- Almost all functions rely on [Regina](https://regina-normal.github.io/). Some functions rely on [Snappy](https://snappy.computop.org/) and/or [SageMath](https://www.sagemath.org/). -->
 
