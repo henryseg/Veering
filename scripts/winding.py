@@ -2,13 +2,14 @@
 # winding.py
 #
 
-# Goal - generate windings (called \ZZ--charges by [BB]) and use them
-# to prove that some manifolds have finitely many veering structures.
+# Goal - generate windings (called \ZZ--charges by
+# [Baseilhac--Benedetti]) and use them to prove that some manifolds
+# have finitely many veering structures.
 
 
 from sage.rings.integer_ring import ZZ
 from sage.misc.misc import powerset
-from sage.matrix.constructor import Matrix
+from sage.matrix.constructor import matrix
 from sage.modules.free_module_element import vector
 from sage.modules.free_module import VectorSpace
 from sage.numerical.mip import MIPSolverException, MixedIntegerLinearProgram
@@ -20,7 +21,7 @@ import flipper
 from snappy.snap import t3mlite as t3m
 
 from veering.taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair, isosig_to_tri_angle
-from veering.taut_polytope import dot_prod, extract_solution, is_layered, is_torus_bundle
+from veering.taut_polytope import dot_prod, is_layered, is_torus_bundle
 from veering.veering_tri import is_veering
 from veering.z2_taut import is_trivial_in_z2_cohomology
 
@@ -73,18 +74,18 @@ def tet_vector(i, num_tet):
     return out
 
 
-def solution_vector(M):
+def angle_sum_vector(M):
     """
     Given a snappy manifold, returns the desired sums of the tet,
     edge, and holonomy equations.
     """
     num_tet = M.num_tetrahedra()
     num_cusps = M.num_cusps()
-    sol = []
-    sol.extend([1]*num_tet) # pi
-    sol.extend([2]*num_tet) # 2 pi
-    sol.extend([0]*2*num_cusps) # zero
-    return vector(ZZ, sol)
+    asv = []
+    asv.extend([1]*num_tet) # pi
+    asv.extend([2]*num_tet) # 2 pi
+    asv.extend([0]*2*num_cusps) # zero
+    return vector(ZZ, asv)
 
 
 def tet_edge_cusp_equations(M):
@@ -94,7 +95,7 @@ def tet_edge_cusp_equations(M):
     """
     num_tet = M.num_tetrahedra()
     G = M.gluing_equations()
-    T = Matrix(ZZ, [tet_vector(i, num_tet) for i in range(num_tet)])
+    T = matrix(ZZ, [tet_vector(i, num_tet) for i in range(num_tet)])
     return T.transpose().augment(G.transpose()).transpose() # sigh
 
 
@@ -105,11 +106,11 @@ def is_trivial_in_bdy_cohomology(M, w):
     check that w is a winding over ZZ.)
     """
     A = tet_edge_cusp_equations(M)
-    b = solution_vector(M)
+    b = angle_sum_vector(M)
     return A*vector(w) == b
 
 
-def windings_vanishing_on_bdy(M):
+def windings_vanishing_on_bdy(M, z2_reduction = False):
     """
     Given a snappy manifold M, returns an integer solution to the
     tet_edge_cusp_equations, as well as an integer basis for the
@@ -117,18 +118,20 @@ def windings_vanishing_on_bdy(M):
     boundary cohomology.
     """
     A = tet_edge_cusp_equations(M)
-    b = solution_vector(M)
+    b = angle_sum_vector(M)
     D, U, V = A.smith_form() 
     # UAV = D so Uinv D Vinv = A
     # want to solve Ax = b
     # that is Uinv D Vinv x = b
-    # that is D Vinv x = Ub
+    # that is "x = V Dinv U b"
+    # So first:
     c = U * b
     
     min_dim, max_dim = A.dimensions()
     assert min_dim <= max_dim
-    # D is diagonal, so Dinv means "divide".
-    # by [L] + [BB] there is always a solution:
+    # Of course, D need not be invertible.  But, if it were, since it
+    # is diagonal, Dinv would mean "divide".
+    # by [Luo] + [Baseilhac--Benedetti] there is always a solution:
     assert all(D[i][i].divides(c[i]) for i in range(min_dim))
     # so divide, and set 0 / 0 equal to 0
     c = [c[i] / D[i][i] if D[i][i] != 0 else 0 for i in range(min_dim)]
@@ -141,6 +144,12 @@ def windings_vanishing_on_bdy(M):
     # thus x = V Dinv U b
     x = V * c
     assert A*x == b
+    if z2_reduction:
+        # Reduction will, generally, decrease the rank and so increase
+        # the nullity. In the example of m004, the two exotics now
+        # appear.
+        x = vector(ZZ2, x)
+        A = matrix(ZZ2, A)
     return x, A.right_kernel().basis()
 
 
@@ -331,7 +340,7 @@ def has_internal_singularities(tri, angle):
     # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
     # for the relevant code in flipper
     T = t3m.Mcomplex(snappy.Manifold(tri))
-    angle_vector = angle_to_charge(angle, flipper_format = True)
+    angle_vector = preangle_to_winding(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
     strat = taut_struct.monodromy().stratum()
     return any(punc.filled for punc in strat.keys())
