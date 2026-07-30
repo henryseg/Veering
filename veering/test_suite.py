@@ -167,6 +167,7 @@ def test_taut_and_branched_drill_plus_semiflows_on_drillings(veering_isosigs, nu
 
     return None
 
+
 # snappy tests
 
 
