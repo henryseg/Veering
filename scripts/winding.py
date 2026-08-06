@@ -203,24 +203,27 @@ def flat_reduced_windings(M):
     return windings
 
 
-def preangles_from_frws(M):
+def preangles_from_frws(M, apply_symmetries = False):
     """
     Given a snappy manifold M, compute the flat reduced windings,
     convert to pre-angle structures (as the edge equations may be
-    violated), remove repeated structures (using symmetries of the
-    triangulation), remove non-trivial structures (in ZZ2 cohomology),
-    and return what remains.
+    violated), optionally remove repeated structures (using symmetries
+    of the triangulation), remove non-trivial structures (in ZZ2
+    cohomology), and return what remains.
+
+    (TODO: It might be nice to not apply symmetries, but instead
+    partition angle structures into symmetry classes.)
     """
     windings = flat_reduced_windings(M)
     tri = regina.Triangulation3(M)
     angles = [winding_to_preangle(w) for w in windings] 
 
-    # remove symmetries
-    lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]
-    angles = []
-    for angle in lex_angles:  
-        if angle not in angles:
-            angles.append(angle) 
+    if apply_symmetries:
+        lex_angles = [lex_smallest_angle_structure(tri, angle) for angle in angles]
+        angles = []
+        for angle in lex_angles:  
+            if angle not in angles:
+                angles.append(angle) 
 
     # remove the angles that flip a triangle over
     angles = [angle for angle in angles if is_trivial_in_z2_cohomology(tri, angle)] 
@@ -249,18 +252,18 @@ def can_deal_with_reduced_angles(M):
     """
     Returns True if we can deal with all of the reduced angles. 
     """
-    angles = preangles_from_frws(M)
+    angles = preangles_from_frws(M, True)
     tri = regina.Triangulation3(M)
     results = [can_deal_with_reduced_angle(tri, angle) for angle in angles]
     if any(r[1] == "torus bundle" for r in results):
         return (True, "torus bundle")
-    return (all(r[0] for r in results), None)
+    return (all(r[0] for r in results), [r[1] for r in results])
 
 
-def get_some_sigs(M, tries = 20):
+def get_some_sigs(M, tries = 100):
     sigs = set()
     for i in range(tries):
-        sigs.add(M.triangulation_isosig())
+        sigs.add(M.triangulation_isosig(decorated = False))
         M.randomize()
     return sigs
 
@@ -278,23 +281,34 @@ def check_some_sigs(sigs):
     return (False, None, None)
 
 
-def check_snappy_manifold(M):
+def check_snappy_manifold(M, tries = 100):
     ids = M.identify()
-    s = M.triangulation_isosig()
+    orig_sig = M.triangulation_isosig(decorated = False)
     b, r = can_deal_with_reduced_angles(M)
     if b:
-        print("can deal with", ids, s, r)
+        return (M.name(), orig_sig, r)
     else:
-        sigs = get_some_sigs(M)
-        b, s, r = check_some_sigs(sigs)
+        sigs = get_some_sigs(M, tries)
+        b, sig, r = check_some_sigs(sigs)
         if b:
-            print("can deal with", ids, s, r)
+            return (M.name(), sig, r)
+    return None
 
             
-def check_veering_sig(veering_sig):
-    tri, angle = isosig_to_tri_angle(veering_sig)
-    M = snappy.Manifold(tri)
-    check_snappy_manifold(M)
+def check_veering_sig(veering_sig, tries = 100):
+    orig_sig = veering_sig.split("_")[0]
+    M = snappy.Manifold(orig_sig)    
+    return check_snappy_manifold(M, tries)
+
+
+def check_census(cen, tries):
+    out = []
+    for sig in cen:
+        result = winding.check_veering_sig(sig, tries)
+        if result != None and result[-1] == None:
+            print(result)
+            out.append(result)
+    return out
 
 
 def num_veering_structs(M, angles = None, use_flipper = True):
@@ -328,13 +342,15 @@ def num_veering_structs(M, angles = None, use_flipper = True):
                 print("flipper failed")
     return total
 
-def has_internal_singularities(tri, angle):
+def without_internal_singularities(tri, angle):
     """
-    Given a regina manifold tri and an angle structure (assumed to be
-    layered), convert tri to a t3m triangulation, convert angle to the
-    correct flipper format, use them both to get a flipper
-    TautStructure, find the monodromy, and then check the stratum.  If
-    there are internal singularities, return True.
+    Given a regina manifold tri and an angle structure angle
+    (assumed layered), convert tri to a t3m triangulation, convert
+    angle to the correct flipper format, use them both to get a
+    flipper TautStructure, find the monodromy, and then check the
+    stratum.  If there are no internal singularities, return True.
+    (That is, we return 'True' iff the monodromy gives us a veering
+    structure.)
     """
     # See
     # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
@@ -342,5 +358,7 @@ def has_internal_singularities(tri, angle):
     T = t3m.Mcomplex(snappy.Manifold(tri))
     angle_vector = preangle_to_winding(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
-    strat = taut_struct.monodromy().stratum()
-    return any(punc.filled for punc in strat.keys())
+    h = taut_struct.monodromy()
+    strat = h.stratum()
+    return not any(punc.filled for punc in strat.keys())
+
