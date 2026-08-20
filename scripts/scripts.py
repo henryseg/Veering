@@ -468,7 +468,7 @@ def drill_flow_cycle_script():
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, make_continent_naive, make_continent_fund_dom
     from draw_drilled_tetrahedra import draw_drilled_tetrahedra
     from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
-    from drill_flow_cycle import triangulation_data_to_tri_angle, drill_flow_cycle
+    from veering.drill_flow_cycle import triangulation_data_to_tri_angle, drill_flow_cycles
     from veering.taut import isosig_from_tri_angle
     from boundary_triangulation import generate_boundary_triangulation
 
@@ -513,7 +513,7 @@ def drill_flow_cycle_script():
     
     print(veering_isosig, flow_cycle)
 
-    out = drill_flow_cycle(veering_isosig, flow_cycle, return_isosig_tri_angle = True, draw_rectangles = True, return_found_parallel = True, return_cusp_mapping = True, use_untwisted_speed_up = True, verbose = 0)
+    out = drill_flow_cycles(veering_isosig, [flow_cycle], return_isosig_tri_angle = True, draw_rectangles = True, return_found_parallel = True, return_cusp_mapping = True, use_untwisted_speed_up = True, verbose = 0)
     drilled_sig, drilled_tri, drilled_angle, found_parallel, cusp_mapping_isosig = out
 
 
@@ -524,10 +524,10 @@ def drill_flow_cycle_script():
     drilled_b = generate_boundary_triangulation(drilled_sig, draw = False)
     print(drilled_b.ladder_counts())
 
-def compare_flow_and_geodesic_drilling_script():  
+def compare_flow_and_geodesic_drilling_script_search():  
     from veering.taut import isosig_from_tri_angle
     from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
-    from drill_flow_cycle import drill_flow_cycle
+    from veering.drill_flow_cycle import drill_flow_cycles
     from snappy_drill_homotopic import drill_tet_and_face_indices
     from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
     import snappy
@@ -542,7 +542,7 @@ def compare_flow_and_geodesic_drilling_script():
 
     for fc in cycles:  
         print(fc)
-        out = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True) 
+        out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True) 
         if out != None: 
             tri, angle = isosig_to_tri_angle(sig) 
             
@@ -577,6 +577,58 @@ def compare_flow_and_geodesic_drilling_script():
                 # assert isomsig1 == isomsig2, sig + '_' + fc
                 if isomsig1 != isomsig2:
                     print('drilling', sig, 'along', fc, 'gives different results', isomsig1, drilled_M.identify(), isomsig2, snappy_drilled_M.identify())
+
+def compare_flow_and_geodesic_drilling_script_specific():  
+    from veering.taut import isosig_from_tri_angle
+    from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
+    from veering.drill_flow_cycle import drill_flow_cycles
+    from snappy_drill_homotopic import drill_tet_and_face_indices
+    from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
+    import snappy
+# 
+    # sig = 'cPcbbbdxm_10'
+    sig = 'cPcbbbiht_12'
+    # sig = 'dLQacccjsnk_200' 
+    # sig = 'dLQbccchhfo_122'
+    # sig = 'dLQbccchhsj_122'
+
+    fc = [(0, 0), (0, 0), (0, 5), (0, 0), (0, 5)]
+    print(fc)
+    out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True) 
+    if out != None: 
+        tri, angle = isosig_to_tri_angle(sig) 
+        
+        drilled_sig, drilled_tri, drilled_angle = out     
+        drilled_M = snappy.Manifold(drilled_tri) 
+
+        orig_M = snappy.Manifold(tri) 
+        dual_loop = flow_cycle_to_dual_edge_loop(tri, angle, fc) 
+        # print(fc, dual_loop) 
+        try:
+            ### May need to sys.setrecursionlimit(1000000) to make this work
+            snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 200) 
+        except GeodesicSystemNotSimpleError as e:
+            print(e)
+            return None
+        snappy_drilled_M.simplify()
+        drilled_M.simplify()
+        found_isometry = False
+        for i in range(10):
+            if drilled_M.is_isometric_to(snappy_drilled_M):  ### from the docstring for is_isometric_to:
+            ### The answer True is rigorous, but the answer False may
+            ### not be as there could be numerical errors resulting in finding
+            ### an incorrect canonical triangulation.
+                found_isometry = True
+                break
+        if not found_isometry:
+            # print('checking with verified isometry_signature', sig, fc)
+            isomsig1 = drilled_M.isometry_signature(verified = True)
+            isomsig2 = snappy_drilled_M.isometry_signature(verified = True)
+            assert not isomsig1 == None, 'isom signature failed ' + sig + ' ' + fc
+            assert not isomsig2 == None, 'isom signature failed ' + sig + ' ' + fc
+            # assert isomsig1 == isomsig2, sig + '_' + fc
+            if isomsig1 != isomsig2:
+                print('drilling', sig, 'along', fc, 'gives different results', isomsig1, drilled_M.identify(), isomsig2, snappy_drilled_M.identify())
 
 
 
