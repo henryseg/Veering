@@ -56,9 +56,7 @@ def short_flow_cycles_string(flow_cycles):
 
 def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, generate_picture = False, draw_tetrahedron_rectangles = True, global_scale_up = 1.0, scale_drawn_elements = 1.0, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
     out = make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
-    if out == None:  ### flow cycle is boundary parallel
-        # print('flow_cycle is boundary parallel')
-        return None
+    ### peripheral flow cycles are ignored
     con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _, found_parallel = out
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
     new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)

@@ -543,7 +543,8 @@ def compare_flow_and_geodesic_drilling_script_search():
     for fc in cycles:  
         print('flow cycle', fc)
         out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True) 
-        if out != None: 
+        drilled_sig, drilled_tri, drilled_angle = out 
+        if drilled_sig != sig:  ### This happens if you try to drill a peripheral flow cycle 
             tri, angle = isosig_to_tri_angle(sig) 
             
             drilled_sig, drilled_tri, drilled_angle = out     
