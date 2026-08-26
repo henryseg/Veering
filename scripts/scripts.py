@@ -541,7 +541,7 @@ def compare_flow_and_geodesic_drilling_script_search():
     cycles = generate_flow_cycles(sig, max_length = 5)
 
     for fc in cycles:  
-        print(fc)
+        print('flow cycle', fc)
         out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True) 
         if out != None: 
             tri, angle = isosig_to_tri_angle(sig) 

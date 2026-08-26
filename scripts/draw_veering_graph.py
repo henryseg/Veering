@@ -121,7 +121,7 @@ def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.
 
     table, nodes_to_draw = prepare_table(graph, max_tetrahedra = max_tetrahedra, max_cusps = max_cusps)
 
-    nodes_to_draw = prune_nodes(nodes_to_draw, graph)
+    # nodes_to_draw = prune_nodes(nodes_to_draw, graph)
 
     for row in table:
         print([len(entry) for entry in row])

@@ -137,30 +137,6 @@ def drill_all_flow_cycles(veering_isosig, min_length, max_length, generate_pictu
         global_scale_up = global_scale_up, scale_drawn_elements = scale_drawn_elements, verbose = verbose)
     return drilled
 
-def main():
-    ### examples where drilling the flow cycle and drilling the geodesic give different answers:
-    ### drilling cPcbbbiht_12 along ((0, 0), (0, 0), (0, 5), (0, 0), (0, 5)) gives different results jLLwQLQbeefgehiiixxxaaxxxcv [o9_40888(0,0)(0,0)] nLvALzAAQkbeffhhikjlkmmmhaihggfhujcvcf [L14n33639(0,0)(0,0)]
-    ### snappy word: 'bbCabCa'
-
-    ### drilling dLQacccjsnk_200 along ((0, 4), (2, 2), (2, 5), (1, 1)) gives different results pLLPwvAPPAQccdfejhmjklnmnooqffaakvachckcvhw [o9_43267(0,0)(0,0)] oLLzMLLzQQcaceefiljkmnlnmnjkxccnabqqarggr [o9_41941(0,0)(0,0)]
-
-    import snappy
-    from snappy_drill_homotopic import tet_and_face_indices_to_word, drill_tet_and_face_indices
-    from veering.taut import isosig_to_tri_angle
-
-    sig = 'cPcbbbiht_12'
-    flow_cycle = ((0, 0), (0, 0), (0, 5), (0, 0), (0, 5))
-    tri, angle = isosig_to_tri_angle(sig)
-    tet_and_face_indices = flow_cycle_to_dual_edge_loop(tri, angle, flow_cycle)
-    mfd = snappy.Manifold(tri)
-    word = tet_and_face_indices_to_word(mfd, tet_and_face_indices)
-    print(sig, flow_cycle, word)
-    drilled = drill_tet_and_face_indices(mfd, tet_and_face_indices)
-    print(drilled.identify())
-
-    # output: cPcbbbiht_12 ((0, 0), (0, 0), (0, 5), (0, 0), (0, 5)) bbCabCa
-    #         [L14n33639(0,0)(0,0)]
-
 
 
 
