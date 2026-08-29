@@ -84,8 +84,17 @@ def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.
     default_col = black
     # background_col = white
 
-    global_scale_up = 5.0
+    # text_size_words = 3
+    # text_size_numbers = 4
+    # global_scale_up = 5.0
+    
+
+    text_size_words = 4
+    text_size_numbers = 5
+    global_scale_up = 4.0
+
     scl = trafo.trafo(matrix=((global_scale_up, 0), (0, global_scale_up)), vector=(0, 0))
+
     vertical_spacing_scale = 1.5
 
     r = 0.2
@@ -101,23 +110,25 @@ def draw(graph, name = 'foo', max_tetrahedra = 5, max_cusps = 3, max_transp = 0.
     # p = p.transformed(scl)
     # canv.stroke(p, [deco.filled(), style.linewidth(0), background_col])
 
-    text_pos = global_scale_up * complex(2.35, 0.75 - (1 - vertical_spacing_scale))
-    canv.text(text_pos.real, text_pos.imag, "tetrahedra", textattrs=[text.size(3), default_col, text.halign.center, text.valign.middle])
+    # text_pos = global_scale_up * complex(2.35, 0.75 - (1 - vertical_spacing_scale))
+    text_pos = global_scale_up * complex(2.35, 0.6 - (1 - vertical_spacing_scale))
+    canv.text(text_pos.real, text_pos.imag, "tetrahedra", textattrs=[text.size(text_size_words), default_col, text.halign.center, text.valign.middle])
     # canv.text(text_pos.real, text_pos.imag, "vertices", textattrs=[text.size(3), default_col, text.halign.center, text.valign.middle])
 
     text_pos = global_scale_up * complex(1.75, 1.35 - (1 - vertical_spacing_scale))
-    canv.text(text_pos.real, text_pos.imag, "cusps", textattrs=[text.size(3), default_col, text.halign.center, text.valign.middle, trafo.rotate(90)])
+    canv.text(text_pos.real, text_pos.imag, "cusps", textattrs=[text.size(text_size_words), default_col, text.halign.center, text.valign.middle, trafo.rotate(90)])
     # canv.text(text_pos.real, text_pos.imag, "bubbles", textattrs=[text.size(3), default_col, text.halign.center, text.valign.middle, trafo.rotate(90)])
 
 
     for i in range(2, max_tetrahedra + 1):
         # print('i', i)
-        text_pos = global_scale_up * complex(i + 0.35, 0.9 - (1 - vertical_spacing_scale))
-        canv.text(text_pos.real, text_pos.imag, "$"+str(i)+"$", textattrs=[text.size(4), default_col, text.halign.center, text.valign.middle])
+        # text_pos = global_scale_up * complex(i + 0.35, 0.9 - (1 - vertical_spacing_scale))
+        text_pos = global_scale_up * complex(i + 0.35, 0.8 - (1 - vertical_spacing_scale))
+        canv.text(text_pos.real, text_pos.imag, "$"+str(i)+"$", textattrs=[text.size(text_size_numbers), default_col, text.halign.center, text.valign.middle])
     for j in range(1, max_cusps + 1):
         # print('j', j)
         text_pos = global_scale_up * complex(1.9, vertical_spacing_scale*j + 0.35)
-        canv.text(text_pos.real, text_pos.imag, "$"+str(j)+"$", textattrs=[text.size(4), default_col, text.halign.center, text.valign.middle])
+        canv.text(text_pos.real, text_pos.imag, "$"+str(j)+"$", textattrs=[text.size(text_size_numbers), default_col, text.halign.center, text.valign.middle])
 
     table, nodes_to_draw = prepare_table(graph, max_tetrahedra = max_tetrahedra, max_cusps = max_cusps)
 
