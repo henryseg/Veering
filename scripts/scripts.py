@@ -524,24 +524,26 @@ def drill_flow_cycle_script():
     drilled_b = generate_boundary_triangulation(drilled_sig, draw = False)
     print(drilled_b.ladder_counts())
 
-def compare_flow_and_geodesic_drilling_script_search():  
+def compare_flow_and_geodesic_drilling_script_search(max_length = 5, min_length = 1):  
     from veering.taut import isosig_from_tri_angle
     from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
     from veering.drill_flow_cycle import drill_flow_cycles
     from snappy_drill_homotopic import drill_tet_and_face_indices
     from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
     import snappy
-# 
+    import sys
+    sys.setrecursionlimit(1000000)
+
     # sig = 'cPcbbbdxm_10'
     sig = 'cPcbbbiht_12'
     # sig = 'dLQacccjsnk_200' 
     # sig = 'dLQbccchhfo_122'
     # sig = 'dLQbccchhsj_122'
 
-    cycles = generate_flow_cycles(sig, max_length = 5)
+    cycles = generate_flow_cycles(sig, max_length = max_length, min_length = min_length)
 
     for fc in cycles:  
-        print('flow cycle', fc)
+        # print('flow cycle', fc)
         out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True) 
         drilled_sig, drilled_tri, drilled_angle = out 
         if drilled_sig != sig:  ### This happens if you try to drill a peripheral flow cycle 

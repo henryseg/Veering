@@ -354,8 +354,9 @@ def get_nice_edge_orientations_relative_to_regina(triangulation, veering_colours
                 edge_orientations_relative_to_regina[edge_num] = -1
     return edge_orientations_relative_to_regina
 
-def get_consistent_tet_vert_posns(triangulation, angle, tet_types, coorientations):
-    veering_colours = is_veering(triangulation, angle, return_type = 'veering_colours')
+def get_consistent_tet_vert_posns(vt, version = 1):  ### version number to keep old behaviour if needed
+    triangulation, angle, tet_types, coorientations = vt.tri, vt.angle, vt.tet_types, vt.coorientations
+    veering_colours = vt.veering_colours
     # coorientations = is_transverse_taut(triangulation, angle_structure, return_type = 'tet_vert_coorientations')
     tet_vert_posns_below = []  ## positions of the tetrahedron vertices in the top down view. These determine which way round to draw diamonds
     tet_vert_posns_above = []  ## there are two for tracking the upper and lower pairs of triangles on the tetrahedra
@@ -482,6 +483,9 @@ def get_consistent_tet_vert_posns(triangulation, angle, tet_types, coorientation
                     zigzags[i] = [tet_class_below, tet_class_above]
                     made_change = True
                     break # out of for loop
+            # if version > 0:
+
+
         if made_change == False:  #otherwise, have to keep shifting down until we make a pass through and make no changes
             break
 
