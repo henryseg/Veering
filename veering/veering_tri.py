@@ -92,7 +92,7 @@ def is_veering(tri, angle, return_type = "boolean"):
         assert return_type == 'boolean'
         return True
 
-
+@liberal
 class veering_triangulation():
     """
     Container class for a triangulation with transverse veering
@@ -279,6 +279,18 @@ def rotate_vertices(vert_posns):
     top_verts, bottom_verts = vert_posns
     return ([top_verts[1], top_verts[0]], [bottom_verts[1], bottom_verts[0]])
 
+def flip_zigzag(zigzags, i, tet_vert_posns_below, tet_vert_posns_above):
+    tet_class_below, tet_class_above = zigzags[i]
+    for tet_num_above in tet_class_above:
+        tet_vert_posns_above[tet_num_above] = rotate_vertices(tet_vert_posns_above[tet_num_above])
+    for tet_num_below in tet_class_below:
+        tet_vert_posns_below[tet_num_below] = rotate_vertices(tet_vert_posns_below[tet_num_below])
+    tet_class_below.append(tet_class_below.pop(0)) # fence post stuff
+    tet_class_below.reverse()
+    tet_class_above.reverse()
+    zigzags[i] = [tet_class_below, tet_class_above]
+
+
 ###           top[0]
 ###          /   |   \
 ### bottom[0]--- | ---bottom[1]
@@ -353,6 +365,12 @@ def get_nice_edge_orientations_relative_to_regina(triangulation, veering_colours
             if is_same_orientation_as_regina(triangulation.tetrahedron(tet_num), verts[0], verts[1]):
                 edge_orientations_relative_to_regina[edge_num] = -1
     return edge_orientations_relative_to_regina
+
+def zigzag_index_with_tet_num_above(zigzags, tet_num):
+    for j, zigzag2 in enumerate(zigzags): ### find which zigzag is the one with tet_num in tet_class_above
+        _, tet_class_above2 = zigzag2
+        if tet_num in tet_class_above2:
+            return j
 
 def get_consistent_tet_vert_posns(vt, version = 1):  ### version number to keep old behaviour if needed
     triangulation, angle, tet_types, coorientations = vt.tri, vt.angle, vt.tet_types, vt.coorientations
@@ -463,31 +481,41 @@ def get_consistent_tet_vert_posns(vt, version = 1):  ### version number to keep 
     blue_zigzags.sort(key = lambda x: len(x[0]))
     zigzags = red_zigzags + blue_zigzags
 
-    while True:
-        made_change = False
-        for i, zigzag in enumerate(zigzags):
+    if version == 0:
+        while True:
+            made_change = False
+            for i, zigzag in enumerate(zigzags):
+                tet_class_below, tet_class_above = zigzag
+                if len([tet_num for tet_num in tet_class_below if tet_types[tet_num] == 'toggle']) == 0:  #all fan tetrahedra below, so it is safe to flip the zigzag below
+                    # print('all fan tetrahedra in zigzag', i, zigzag)
+                    if not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_class_below[0]):
+                        for tet_num in tet_class_below:
+                            assert not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_num)
+                        # print('and orientations dont match below: rotate this entire annulus')  ### also rotates some other stuff for toggles...
+                        flip_zigzag(zigzags, i, tet_vert_posns_below, tet_vert_posns_above)
+                        made_change = True
+                        break # out of for loop
+            if made_change == False:  #otherwise, have to keep shifting down until we make a pass through and make no changes
+                break
+
+    else: # version 1: when vt.is_edge_orientable() we can get everything consistently oriented. Otherwise we get as much consistent as we can
+        zigzag_nums_to_visit = list(range(len(zigzags)))
+        first_zigzag_num = zigzag_nums_to_visit.pop()
+        frontier_zigzag_nums = [first_zigzag_num]
+        while len(frontier_zigzag_nums) > 0:
+            # print('start loop', zigzag_nums_to_visit, frontier_zigzag_nums)
+            zigzag_num = frontier_zigzag_nums.pop() 
+            zigzag = zigzags[zigzag_num]
             tet_class_below, tet_class_above = zigzag
-            if len([tet_num for tet_num in tet_class_below if tet_types[tet_num] == 'toggle']) == 0:  #all fan tetrahedra
-                # print 'all fan tetrahedra'
-                if not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_class_below[0]):
-                    for tet_num in tet_class_below:
-                        assert not orientations_agree(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, tet_num)
-                    # print 'and orientations dont match below: rotate this entire annulus'  ### also rotates some other stuff for toggles...
-                    for tet_num_above in tet_class_above:
-                        tet_vert_posns_above[tet_num_above] = rotate_vertices(tet_vert_posns_above[tet_num_above])
-                    for tet_num_below in tet_class_below:
-                        tet_vert_posns_below[tet_num_below] = rotate_vertices(tet_vert_posns_below[tet_num_below])
-                    tet_class_below.append(tet_class_below.pop(0)) # fence post stuff
-                    tet_class_below.reverse()
-                    tet_class_above.reverse()
-                    zigzags[i] = [tet_class_below, tet_class_above]
-                    made_change = True
-                    break # out of for loop
-            # if version > 0:
-
-
-        if made_change == False:  #otherwise, have to keep shifting down until we make a pass through and make no changes
-            break
+            for tet_num in tet_class_below:
+                j = zigzag_index_with_tet_num_above(zigzags, tet_num)
+                # print('below zigzag', zigzag_num, zigzags[zigzag_num], 'is zigzag', j, zigzags[j])
+                if j in zigzag_nums_to_visit:
+                    zigzag_nums_to_visit.remove(j)
+                    frontier_zigzag_nums.append(j)
+                    if tet_vert_posns_below[tet_num] != tet_vert_posns_above[tet_num]:
+                        flip_zigzag(zigzags, j, tet_vert_posns_below, tet_vert_posns_above)
+        assert len(zigzag_nums_to_visit) == 0
 
     cut_edges = find_cut_edges(triangulation, veering_colours, tet_num_below_edge_num, tet_vert_posns_below, tet_vert_posns_above, zigzags)
     # print tet_vert_posns_below
