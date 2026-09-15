@@ -477,8 +477,8 @@ def get_consistent_tet_vert_posns(vt, version = 1):  ### version number to keep 
                 # else: # we have looped vertically.
             break
 
-    red_zigzags.sort(key = lambda x: len(x[0]))   # sorted short to long
-    blue_zigzags.sort(key = lambda x: len(x[0]))
+    # red_zigzags.sort(key = lambda x: len(x[0]))   # sorted short to long
+    # blue_zigzags.sort(key = lambda x: len(x[0]))
     zigzags = red_zigzags + blue_zigzags
 
     if version == 0:
