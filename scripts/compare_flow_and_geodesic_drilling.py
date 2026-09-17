@@ -38,11 +38,12 @@ def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_su
             append_to_file(fail_filename, sig)
     return (win, lose)
 
-def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None, max_length = 5, min_length = 1, quit_after_finding_one = True):  
+def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None, max_length = 5, min_length = 1, quit_after_finding_one = True, verbose = 0):  
     cycles = generate_flow_cycles(sig, max_length = max_length, min_length = min_length)
 
     for fc in cycles:  
-        # print('flow cycle', fc)
+        if verbose > 0:
+            print('flow cycle', fc)
         out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True) 
         drilled_sig, drilled_tri, drilled_angle = out 
         if drilled_sig != sig:  ### This happens if you try to drill a peripheral flow cycle 
@@ -52,12 +53,14 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
 
             orig_M = snappy.Manifold(tri) 
             dual_loop = flow_cycle_to_dual_edge_loop(tri, angle, fc) 
-            # print(fc, dual_loop) 
+            if verbose > 1: 
+                print('dual_loop', dual_loop) 
             try:
                 ### May need to sys.setrecursionlimit(1000000) to make this work
-                snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 200) 
+                snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 1000) 
             except GeodesicSystemNotSimpleError as e:
-                # print(e)
+                if verbose > 1:
+                    print(e)
                 continue
             snappy_drilled_M.simplify()
             drilled_M.simplify()
@@ -79,7 +82,8 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
                 if isomsig1 != isomsig2:
                     print('drilling', sig, 'along', fc, 'gives different results', isomsig1, drilled_M.identify(), isomsig2, snappy_drilled_M.identify())
                     out_line = sig + '|' + str(fc) + '|' + str(isomsig1) + '|' + str(isomsig2)
-                    append_to_file(output_filename, out_line)
+                    if output_filename != None:
+                        append_to_file(output_filename, out_line)
                     if quit_after_finding_one:
                         return True
     if quit_after_finding_one:
