@@ -38,6 +38,7 @@ def tet_and_face_indices_to_word(
 def drill_tet_and_face_indices(
         mfd : Manifold,
         tet_and_face_indices : Sequence[Tuple[int, int]],
+        *,
         verified : bool = False,
         bits_prec : Optional[int] = None) -> Manifold:
     """
