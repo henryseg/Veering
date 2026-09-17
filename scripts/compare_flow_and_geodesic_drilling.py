@@ -2,8 +2,10 @@ from veering.taut import isosig_from_tri_angle, isosig_to_tri_angle
 from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
 from veering.drill_flow_cycle import drill_flow_cycles
 from veering.file_io import veering_census
-from snappy_drill_homotopic import drill_tet_and_face_indices
+from snappy_drill_homotopic import drill_tet_and_face_indices, tet_and_face_indices_to_word
 from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
+from snappy.geometric_structure.geodesic.exceptions import WordAppearsToBeParabolic
+from snappy.verify.exceptions import ShapePositiveImaginaryPartNumericalVerifyError
 import snappy
 import sys
 sys.setrecursionlimit(1000000)
@@ -14,9 +16,9 @@ def append_to_file(output_filename, string):
     output_file.write(string+'\n')
     output_file.close()
 
-def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_suffix = "", census_start = 0, census_end = -1):
-    output_filename = "data/compare_flow_and_geodesic" + filename_suffix + ".txt"
-    fail_filename = "data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
+def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_suffix = "", census_start = 0, census_end = -1, verbose = 0):
+    output_filename = "../../../Dropbox/Data/compare_flow_and_geodesic" + filename_suffix + ".txt"
+    fail_filename = "../../../Dropbox/Data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
     output_file = open(output_filename, 'w')  #write mode, clear any existing file
     output_file.close()
     fail_file = open(fail_filename, 'w')  #write mode, clear any existing file
@@ -31,7 +33,7 @@ def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_su
     lose = []
     for sig in census:
         print(sig)
-        if compare_flow_and_geodesic_drilling_script_search(sig, output_filename = output_filename, max_length = 5, min_length = 1):
+        if compare_flow_and_geodesic_drilling_script_search(sig, output_filename = output_filename, max_length = 5, min_length = 1, verbose = verbose):
             win.append(sig)
         else:
             lose.append(sig)
@@ -47,6 +49,8 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
         out = drill_flow_cycles(sig, [fc], return_isosig_tri_angle = True) 
         drilled_sig, drilled_tri, drilled_angle = out 
         if drilled_sig != sig:  ### This happens if you try to drill a peripheral flow cycle 
+            if verbose > 0:
+                print('drilled sig', drilled_sig)
             tri, angle = isosig_to_tri_angle(sig) 
              
             drilled_M = snappy.Manifold(drilled_tri) 
@@ -54,13 +58,20 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
             orig_M = snappy.Manifold(tri) 
             dual_loop = flow_cycle_to_dual_edge_loop(tri, angle, fc) 
             if verbose > 1: 
-                print('dual_loop', dual_loop) 
+                print('dual_loop', dual_loop, 'word', tet_and_face_indices_to_word(orig_M, dual_loop)) 
             try:
                 ### May need to sys.setrecursionlimit(1000000) to make this work
-                snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 1000) 
+                snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 2000) 
             except GeodesicSystemNotSimpleError as e:
                 if verbose > 1:
                     print(e)
+                continue
+            except WordAppearsToBeParabolic as e:
+                if verbose > 0:
+                    print(e)     
+            except ShapePositiveImaginaryPartNumericalVerifyError as e:
+                if verbose > 0:
+                    print(e)              
                 continue
             snappy_drilled_M.simplify()
             drilled_M.simplify()
@@ -91,13 +102,7 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
         return False
 
 def compare_flow_and_geodesic_drilling_script_specific():  
-    from veering.taut import isosig_from_tri_angle
-    from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
-    from veering.drill_flow_cycle import drill_flow_cycles
-    from snappy_drill_homotopic import drill_tet_and_face_indices
-    from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
-    import snappy
-# 
+
     # sig = 'cPcbbbdxm_10'
     sig = 'cPcbbbiht_12'
     # sig = 'dLQacccjsnk_200' 
