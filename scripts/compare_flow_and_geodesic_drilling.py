@@ -17,8 +17,11 @@ def append_to_file(output_filename, string):
     output_file.close()
 
 def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_suffix = "", census_start = 0, census_end = -1, verbose = 0):
-    output_filename = "../../../Dropbox/Data/compare_flow_and_geodesic" + filename_suffix + ".txt"
-    fail_filename = "../../../Dropbox/Data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
+    # output_filename = "../../../Dropbox/Data/compare_flow_and_geodesic" + filename_suffix + ".txt"
+    # fail_filename = "../../../Dropbox/Data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
+    output_filename = "data/compare_flow_and_geodesic" + filename_suffix + ".txt"
+    fail_filename = "data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
+
     output_file = open(output_filename, 'w')  #write mode, clear any existing file
     output_file.close()
     fail_file = open(fail_filename, 'w')  #write mode, clear any existing file
@@ -64,14 +67,15 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
                 snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 2000) 
             except GeodesicSystemNotSimpleError as e:
                 if verbose > 1:
-                    print(e)
+                    print('not simple error |', e)
                 continue
             except WordAppearsToBeParabolic as e:
                 if verbose > 0:
-                    print(e)     
+                    print('parabolic error |', e)    
+                continue 
             except ShapePositiveImaginaryPartNumericalVerifyError as e:
                 if verbose > 0:
-                    print(e)              
+                    print('shape error |', e)              
                 continue
             snappy_drilled_M.simplify()
             drilled_M.simplify()

@@ -386,6 +386,10 @@ def flow_cycle_to_dual_edge_loop(tri, angle, flow_cycle, verbose = 0):
             print('adding first step: (tet_index, face_num)', (tet_index, face_num))
         out.append((tet_index, face_num))       
         out.extend(go_up_around_edge(tet_vert_coorientations, tet, face_num, verts, flow_cycle[(i+1) % len(flow_cycle)][0], verbose = verbose))
+    ### sanity check the dual edge loop
+    for i, (tet_index, face_num) in enumerate(out):
+        next_tet_index = out[(i+1)%len(out)][0]
+        assert tri.tetrahedron(tet_index).adjacentTetrahedron(face_num).index() == next_tet_index
     return out
 
 

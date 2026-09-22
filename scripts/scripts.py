@@ -210,7 +210,7 @@ def draw_continent_script():
     # veering_isosigs_list = ['kLLLAPPkcdgfehhjijjhfhaqiphffj_2010222001', 'mvLALLMQQecfgjkkjiljllccaxvvwkfekix_100001122112', 'mvLALPMPQecfggjgikllklccaxxvcfaqdmo_100001122100']
     # draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = max_length, draw_args = draw_args)
 
-def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahedra = 500000, use_algebraic_numbers = True):
+def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahedra = 500000, use_algebraic_numbers = False):
     from draw_continent import draw_continent
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'ct_lw': 0.02, 'global_drawing_scale': 12, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'ct_lw': 0.02, 'global_drawing_scale': 12, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
@@ -266,6 +266,30 @@ def draw_census_continents(census_start = 0, census_end = 10, max_length = 0.1, 
     for i, sig in enumerate(census[census_start:census_end]):
         print('drawing census sig ' + str(i + census_start) + ' ' + sig)
         draw_continent_from_isosig(sig, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers)
+
+def draw_continent_sequence(n = 5):
+    import snappy
+    import regina
+    from veering_detect import find_veering_structures
+    from veering.taut import isosig_from_tri_angle
+    from veering.transverse_taut import is_transverse_taut
+
+    ### torus bundles L^nR^n
+    for i in range(12, n):
+        s = "b++" + "L" * i + "R" * i
+        print(s)
+        M = snappy.Manifold(s)
+        tri = regina.Triangulation3(M)
+        angles = find_veering_structures(tri)
+        for angle in angles:
+            sig = isosig_from_tri_angle(tri, angle)
+            is_TT = is_transverse_taut(tri, angle)
+            print(sig, is_TT) ### LLRR has a non transverse taut veering structure as well!
+            if is_TT:
+                draw_continent_from_isosig(sig, max_length = 0.02*i**2)
+
+
+        
 
 def draw_fund_dom_continent_circle_script():
     from draw_continent_circle import draw_continent_circle, complete_tetrahedron_rectangles
