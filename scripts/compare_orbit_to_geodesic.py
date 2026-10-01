@@ -6,6 +6,9 @@ from veering.taut import isosig_to_tri_angle
 from veering.flow_cycles import flow_cycle_to_dual_edge_loop
 from veering.drill_flow_cycle import drill_flow_cycles
 
+import sys
+sys.setrecursionlimit(1000000)
+
 
 
 def compare_orbit_to_geodesic(sig, flow_cycle, verbose=True):
@@ -39,7 +42,7 @@ def compare_orbit_to_geodesic(sig, flow_cycle, verbose=True):
 
     try:
         drilled = drill_tet_and_face_indices(
-            mfd, tet_and_face_indices
+            mfd, tet_and_face_indices, verified = True, bits_prec = 1000
         )
     except Exception as e:
         if verbose:
@@ -63,6 +66,17 @@ def compare_orbit_to_geodesic(sig, flow_cycle, verbose=True):
             print("error:", e)
         return None
 
+	### If orbit_mfd.is_isometric_to(drilled) returns True, that certifies that the manifolds are isometric
+	### If it returns False, that does not necessarily certify that they are non-isometric - it might just failed to find an isometry
+	### so if different == True, use verified = True
+
+    if different: 
+    	isomsig1 = orbit_mfd.isometry_signature(verified=True)
+    	isomsig2 = drilled.isometry_signature(verified=True)
+    	assert isomsig1 is not None, 'isom signature failed ' + sig + ' ' + flow_cycle
+    	assert isomsig2 is not None, 'isom signature failed ' + sig + ' ' + flow_cycle
+    	different = (isomsig1 != isomsig2)
+    
     if different:
         if verbose:
             print("DIFFERENT:", sig, flow_cycle)
