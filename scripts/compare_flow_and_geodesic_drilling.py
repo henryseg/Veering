@@ -50,25 +50,32 @@ def orbit_drilled_different_from_geodesic_drilled(sig, fc, drilled_sig, output_f
 
     ### try to find an isometry
     for i in range(10):
-        if drilled_M.is_isometric_to(snappy_drilled_M):  ### from the docstring for is_isometric_to:
+        try:
+            if drilled_M.is_isometric_to(snappy_drilled_M):  ### from the docstring for is_isometric_to:
         ### The answer True is rigorous, but the answer False may
         ### not be as there could be numerical errors resulting in finding
         ### an incorrect canonical triangulation.
-            return False
+                return False
+        except Exception as e:
+            print(type(e), e)  
 
     # print('checking with verified isometry_signature', sig, fc)
-    isomsig1 = drilled_M.isometry_signature(verified = True)
-    isomsig2 = snappy_drilled_M.isometry_signature(verified = True)
-    assert not isomsig1 == None, 'isom signature failed ' + sig + ' ' + fc
-    assert not isomsig2 == None, 'isom signature failed ' + sig + ' ' + fc
-    # assert isomsig1 == isomsig2, sig + '_' + fc
-    if isomsig1 != isomsig2:
-        print('drilling', sig, 'along', fc, 'gives different results', isomsig1, drilled_M.identify(), isomsig2, snappy_drilled_M.identify())
-        out_line = sig + '|' + str(fc) + '|' + str(isomsig1) + '|' + str(isomsig2)
-        if output_filename != None:
-            append_to_file(output_filename, out_line)
-        return True
-    else:
+    try:
+        isomsig1 = drilled_M.isometry_signature(verified = True)
+        isomsig2 = snappy_drilled_M.isometry_signature(verified = True)
+        assert not isomsig1 == None, 'isom signature failed ' + sig + ' ' + fc
+        assert not isomsig2 == None, 'isom signature failed ' + sig + ' ' + fc
+        # assert isomsig1 == isomsig2, sig + '_' + fc
+        if isomsig1 != isomsig2:
+            print('drilling', sig, 'along', fc, 'gives different results', isomsig1, drilled_M.identify(), isomsig2, snappy_drilled_M.identify())
+            out_line = sig + '|' + str(fc) + '|' + str(isomsig1) + '|' + str(isomsig2)
+            if output_filename != None:
+                append_to_file(output_filename, out_line)
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(type(e), e) 
         return False
 
 def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None, max_length = 5, min_length = 1, quit_after_finding_one = True, verbose = 0):  
@@ -86,16 +93,17 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
         print('no differences found for', sig)
         return False
 
-def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_suffix = "", census_start = 0, census_end = -1, verbose = 0):
+def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_suffix = "", census_start = 0, census_end = -1, continue_file = False, verbose = 0):
     # output_filename = "../../../Dropbox/Data/compare_flow_and_geodesic" + filename_suffix + ".txt"
     # fail_filename = "../../../Dropbox/Data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
     output_filename = "data/compare_flow_and_geodesic" + filename_suffix + ".txt"
     fail_filename = "data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
 
-    output_file = open(output_filename, 'w')  #write mode, clear any existing file
-    output_file.close()
-    fail_file = open(fail_filename, 'w')  #write mode, clear any existing file
-    fail_file.close()
+    if not continue_file:
+        output_file = open(output_filename, 'w')  #write mode, clear any existing file
+        output_file.close()
+        fail_file = open(fail_filename, 'w')  #write mode, clear any existing file
+        fail_file.close()
 
     if census_end != -1:
         census = veering_census()[census_start:census_end]
@@ -122,7 +130,7 @@ def get_drillings(line):
     return eval(line[ind:])
 
 def census_from_data_compare_flow_and_geodesic(census_data_filename = 'data/drillings_census_eo_4_ladders_cycle_len_up_to_5.txt', 
-        max_length = 5, min_length = 1, filename_suffix = "", census_start = 0, census_end = -1, quit_after_finding_one = True, verbose = 0):
+        sigs_to_do_filename = None, filename_suffix = "", census_start = 0, census_end = -1, quit_after_finding_one = True, verbose = 0):
     # output_filename = "../../../Dropbox/Data/compare_flow_and_geodesic" + filename_suffix + ".txt"
     # fail_filename = "../../../Dropbox/Data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
     output_filename = "data/compare_flow_and_geodesic" + filename_suffix + ".txt"
@@ -139,6 +147,10 @@ def census_from_data_compare_flow_and_geodesic(census_data_filename = 'data/dril
         census_data = census_data[census_start:census_end]
     else:
         census_data = census_data[census_start:]
+
+    if sigs_to_do_filename != None:
+        sigs_to_do = parse_data_file(sigs_to_do_filename)
+        census_data = [line for line in census_data if get_sig(line) in sigs_to_do]
 
     for line in census_data:
         sig = get_sig(line)
