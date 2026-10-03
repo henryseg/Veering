@@ -17,7 +17,7 @@ def append_to_file(output_filename, string):
     output_file.close()
 
 def orbit_drilled_different_from_geodesic_drilled(sig, fc, drilled_sig, output_filename = None, verbose = 0):
-    if verbose > 0:
+    if verbose > 1:
         print('drilled sig', drilled_sig)
     tri, angle = isosig_to_tri_angle(sig) 
     drilled_tri, _ = isosig_to_tri_angle(drilled_sig)
@@ -25,17 +25,17 @@ def orbit_drilled_different_from_geodesic_drilled(sig, fc, drilled_sig, output_f
 
     orig_M = snappy.Manifold(tri) 
     dual_loop = flow_cycle_to_dual_edge_loop(tri, angle, fc) 
-    if verbose > 1: 
+    if verbose > 2: 
         print('dual_loop', dual_loop, 'word', tet_and_face_indices_to_word(orig_M, dual_loop)) 
     try:
         ### May need to sys.setrecursionlimit(1000000) to make this work
         snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 2000) 
     except GeodesicSystemNotSimpleError as e:
-        if verbose > 1:
+        if verbose > 2:
             print('not simple error |', e)
         return False
     except ShapePositiveImaginaryPartNumericalVerifyError as e:
-        if verbose > 0:
+        if verbose > 1:
             print('shape error |', e)              
         return False
     except WordAppearsToBeParabolic as e:
@@ -93,7 +93,7 @@ def compare_flow_and_geodesic_drilling_script_search(sig, output_filename = None
         print('no differences found for', sig)
         return False
 
-def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_suffix = "", census_start = 0, census_end = -1, continue_file = False, verbose = 0):
+def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, sigs_to_do_filename = None, filename_suffix = "", census_start = 0, census_end = -1, continue_file = False, verbose = 0):
     # output_filename = "../../../Dropbox/Data/compare_flow_and_geodesic" + filename_suffix + ".txt"
     # fail_filename = "../../../Dropbox/Data/compare_flow_and_geodesic_fail" + filename_suffix + ".txt"
     output_filename = "data/compare_flow_and_geodesic" + filename_suffix + ".txt"
@@ -105,16 +105,19 @@ def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, filename_su
         fail_file = open(fail_filename, 'w')  #write mode, clear any existing file
         fail_file.close()
 
-    if census_end != -1:
-        census = veering_census()[census_start:census_end]
-    else:
-        census = veering_census()[census_start:]
+    if sigs_to_do_filename != None:
+        census = parse_data_file(sigs_to_do_filename)
+    else: 
+        if census_end != -1:
+            census = veering_census()[census_start:census_end]
+        else:
+            census = veering_census()[census_start:]
     print(len(census))
     win = []
     lose = []
     for sig in census:
         print(sig)
-        if compare_flow_and_geodesic_drilling_script_search(sig, output_filename = output_filename, max_length = 5, min_length = 1, verbose = verbose):
+        if compare_flow_and_geodesic_drilling_script_search(sig, output_filename = output_filename, max_length = max_length, min_length = min_length, verbose = verbose):
             win.append(sig)
         else:
             lose.append(sig)
