@@ -115,8 +115,8 @@ def census_compare_flow_and_geodesic(max_length = 5, min_length = 1, sigs_to_do_
     print(len(census))
     win = []
     lose = []
-    for sig in census:
-        print(sig)
+    for i, sig in enumerate(census):
+        print(sig, float(i)/float(len(census)))
         if compare_flow_and_geodesic_drilling_script_search(sig, output_filename = output_filename, max_length = max_length, min_length = min_length, verbose = verbose):
             win.append(sig)
         else:
