@@ -861,3 +861,60 @@ def test_semiflow_on_drillings(sig):
                 drill(tri, tri_loop, angle, branch)
                 assert has_non_sing_semiflow(tri, branch)
                 # print (tri.isoSig(), branch, "has nonsing semiflow")
+
+def append_to_file(output_filename, string):
+    output_file = open(output_filename, 'a')  #append mode
+    output_file.write(string+'\n')
+    output_file.close()
+
+def get_sig(line):
+    parts = line.split('_')
+    return parts[0] + '_' + parts[1]
+
+def get_drillings(line):
+    ind = line.index('[')
+    return eval(line[ind:])
+
+def find_geometric_parents_from_census():
+    import snappy
+    drilling_data_eo = parse_data_file('data/drillings_census_eo_4_ladders_cycle_len_up_to_5.txt')
+    drilling_data_other = parse_data_file('data/drillings_census_other_cycle_len_up_to_5.txt')
+
+    drilling_data = drilling_data_eo + drilling_data_other
+    drilling_dict = {}
+    for line in drilling_data:
+        drilling_dict[get_sig(line)] = get_drillings(line)
+
+    output_filename = "data/geometric_drillings.txt"
+    output_file = open(output_filename, 'w')  #write mode, clear any existing file
+    output_file.close()
+
+    census_data = parse_data_file('../veering/data/veering_census_with_data.txt')
+    for line in census_data:
+        line = line.split(' ')
+        if line[3] == 'N':
+            sig = line[0]
+            print(sig)
+            win = False
+            drillings = drilling_dict[sig]
+            drillings.sort(key = lambda x: (len(x[1]), x[1]))
+            for drilled_sig, fc in drillings:
+                tri, angle = isosig_to_tri_angle(drilled_sig)
+                M = snappy.Manifold(tri)
+                if M.verify_hyperbolicity()[0]:
+                    append_to_file(output_filename, sig + '|' + str(fc) + '|' + drilled_sig)
+                    win = True
+                    break
+            if not win:
+                print('failed', sig)
+
+
+
+                
+
+
+
+
+
+
+
