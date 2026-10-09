@@ -391,5 +391,5 @@ Sections 2 (definition) and 6 (proof that flow cycles encode orbits of the flow)
 __10. Drilling veering triangulations__
 
 [A. Parlak](https://annaparlak.github.io),
-[Henry Segerman](http://www.segerman.org),
+[H. Segerman](http://www.segerman.org),
 [Drilling veering triangulations with applications to pseudo-Anosov flows](https://arxiv.org/abs/2610.12302)
