@@ -392,5 +392,4 @@ __10. Drilling veering triangulations__
 
 [A. Parlak](https://annaparlak.github.io),
 [Henry Segerman](http://www.segerman.org),
-Drilling veering triangulations and applications to pseudo-Anosov flows,
-in preparation.
+[Drilling veering triangulations with applications to pseudo-Anosov flows](https://arxiv.org/abs/2610.12302)
