@@ -274,7 +274,7 @@ The output is the taut signature of the veering parent.
         ['gLLPQccdfeffhggaagb_201022']
 
 
-The algorithm for drilling relies on finding the preimage of the orbit(s) encoded by the flow cycle(s) inside certain _fundamental tetrahedron rectangles_. It is possible to generate images of drilled tetrahedron rectangles after creating the directory Images/DrilledTetrahedra in the working directory -- this is were the pictures are saved as pdf files.
+The algorithm for drilling relies on finding the preimage of the orbit(s) encoded by the flow cycle(s) inside certain _fundamental tetrahedron rectangles_. It is possible to generate images of drilled tetrahedron rectangles after creating the directory Images/DrilledTetrahedra in the working directory -- this is where the pictures are saved as pdf files.
 
         sage: for cycle in cycles:
         ....:     drill_flow_cycle.drill_flow_cycles(sig, [cycle], generate_picture=True
