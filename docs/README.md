@@ -56,7 +56,7 @@ After installation start a sage session and run the following:
 
 Every veering triangulation can be assigned a unique `name' called a _taut signature_. A taut signature consists of an alphabetical string that identifies the triangulation up to combinatorial isomorphism, and a numerical string that identifies its taut structure up to reversing the coorientation on all faces of the triangulation.
 
-Information on all veering triangulation with at most 16 tetrahedra can be found in the [Veering Census](https://math.okstate.edu/people/segerman/veering.html). One can load the taut signatures of all veering triangulations in the census, or a specific veering triangulation from the census, as follows:
+Information on all veering triangulation with at most 16 tetrahedra can be found in the [Veering Census](https://www.segerman.org/veering.html). One can load the taut signatures of all veering triangulations in the census, or a specific veering triangulation from the census, as follows:
 
     sage: census = veering.veering_census()
     sage: sig = census[17]
