@@ -103,17 +103,7 @@ The chosen basis on H^1 is dual to the basis of H_1 used to compute the taut and
 
 We also maintain a [census](https://www.segerman.org/veering.html) of veering structures (including diagrams and references).
 
-### Citation
-
-When citing the census, please use a version of following (updating the year).
-```
-@Misc{VeeringCensus,
-        author = {Giannopoulos, Andreas and Schleimer, Saul and Segerman, Henry},
-        title = {A census of veering structures},
-        howpublished = {\url{https://math.okstate.edu/people/segerman/veering.html},
-        year = {20zz},
-}
-```
+### Citations
 
 When citing the codebase, please use a version of the following (updating the 
 version number and the year). 
@@ -123,6 +113,16 @@ version number and the year).
     title = {veering x.y, code for studying taut and veering ideal triangulations},
     howpublished = {\url{https://github.com/henryseg/Veering}},
     year = {20zz},
+}
+```
+
+When citing the census, please use a version of following (updating the year).
+```
+@Misc{VeeringCensus,
+        author = {Giannopoulos, Andreas and Schleimer, Saul and Segerman, Henry},
+        title = {A census of veering structures},
+        howpublished = {\url{https://math.okstate.edu/people/segerman/veering.html},
+        year = {20zz},
 }
 ```
 
