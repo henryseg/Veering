@@ -121,7 +121,7 @@ When citing the census, please use a version of following (updating the year).
 @Misc{VeeringCensus,
         author = {Giannopoulos, Andreas and Schleimer, Saul and Segerman, Henry},
         title = {A census of veering structures},
-        howpublished = {\url{https://math.okstate.edu/people/segerman/veering.html},
+        howpublished = {\url{https://www.segerman.org/veering.html}},
         year = {20zz},
 }
 ```
