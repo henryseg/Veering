@@ -40,6 +40,10 @@ Each test should take at most a few seconds.
 
 ### Usage
 
+We have written a detailed walkthrough of the codebase: 
+
+https://github.com/henryseg/Veering/blob/master/docs/
+
 As a simple example:
 
     sage: census = veering.veering_census(); len(census)
