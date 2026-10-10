@@ -99,11 +99,9 @@ Landry, Minsky, and Taylor proved that, if nonempty, this cone is
 equal to a cone on a (not necessarily top-dimensional) face of the Thurston norm ball. 
 The chosen basis on H^1 is dual to the basis of H_1 used to compute the taut and veering polynomials.
 
-### Webpage
+### Census
 
-You can find the census of veering structures (including diagrams and references) here: 
-
-https://math.okstate.edu/people/segerman/veering.html
+We also maintain a [census](https://www.segerman.org/veering.html) of veering structures (including diagrams and references).
 
 ### Citation
 
