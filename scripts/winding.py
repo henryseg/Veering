@@ -20,7 +20,7 @@ import flipper
 
 from snappy.snap import t3mlite as t3m
 
-from veering.taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair, isosig_to_tri_angle
+from veering.taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair, isosig_to_tri_angle, isosig_from_tri_angle
 from veering.taut_polytope import dot_prod, is_layered, is_torus_bundle
 from veering.veering_tri import is_veering
 from veering.z2_taut import is_trivial_in_z2_cohomology
@@ -252,7 +252,7 @@ def can_deal_with_reduced_angles(M):
     """
     Returns True if we can deal with all of the reduced angles. 
     """
-    angles = preangles_from_frws(M, True)
+    angles = preangles_from_frws(M)
     tri = regina.Triangulation3(M)
     results = [can_deal_with_reduced_angle(tri, angle) for angle in angles]
     if any(r[1] == "torus bundle" for r in results):
@@ -311,54 +311,73 @@ def check_census(cen, tries):
     return out
 
 
-def num_veering_structs(M, angles = None, use_flipper = True):
+def analyse_angle_structs(M, angles = None, use_flipper = True, apply_symmetries = False):
     """
-    Tries to count them (in a very naive way). 
-    Tries to eliminate overcounting due to symmetries (in preangles_from_frws)
-    but will fail if one of the symmetries is hidden by retriangulation. 
-    If use_flipper = False then we get a (true) lower bound, since then it only
-    counts veering structures on the given triangulation.
+    Generates (pre)angle structures and tries to check each.
     """
+    print(M.name())
     if angles == None:
-        angles = preangles_from_frws(M)
+        # apply_symmetries if you don't care about counting
+        angles = preangles_from_frws(M, apply_symmetries = apply_symmetries)
+    print("num angles", len(angles))
     tri = regina.Triangulation3(M)
-    for angle in angles:
-        if not is_taut(tri, angle):
-            return None
-    for angle in angles:
-        if not (is_veering(tri, angle) or is_layered(tri, angle)):
-            return None
     total = 0
     for angle in angles:
-        if is_veering(tri, angle):
+        t = is_taut(tri, angle)
+        l = is_layered(tri, angle)
+        v = is_veering(tri, angle)
+        print(M, angle, "taut", t, "layered", l, "veering", v)
+        if v: 
+            print("is veering directly", isosig_from_tri_angle(tri, angle))
             total = total + 1
-        elif use_flipper:
-            assert is_layered(tri, angle)
+        if (not v) and l and use_flipper:
             print(M.name(), angle, "needs flipper")
             try: 
-                if not has_internal_singularities(tri, angle):
+                b, sig = layered_without_internal_singularities(tri, angle)
+                if b:
+                    print("is veering via flipper", sig)
                     total = total + 1
+                else:
+                    print("not veering via flipper", sig)
             except:
                 print("flipper failed")
-    return total
+    print("number of veering structures", total)
+    return None
 
-def without_internal_singularities(tri, angle):
+
+def layered_without_internal_singularities(tri, angle):
     """
-    Given a regina manifold tri and an angle structure angle
-    (assumed layered), convert tri to a t3m triangulation, convert
-    angle to the correct flipper format, use them both to get a
-    flipper TautStructure, find the monodromy, and then check the
-    stratum.  If there are no internal singularities, return True.
-    (That is, we return 'True' iff the monodromy gives us a veering
-    structure.)
+    Given a regina manifold tri and an angle structure angle (assumed
+    layered), convert tri to a t3m triangulation, convert angle to the
+    correct flipper format, use them both to get a flipper
+    TautStructure, find the monodromy, and then check the stratum.
+
+    If there are no internal singularities, then we have discovered a
+    veering structure on the original manifold.  So return True and
+    the veering isosig.
+    
+    If there are internal singularities, return False and the veering
+    isosig for the drilled manifold (as this sig certifies the fibered
+    face).
+
+    See
+    https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
+    for the relevant code in flipper
     """
-    # See
-    # https://github.com/MarkCBell/flipper/blob/master/flipper/kernel/taut.py
-    # for the relevant code in flipper
     T = t3m.Mcomplex(snappy.Manifold(tri))
     angle_vector = preangle_to_winding(angle, flipper_format = True)
     taut_struct = flipper.kernel.taut.TautStructure(T, angle_vector)
     h = taut_struct.monodromy()
     strat = h.stratum()
-    return not any(punc.filled for punc in strat.keys())
+    v = all(not punc.filled for punc in strat.keys())    
+    # v == True means no puncture is filled.  In this case we have
+    # found a veering structure.
 
+    # In all cases we return the veering sig - note that this is
+    # drilled iff v == False.
+    B = h.bundle(veering = True)
+    Bs = snappy.Manifold(B)
+    Br = regina.Triangulation3(Bs)
+    ones = [1]*Bs.num_tetrahedra()
+    veering_sig = isosig_from_tri_angle(Br, ones)
+    return (v, veering_sig)
