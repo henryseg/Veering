@@ -261,7 +261,7 @@ def make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_
     ### Now start sorting the intervals inside the tet rectangles.
     ### Do horizontal order first. Start with positions of intervals relative to the S, N cusps
 
-    tet_vert_posns, _, _, _ = get_consistent_tet_vert_posns(vt.tri, vt.angle, vt.tet_types, vt.coorientations)
+    tet_vert_posns, _, _, _ = get_consistent_tet_vert_posns(vt)
     vt.tet_vert_posns = tet_vert_posns
 
     ###           top[0]

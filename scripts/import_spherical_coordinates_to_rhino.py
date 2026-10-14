@@ -2,10 +2,19 @@ import rhinoscriptsyntax as rs
 import json
 from math import acos
 
+import sys
+sys.path.append("/Users/segerman/Library/CloudStorage/Dropbox/hs_rhinoscript_library")
+import obj_read_write
+
 def read_from_json(filename):                           
     with open(filename) as f:
   		data = json.load(f)
     return data
+
+def read_from_obj(filename):
+	with open(filename) as f:
+		mesh = obj_read_write.OBJ(filename = filename)
+	return mesh
 
 def add_arc_two_points(v, w):
 	u = rs.VectorUnitize(v+w)
@@ -20,9 +29,9 @@ def transform_saul_to_henry_convention(v):
 def spherical_distance(v, w):
 	return acos( sum([a*b for (a,b) in zip(v, w)]) )
 
-def draw_path(filename):
-	path = read_from_json(filename)
-	path = [rs.CreateVector(v) for v in path]
+def draw_path(list_of_vertices):
+	path = [rs.CreateVector(v) for v in list_of_vertices]
+	path = [rs.VectorUnitize(v) for v in path]
 
 	dists = []
 	n = len(path)
@@ -33,6 +42,15 @@ def draw_path(filename):
 		add_arc_two_points(v, w)
 	dists.sort()
 	print(dists[-10:])
+
+def draw_path_from_json(filename):
+	list_of_vertices = read_from_json(filename)
+	draw_path(list_of_vertices)
+
+def draw_path_from_obj(filename):
+	mesh = read_from_obj(verts_filename)
+	list_of_vertices = mesh.vertices
+	draw_path(list_of_vertices)
 
 def draw_mesh(verts_filename, tris_filename):
 	verts = read_from_json(verts_filename)
@@ -62,11 +80,16 @@ def draw_list_of_edges(filename):
 
 
 
-verts_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/gLLAQbecdfffhhnkqnc_120012_build_spherically_long_.03_float_[484218]_0.json'
-tris_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/gLLAQbecdfffhhnkqnc_120012_build_spherically_long_.03_float_[484218]_tris_0.json'
-draw_mesh(verts_filename, tris_filename)
+# verts_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/cPcbbbiht_12_build_spherically_long_hack_.01_float_[41490]_0.json'
+# tris_filename = '/Users/segerman/GitHub/Veering/scripts/Images/Cannon-Thurston/Spherical/cPcbbbiht_12_build_spherically_long_hack_.01_float_[41490]_tris_0.json'
+# draw_mesh(verts_filename, tris_filename)
 
 # draw_list_of_edges('/Users/segerman/Library/CloudStorage/Dropbox/Schleimer-Segerman/Figure_eight/Seifert_surface/bar_0.00265752_large_835774.json')
 
+# verts_filename = "/Users/segerman/Library/CloudStorage/Dropbox/Schleimer-Segerman/Figure_eight/Orbifold/ct_curve_gen_1_.0025_low_0_0_1.obj"
+verts_filename = "/Users/segerman/Library/CloudStorage/Dropbox/Schleimer-Segerman/Figure_eight/Orbifold/ct_curve_gen_2_.0025_low_0_0_1.obj"
+# mesh = read_from_obj(verts_filename)
 
+draw_path_from_obj(verts_filename)
+# print(len(mesh.vertices))
 

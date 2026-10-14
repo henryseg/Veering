@@ -210,7 +210,7 @@ def draw_continent_script():
     # veering_isosigs_list = ['kLLLAPPkcdgfehhjijjhfhaqiphffj_2010222001', 'mvLALLMQQecfgjkkjiljllccaxvvwkfekix_100001122112', 'mvLALPMPQecfggjgikllklccaxxvcfaqdmo_100001122100']
     # draw_jigsaw_from_veering_isosigs_list(veering_isosigs_list, 'Images/Jigsaw', jigsaw_data_out_filename = "jigsaw_data.pkl", max_num_tetrahedra = 2000000, max_length = max_length, draw_args = draw_args)
 
-def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahedra = 500000, use_algebraic_numbers = True):
+def draw_continent_from_isosig(veering_isosig, max_length = 0.1, max_num_tetrahedra = 500000, use_algebraic_numbers = False):
     from draw_continent import draw_continent
     # draw_args = {'draw_boundary_triangulation':True, 'draw_labels': True, 'ct_lw': 0.02, 'global_drawing_scale': 12, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
     draw_args = {'draw_boundary_triangulation':False, 'draw_labels': False, 'ct_lw': 0.02, 'global_drawing_scale': 12, 'style': 'geometric', 'draw_triangles_near_poles': True, 'ct_depth': -1} #ct_depth is the old way to try to build ct maps
@@ -266,6 +266,30 @@ def draw_census_continents(census_start = 0, census_end = 10, max_length = 0.1, 
     for i, sig in enumerate(census[census_start:census_end]):
         print('drawing census sig ' + str(i + census_start) + ' ' + sig)
         draw_continent_from_isosig(sig, max_length = max_length, use_algebraic_numbers = use_algebraic_numbers)
+
+def draw_continent_sequence(n = 5):
+    import snappy
+    import regina
+    from veering_detect import find_veering_structures
+    from veering.taut import isosig_from_tri_angle
+    from veering.transverse_taut import is_transverse_taut
+
+    ### torus bundles L^nR^n
+    for i in range(12, n):
+        s = "b++" + "L" * i + "R" * i
+        print(s)
+        M = snappy.Manifold(s)
+        tri = regina.Triangulation3(M)
+        angles = find_veering_structures(tri)
+        for angle in angles:
+            sig = isosig_from_tri_angle(tri, angle)
+            is_TT = is_transverse_taut(tri, angle)
+            print(sig, is_TT) ### LLRR has a non transverse taut veering structure as well!
+            if is_TT:
+                draw_continent_from_isosig(sig, max_length = 0.02*i**2)
+
+
+        
 
 def draw_fund_dom_continent_circle_script():
     from draw_continent_circle import draw_continent_circle, complete_tetrahedron_rectangles
@@ -468,7 +492,7 @@ def drill_flow_cycle_script():
     from build_continent import make_continent_drill_flow_cycle, get_fund_domain_tetrahedra, make_continent_naive, make_continent_fund_dom
     from draw_drilled_tetrahedra import draw_drilled_tetrahedra
     from ordered_rectangles import build_tetrahedron_rectangle_orderings, sanity_check, build_drilled_triangulation_data
-    from drill_flow_cycle import triangulation_data_to_tri_angle, drill_flow_cycle
+    from veering.drill_flow_cycle import triangulation_data_to_tri_angle, drill_flow_cycles
     from veering.taut import isosig_from_tri_angle
     from boundary_triangulation import generate_boundary_triangulation
 
@@ -513,7 +537,7 @@ def drill_flow_cycle_script():
     
     print(veering_isosig, flow_cycle)
 
-    out = drill_flow_cycle(veering_isosig, flow_cycle, return_isosig_tri_angle = True, draw_rectangles = True, return_found_parallel = True, return_cusp_mapping = True, use_untwisted_speed_up = True, verbose = 0)
+    out = drill_flow_cycles(veering_isosig, [flow_cycle], return_isosig_tri_angle = True, draw_rectangles = True, return_found_parallel = True, return_cusp_mapping = True, use_untwisted_speed_up = True, verbose = 0)
     drilled_sig, drilled_tri, drilled_angle, found_parallel, cusp_mapping_isosig = out
 
 
@@ -523,61 +547,6 @@ def drill_flow_cycle_script():
     print(original_b.ladder_counts())
     drilled_b = generate_boundary_triangulation(drilled_sig, draw = False)
     print(drilled_b.ladder_counts())
-
-def compare_flow_and_geodesic_drilling_script():  
-    from veering.taut import isosig_from_tri_angle
-    from veering.flow_cycles import generate_flow_cycles, flow_cycle_to_dual_edge_loop
-    from drill_flow_cycle import drill_flow_cycle
-    from snappy_drill_homotopic import drill_tet_and_face_indices
-    from snappy.drilling.exceptions import GeodesicSystemNotSimpleError
-    import snappy
-# 
-    # sig = 'cPcbbbdxm_10'
-    sig = 'cPcbbbiht_12'
-    # sig = 'dLQacccjsnk_200' 
-    # sig = 'dLQbccchhfo_122'
-    # sig = 'dLQbccchhsj_122'
-
-    cycles = generate_flow_cycles(sig, max_length = 5)
-
-    for fc in cycles:  
-        print(fc)
-        out = drill_flow_cycle(sig, fc, return_isosig_tri_angle = True) 
-        if out != None: 
-            tri, angle = isosig_to_tri_angle(sig) 
-            
-            drilled_sig, drilled_tri, drilled_angle = out     
-            drilled_M = snappy.Manifold(drilled_tri) 
-
-            orig_M = snappy.Manifold(tri) 
-            dual_loop = flow_cycle_to_dual_edge_loop(tri, angle, fc) 
-            # print(fc, dual_loop) 
-            try:
-                ### May need to sys.setrecursionlimit(1000000) to make this work
-                snappy_drilled_M = drill_tet_and_face_indices(orig_M, dual_loop, verified = True, bits_prec = 200) 
-            except GeodesicSystemNotSimpleError as e:
-                print(e)
-                continue
-            snappy_drilled_M.simplify()
-            drilled_M.simplify()
-            found_isometry = False
-            for i in range(10):
-                if drilled_M.is_isometric_to(snappy_drilled_M):  ### from the docstring for is_isometric_to:
-                ### The answer True is rigorous, but the answer False may
-                ### not be as there could be numerical errors resulting in finding
-                ### an incorrect canonical triangulation.
-                    found_isometry = True
-                    break
-            if not found_isometry:
-                # print('checking with verified isometry_signature', sig, fc)
-                isomsig1 = drilled_M.isometry_signature(verified = True)
-                isomsig2 = snappy_drilled_M.isometry_signature(verified = True)
-                assert not isomsig1 == None, 'isom signature failed ' + sig + ' ' + fc
-                assert not isomsig2 == None, 'isom signature failed ' + sig + ' ' + fc
-                # assert isomsig1 == isomsig2, sig + '_' + fc
-                if isomsig1 != isomsig2:
-                    print('drilling', sig, 'along', fc, 'gives different results', isomsig1, drilled_M.identify(), isomsig2, snappy_drilled_M.identify())
-
 
 
 def draw_veering_triangulation_and_mid_annuli_script():
@@ -892,3 +861,60 @@ def test_semiflow_on_drillings(sig):
                 drill(tri, tri_loop, angle, branch)
                 assert has_non_sing_semiflow(tri, branch)
                 # print (tri.isoSig(), branch, "has nonsing semiflow")
+
+def append_to_file(output_filename, string):
+    output_file = open(output_filename, 'a')  #append mode
+    output_file.write(string+'\n')
+    output_file.close()
+
+def get_sig(line):
+    parts = line.split('_')
+    return parts[0] + '_' + parts[1]
+
+def get_drillings(line):
+    ind = line.index('[')
+    return eval(line[ind:])
+
+def find_geometric_parents_from_census():
+    import snappy
+    drilling_data_eo = parse_data_file('data/drillings_census_eo_4_ladders_cycle_len_up_to_5.txt')
+    drilling_data_other = parse_data_file('data/drillings_census_other_cycle_len_up_to_5.txt')
+
+    drilling_data = drilling_data_eo + drilling_data_other
+    drilling_dict = {}
+    for line in drilling_data:
+        drilling_dict[get_sig(line)] = get_drillings(line)
+
+    output_filename = "data/geometric_drillings.txt"
+    output_file = open(output_filename, 'w')  #write mode, clear any existing file
+    output_file.close()
+
+    census_data = parse_data_file('../veering/data/veering_census_with_data.txt')
+    for line in census_data:
+        line = line.split(' ')
+        if line[3] == 'N':
+            sig = line[0]
+            print(sig)
+            win = False
+            drillings = drilling_dict[sig]
+            drillings.sort(key = lambda x: (len(x[1]), x[1]))
+            for drilled_sig, fc in drillings:
+                tri, angle = isosig_to_tri_angle(drilled_sig)
+                M = snappy.Manifold(tri)
+                if M.verify_hyperbolicity()[0]:
+                    append_to_file(output_filename, sig + '|' + str(fc) + '|' + drilled_sig)
+                    win = True
+                    break
+            if not win:
+                print('failed', sig)
+
+
+
+                
+
+
+
+
+
+
+

@@ -8,7 +8,7 @@ from snappy import Manifold
 
 from veering.file_io import parse_data_file
 
-from veering.veering_tri import (is_veering, get_consistent_tet_vert_posns, 
+from veering.veering_tri import (veering_triangulation, get_consistent_tet_vert_posns, 
                                  get_edge_between_verts_colour,
                                  rotate_vertices, 
                                  get_edge_between_verts_index,
@@ -16,8 +16,6 @@ from veering.veering_tri import (is_veering, get_consistent_tet_vert_posns,
                                  get_edge_between_verts_oriented,
                                  get_nice_edge_orientations_relative_to_regina,
                                 )
-from veering.transverse_taut import is_transverse_taut
-# import veering_detect
 from veering.taut import isosig_to_tri_angle
 
 import ordered_tri
@@ -611,17 +609,18 @@ def draw_triangulation(triangulation, midannuli_filename, tetrahedra_filename, a
         angle = veering_structures[0]
         print('angle structure:', str(angle))
 
-    veering_colours = is_veering(triangulation, angle, return_type = 'veering_colours')
+    vt = veering_triangulation(triangulation, angle)
+    veering_colours = vt.veering_colours
     assert veering_colours != False
 
-    coorientations = is_transverse_taut(triangulation, angle, return_type = 'tet_vert_coorientations')
+    coorientations = vt.coorientations
     if coorientations == False:
         # print 'not transverse taut! Not drawing triangulation' 
         return False
     # coorientations = [[-c for c in t] for t in coorientations] # flip all
 
-    tet_types = is_veering(triangulation, angle, return_type = 'tet_types')
-    tet_vert_posns_below, tet_vert_posns_above, zigzags, cut_edges = get_consistent_tet_vert_posns(triangulation, angle, tet_types, coorientations)
+    tet_types = vt.tet_types
+    tet_vert_posns_below, tet_vert_posns_above, zigzags, cut_edges = get_consistent_tet_vert_posns(vt)
     edge_orientations_relative_to_regina = get_nice_edge_orientations_relative_to_regina(triangulation, veering_colours, tet_vert_posns_below, tet_vert_posns_above, zigzags)
 
     midannuli, edges_between_midannuli = make_midannuli_and_edges(triangulation, tet_vert_posns_below, tet_vert_posns_above, zigzags, cut_edges)

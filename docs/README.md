@@ -56,7 +56,7 @@ After installation start a sage session and run the following:
 
 Every veering triangulation can be assigned a unique `name' called a _taut signature_. A taut signature consists of an alphabetical string that identifies the triangulation up to combinatorial isomorphism, and a numerical string that identifies its taut structure up to reversing the coorientation on all faces of the triangulation.
 
-Information on all veering triangulation with at most 16 tetrahedra can be found in the [Veering Census](https://math.okstate.edu/people/segerman/veering.html). One can load the taut signatures of all veering triangulations in the census, or a specific veering triangulation from the census, as follows:
+Information on all veering triangulation with at most 16 tetrahedra can be found in the [Veering Census](https://www.segerman.org/veering.html). One can load the taut signatures of all veering triangulations in the census, or a specific veering triangulation from the census, as follows:
 
     sage: census = veering.veering_census()
     sage: sig = census[17]
@@ -274,7 +274,7 @@ The output is the taut signature of the veering parent.
         ['gLLPQccdfeffhggaagb_201022']
 
 
-The algorithm for drilling relies on finding the preimage of the orbit(s) encoded by the flow cycle(s) inside certain _fundamental tetrahedron rectangles_. It is possible to generate images of drilled tetrahedron rectangles after creating the directory Images/DrilledTetrahedra in the working directory -- this is were the pictures are saved as pdf files.
+The algorithm for drilling relies on finding the preimage of the orbit(s) encoded by the flow cycle(s) inside certain _fundamental tetrahedron rectangles_. It is possible to generate images of drilled tetrahedron rectangles after creating the directory Images/DrilledTetrahedra in the working directory -- this is where the pictures are saved as pdf files.
 
         sage: for cycle in cycles:
         ....:     drill_flow_cycle.drill_flow_cycles(sig, [cycle], generate_picture=True
@@ -391,6 +391,5 @@ Sections 2 (definition) and 6 (proof that flow cycles encode orbits of the flow)
 __10. Drilling veering triangulations__
 
 [A. Parlak](https://annaparlak.github.io),
-[Henry Segerman](http://www.segerman.org),
-Drilling veering triangulations and applications to pseudo-Anosov flows,
-in preparation.
+[H. Segerman](http://www.segerman.org),
+[Drilling veering triangulations with applications to pseudo-Anosov flows](https://arxiv.org/abs/2610.12302)

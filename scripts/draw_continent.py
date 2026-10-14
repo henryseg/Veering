@@ -462,6 +462,8 @@ def expand_continents_for_drawing( continents, B, build_type, max_length = 0.5, 
             hit_max_tetrahedra = build_long_and_mid(con, max_length = max_length2, mid_scaling = mid_scaling, max_num_tetrahedra = max_num_tetrahedra)
         elif build_type == 'build_spherically_long':
             hit_max_tetrahedra = build_spherical_long(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra)
+        elif build_type == 'build_spherically_long_hack':
+            hit_max_tetrahedra = build_spherical_long_hack(con, max_length = max_length2, max_num_tetrahedra = max_num_tetrahedra)
         print('con size', len(con.tetrahedra))
     return hit_max_tetrahedra
 
@@ -1234,6 +1236,42 @@ def build_spherical_long(con, max_length = 0.1, max_num_tetrahedra = 50000, anim
     con.build_boundary_data() ### only needed if drawing upper/lower boundary landscapes
     # print(('num_long_edges_direct_count', con.count_long_edges()))
     # print(('max_coastal_edge_length', con.calculate_max_ladderpole_descendant_coast_edge_length()))
+    return hit_max_tetrahedra
+
+### experiments...
+def build_spherical_long_hack(con, max_length = 0.1, max_num_tetrahedra = 50000, animate = False, images_filename_base = 'Images/Animation/foo', B = None, draw_args = None):  
+    con.max_length = max_length
+    print(('max_length (spherical)', max_length))
+    num_tet = len(con.tetrahedra)
+
+    ## now build
+    bury_num = 0
+    frame_num = 0
+
+    con.first_interesting_index = 0 ### "interesting" means not buried and not already small enough.
+    while con.first_interesting_index < len(con.triangles) and con.num_tetrahedra < max_num_tetrahedra: 
+        tri = con.triangles[con.first_interesting_index]  
+        if not tri.is_buried():
+            # if any( [edge.is_spherically_long() and edge.is_coastal() for edge in tri.edges] ): ### Thurston's algorithm, more or less
+            if not tri.is_upper and any( [edge.is_spherically_long() for edge in tri.edges] ):
+                con.bury(tri)
+                if animate:
+                    output_filename = images_filename_base + str(frame_num) + '.pdf'
+                    if bury_num % 100 == 0:
+                        draw_prepared_continents([con], B, output_filename = output_filename, max_length = max_length, draw_args = draw_args)
+                        B.clear_canvases()
+                        frame_num += 1
+                    bury_num += 1
+                current_num_tet = len(con.tetrahedra)
+                if current_num_tet > num_tet + 2000:
+                    num_tet = current_num_tet
+                    print(current_num_tet)
+        con.first_interesting_index += 1
+
+    # print(('num_tetrahedra', con.num_tetrahedra))
+    hit_max_tetrahedra = (con.num_tetrahedra >= max_num_tetrahedra)
+    # print(('hit max tetrahedra', hit_max_tetrahedra))
+    con.build_boundary_data() ### only needed if drawing upper/lower boundary landscapes
     return hit_max_tetrahedra
 
 

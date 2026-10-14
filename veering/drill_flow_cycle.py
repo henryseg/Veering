@@ -56,9 +56,7 @@ def short_flow_cycles_string(flow_cycles):
 
 def drill_flow_cycles(veering_isosig, flow_cycles, save_filename = None, return_isosig_tri_angle = False, return_built_tri_angle = False, return_triangulation_data = False, generate_picture = False, draw_tetrahedron_rectangles = True, global_scale_up = 1.0, scale_drawn_elements = 1.0, return_found_parallel = False, return_cusp_mapping = False, use_untwisted_speed_up = True, verbose = 0):
     out = make_continent_drill_flow_cycles(veering_isosig, flow_cycles, use_untwisted_speed_up = use_untwisted_speed_up, verbose = verbose)
-    if out == None:  ### flow cycle is boundary parallel
-        # print('flow_cycle is boundary parallel')
-        return None
+    ### peripheral flow cycles are ignored
     con, tetrahedra_cusp_orders, tetrahedra_chunks, intervals_inside_tet_rectangles, _, _, _, _, found_parallel = out
     old_tet_rectangles = build_tetrahedron_rectangle_orderings(con, tetrahedra_cusp_orders, tetrahedra_chunks)
     new_tetrahedra, new_faces = build_drilled_triangulation_data(old_tet_rectangles)
@@ -136,30 +134,6 @@ def drill_all_flow_cycles(veering_isosig, min_length, max_length, generate_pictu
         generate_picture = generate_picture, draw_tetrahedron_rectangles = draw_tetrahedron_rectangles, 
         global_scale_up = global_scale_up, scale_drawn_elements = scale_drawn_elements, verbose = verbose)
     return drilled
-
-def main():
-    ### examples where drilling the flow cycle and drilling the geodesic give different answers:
-    ### drilling cPcbbbiht_12 along ((0, 0), (0, 0), (0, 5), (0, 0), (0, 5)) gives different results jLLwQLQbeefgehiiixxxaaxxxcv [o9_40888(0,0)(0,0)] nLvALzAAQkbeffhhikjlkmmmhaihggfhujcvcf [L14n33639(0,0)(0,0)]
-    ### snappy word: 'bbCabCa'
-
-    ### drilling dLQacccjsnk_200 along ((0, 4), (2, 2), (2, 5), (1, 1)) gives different results pLLPwvAPPAQccdfejhmjklnmnooqffaakvachckcvhw [o9_43267(0,0)(0,0)] oLLzMLLzQQcaceefiljkmnlnmnjkxccnabqqarggr [o9_41941(0,0)(0,0)]
-
-    import snappy
-    from snappy_drill_homotopic import tet_and_face_indices_to_word, drill_tet_and_face_indices
-    from veering.taut import isosig_to_tri_angle
-
-    sig = 'cPcbbbiht_12'
-    flow_cycle = ((0, 0), (0, 0), (0, 5), (0, 0), (0, 5))
-    tri, angle = isosig_to_tri_angle(sig)
-    tet_and_face_indices = flow_cycle_to_dual_edge_loop(tri, angle, flow_cycle)
-    mfd = snappy.Manifold(tri)
-    word = tet_and_face_indices_to_word(mfd, tet_and_face_indices)
-    print(sig, flow_cycle, word)
-    drilled = drill_tet_and_face_indices(mfd, tet_and_face_indices)
-    print(drilled.identify())
-
-    # output: cPcbbbiht_12 ((0, 0), (0, 0), (0, 5), (0, 0), (0, 5)) bbCabCa
-    #         [L14n33639(0,0)(0,0)]
 
 
 

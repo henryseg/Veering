@@ -27,7 +27,8 @@ def tet_and_face_indices_to_word(
     gen_infos = [info['generators'] for info in mfd._choose_generators_info()]
 
     word_list = [
-        -g  ### minus sign empirically observed to be correct
+        # -g  ### minus sign empirically observed to be correct
+        g
         for tet_index, face_index in tet_and_face_indices
         if (g := gen_infos[tet_index][face_index]) != 0 ]
 
@@ -38,6 +39,7 @@ def tet_and_face_indices_to_word(
 def drill_tet_and_face_indices(
         mfd : Manifold,
         tet_and_face_indices : Sequence[Tuple[int, int]],
+        *,
         verified : bool = False,
         bits_prec : Optional[int] = None) -> Manifold:
     """
