@@ -18,7 +18,7 @@ from sage.modules.free_module_element import vector
 from sage.rings.integer_ring import ZZ
 from sage.geometry.cone import Cone
 
-from .taut import liberal, taut_regina_angle_struct_to_taut_struct
+from .taut import liberal, taut_regina_angle_struct_to_taut_struct, is_taut
 from .transverse_taut import is_transverse_taut
 from .taut_homology import edge_equation_matrix_taut, elem_vector, faces_in_smith, rank_of_quotient
 from .fundamental_domain import non_tree_face_cycles
@@ -186,6 +186,9 @@ def is_layered(tri, angle):
     """
     Given a tri, angle decide if it is layered.
     """
+    if not is_taut(tri, angle):
+        return False
+
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
     w = fully_carried_solution(N)
