@@ -28,8 +28,8 @@ def tet_type(triangulation, tet_num, veering_colours):
 @liberal
 def is_veering(tri, angle, return_type = "boolean"):
     """
-    checks to see if this triangulation with this taut angle
-    structure is veering
+    checks to see if this triangulation with this angle structure
+    is veering
     """
     # return type can be "boolean", "veering_colours", "veering_partition" or "num_toggles"
     # all return False if it is not veering. If it is veering:
@@ -38,7 +38,8 @@ def is_veering(tri, angle, return_type = "boolean"):
     # "num_toggles" returns the number of toggle tetrahedra
     # "tet_types" returns list of tets, either "toggle", "red" or "blue" veering
 
-    assert is_taut(tri, angle)
+    if not is_taut(tri, angle):
+        return False
 
     # first do quick test on edge degrees
     for e in tri.edges():
