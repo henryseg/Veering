@@ -6,7 +6,6 @@
 # [Baseilhac--Benedetti]) and use them to prove that some manifolds
 # have finitely many veering structures.
 
-
 from sage.rings.integer_ring import ZZ
 from sage.misc.misc import powerset
 from sage.matrix.constructor import matrix
@@ -190,6 +189,8 @@ def flat_reduced_windings(M):
     """
     Given a snappy manifold M, we reduce (mod 2) the windings given by
     windings_vanishing_on_bdy and eliminate the non-flat ones.
+
+    This gives steps (1, 2, 3) of Algorithm 9.1 of the paper.
     """
     x, A = windings_vanishing_on_bdy(M)
     dim = 3*M.num_tetrahedra()
@@ -203,7 +204,7 @@ def flat_reduced_windings(M):
     return windings
 
 
-def preangles_from_frws(M, apply_symmetries = False):
+def candidate_preangles(M, apply_symmetries = False):
     """
     Given a snappy manifold M, compute the flat reduced windings,
     convert to pre-angle structures (as the edge equations may be
@@ -211,8 +212,11 @@ def preangles_from_frws(M, apply_symmetries = False):
     of the triangulation), remove non-trivial structures (in ZZ2
     cohomology), and return what remains.
 
-    (TODO: It might be nice to not apply symmetries, but instead
-    partition angle structures into symmetry classes.)
+    (TODO: It might be nice to have a mode where we return preangles
+    sorted into symmetry classes.)
+
+    This is step (4) of Algorithm 9.1 of the paper (but using the
+    preangles instead of windings).
     """
     windings = flat_reduced_windings(M)
     tri = regina.Triangulation3(M)
@@ -252,7 +256,7 @@ def can_deal_with_reduced_angles(M):
     """
     Returns True if we can deal with all of the reduced angles. 
     """
-    angles = preangles_from_frws(M)
+    angles = candidate_preangles(M)
     tri = regina.Triangulation3(M)
     results = [can_deal_with_reduced_angle(tri, angle) for angle in angles]
     if any(r[1] == "torus bundle" for r in results):
@@ -318,7 +322,7 @@ def analyse_angle_structs(M, angles = None, use_flipper = True, apply_symmetries
     print(M.name())
     if angles == None:
         # apply_symmetries if you don't care about counting
-        angles = preangles_from_frws(M, apply_symmetries = apply_symmetries)
+        angles = candidate_preangles(M, apply_symmetries = apply_symmetries)
     print("num angles", len(angles))
     tri = regina.Triangulation3(M)
     total = 0
