@@ -5,14 +5,18 @@
 # Pachner moves that respect taut structures
 
 import regina
+import snappy
 
 from veering.taut import unsorted_vert_pair_to_edge_pair
+from winding import is_winding
 
-def twoThreeMove(tri, winding, face_num, twist = 0, perform = True, return_edge = False):
+def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = False):
     """Apply a 2-3 move to a triangulation with a winding, if possible. 
     If perform = False, returns if the move is possible.
     If perform = True, modifies tri, returns (tri, winding) for the performed move"""
     
+    M = snappy.Manifold(tri)
+    assert is_winding(M, wind)
     face = tri.triangle(face_num)
 
     embed0 = face.embedding(0)
@@ -65,8 +69,8 @@ def twoThreeMove(tri, winding, face_num, twist = 0, perform = True, return_edge 
     for i in range(3):
         j = (i+1) % 3
         k = (i+2) % 3
-        w[0][i] = winding[ 3*tet_num0 + unsorted_vert_pair_to_edge_pair[(vertices0[j], vertices0[k])] ]
-        w[1][i] = winding[ 3*tet_num1 + unsorted_vert_pair_to_edge_pair[(vertices1[j], vertices1[k])] ]
+        w[0][i] = wind[ 3*tet_num0 + unsorted_vert_pair_to_edge_pair[(vertices0[j], vertices0[k])] ]
+        w[1][i] = wind[ 3*tet_num1 + unsorted_vert_pair_to_edge_pair[(vertices1[j], vertices1[k])] ]
 
     ### replace mapping info with corresponding info for the 3 tet. Self gluings will be annoying...
 
@@ -127,6 +131,7 @@ def twoThreeMove(tri, winding, face_num, twist = 0, perform = True, return_edge 
               ]
             ]
     flip = perms[0][0].sign() == -1
+    print('flip', flip)
     if flip:  #then all of the signs are wrong, switch 0 and 1 on input
         perms = [[p * regina.Perm4( 1,0,2,3 ) for p in a] for a in perms]
 
@@ -170,21 +175,24 @@ def twoThreeMove(tri, winding, face_num, twist = 0, perform = True, return_edge 
     ### update the winding
     tet_indices = [tet_num0, tet_num1]
     tet_indices.sort()
-    winding.pop(3*tet_indices[1]+2)
-    winding.pop(3*tet_indices[1]+1)
-    winding.pop(3*tet_indices[1])
-    winding.pop(3*tet_indices[0]+2)
-    winding.pop(3*tet_indices[0]+1)
-    winding.pop(3*tet_indices[0])  ## remove from the list in the correct order!
+    wind.pop(3*tet_indices[1]+2)
+    wind.pop(3*tet_indices[1]+1)
+    wind.pop(3*tet_indices[1])
+    wind.pop(3*tet_indices[0]+2)
+    wind.pop(3*tet_indices[0]+1)
+    wind.pop(3*tet_indices[0])  ## remove from the list in the correct order!
 
-    winding.extend( [n[0][0], n[0][1], n[0][2], 
-                     n[1][0], n[1][1], n[1][2],
-                     n[2][0], n[2][1], n[2][2]] )
+    wind.extend( [n[0][0], n[0][1], n[0][2], 
+                  n[1][0], n[1][1], n[1][2],
+                  n[2][0], n[2][1], n[2][2]] )
+
+    M = snappy.Manifold(tri)
+    assert is_winding(M, wind)
 
     if not return_edge:
-        return [ tri, winding ]
+        return [ tri, wind ]
     else:
-        return [ tri, winding, new_tets[0].edge(0).index() ]
+        return [ tri, wind, new_tets[0].edge(0).index() ]
 
 def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False):
     """Apply a 3-2 move to a taut triangulation, if possible. 
