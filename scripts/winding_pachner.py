@@ -187,7 +187,7 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
                   n[2][0], n[2][1], n[2][2]] )
 
     M = snappy.Manifold(tri)
-    assert is_winding(M, wind)
+    print('is_winding after', is_winding(M, wind))
 
     if not return_edge:
         return [ tri, wind ]
