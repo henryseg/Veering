@@ -73,7 +73,19 @@ def tet_vector(i, num_tet):
     return out
 
 
-def angle_sum_vector(M):
+def tet_edge_vector(M):
+    """
+    Given a snappy manifold, returns the desired sums of the tet,
+    edge, and holonomy equations.
+    """
+    num_tet = M.num_tetrahedra()
+    asv = []
+    asv.extend([1]*num_tet) # pi
+    asv.extend([2]*num_tet) # 2 pi
+    return vector(ZZ, asv)
+
+
+def tet_edge_cusp_vector(M):
     """
     Given a snappy manifold, returns the desired sums of the tet,
     edge, and holonomy equations.
@@ -87,6 +99,17 @@ def angle_sum_vector(M):
     return vector(ZZ, asv)
 
 
+def tet_edge_equations(M):
+    """
+    Given a snappy manifold M, returns the matrix of left-hand-sides
+    of the restricted angle equations (that is, the tet and edge equations).
+    """
+    num_tet = M.num_tetrahedra()
+    T = matrix(ZZ, [tet_vector(i, num_tet) for i in range(num_tet)])
+    G = M.gluing_equations()[:num_tet]
+    return T.transpose().augment(G.transpose()).transpose() # sigh
+
+
 def tet_edge_cusp_equations(M):
     """
     Given a snappy manifold M, returns the matrix of left-hand-sides
@@ -98,6 +121,12 @@ def tet_edge_cusp_equations(M):
     return T.transpose().augment(G.transpose()).transpose() # sigh
 
 
+def is_winding(M, w):
+    A = tet_edge_equations(M)
+    b = tet_edge_vector(M)
+    return A*vector(w) == b
+
+
 def is_trivial_in_bdy_cohomology(M, w):
     """
     Given a snappy manifold M and a winding w, decides if w induces
@@ -105,7 +134,7 @@ def is_trivial_in_bdy_cohomology(M, w):
     check that w is a winding over ZZ.)
     """
     A = tet_edge_cusp_equations(M)
-    b = angle_sum_vector(M)
+    b = tet_edge_cusp_vector(M)
     return A*vector(w) == b
 
 
@@ -117,7 +146,7 @@ def windings_vanishing_on_bdy(M, z2_reduction = False):
     boundary cohomology.
     """
     A = tet_edge_cusp_equations(M)
-    b = angle_sum_vector(M)
+    b = tet_edge_cusp_vector(M)
     D, U, V = A.smith_form() 
     # UAV = D so Uinv D Vinv = A
     # want to solve Ax = b
