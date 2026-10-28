@@ -15,6 +15,7 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     If perform = False, returns if the move is possible.
     If perform = True, modifies tri, returns (tri, winding) for the performed move"""
     
+    assert face_num < tri.countTriangles()
     M = snappy.Manifold(tri)
     assert is_winding(M, wind)
     face = tri.triangle(face_num)
@@ -66,11 +67,11 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     for t in range(2):
         w.append([None, None, None])
 
+    # print('wind', wind)
     for i in range(3):
-        j = (i+1) % 3
-        k = (i+2) % 3
-        w[0][i] = wind[ 3*tet_num0 + unsorted_vert_pair_to_edge_pair[(vertices0[j], vertices0[k])] ]
-        w[1][i] = wind[ 3*tet_num1 + unsorted_vert_pair_to_edge_pair[(vertices1[j], vertices1[k])] ]
+        w[0][i] = wind[ 3*tet_num0 + unsorted_vert_pair_to_edge_pair[(vertices0[0], vertices0[i+1])] ]
+        w[1][i] = wind[ 3*tet_num1 + unsorted_vert_pair_to_edge_pair[(vertices1[0], vertices1[i+1])] ]
+    # print('w', w)
 
     ### replace mapping info with corresponding info for the 3 tet. Self gluings will be annoying...
 
@@ -79,14 +80,14 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
 
     ###                  tet0                                    new_tet0
     ###                _________                                 _________
-    ###    (y_3) w00 ,'\       /`. w01 (y_2)                   ,'\`.   ,'/`.
+    ###    (y_3) w00 ,'\       /`. w01 (y_2)                   ,'\`.   ,'/`.  
     ###            ,'   \ v03 /   `.                         ,'   \ `0' /   `. 
     ###          ,'      \   /      `.                     ,'      \ | /      `.          n00 = w12 + w02   (a_1 = x_1 + y_1)
     ###         / \       \ /       / \                   /|\       \|/       /|\         n10 = w11 + w01   (b_1 = x_2 + y_2)
     ###        /v02\       *       /v01\                 / | \       *       / | \        n20 = w10 + w00   (c_1 = x_3 + y_3)
     ###       /    _\.(y_1)|w02.../_    \               /  | 3\..... | ...../2 |  \ 
-    ###      /_--"" /      *      \ ""--_\             /2 ,'  /      *      \  `. 3\      pick a value for k
-    ###      \`.v12/      / \      \v11,'/      `.     \`.|  /      /|\      \  |,'/      n22 = k           (c_3 = k)
+    ###      /_--"" /      *      \ ""--_\             /2 ,'  /      *      \  `. 3\      pick a value for twist
+    ###      \`.v12/      / \      \v11,'/      `.     \`.|  /      /|\      \  |,'/      n22 = twist       (c_3 = k)
     ###       \ `./      /   \      \,' /     ----}     \ `./      / | \      \,' /       n11 = w12 - n22   (b_2 = x_1 - c_3)
     ###        \ /`.    / v00 \    ,'\ /        ,'       \|/`.    /  |  \    ,'\|/        n02 = w00 - n11   (a_3 = y_3 - b_2)
     ###         \   `. /       \ ,'   /                   \   `. /   |   \ ,'   /         n21 = w11 - n02   (c_2 = x_2 - a_3)
@@ -115,10 +116,12 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     n[2][1] = w[1][1] - n[0][2]
     n[1][2] = w[0][2] - n[2][1]
     n[0][1] = w[1][0] - n[1][2]
+
+    # print('n', n)
     # permutations taking the vertices for a face of the 3-tet ball to the 
     # vertices of the same face for the 2-tet ball
 
-    # these should be even in order to preserve orientability.
+    # these should be even in order to preserve orientedness.
     # exactly one of vertices[0] and vertices[1] is even, but it seems to depend on the face.
 
     perms = [[vertices[0] * regina.Perm4( 3,0,1,2 ),   ### opposite v00
@@ -131,9 +134,11 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
               ]
             ]
     flip = perms[0][0].sign() == -1
-    print('flip', flip)
+    # print('flip', flip)
     if flip:  #then all of the signs are wrong, switch 0 and 1 on input
         perms = [[p * regina.Perm4( 1,0,2,3 ) for p in a] for a in perms]
+        for i in range(3):
+            n[i][1], n[i][2] = n[i][2], n[i][1]
 
     for i in range(2):
         for j in range(3):
@@ -187,7 +192,7 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
                   n[2][0], n[2][1], n[2][2]] )
 
     M = snappy.Manifold(tri)
-    print('is_winding after', is_winding(M, wind))
+    assert is_winding(M, wind)
 
     if not return_edge:
         return [ tri, wind ]

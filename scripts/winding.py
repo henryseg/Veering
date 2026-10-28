@@ -124,6 +124,9 @@ def tet_edge_cusp_equations(M):
 def is_winding(M, w):
     A = tet_edge_equations(M)
     b = tet_edge_vector(M)
+    # print('A', A)
+    # print('b', b)
+    # print('Aw', A*vector(w))
     return A*vector(w) == b
 
 

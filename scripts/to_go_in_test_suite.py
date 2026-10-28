@@ -134,6 +134,20 @@ def test_drilling_properties(veering_isosigs, num_to_check, smaller_num_to_check
 # def run_tests(num_to_check = 20, smaller_num_to_check = 10):
 #     veering_isosigs = veering_census()
 
+
+def test_winding_bistellar_flip(veering_isosigs, num_to_check):
+    import regina
+    from veering.taut import isosig_to_tri_angle 
+    import winding, winding_bistellar_flip
+    for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
+        tri, angle = isosig_to_tri_angle(sig)
+        wind = winding.preangle_to_winding(angle)
+        for f in range(tri.countTriangles()):
+            for twist in range(2):
+                winding_bistellar_flip.twoThreeMove(tri, wind, f, twist = twist)  ### has asserts inside to check is_winding before and after
+
+
+
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     veering_isosigs = veering_census()
     test_drilling_methods_agree(veering_isosigs, 5, 3)   
