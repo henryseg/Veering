@@ -1,5 +1,5 @@
 #
-# taut_pachner.py
+# winding_bistellar_flip.py
 #
 
 # Pachner moves that respect taut structures
@@ -17,7 +17,7 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     
     assert face_num < tri.countTriangles()
     M = snappy.Manifold(tri)
-    assert is_winding(M, wind)
+    assert is_winding(M, wind), M, tri, wind
     face = tri.triangle(face_num)
 
     embed0 = face.embedding(0)
@@ -44,6 +44,7 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     ## record the tetrahedra and gluings adjacent to tet0 and tet1
 
     tets = [tet0, tet1]
+    tet_nums = [tet_num0, tet_num1]
     vertices = [vertices0, vertices1]
 
     gluings = [] 
@@ -68,9 +69,11 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
         w.append([None, None, None])
 
     # print('wind', wind)
-    for i in range(3):
-        w[0][i] = wind[ 3*tet_num0 + unsorted_vert_pair_to_edge_pair[(vertices0[0], vertices0[i+1])] ]
-        w[1][i] = wind[ 3*tet_num1 + unsorted_vert_pair_to_edge_pair[(vertices1[0], vertices1[i+1])] ]
+
+    for i in range(2):
+        for j in range(3):
+            w[i][j] = wind[ 3*tet_nums[i] + unsorted_vert_pair_to_edge_pair[(vertices[i][0], vertices[i][j+1])] ]
+        
     # print('w', w)
 
     ### replace mapping info with corresponding info for the 3 tet. Self gluings will be annoying...
@@ -178,14 +181,10 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     assert tri.isOriented()
 
     ### update the winding
-    tet_indices = [tet_num0, tet_num1]
-    tet_indices.sort()
-    wind.pop(3*tet_indices[1]+2)
-    wind.pop(3*tet_indices[1]+1)
-    wind.pop(3*tet_indices[1])
-    wind.pop(3*tet_indices[0]+2)
-    wind.pop(3*tet_indices[0]+1)
-    wind.pop(3*tet_indices[0])  ## remove from the list in the correct order!
+    tet_nums.sort()
+    for i in range(2):
+        for j in range(3):
+            wind.pop( 3*tet_nums[1-i] + (2-j) )  ## remove from the list in the correct order!
 
     wind.extend( [n[0][0], n[0][1], n[0][2], 
                   n[1][0], n[1][1], n[1][2],
@@ -199,8 +198,8 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     else:
         return [ tri, wind, new_tets[0].edge(0).index() ]
 
-def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False):
-    """Apply a 3-2 move to a taut triangulation, if possible. 
+def threeTwoMove(tri, wind, edge_num, perform = True, return_triangle = False):
+    """Apply a 3-2 move to a triangulation with a winding, if possible. 
     If perform = False, returns if the move is possible.
     If perform = True, modifies tri, returns (tri, winding) for the performed move"""
 
@@ -211,16 +210,11 @@ def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False
     tets = []
     tet_nums = []
     vertices = []
-    non_pi_tet_num = None
     for i in range(3):
         embed = edge.embedding(i)
         tets.append(embed.simplex())
         tet_nums.append(tets[i].index())
         vertices.append(embed.vertices())
-        if not there_is_a_pi_here(angle, embed):
-            assert non_pi_tet_num == None
-            non_pi_tet_num = embed.simplex().index()
-            local_non_pi_tet_num = i
 
     if len(set([tet.index() for tet in tets])) != 3: 
         return False  ### tetrahedra must be distinct
@@ -228,10 +222,6 @@ def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False
     if not perform:
         return True  ### taut 3-2 move is always possible if the 3-2 move is.
 
-    ### record the "slope" of the pis on the non_pi_tet. This is a boolean
-    non_pi_tet_positive = unsorted_vert_pair_to_edge_pair[ ( vertices[local_non_pi_tet_num][0], vertices[local_non_pi_tet_num][2] ) ]
-    is_positive_slope = (angle[non_pi_tet_num] == non_pi_tet_positive)
-     
     ### check we do the same as regina... 
     tri2 = regina.Triangulation3(tri)  ## make a copy
     tri2.pachner(tri2.edge(edge_num))
@@ -256,6 +246,17 @@ def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False
     ### glue across face
     new_tets[0].join(3, new_tets[1], regina.Perm4(0,2,1,3))
 
+
+    ### record winding values for tets
+    w = []
+    for t in range(3):
+        w.append([None, None, None])
+
+    # print('wind', wind)
+    for i in range(3):
+        for j in range(3):
+            w[i][j] = wind[ 3*tet_nums[i] + unsorted_vert_pair_to_edge_pair[(vertices[i][0], vertices[i][j+1])] ]
+
     ### replace mapping info with corresponding info for the 2 tet. Self gluings will be annoying...
 
     ### write vertices[i][j] as vij
@@ -263,11 +264,11 @@ def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False
     ###                 tets[0]                                   new_tet1
     ###                _________                                 _________
     ###              ,'\`.v00,'/`.                             ,'\       /`.
-    ###            ,'   \ `.' /   `.                         ,'   \  3  /   `. 
+    ###            ,'   \ `.' /   `.                      n11,'   \  3  /   `.n10 
     ###          ,'   v10\ | /v20   `.                     ,'      \   /      `.
     ###         /|\       \|/       /|\                   / \       \ /       / \
     ###        / | \       *       / | \                 /   \       *       /   \
-    ###    v12/  |  \..... | ...../  |  \v23            /  1 _\..... | ...../_ 2  \ 
+    ###    v12/  |  \..... | ...../  |  \v23            /  1 _\..... |n12.../_ 2  \ 
     ###      /  ,'  /      *      \  `.  \             /_--"" /      *      \ ""--_\
     ###      \`.|  /v03   /|\   v02\  |,'/      `.     \`. 2 /      / \      \ 1 ,'/ 
     ###       \ `./      / | \      \,' /     ----}     \ `./      /   \      \,' /
@@ -276,30 +277,30 @@ def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False
     ###          \    * v13|v22 *    /                     \    `---------'    /
     ###           \    \   |   /    /                       \    \       /    /
     ###            \    \  |  /    /                         \    \  0  /    /
-    ###             \    \ | /    /                           \    \   /    /  
+    ###             \    \ | /    /                       n00 \    \   /    / n01
     ###    tets[1]   \    \|/    /   tets[2]                   \    \ /    /
     ###               \    *    /                               \    *    / new_tet0
-    ###                \..v01../                                 \...|.../
+    ###                \..v01../                                 \...|n02/
     ###                 \`.|.'/                                   \  |  /
     ###               v11\ | /v21                                  \ 3 /
     ###                   \|/                                       \|/
     ###                    *                                         *
 
+    n = []
+    for t in range(2):
+        n.append([None, None, None])
+    n[0][0] = w[0][1] + w[1][2]
+    n[0][1] = w[2][1] + w[0][2] 
+    n[0][2] = w[1][1] + w[2][2]
+    
+    n[1][0] = w[2][2] + w[0][1]
+    n[1][1] = w[0][2] + w[1][1] 
+    n[1][2] = w[1][2] + w[2][1]    
+
     # permutations taking the vertices for a face of the 2-tet ball to the 
     # vertices of the same face for the 3-tet ball
 
     # these should be even in order to preserve orientability.
-
-    # perms = [[regina.Perm4( vertices[0][0], vertices[0][2], vertices[0][3], vertices[0][1] ),   ### opposite v00
-    #           regina.Perm4( vertices[0][1], vertices[0][3], vertices[0][2], vertices[0][0] )    ### opposite v01
-    #           ],
-    #          [regina.Perm4( vertices[1][3], vertices[1][0], vertices[1][2], vertices[1][1] ),   ### opposite v10
-    #           regina.Perm4( vertices[1][3], vertices[1][2], vertices[1][1], vertices[1][0] )    ### opposite v11
-    #           ],
-    #          [regina.Perm4( vertices[2][2], vertices[2][3], vertices[2][0], vertices[2][1] ),   ### opposite v20
-    #           regina.Perm4( vertices[2][2], vertices[2][1], vertices[2][3], vertices[2][0] )    ### opposite v21
-    #           ]
-    #         ]
 
     perms = [[vertices[0] * regina.Perm4( 0, 2, 3, 1 ),   ### opposite v00
               vertices[0] * regina.Perm4( 1, 3, 2, 0 )    ### opposite v01
@@ -353,37 +354,22 @@ def threeTwoMove(tri, winding, edge_num, perform = True, return_triangle = False
     assert tri.isIsomorphicTo(tri2)
     assert tri.isOriented()
 
-    # ### update the angle structure
+    # ### update the winding
     tet_nums.sort()
-    angle.pop(tet_nums[2])
-    angle.pop(tet_nums[1])
-    angle.pop(tet_nums[0])  ## remove from the list in the correct order!
-
-    if local_non_pi_tet_num == 0:
-        if is_positive_slope:
-            new_angle = [0, 0]
-        else:
-            new_angle = [1, 1]
-    elif local_non_pi_tet_num == 1:
-        if is_positive_slope:
-            new_angle = [2, 1]
-        else:
-            new_angle = [0, 2]
-    else:
-        assert local_non_pi_tet_num == 2
-        if is_positive_slope:
-            new_angle = [1, 2]
-        else:
-            new_angle = [2, 0]
+    for i in range(3):
+        for j in range(3):
+            wind.pop( 3*tet_nums[2-i] + (2-j) )  ## remove from the list in the correct order!
     
-    angle.extend(new_angle)
+    wind.extend( [n[0][0], n[0][1], n[0][2], 
+                  n[1][0], n[1][1], n[1][2]] )
 
-    assert is_taut(tri, angle)
+    M = snappy.Manifold(tri)
+    assert is_winding(M, wind)
 
     if not return_triangle:
-        return (tri, angle)    
+        return (tri, wind)    
     else:
-        return (tri, angle, new_tets[0].triangle(3).index())    
+        return (tri, wind, new_tets[0].triangle(3).index())    
 
     ### Extra ASCII art:
 

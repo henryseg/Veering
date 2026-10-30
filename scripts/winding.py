@@ -130,6 +130,51 @@ def is_winding(M, w):
     return A*vector(w) == b
 
 
+# dealing with relabelling triangulations
+def apply_isom_to_winding(original_wind, isom):
+    """
+    Given a winding and an isomorphism of a triangulation,
+    return the winding relative to the new triangulation.
+    """
+    n = len(original_wind)
+    new_wind = [None] * n
+    for i in range(int(n / 3)):
+        mapped_tet_index = isom.tetImage(i)
+        for j in range(3):
+            new_tet_edge_endpoints = (isom.facetPerm(i)[0], isom.facetPerm(i)[j+1])
+            new_tet_edge_pair = unsorted_vert_pair_to_edge_pair[new_tet_edge_endpoints]
+            new_wind[3*mapped_tet_index + new_tet_edge_pair] = original_wind[3*i + j]
+    return new_wind
+
+
+def lex_smallest_winding(tri, wind, return_isom = False):
+    """
+    Finds the lexicographically smallest winding among
+    symmetries of the one we have.
+    """
+    all_isoms = tri.findAllIsomorphisms(tri)
+    # print('num isoms', len(all_isoms))
+    all_windings = []
+    for isom in all_isoms:
+        all_windings.append( (apply_isom_to_winding(wind, isom), isom) )
+    all_windings.sort(key = lambda pair: pair[0])
+    if return_isom:
+        return all_windings[0]
+    else:
+        return all_windings[0][0]
+
+
+def num_winding_automorphisms(tri, wind):
+    """
+    Finds the number of taut automorphisms
+    """
+    all_isoms = tri.findAllIsomorphisms(tri)
+    all_windings = []
+    for isom in all_isoms:
+        all_windings.append( apply_isom_to_winding(wind, isom) )
+    return all_windings.count(all_windings[0])
+
+
 def is_trivial_in_bdy_cohomology(M, w):
     """
     Given a snappy manifold M and a winding w, decides if w induces

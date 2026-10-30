@@ -139,7 +139,7 @@ def test_winding_bistellar_flip(veering_isosigs, num_to_check):
     import regina
     from veering.taut import isosig_to_tri_angle 
     import winding, winding_bistellar_flip
-    for sig in random.sample(veering_isosigs, num_to_check): ### only try small examples
+    for sig in random.sample(veering_isosigs, num_to_check): 
         tri, angle = isosig_to_tri_angle(sig)
         wind = winding.preangle_to_winding(angle)
         for f in range(tri.countTriangles()):
@@ -147,6 +147,24 @@ def test_winding_bistellar_flip(veering_isosigs, num_to_check):
                 winding_bistellar_flip.twoThreeMove(tri, wind, f, twist = twist)  ### has asserts inside to check is_winding before and after
 
 
+def test_winding_bistellar_flip_and_unflip(veering_isosigs, num_to_check):
+    from veering.taut import isosig_to_tri_angle 
+    import winding, winding_bistellar_flip
+    for sig in random.sample(veering_isosigs, num_to_check):
+        tri_old, angle_old = isosig_to_tri_angle(sig)
+        wind_old = winding.preangle_to_winding(angle_old)
+        for f in random.sample(range(tri_old.countTriangles()), 3):  ### check a few faces
+            for twist in range(2):  ### check both parities
+                tri, angle = isosig_to_tri_angle(sig)
+                wind = winding.preangle_to_winding(angle)
+                out = winding_bistellar_flip.twoThreeMove(tri, wind, f, twist = twist, return_edge = True)
+                if out != False:
+                    tri, wind, edge_num = out
+                    out = winding_bistellar_flip.threeTwoMove(tri, wind, edge_num)
+                    assert tri.isIsomorphicTo(tri_old)
+                    isom = tri.isIsomorphicTo(tri_old)
+                    wind = winding.apply_isom_to_winding(wind, isom)
+                    assert winding.lex_smallest_winding(tri_old, wind_old) == winding.lex_smallest_winding(tri_old, wind)
 
 def run_tests(num_to_check = 20, smaller_num_to_check = 10):
     veering_isosigs = veering_census()
