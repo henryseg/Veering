@@ -17,7 +17,7 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     
     assert face_num < tri.countTriangles()
     M = snappy.Manifold(tri)
-    assert is_winding(M, wind), M, tri, wind
+    assert is_winding(M, wind), (M, tri, wind)
     face = tri.triangle(face_num)
 
     embed0 = face.embedding(0)
