@@ -8,7 +8,8 @@ import regina
 import snappy
 
 from veering.taut import unsorted_vert_pair_to_edge_pair
-from winding import is_winding
+from winding import is_winding, is_flat, apply_isom_to_winding
+from pachner_graph_path import search_Pachner_graph_for_shortest_path, build_Pachner_graph, get_path
 
 def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = False):
     """Apply a 2-3 move to a triangulation with a winding, if possible. 
@@ -396,5 +397,87 @@ def threeTwoMove(tri, wind, edge_num, perform = True, return_triangle = False):
     ###                  \ | /                                     \ | /
     ###                   \|/                                       \|/
     ###                    *                                         *
+
+
+def carry_windings(start_winds, path_of_moves, verbose = 0):
+    """Given a path of moves, carry windings as you go (eliminating non flat windings)"""
+    ### each move is a pair of a sig and either a face number or edge number, written 'fn' or 'en'
+    
+    tri = regina.Triangulation3(path_of_moves[0][0])
+    tri.orient()
+    before_winds = start_winds[:]
+    if verbose > 2:
+        for wind in before_winds:
+            print(wind)
+    for move in path_of_moves[:-1]: ### except the last in the path, which only gives the final sig
+        if verbose > 2:
+            print(move)
+        after_winds = []
+        sig, flip = move
+        assert tri.isoSig() == sig
+        cell_index = int(flip[1:])
+        if flip[0] == 'f':
+            for wind in before_winds:
+                for twist in range(2):
+                    tri_temp = regina.Triangulation3(tri)
+                    wind_temp = wind[:]
+                    new_tri, new_wind = twoThreeMove(tri_temp, wind_temp, cell_index, twist = twist)
+                    if is_flat(new_wind):
+                        after_winds.append(new_wind)
+        else:
+            assert flip[0] == 'e'
+            for wind in before_winds:
+                tri_temp = regina.Triangulation3(tri)
+                wind_temp = wind[:]
+                new_tri, new_wind = threeTwoMove(tri_temp, wind_temp, cell_index)
+                if is_flat(new_wind):
+                    after_winds.append(new_wind)
+        if verbose > 2:
+            for wind in after_winds:
+                print(wind)
+        if len(after_winds) == 0:
+            if verbose > 1:
+                print('no windings')
+            return None ### no point in continuing along the path of moves.
+        before_winds = after_winds
+        tri = new_tri
+    sig, _ = path_of_moves[-1]
+    if verbose > 2:
+        print(path_of_moves[-1])
+    assert tri.isoSig() == sig, (sig, tri.isoSig())
+    return after_winds
+
+def windings_diaspora(start_sig, start_winds, target_sigs, search_depth = 1000, ceiling = 5, verbose = 0):
+    if target_sigs == None:
+        G = build_Pachner_graph(start_sig, search_depth = 1000, ceiling = ceiling)
+        target_sigs = []
+        for node in G:
+            if len(G[node].neighbour_moves_down_tri) == 0:
+                print(node)
+                target_sigs.append(node)  ### look for local minima
+    survivors = []
+    junk = []
+    for wind in start_winds:
+        survived = True
+        print('start winding', wind)
+        for target_sig in target_sigs:
+            if target_sig != start_sig:
+                # print('target sig', target_sig)
+                path_of_moves = get_path(target_sig, G) 
+                tri = regina.Triangulation3(start_sig)
+                tri.orient()
+                carry_wind = wind[:] ### make a copy
+                carried = carry_windings([carry_wind], path_of_moves, verbose = 0)
+                if carried == None:
+                    print('winding', wind, 'became', carried, 'at', target_sig)
+                    survived = False
+                    junk.append(wind)
+                    break
+        if survived:
+            survivors.append(wind)
+    print('survivors', survivors)   ### may be some that map to the same on some triangulation
+    print('junk', junk)
+
+
 
 

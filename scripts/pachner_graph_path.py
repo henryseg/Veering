@@ -3,6 +3,7 @@
 
 import regina
 from veering.pachner import twoThreeMove, threeTwoMove
+from veering.file_io import output_to_pickle
 
 class pachner_node():
     def __init__(self, isoSig, tri, ceiling = 9999, floor = 0):
@@ -14,6 +15,7 @@ class pachner_node():
         self.neighbour_moves_tri = None
         self.tri = tri 
         # self.is_frontier = False #is a node on the boundary of what we have explored
+        self.came_from = None
         self.generate_neighbour_isoSigs(ceiling, floor)
 
     def all_neighbour_isoSigs(self):
@@ -27,13 +29,13 @@ class pachner_node():
 
         if num_tetrahedra < ceiling:
             for face_index in range(tri.countTriangles()):
-                face = tri.triangles()[face_index]
-                embed0 = face.embedding(0)
-                tet0 = embed0.simplex()
-                tet_0_face_num = embed0.face()
-                embed1 = face.embedding(1)
-                tet1 = embed1.simplex()
-                tet_1_face_num = embed1.face()
+                # face = tri.triangles()[face_index]
+                # embed0 = face.embedding(0)
+                # tet0 = embed0.simplex()
+                # tet_0_face_num = embed0.face()
+                # embed1 = face.embedding(1)
+                # tet1 = embed1.simplex()
+                # tet_1_face_num = embed1.face()
 
                 tri_copy = regina.Triangulation3(tri) 
                 output = twoThreeMove(tri_copy, face_index)
@@ -47,7 +49,7 @@ class pachner_node():
         if num_tetrahedra > floor:
             for edge_index in range(tri.countEdges()):
                 edge = tri.edges()[edge_index]
-                tri_copy = regina.Triangulation3(tri)
+                tri_copy = regina.Triangulation3(tri)   ### maybe should check to see if the threeTwoMove is possible before making a new copy of the triangulation
                 output = threeTwoMove(tri_copy, edge_index)
                 if output != False:
                     tri_new = output[0]
@@ -56,7 +58,7 @@ class pachner_node():
                     self.neighbour_moves_down_tri[sig_new] = tri_new
         self.neighbour_moves_tri = {**self.neighbour_moves_up_tri, **self.neighbour_moves_down_tri} ## union of the dictionaries
 
-def print_path(target_isoSig, big_dict_of_nodes):
+def get_path(target_isoSig, big_dict_of_nodes):
     ### Given the target isoSig and the big dict of nodes, each node of which 
     ### knows where it came from in the search, build the path from target back
     ### to the start. Print out the list of nodes and save them as regina files.
@@ -67,18 +69,22 @@ def print_path(target_isoSig, big_dict_of_nodes):
         current_node = big_dict_of_nodes[current_node.came_from]
         path.append(current_node)
     path.reverse()  ### now goes from start to target
+    moves = []
     for i, node in enumerate(path):
-        print(node.isoSig)
+        # print(node.isoSig)
         # filename = node.isoSig + '.rga'
         # print(filename)
         # node.tri.save('Output/' + filename)
         if i < len(path) - 1:  ## not the last one
             next_node = path[i+1]
             if next_node.isoSig in node.neighbour_moves_up_faces:
-                print(node.neighbour_moves_up_faces[next_node.isoSig])
+                moves.append((node.isoSig, node.neighbour_moves_up_faces[next_node.isoSig]))
             else:
                 assert next_node.isoSig in node.neighbour_moves_down_edges
-                print(node.neighbour_moves_down_edges[next_node.isoSig])
+                moves.append((node.isoSig, node.neighbour_moves_down_edges[next_node.isoSig]))
+        else:
+            moves.append((node.isoSig, None))
+    return moves
 
 def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name = None, search_depth = 3, ceiling = 5, save_dir = None):
     start_tri = regina.Triangulation3.fromIsoSig(start_isoSig)
@@ -111,12 +117,40 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name = N
 
                     if nb_isoSig == target_isoSig:
                         print('found path')
-                        print_path(nb_isoSig, big_dict_of_nodes)
-                        ## break
-                        return None 
+                        return get_path(nb_isoSig, big_dict_of_nodes)
 
         frontier_isoSigs = new_frontier_isoSigs
         print(len(big_dict_of_nodes), len(frontier_isoSigs))
 
     print('did not find path')
     return None
+
+def build_Pachner_graph(start_isoSig, name = None, search_depth = 3, ceiling = 5, save_dir = None):
+    start_tri = regina.Triangulation3.fromIsoSig(start_isoSig)
+    start_tri.orient()
+    start_node = pachner_node( start_isoSig, start_tri, ceiling = ceiling )
+    big_dict_of_nodes = {start_isoSig : start_node}
+    frontier_isoSigs = set([start_isoSig])
+    print(len(big_dict_of_nodes), len(frontier_isoSigs))
+    for counter in range(search_depth):
+        if len(frontier_isoSigs) == 0: #we are done...
+            break
+        new_frontier_isoSigs = set([]) 
+        # for each element in the frontier check to see if it appears on the big_list_of_sigs if not we add it to the big list 
+        for cur_isoSig in frontier_isoSigs:
+            current_node = big_dict_of_nodes[cur_isoSig]
+            neighbour_isoSigs = current_node.all_neighbour_isoSigs()
+            for nb_isoSig in neighbour_isoSigs: 
+                if not nb_isoSig in big_dict_of_nodes:
+                    nb_tri = current_node.neighbour_moves_tri[nb_isoSig]
+                    new_node = pachner_node(nb_isoSig, nb_tri, ceiling = ceiling)
+                    new_node.came_from = cur_isoSig
+                    if counter == search_depth - 1: #last layer
+                        new_node.is_frontier = True
+
+                    new_frontier_isoSigs.add(nb_isoSig)
+                    big_dict_of_nodes[nb_isoSig] = new_node
+
+        frontier_isoSigs = new_frontier_isoSigs
+        print(len(big_dict_of_nodes), len(frontier_isoSigs))
+    return big_dict_of_nodes
