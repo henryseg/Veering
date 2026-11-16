@@ -262,7 +262,7 @@ def is_flat(u):
     return True
 
 
-def flat_reduced_windings(M):
+def flat_reduced_windings(M, return_lifts = False):
     """
     Given a snappy manifold M, we reduce (mod 2) the windings given by
     windings_vanishing_on_bdy and eliminate the non-flat ones.
@@ -270,15 +270,27 @@ def flat_reduced_windings(M):
     This gives steps (1, 2, 3) of Algorithm 9.1 of the paper.
     """
     x, A = windings_vanishing_on_bdy(M)
+    diffs = [sum(B) for B in powerset(A)]
+    windings = [x + v for v in diffs]
+    windings = [w for w in windings if is_flat(w)]
     dim = 3*M.num_tetrahedra()
     V = VectorSpace(ZZ2, dim)
-    AA = V.subspace(A)  # the reduced kernel
-    xx = V(x)  # the reduced solution
+    deduped_windings = []
+    deduped_reduceds = []
+    for w in windings:
+        if V(w) not in deduped_reduceds:
+            deduped_windings.append(w)
+            deduped_reduceds.append(V(w))
+    windings = [list(w) for w in deduped_windings]
+    reduceds = [list(w) for w in deduped_reduceds]
+    if return_lifts:
+        return reduceds, windings
+    return reduceds
 
-    diffs = [sum(B) for B in powerset(AA.basis())]
-    windings = [xx + v for v in diffs]
-    windings = [c for c in windings if is_flat(c)]
-    return windings
+    # AA = V.subspace(A)  # the reduced kernel
+    # xx = V(x)  # the reduced solution
+    # windings = [c for c in windings if is_flat(c)]
+    # return windings
 
 
 def candidate_preangles(M, apply_symmetries = False):
