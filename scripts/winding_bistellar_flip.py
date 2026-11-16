@@ -8,7 +8,7 @@ import regina
 import snappy
 
 from veering.taut import unsorted_vert_pair_to_edge_pair
-from winding import is_winding, is_flat, apply_isom_to_winding
+from winding import is_winding, is_flat, apply_isom_to_winding, flat_reduced_windings
 from pachner_graph_path import search_Pachner_graph_for_shortest_path, build_Pachner_graph, get_path
 
 def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = False):
@@ -447,7 +447,12 @@ def carry_windings(start_winds, path_of_moves, verbose = 0):
     assert tri.isoSig() == sig, (sig, tri.isoSig())
     return after_winds
 
-def windings_diaspora(start_sig, start_winds, target_sigs, search_depth = 1000, ceiling = 5, verbose = 0):
+def windings_diaspora(start_sig, start_winds = None, target_sigs = None, search_depth = 1000, ceiling = 5, verbose = 0):
+    if start_winds == None:
+        tri = regina.Triangulation3(start_sig)
+        tri.orient()
+        M = snappy.Manifold(tri)
+        start_winds = flat_reduced_windings(M, return_lifts = True)[1]
     if target_sigs == None:
         G = build_Pachner_graph(start_sig, search_depth = 1000, ceiling = ceiling)
         target_sigs = []

@@ -5,6 +5,10 @@ import regina
 from veering.pachner import twoThreeMove, threeTwoMove
 from veering.file_io import output_to_pickle
 
+def isoSig_count_tetrahedra(sig):
+    tri = regina.Triangulation3(sig)
+    return tri.countTetrahedra()
+
 class pachner_node():
     def __init__(self, isoSig, tri, ceiling = 9999, floor = 0):
         self.isoSig = isoSig
@@ -125,13 +129,14 @@ def search_Pachner_graph_for_shortest_path(start_isoSig, target_isoSig, name = N
     print('did not find path')
     return None
 
-def build_Pachner_graph(start_isoSig, name = None, search_depth = 3, ceiling = 5, save_dir = None):
+def build_Pachner_graph(start_isoSig, name = None, search_depth = 3, ceiling = 5, save_dir = None, verbose = 0):
     start_tri = regina.Triangulation3.fromIsoSig(start_isoSig)
     start_tri.orient()
     start_node = pachner_node( start_isoSig, start_tri, ceiling = ceiling )
     big_dict_of_nodes = {start_isoSig : start_node}
     frontier_isoSigs = set([start_isoSig])
-    print(len(big_dict_of_nodes), len(frontier_isoSigs))
+    if verbose > 1:    
+        print(len(big_dict_of_nodes), len(frontier_isoSigs))
     for counter in range(search_depth):
         if len(frontier_isoSigs) == 0: #we are done...
             break
@@ -152,5 +157,27 @@ def build_Pachner_graph(start_isoSig, name = None, search_depth = 3, ceiling = 5
                     big_dict_of_nodes[nb_isoSig] = new_node
 
         frontier_isoSigs = new_frontier_isoSigs
-        print(len(big_dict_of_nodes), len(frontier_isoSigs))
+        if verbose > 1:
+            print(len(big_dict_of_nodes), len(frontier_isoSigs))
     return big_dict_of_nodes
+
+
+def find_minima(start_sig):
+    tri = regina.Triangulation3(start_sig)
+    tri.orient()
+    n = tri.countTetrahedra()
+    G = build_Pachner_graph(start_sig, search_depth = 1000, ceiling = n+1)
+    G_sigs = list(G.keys())
+    G_sigs.sort()
+    first_letter = G_sigs[0][0]
+    global_minima = []
+    for node_name in G_sigs:
+        if node_name[0] == first_letter:
+            global_minima.append(node_name)
+        else:
+            break
+    return global_minima
+
+
+
+
