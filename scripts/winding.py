@@ -343,11 +343,12 @@ def can_deal_with_reduced_angle(tri, angle):
     return (False, None)
 
 
-def can_deal_with_reduced_angles(M):
+def can_deal_with_reduced_angles(M, angles = None):
     """
     Returns True if we can deal with all of the reduced angles. 
     """
-    angles = candidate_preangles(M)
+    if angles == None:
+        angles = candidate_preangles(M)
     tri = regina.Triangulation3(M)
     results = [can_deal_with_reduced_angle(tri, angle) for angle in angles]
     if any(r[1] == "torus bundle" for r in results):
@@ -406,15 +407,18 @@ def check_census(cen, tries):
     return out
 
 
-def analyse_angle_structs(M, angles = None, use_flipper = True, apply_symmetries = False):
+def analyse_angle_structs(M, angles = None, use_flipper = True, apply_symmetries = False, verbose = 0):
     """
     Generates (pre)angle structures and tries to check each.
     """
-    print(M.name())
+    sig = M.triangulation_isosig(decorated = False)
+    if verbose > 0: 
+        print(M.name(), sig)
     if angles == None:
         # apply_symmetries if you don't care about counting
         angles = candidate_preangles(M, apply_symmetries = apply_symmetries)
-    print("num angles", len(angles))
+    if verbose > 0: 
+        print("num angles", len(angles))
     tri = regina.Triangulation3(M)
     total = 0
     for angle in angles:
