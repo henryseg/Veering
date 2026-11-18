@@ -29,16 +29,18 @@ ZZ2 = ZZ.quotient(ZZ(2))
 
 def winding_to_preangle(w):
     """
-    Given a list of 3*n integers with each triple of the form (1,0,0),
-    (0,1,0), or (0,0,1), convert it to our angle structure format.
-    Note that we may obtain a "preangle" structure as we may not have
-    the edge condition.
+    Given a list of 3*n integers with each triple of the form
+    (1,0,0), (0,1,0), or (0,0,1) (mod two), convert it to our angle
+    structure format.  Note that we may obtain a "preangle" structure
+    as we may not have the edge condition.
     """
+    w = [a % 2 for a in w]
     assert len(w) % 3 == 0
     n = int(round(len(w)/3))
     out = []
     for i in range(n):
         tet = w[ 3*i : 3*i+3 ]
+        assert sum(tet) == 1
         out.append( pi_edgepair_dict[tuple(tet)] )
     return out
 
