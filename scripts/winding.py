@@ -332,8 +332,8 @@ def can_deal_with_reduced_angle(tri, angle):
     """
     if not is_taut(tri, angle):
         return (False, "not taut")
-    if is_torus_bundle(tri, angle):
-        return (True, "torus bundle")
+#    if is_torus_bundle(tri, angle):  ### is_torus_bundle is broken...
+#        return (True, "torus bundle")
     if is_veering(tri, angle) and is_layered(tri, angle):
         return (True, "veering+layered")
     if is_veering(tri, angle):
