@@ -20,6 +20,7 @@ import flipper
 from snappy.snap import t3mlite as t3m
 
 from veering.taut import pi_edgepair_dict, is_taut, lex_smallest_angle_structure, unsorted_vert_pair_to_edge_pair, isosig_to_tri_angle, isosig_from_tri_angle
+from veering.transverse_taut import is_transverse_taut
 from veering.taut_polytope import dot_prod, is_layered, is_torus_bundle
 from veering.veering_tri import is_veering
 from veering.z2_taut import is_trivial_in_z2_cohomology
@@ -264,17 +265,17 @@ def is_flat(u):
     return True
 
 
-def flat_reduced_windings(M, return_lifts = False):
+def flat_reduced_windings(M, return_lifts = False, z2_checking = True):
     """
-    Given a snappy manifold M, we reduce (mod 2) the windings given by
-    windings_vanishing_on_bdy and eliminate the non-flat ones.
-
-    This gives steps (1, 2, 3) of Algorithm 9.1 of the paper.
+    Algorithm 9.1 of the paper.
     """
     x, A = windings_vanishing_on_bdy(M)
     diffs = [sum(B) for B in powerset(A)]
     windings = [x + v for v in diffs]
     windings = [w for w in windings if is_flat(w)]
+    if z2_checking:
+        tri = regina.Triangulation3(M)
+        windings = [w for w in windings if is_trivial_in_z2_cohomology(tri, winding_to_preangle(w))]
     dim = 3*M.num_tetrahedra()
     V = VectorSpace(ZZ2, dim)
     deduped_windings = []
