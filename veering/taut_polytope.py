@@ -226,8 +226,12 @@ def is_torus_bundle(tri, angle):
     """
     return (tri.homology().rank() == 1 and
             is_layered(tri, angle) and
-            carries_torus_or_sphere(tri, angle))  # WTF? hvLPQkcedfggfgwrwxqaar_1101101 is a counterexample?
-
+            carries_torus_or_sphere(tri, angle))
+# WTF? hvLPQkcedfggfgwrwxqaar_1101101 is a counterexample????
+# As are 
+# iLLLQPccegffghhhhhhaxahxa
+# iLLwQPcbeefgehhhxxhaahxqh
+# for the correct angles... This is very confusing...
 
 # TODO - check this against the homological dim of the taut
 # cone... and then delete.  :)
