@@ -7,8 +7,9 @@
 import regina
 import snappy
 
+from veering import veering_census
 from veering.taut import unsorted_vert_pair_to_edge_pair
-from winding import is_winding, is_flat, apply_isom_to_winding, flat_reduced_windings
+from winding import is_winding, is_flat, apply_isom_to_winding, flat_reduced_windings, winding_to_preangle, analyse_angle_structs, can_deal_with_reduced_angles
 from pachner_graph_path import search_Pachner_graph_for_shortest_path, build_Pachner_graph, get_path
 
 def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = False):
@@ -458,13 +459,15 @@ def windings_diaspora(start_sig, start_winds = None, target_sigs = None, search_
         target_sigs = []
         for node in G:
             if len(G[node].neighbour_moves_down_tri) == 0:
-                print(node)
+                if verbose > 2:
+                    print(node)
                 target_sigs.append(node)  ### look for local minima
     survivors = []
     junk = []
     for wind in start_winds:
         survived = True
-        print('start winding', wind)
+        if verbose > 3:
+            print('start winding', wind)
         for target_sig in target_sigs:
             if target_sig != start_sig:
                 # print('target sig', target_sig)
@@ -474,15 +477,39 @@ def windings_diaspora(start_sig, start_winds = None, target_sigs = None, search_
                 carry_wind = wind[:] ### make a copy
                 carried = carry_windings([carry_wind], path_of_moves, verbose = 0)
                 if carried == None:
-                    print('winding', wind, 'became', carried, 'at', target_sig)
+                    if verbose > 0:
+                        print('winding', wind, 'became', carried, 'at', target_sig)
                     survived = False
                     junk.append(wind)
                     break
         if survived:
             survivors.append(wind)
-    print('survivors', survivors)   ### may be some that map to the same on some triangulation
-    print('junk', junk)
+    if verbose > 0:
+        print('survivors', survivors)   ### may be some that map to the same on some triangulation
+        print('junk', junk)
+    return (survivors, junk)
 
+
+def search_census_for_transport_wins(census, ceiling_overhead = 1):
+    for input_sig in census:
+        if '_' in input_sig:    
+            sig = input_sig.split('_')[0]
+        else:
+            sig = input_sig
+        tri = regina.Triangulation3(sig)
+        tri.orient()
+        M = snappy.Manifold(tri)
+        assert M.triangulation_isosig(decorated = False) == sig
+        n = tri.countTetrahedra()
+        survivors, junk = windings_diaspora(sig, ceiling = n + ceiling_overhead)
+        if len(junk) > 0:  ### if no junk then we already checked these examples before
+            survivors = [winding_to_preangle(wind) for wind in survivors]
+            # analyse_angle_structs(M, angles = survivors, use_flipper = False, apply_symmetries = True)
+            can_deal = can_deal_with_reduced_angles(M, angles = survivors)
+            if can_deal[0]:
+                print(input_sig)
+                print(survivors)
+                print(can_deal)
 
 
 
