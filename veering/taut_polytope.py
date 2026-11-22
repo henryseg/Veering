@@ -234,11 +234,18 @@ def is_torus_bundle(tri, angle):
     return (tri.homology().rank() == 1 and
             is_layered(tri, angle) and
             carries_euler_char_neg_one(tri, angle))
-# WTF? hvLPQkcedfggfgwrwxqaar_1101101 is a counterexample????
-# As are 
+
+# Here are some unpleasant examples:
+
+# hvLPQkcedfggfgwrwxqaar
 # iLLLQPccegffghhhhhhaxahxa
 # iLLwQPcbeefgehhhxxhaahxqh
-# for the correct angles... This is very confusing...
+
+# Each has betti number one and has an angle structure (with z2
+# internal cohomological content, so not veering or even transverse)
+# which is semi-layered, and which has a carried surface with euler
+# char = -1.  But it is not a torus bundle...  We got hung up on such
+# examples for a while.
 
 
 # TODO - check this against the homological dim of the taut
