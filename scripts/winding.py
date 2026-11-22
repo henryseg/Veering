@@ -307,8 +307,8 @@ def candidate_preangles(M, apply_symmetries = False):
     (TODO: It might be nice to have a mode where we return preangles
     sorted into symmetry classes.)
 
-    This is step (4) of Algorithm 9.1 of the paper (but using the
-    preangles instead of windings).
+    This is Algorithm 9.1 of the paper (but using preangles instead
+    of windings).
     """
     windings = flat_reduced_windings(M)
     tri = regina.Triangulation3(M)
