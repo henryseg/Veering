@@ -182,12 +182,15 @@ def fully_carried_solution(N):
 
 
 @liberal
-def is_layered(tri, angle):
+def is_layered(tri, angle, allow_semi_layered = False):
     """
     Given a tri, angle decide if it is layered.
     """
     if not is_taut(tri, angle):
         return False
+    if not allow_semi_layered:
+        if not is_transverse_taut(tri, angle):
+            return False
 
     N = edge_equation_matrix_taut(tri, angle)
     N = Matrix(N)
@@ -196,10 +199,12 @@ def is_layered(tri, angle):
 
 
 @liberal
-def carries_torus_or_sphere(tri, angle):
+def carries_euler_char_neg_one(tri, angle):
     """
-    Given a tri, angle decides if there is a once-punctured torus or
-    three-times punctured sphere among the carried surfaces.
+    Given a tri, angle decides if there is surface with exactly two
+    ideal triangles amongst the carried surfaces.  (So, a
+    once-punctured torus, or three-times punctured sphere, or
+    once-punctured Klein bottle, or twice-punctured projective plane.)
     """
     N = edge_equation_matrix_taut(tri, angle)
     # We must decide if there is a pair of columns which are negatives
@@ -222,16 +227,19 @@ def carries_torus_or_sphere(tri, angle):
 def is_torus_bundle(tri, angle):
     """
     Given a tri, angle, decides if it is layered by once-punctured
-    tori.
+    tori.  Note that semi-layered manifolds can have once-punctured
+    klein bottles, or twice-punctured projective planes... and perhaps
+    thrice-punctured spheres...
     """
     return (tri.homology().rank() == 1 and
             is_layered(tri, angle) and
-            carries_torus_or_sphere(tri, angle))
+            carries_euler_char_neg_one(tri, angle))
 # WTF? hvLPQkcedfggfgwrwxqaar_1101101 is a counterexample????
 # As are 
 # iLLLQPccegffghhhhhhaxahxa
 # iLLwQPcbeefgehhhxxhaahxqh
 # for the correct angles... This is very confusing...
+
 
 # TODO - check this against the homological dim of the taut
 # cone... and then delete.  :)
