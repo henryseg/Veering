@@ -82,7 +82,7 @@ def is_trivial_in_z2_cohomology(tri, angle):
     Test all loops in this triangulation, do any of them pass an odd number
     of pi's. If so, return False
     """
-    # print('angle', angle)
+    ### Does the "same" as is_transverse_taut with check_is_taut set to False.
     loops = non_tree_face_loops(tri, include_tetrahedra = True)
     for (face_inds, tets) in loops:
         # print('face_inds', face_inds)

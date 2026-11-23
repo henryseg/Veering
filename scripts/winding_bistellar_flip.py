@@ -9,6 +9,7 @@ import snappy
 
 from veering import veering_census
 from veering.taut import unsorted_vert_pair_to_edge_pair
+from veering.transverse_taut import is_transverse_taut
 from winding import is_winding, is_flat, apply_isom_to_winding, flat_reduced_windings, winding_to_preangle, analyse_angle_structs, can_deal_with_reduced_angles
 from pachner_graph_path import search_Pachner_graph_for_shortest_path, build_Pachner_graph, get_path
 
@@ -446,7 +447,7 @@ def carry_windings(start_winds, path_of_moves, verbose = 0):
     if verbose > 2:
         print(path_of_moves[-1])
     assert tri.isoSig() == sig, (sig, tri.isoSig())
-    return after_winds
+    return after_winds, tri
 
 def windings_diaspora(start_sig, start_winds = None, target_sigs = None, search_depth = 1000, ceiling = 5, verbose = 0):
     if start_winds == None:
@@ -482,6 +483,11 @@ def windings_diaspora(start_sig, start_winds = None, target_sigs = None, search_
                     survived = False
                     junk.append(wind)
                     break
+                else:  ### sanity check: should still have trivial internal z2 cohomology
+                    carried_winds, after_tri = carried
+                    for cwind in carried_winds:
+                        cangle = winding_to_preangle(cwind)
+                        assert is_transverse_taut(after_tri, cangle, check_is_taut = False)
         if survived:
             survivors.append(wind)
     if verbose > 0:
@@ -510,6 +516,25 @@ def search_census_for_transport_wins(census, ceiling_overhead = 1):
                 print(input_sig)
                 print(survivors)
                 print(can_deal)
+
+#### searched first 100000 of snappy census, found 
+# gLLPQbefefefhhhhhha
+# [[0, 2, 2, 2, 0, 2], [1, 1, 0, 0, 1, 1]]
+# (True, ['veering+layered', 'veering+layered'])
+# ivLAPQcedfhgghhgkjahmhtsn
+# [[0, 2, 2, 1, 1, 0, 2, 0], [0, 1, 1, 2, 2, 0, 0, 1]]
+# (True, ['layered', 'layered'])
+
+#### veering census search ran out of memory somewhere in [500:2000], before then found
+# fLLQcbeddeehhbghh_01110
+# [[0, 2, 2, 2, 0], [1, 1, 0, 0, 1]]
+# (True, ['veering+layered', 'layered'])
+# gLLPQbefefefhhhhhha_011102
+# [[0, 2, 2, 2, 0, 2], [1, 1, 0, 0, 1, 1]]
+# (True, ['veering+layered', 'veering+layered'])
+# ivvPQQcfhgghfhgfaaahhahha_10000122
+# [[2, 0, 0, 0, 0, 2, 1, 1], [1, 0, 0, 0, 0, 1, 2, 2]]
+# (True, ['veering+layered', 'veering+layered'])
 
 
 
