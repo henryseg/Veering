@@ -13,7 +13,7 @@ from veering.transverse_taut import is_transverse_taut
 from winding import is_winding, is_flat, apply_isom_to_winding, flat_reduced_windings, winding_to_preangle, analyse_angle_structs, can_deal_with_reduced_angles
 from pachner_graph_path import search_Pachner_graph_for_shortest_path, build_Pachner_graph, get_path
 
-def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = False):
+def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, test_ambiguous = False, check_twist_is_good_assuming_non_ambiguous = False, return_edge = False, verbose = 0):
     """Apply a 2-3 move to a triangulation with a winding, if possible. 
     If perform = False, returns if the move is possible.
     If perform = True, modifies tri, returns (tri, winding) for the performed move"""
@@ -79,6 +79,21 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
         
     # print('w', w)
 
+    is_ambiguous = ( (w[1][2] + w[0][2]) % 2 == (w[1][1] + w[0][1]) % 2 == (w[1][0] + w[0][0]) % 2 )
+    ### ambiguous if all are even, i.e. the pi's meet at a single equatorial edge 
+    if verbose > 3:
+        print('is_ambiguous', is_ambiguous)
+    if test_ambiguous:
+        return is_ambiguous
+    if is_ambiguous:
+        non_ambiguous_index = None
+        non_ambiguous_tet_num = None
+    else:
+        for i in range(3):
+            if (w[1][i] + w[0][i]) % 2 == 0:  ### will hit once
+                non_ambiguous_index = i  
+                non_ambiguous_tet_num = 2-i
+
     ### replace mapping info with corresponding info for the 3 tet. Self gluings will be annoying...
 
     ### write verticesi[j] as vij    Paper notation is in parentheses
@@ -99,7 +114,7 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     ###         \   `. /       \ ,'   /                   \   `. /   |   \ ,'   /         n21 = w11 - n02   (c_2 = x_2 - a_3)
     ###          \    `---------'    /                     \    * 3  |  2 *    /          n12 = w02 - n21   (b_3 = y_1 - c_2)
     ###           \    \       /    /                       \    \   |   /    /           n01 = w10 - n12   (a_2 = x_3 - b_3)
-    ###            \    \ v10 /    /               new_tet1  \    \  |  /    /  new_tet2
+    ###            \    \ v10 /    /               new_tet1  \    \  |  /    /  new_tet2 (n22 = w01 - n01)
     ###   (x_3) w10 \    \   /    / w11 (x_2)                 \    \ | /    /  
     ###              \    \ /    /                             \    \|/    /
     ###               \    *    /                               \    *    /
@@ -122,6 +137,28 @@ def twoThreeMove(tri, wind, face_num, twist = 0, perform = True, return_edge = F
     n[2][1] = w[1][1] - n[0][2]
     n[1][2] = w[0][2] - n[2][1]
     n[0][1] = w[1][0] - n[1][2]
+
+    ### See Fig 5.14(a). In the following block of code, w[0][pi_index_on_tet0] is the edge XC
+    ### and n[non_ambiguous_tet_num][(2 - non_ambiguous_tet_num - pi_index_on_tet0) % 3] is the 
+    ### edge of the new tetrahedron containing BC that gets glued to XC
+    if (not is_ambiguous) and check_twist_is_good_assuming_non_ambiguous:
+        for i in range(3):
+            if w[0][i] % 2 == 1:  ### will hit once
+                pi_index_on_tet0 = i
+        # if pi_index_on_tet0 == 0 and non_ambiguous_tet_num == 0:
+        #     return n[0][2] % 2 == 1
+        # elif pi_index_on_tet0 == 0 and non_ambiguous_tet_num == 1:
+        #     return n[1][1] % 2 == 1
+        # elif pi_index_on_tet0 == 1 and non_ambiguous_tet_num == 2:
+        #     return n[2][2] % 2 == 1
+        # elif pi_index_on_tet0 == 1 and non_ambiguous_tet_num == 0:
+        #     return n[0][1] % 2 == 1
+        # elif pi_index_on_tet0 == 2 and non_ambiguous_tet_num == 1:
+        #     return n[1][2] % 2 == 1
+        # elif pi_index_on_tet0 == 2 and non_ambiguous_tet_num == 2:
+        #     return n[2][1] % 2 == 1
+        if not n[non_ambiguous_tet_num][(2 - non_ambiguous_tet_num - pi_index_on_tet0) % 3] % 2 == 1:
+            return False ### twist is bad
 
     # print('n', n)
     # permutations taking the vertices for a face of the 3-tet ball to the 
@@ -410,10 +447,10 @@ def carry_windings(start_winds, path_of_moves, verbose = 0):
     before_winds = start_winds[:]
     if verbose > 2:
         for wind in before_winds:
-            print(wind)
+            print('before wind', wind)
     for move in path_of_moves[:-1]: ### except the last in the path, which only gives the final sig
         if verbose > 2:
-            print(move)
+            print('move', move)
         after_winds = []
         sig, flip = move
         assert tri.isoSig() == sig
@@ -423,9 +460,11 @@ def carry_windings(start_winds, path_of_moves, verbose = 0):
                 for twist in range(2):
                     tri_temp = regina.Triangulation3(tri)
                     wind_temp = wind[:]
-                    new_tri, new_wind = twoThreeMove(tri_temp, wind_temp, cell_index, twist = twist)
-                    if is_flat(new_wind):
-                        after_winds.append(new_wind)
+                    out = twoThreeMove(tri_temp, wind_temp, cell_index, twist = twist, check_twist_is_good_assuming_non_ambiguous = True, verbose = verbose)
+                    if out != False:
+                        new_tri, new_wind = out 
+                        if is_flat(new_wind):
+                            after_winds.append(new_wind)
         else:
             assert flip[0] == 'e'
             for wind in before_winds:
@@ -436,7 +475,7 @@ def carry_windings(start_winds, path_of_moves, verbose = 0):
                     after_winds.append(new_wind)
         if verbose > 2:
             for wind in after_winds:
-                print(wind)
+                print('after_wind', wind)
         if len(after_winds) == 0:
             if verbose > 1:
                 print('no windings')
@@ -445,7 +484,7 @@ def carry_windings(start_winds, path_of_moves, verbose = 0):
         tri = new_tri
     sig, _ = path_of_moves[-1]
     if verbose > 2:
-        print(path_of_moves[-1])
+        print('move', path_of_moves[-1])
     assert tri.isoSig() == sig, (sig, tri.isoSig())
     return after_winds, tri
 
@@ -455,14 +494,15 @@ def windings_diaspora(start_sig, start_winds = None, target_sigs = None, search_
         tri.orient()
         M = snappy.Manifold(tri)
         start_winds = flat_reduced_windings(M, return_lifts = True)[1]
+    G = build_Pachner_graph(start_sig, search_depth = 1000, ceiling = ceiling)
     if target_sigs == None:
-        G = build_Pachner_graph(start_sig, search_depth = 1000, ceiling = ceiling)
         target_sigs = []
         for node in G:
             if len(G[node].neighbour_moves_down_tri) == 0:
                 if verbose > 2:
-                    print(node)
+                    print('node', node)
                 target_sigs.append(node)  ### look for local minima
+    assert all(ts in G for ts in target_sigs)
     survivors = []
     junk = []
     for wind in start_winds:
@@ -476,16 +516,21 @@ def windings_diaspora(start_sig, start_winds = None, target_sigs = None, search_
                 tri = regina.Triangulation3(start_sig)
                 tri.orient()
                 carry_wind = wind[:] ### make a copy
-                carried = carry_windings([carry_wind], path_of_moves, verbose = 0)
+                carried = carry_windings([carry_wind], path_of_moves, verbose = verbose)
                 if carried == None:
                     if verbose > 0:
                         print('winding', wind, 'became', carried, 'at', target_sig)
                     survived = False
                     junk.append(wind)
                     break
-                else:  ### sanity check: should still have trivial internal z2 cohomology
+                else:  
                     carried_winds, after_tri = carried
-                    for cwind in carried_winds:
+                    if verbose > 3:
+                        print('sig', target_sig)
+                        print('carried winds')
+                        for cwind in carried_winds:
+                            print(cwind)
+                    for cwind in carried_winds: ### sanity check: should still have trivial internal z2 cohomology
                         cangle = winding_to_preangle(cwind)
                         assert is_transverse_taut(after_tri, cangle, check_is_taut = False)
         if survived:
