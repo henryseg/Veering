@@ -265,7 +265,7 @@ def is_flat(u):
     return True
 
 
-def flat_reduced_windings(M, return_lifts = False, z2_checking = True):
+def candidate_reduced_windings(M, return_lifts = False, z2_checking = True):
     """
     Algorithm 9.1 of the paper.
     """
@@ -298,19 +298,16 @@ def flat_reduced_windings(M, return_lifts = False, z2_checking = True):
 
 def candidate_preangles(M, apply_symmetries = False):
     """
-    Given a snappy manifold M, compute the flat reduced windings,
-    convert to pre-angle structures (as the edge equations may be
-    violated), optionally remove repeated structures (using symmetries
-    of the triangulation), remove non-trivial structures (in ZZ2
-    cohomology), and return what remains.
+    Given a snappy manifold M, compute the candidate windings
+    (flat, reduced, no cohomological content), convert to pre-angle
+    structures ("pre" because the edge equations may be violated),
+    optionally remove repeated structures (using symmetries of the
+    triangulation), and return what remains.
 
     (TODO: It might be nice to have a mode where we return preangles
     sorted into symmetry classes.)
-
-    This is Algorithm 9.1 of the paper (but using preangles instead
-    of windings).
     """
-    windings = flat_reduced_windings(M)
+    windings = candidate_reduced_windings(M)
     tri = regina.Triangulation3(M)
     angles = [winding_to_preangle(w) for w in windings] 
 
@@ -321,8 +318,6 @@ def candidate_preangles(M, apply_symmetries = False):
             if angle not in angles:
                 angles.append(angle) 
 
-    # remove the angles that flip a triangle over
-    angles = [angle for angle in angles if is_trivial_in_z2_cohomology(tri, angle)] 
     return angles
 
 
@@ -333,8 +328,8 @@ def can_deal_with_reduced_angle(tri, angle):
     """
     if not is_taut(tri, angle):
         return (False, "not taut")
-#    if is_torus_bundle(tri, angle):  ### is_torus_bundle is broken...
-#        return (True, "torus bundle")
+    if is_torus_bundle(tri, angle):
+        return (True, "torus bundle")
     if is_veering(tri, angle) and is_layered(tri, angle):
         return (True, "veering+layered")
     if is_veering(tri, angle):
